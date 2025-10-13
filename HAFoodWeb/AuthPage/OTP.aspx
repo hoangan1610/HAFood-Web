@@ -1,54 +1,110 @@
-﻿<%@ Page Language="C#" Async="true" AutoEventWireup="true" CodeBehind="OTP.aspx.cs" Inherits="HAFoodWeb.AuthPage.OTP" %>
+﻿<%@ Page Language="C#" AutoEventWireup="true" CodeBehind="OTP.aspx.cs" Inherits="HAFoodWeb.AuthPage.OTP" %>
 
 <!DOCTYPE html>
 <html>
 <head runat="server">
-    <title>Xác minh OTP</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <title>Verify OTP</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f7f7f7;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
 
-    <script>
-        let countdown;
-        function startCountdown() {
-            let seconds = 60; // thời gian đếm ngược 60s
-            const timerElement = document.getElementById("timer");
-            const resendBtn = document.getElementById("<%= btnResendOtp.ClientID %>");
+        .otp-container {
+            background-color: #fff;
+            padding: 40px 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            width: 350px;
+            text-align: center;
+        }
 
-            resendBtn.disabled = true;
-            timerElement.innerText = `(${seconds}s)`;
+        h2 {
+            margin-bottom: 20px;
+            color: #333;
+        }
 
-            countdown = setInterval(() => {
-                seconds--;
-                timerElement.innerText = `(${seconds}s)`;
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 15px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            font-size: 16px;
+        }
 
-                if (seconds <= 0) {
-                    clearInterval(countdown);
-                    resendBtn.disabled = false;
-                    timerElement.innerText = "(Bạn có thể gửi lại OTP)";
+        input[type="button"], input[type="submit"], .aspNetButton {
+            width: 100%;
+            padding: 12px;
+            margin-top: 10px;
+            border: none;
+            border-radius: 5px;
+            background-color: #007bff;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        input[type="button"]:disabled, input[type="submit"]:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+        }
+
+        input[type="button"]:hover:not(:disabled), input[type="submit"]:hover:not(:disabled) {
+            background-color: #0056b3;
+        }
+
+        .message {
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+
+        #lblError {
+            color: red;
+        }
+
+        #lblSuccess {
+            color: green;
+        }
+    </style>
+
+    <script type="text/javascript">
+        var resendCountdown = 60;
+
+        function startResendCountdown() {
+            var btn = document.getElementById('<%= btnResendOtp.ClientID %>');
+            resendCountdown = 60;
+            btn.disabled = true;
+
+            var interval = setInterval(function () {
+                if (resendCountdown <= 0) {
+                    clearInterval(interval);
+                    btn.disabled = false;
+                    btn.value = "Gửi lại OTP";
+                } else {
+                    btn.value = "Gửi lại OTP (" + resendCountdown + "s)";
+                    resendCountdown--;
                 }
             }, 1000);
         }
     </script>
 </head>
+<body>
+    <form id="form1" runat="server">
+        <div class="otp-container">
+            <h2>Xác minh OTP</h2>
+            <asp:Label ID="lblError" runat="server" CssClass="message"></asp:Label>
+            <asp:Label ID="lblSuccess" runat="server" CssClass="message"></asp:Label>
 
-<body class="bg-light">
-    <form id="form1" runat="server" class="container mt-5">
-        <div class="card mx-auto shadow-sm" style="max-width: 400px;">
-            <div class="card-body text-center">
-                <h4 class="mb-3">🔐 Xác minh OTP</h4>
-                <p>Nhập mã OTP đã được gửi đến email: <strong><%= Email %></strong></p>
+            <asp:TextBox ID="txtOtp" runat="server" placeholder="Nhập OTP" CssClass="otp-input"></asp:TextBox>
 
-                <asp:TextBox ID="txtOtp" runat="server" CssClass="form-control mb-3 text-center" placeholder="Nhập mã OTP"></asp:TextBox>
-
-                <asp:Label ID="lblError" runat="server" CssClass="text-danger d-block mb-2"></asp:Label>
-                <asp:Label ID="lblSuccess" runat="server" CssClass="text-success d-block mb-2"></asp:Label>
-
-                <asp:Button ID="btnVerifyOtp" runat="server" CssClass="btn btn-primary w-100 mb-2" Text="Xác minh" OnClick="btnVerifyOtp_Click" />
-
-                <asp:Button ID="btnResendOtp" runat="server" CssClass="btn btn-outline-secondary w-100" Text="Gửi lại OTP" OnClick="btnResendOtp_Click" />
-
-                <p id="timer" class="mt-2 text-muted small"></p>
-            </div>
+            <asp:Button ID="btnVerifyOtp" runat="server" Text="Xác minh OTP" OnClick="btnVerifyOtp_Click" CssClass="aspNetButton"/>
+            <asp:Button ID="btnResendOtp" runat="server" Text="Gửi lại OTP" OnClick="btnResendOtp_Click" CssClass="aspNetButton"/>
         </div>
     </form>
 </body>
