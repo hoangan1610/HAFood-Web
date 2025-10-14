@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
 using HAFoodWeb.BLL;
+using System.Diagnostics;
 
 namespace HAFoodWeb.AuthPage
 {
@@ -12,7 +13,9 @@ namespace HAFoodWeb.AuthPage
         protected void Page_Load(object sender, EventArgs e)
         {
             userBLL = new UserBLL();
-            Email = Request.QueryString["email"];
+            Email = Session["OTPEmail"] as string;
+
+            Debug.WriteLine("Page_Load: OTPEmail from Session = " + Email);
 
             if (string.IsNullOrEmpty(Email))
             {
@@ -24,16 +27,20 @@ namespace HAFoodWeb.AuthPage
 
             if (!IsPostBack)
             {
-                // Khởi động đếm ngược khi load trang
-                ClientScript.RegisterStartupScript(this.GetType(), "startTimer", "startCountdown();", true);
+                // Bật nút Verify OTP, vô hiệu hóa Resend OTP 60s
+                btnVerifyOtp.Enabled = true;
+                btnResendOtp.Enabled = false;
+                ClientScript.RegisterStartupScript(this.GetType(), "startTimer", "startResendCountdown();", true);
             }
         }
 
-        protected async void btnVerifyOtp_Click(object sender, EventArgs e)
+        protected async Task VerifyOtpAsync()
         {
             lblError.Text = "";
             lblSuccess.Text = "";
             string otpCode = txtOtp.Text.Trim();
+
+            Debug.WriteLine($"VerifyOtpAsync: Email={Email}, OTP={otpCode}");
 
             if (string.IsNullOrEmpty(otpCode))
             {
@@ -43,12 +50,13 @@ namespace HAFoodWeb.AuthPage
 
             bool result = await userBLL.VerifyOtpViaApi(Email, otpCode);
 
+            Debug.WriteLine("VerifyOtpAsync: VerifyOtpViaApi result = " + result);
+
             if (result)
             {
-                lblSuccess.Text = "Xác minh thành công! Đang chuyển đến trang đăng nhập...";
-                await Task.Delay(2000);
-                Response.Redirect("Login.aspx?verify=success", false);
-                Context.ApplicationInstance.CompleteRequest();
+                lblSuccess.Text = "Xác minh thành công! Chuyển đến trang đăng nhập...";
+                string script = "setTimeout(function(){ window.location='Login.aspx?verify=success'; }, 2000);";
+                ClientScript.RegisterStartupScript(this.GetType(), "redirect", script, true);
             }
             else
             {
@@ -56,22 +64,38 @@ namespace HAFoodWeb.AuthPage
             }
         }
 
-        protected async void btnResendOtp_Click(object sender, EventArgs e)
+        protected void btnVerifyOtp_Click(object sender, EventArgs e)
+        {
+            // Gọi async method và không chặn UI
+            _ = VerifyOtpAsync();
+        }
+
+        protected async Task ResendOtpAsync()
         {
             lblError.Text = "";
             lblSuccess.Text = "";
 
+            Debug.WriteLine("ResendOtpAsync: Resending OTP for Email=" + Email);
+
             bool result = await userBLL.ResendOtpViaApi(Email);
+
+            Debug.WriteLine("ResendOtpAsync: ResendOtpViaApi result = " + result);
 
             if (result)
             {
                 lblSuccess.Text = "Mã OTP mới đã được gửi đến email của bạn.";
-                ClientScript.RegisterStartupScript(this.GetType(), "restartTimer", "startCountdown();", true);
+                btnResendOtp.Enabled = false;
+                ClientScript.RegisterStartupScript(this.GetType(), "startTimer", "startResendCountdown();", true);
             }
             else
             {
                 lblError.Text = "Gửi lại OTP thất bại. Vui lòng thử lại sau.";
             }
+        }
+
+        protected void btnResendOtp_Click(object sender, EventArgs e)
+        {
+            _ = ResendOtpAsync();
         }
     }
 }
