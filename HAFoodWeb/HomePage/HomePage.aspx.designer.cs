@@ -15,6 +15,15 @@ namespace HAFoodWeb.HomePage
     {
 
         /// <summary>
+        /// sm control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.ScriptManager sm;
+
+        /// <summary>
         /// Header1 control.
         /// </summary>
         /// <remarks>
@@ -31,6 +40,33 @@ namespace HAFoodWeb.HomePage
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
         protected global::HAFoodWeb.Control.SlideShow Slideshow1;
+
+        /// <summary>
+        /// rpCategories control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Repeater rpCategories;
+
+        /// <summary>
+        /// rpNew control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Repeater rpNew;
+
+        /// <summary>
+        /// rpProducts control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Repeater rpProducts;
 
         /// <summary>
         /// Footer1 control.
