@@ -65,5 +65,12 @@ namespace HAFoodWeb.Infrastructure
             var content = new StringContent(json, Encoding.UTF8, "application/json");
             return await Client.PostAsync(url, content);
         }
+
+        public static async Task<HttpResponseMessage> PutJsonAsync<T>(string url, T payload)
+        {
+            var json = JsonConvert.SerializeObject(payload);
+            var content = new StringContent(json, Encoding.UTF8, "application/json");
+            return await Client.PutAsync(url, content);
+        }
     }
 }

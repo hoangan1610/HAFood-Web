@@ -25,7 +25,6 @@ namespace HAFoodWeb.AuthPage
 
         protected void btnLogin_Click(object sender, EventArgs e)
         {
-            // Đăng ký async task
             RegisterAsyncTask(new PageAsyncTask(LoginAsync));
         }
 
@@ -68,40 +67,37 @@ namespace HAFoodWeb.AuthPage
 
                 var loginResult = await userBLL.LoginViaApi(email, password, deviceUuid, ip);
 
-                // Debug log
-                System.Diagnostics.Debug.WriteLine("loginResult: " + (loginResult == null ? "NULL" : "NOT NULL"));
-
                 if (loginResult != null)
                 {
                     try
                     {
-                        // Lấy thông tin từ response
                         string userInfoId = loginResult.userInfoId?.ToString();
-                        string token = loginResult.token?.ToString();
+                        string jwtToken = loginResult.jwtToken?.ToString();
 
-                        System.Diagnostics.Debug.WriteLine($"UserInfoId: {userInfoId}, Token: {token}");
-
-                        // Kiểm tra userInfoId có hợp lệ không
                         if (!string.IsNullOrEmpty(userInfoId))
                         {
-                            // Lưu thông tin vào Session
                             Session["UserId"] = userInfoId;
                             Session["UserEmail"] = email;
-                            Session["Token"] = token;
+                            Session["JwtToken"] = jwtToken;
+                            Session["Username"] = email.Split('@')[0];
 
-                            // Có thể cần lấy thêm thông tin user từ API khác nếu cần username, phone
-                            // Hoặc lưu tạm email làm username
-                            Session["Username"] = email.Split('@')[0]; // Lấy phần trước @ làm username tạm
+                            // 👉 Lưu token vào cookie
+                            if (!string.IsNullOrEmpty(jwtToken))
+                            {
+                                var authCookie = new HttpCookie("AuthToken", jwtToken)
+                                {
+                                    HttpOnly = true,
+                                    Secure = Request.IsSecureConnection,
+                                    Expires = DateTime.UtcNow.AddDays(7)
+                                };
+                                Response.Cookies.Add(authCookie);
+                            }
 
-                            System.Diagnostics.Debug.WriteLine("Login thành công, redirect về HomePage");
-
-                            // Redirect an toàn trong async
                             Response.Redirect("~/HomePage/HomePage.aspx", false);
                             Context.ApplicationInstance.CompleteRequest();
                         }
                         else
                         {
-                            System.Diagnostics.Debug.WriteLine("loginResult không có userInfoId hợp lệ");
                             lblLoginError.Text = "Email hoặc mật khẩu không đúng!";
                         }
                     }
@@ -113,7 +109,6 @@ namespace HAFoodWeb.AuthPage
                 }
                 else
                 {
-                    System.Diagnostics.Debug.WriteLine("loginResult is NULL - login failed");
                     lblLoginError.Text = "Email hoặc mật khẩu không đúng!";
                 }
             }

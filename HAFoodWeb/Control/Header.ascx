@@ -1,11 +1,10 @@
 ﻿<%@ Control Language="C#" AutoEventWireup="true" CodeBehind="Header.ascx.cs" Inherits="HAFoodWeb.Control.Header" %>
 
-<!-- HEADER -->
+<!-- CSS -->
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet" />
 
 <style>
-    /* HEADER */
     .navbar {
         width: 90%;
         margin: 20px auto;
@@ -42,8 +41,6 @@
         position: relative;
     }
     .nav-icons i:hover { color: #28a745; }
-
-    /* SEARCH DROPDOWN */
     .search-dropdown {
         position: absolute;
         top: 110px;
@@ -92,8 +89,6 @@
         from { transform: translateY(-20px); opacity: 0; }
         to { transform: translateY(0); opacity: 1; }
     }
-
-    /* USER DROPDOWN */
     .user-dropdown {
         position: absolute;
         top: 100%;
@@ -108,14 +103,16 @@
         z-index: 11000;
         animation: fadeIn 0.2s ease;
     }
-    .user-dropdown a {
+    .user-dropdown a, .user-dropdown asp\:LinkButton {
         text-decoration: none;
         color: #333;
         padding: 10px 20px;
         font-size: 16px;
         transition: background 0.3s;
+        display: block;
+        text-align: left;
     }
-    .user-dropdown a:hover {
+    .user-dropdown a:hover, .user-dropdown asp\:LinkButton:hover {
         background: #f4f4f4;
         color: #28a745;
     }
@@ -127,9 +124,9 @@
 
 <!-- NAVBAR -->
 <nav class="navbar navbar-expand-lg position-relative">
-    <a class="navbar-brand" href="<%= ResolveUrl("~/HomePage/HomePage.aspx") %>">
-        <img src="<%= ResolveUrl("~/images/logo.png") %>" alt="Logo" />
-    </a>
+    <asp:HyperLink ID="lnkLogo" runat="server" NavigateUrl="~/HomePage/HomePage.aspx" CssClass="navbar-brand">
+        <asp:Image ID="imgLogo" runat="server" ImageUrl="~/images/HAFood_logo.png" AlternateText="Logo" />
+    </asp:HyperLink>
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
         <span class="navbar-toggler-icon"></span>
@@ -137,25 +134,45 @@
 
     <div class="collapse navbar-collapse" id="navbarNav">
         <ul class="navbar-nav mx-auto">
-            <li class="nav-item"><a class="nav-link" href="<%= ResolveUrl("~/HomePage/HomePage.aspx") %>">Home</a></li>
+            <li class="nav-item">
+                <asp:HyperLink ID="lnkHome" runat="server" NavigateUrl="~/HomePage/HomePage.aspx" CssClass="nav-link">Home</asp:HyperLink>
+            </li>
             <li class="nav-item"><a class="nav-link" href="#">Catalog</a></li>
             <li class="nav-item"><a class="nav-link" href="#">Shop</a></li>
             <li class="nav-item"><a class="nav-link" href="#">Products</a></li>
             <li class="nav-item"><a class="nav-link" href="#">More</a></li>
         </ul>
 
-        <div class="nav-icons d-flex align-items-center">
+        <div class="nav-icons d-flex align-items-center"
+             id="headerRoot"
+             data-guestid="<%# guestDropdown.ClientID %>"
+             data-authid="<%# authDropdown.ClientID %>">
+
             <i class="bi bi-search" id="openSearch"></i>
-            <!-- USER ICON + DROPDOWN -->
+
+            <!-- USER ICON -->
             <div class="position-relative">
                 <i class="bi bi-person" id="userIcon"></i>
-                <div class="user-dropdown" id="userDropdown">
-                    <a href="<%= ResolveUrl("~/AuthPage/Login.aspx") %>">
+
+                <!-- GUEST DROPDOWN -->
+                <div class="user-dropdown" id="guestDropdown" runat="server">
+                    <asp:HyperLink runat="server" NavigateUrl="~/AuthPage/Login.aspx">
                         <i class="bi bi-box-arrow-in-right me-2"></i>Login
-                    </a>
-                    <a href="<%= ResolveUrl("~/AuthPage/Register.aspx") %>">
+                    </asp:HyperLink>
+                    <asp:HyperLink runat="server" NavigateUrl="~/AuthPage/Register.aspx">
                         <i class="bi bi-pencil-square me-2"></i>Register
-                    </a>
+                    </asp:HyperLink>
+                </div>
+
+                <!-- AUTH DROPDOWN -->
+                <div class="user-dropdown" id="authDropdown" runat="server">
+                    <asp:HyperLink ID="lnkProfile" runat="server" NavigateUrl="~/UserInfo/UserProfile.aspx" CssClass="d-flex align-items-center">
+                        <i class="bi bi-person-circle me-2"></i>My Profile
+                    </asp:HyperLink>
+                    <span title="Trang danh sách đơn hàng (chưa có)">Danh sách đơn hàng</span>
+                    <asp:LinkButton ID="btnLogout" runat="server" OnClick="btnLogout_Click">
+                        <i class="bi bi-box-arrow-right me-2"></i>Logout
+                    </asp:LinkButton>
                 </div>
             </div>
 
@@ -175,36 +192,62 @@
 
 <!-- SCRIPT -->
 <script>
-    // SEARCH DROPDOWN
-    const openBtn = document.getElementById("openSearch");
-    const dropdown = document.getElementById("searchDropdown");
-    const overlay = document.getElementById("pageOverlay");
+    document.addEventListener('DOMContentLoaded', function () {
+        const headerRoot = document.getElementById('headerRoot');
+        const guestId = headerRoot?.dataset.guestid;
+        const authId = headerRoot?.dataset.authid;
 
-    openBtn.addEventListener("click", () => {
-        const isVisible = dropdown.style.display === "flex";
-        dropdown.style.display = isVisible ? "none" : "flex";
-        overlay.style.display = isVisible ? "none" : "block";
-        if (!isVisible) dropdown.querySelector("input").focus();
-    });
+        const guestDropdownEl = guestId ? document.getElementById(guestId) : null;
+        const authDropdownEl = authId ? document.getElementById(authId) : null;
 
-    overlay.addEventListener("click", () => {
-        dropdown.style.display = "none";
-        overlay.style.display = "none";
-        userDropdown.style.display = "none";
-    });
+        const userIcon = document.getElementById('userIcon');
+        const openBtn = document.getElementById('openSearch');
+        const searchDropdown = document.getElementById('searchDropdown');
+        const overlay = document.getElementById('pageOverlay');
 
-    // USER DROPDOWN
-    const userIcon = document.getElementById("userIcon");
-    const userDropdown = document.getElementById("userDropdown");
+        function hideAllUserDropdowns() {
+            if (guestDropdownEl) guestDropdownEl.style.display = 'none';
+            if (authDropdownEl) authDropdownEl.style.display = 'none';
+            if (overlay) overlay.style.display = 'none';
+        }
 
-    userIcon.addEventListener("click", (e) => {
-        e.stopPropagation();
-        userDropdown.style.display = userDropdown.style.display === "flex" ? "none" : "flex";
-    });
+        function toggleDropdown(el) {
+            if (!el) return;
+            const isHidden = window.getComputedStyle(el).display === 'none';
+            hideAllUserDropdowns();
+            el.style.display = isHidden ? 'flex' : 'none';
+            overlay.style.display = isHidden ? 'block' : 'none';
+        }
 
-    document.addEventListener("click", (e) => {
-        if (!userDropdown.contains(e.target) && e.target !== userIcon) {
-            userDropdown.style.display = "none";
+        if (userIcon) {
+            userIcon.addEventListener('click', function (e) {
+                e.stopPropagation();
+                toggleDropdown(guestDropdownEl || authDropdownEl);
+            });
+        }
+
+        document.addEventListener('click', function (e) {
+            if (e.target.closest('a')) return;
+            if (guestDropdownEl?.contains(e.target) || authDropdownEl?.contains(e.target) || userIcon?.contains(e.target)) return;
+            hideAllUserDropdowns();
+            if (searchDropdown) searchDropdown.style.display = 'none';
+        });
+
+        if (overlay) {
+            overlay.addEventListener('click', function () {
+                hideAllUserDropdowns();
+                if (searchDropdown) searchDropdown.style.display = 'none';
+            });
+        }
+
+        if (openBtn) {
+            openBtn.addEventListener('click', function (ev) {
+                ev.stopPropagation();
+                const isVisible = window.getComputedStyle(searchDropdown).display === 'flex';
+                searchDropdown.style.display = isVisible ? 'none' : 'flex';
+                overlay.style.display = isVisible ? 'none' : 'block';
+                if (!isVisible) searchDropdown.querySelector('input').focus();
+            });
         }
     });
 </script>

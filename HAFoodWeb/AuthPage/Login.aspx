@@ -86,12 +86,12 @@
             <asp:Label ID="lblPasswordError" runat="server" CssClass="text-danger"></asp:Label>
         </div>
 
+            <asp:Label ID="lblLoginError" runat="server" CssClass="text-danger text-center mb-2"></asp:Label>
+
         <div class="text-center mb-3">
             <asp:HyperLink ID="lnkCreateAccount" runat="server" NavigateUrl="~/AuthPage/Register.aspx" CssClass="link-option">Create Account</asp:HyperLink>
             <asp:HyperLink ID="lnkForgotPassword" runat="server" NavigateUrl="~/AuthPage/ForgotPassword.aspx" CssClass="link-option">Forgot Password</asp:HyperLink>
         </div>
-
-        <asp:Label ID="lblLoginError" runat="server" CssClass="text-danger text-center mb-2"></asp:Label>
 
         <div class="text-center">
             <asp:Button ID="btnLogin" runat="server" Text="Login" CssClass="btn btn-login" OnClick="btnLogin_Click" />
