@@ -1,12 +1,12 @@
 ﻿using System;
-using System.Threading.Tasks;
-using HAFoodWeb.BLL;
 using System.Diagnostics;
+using System.Threading.Tasks;
 using System.Web.UI;
+using HAFoodWeb.BLL;
 
 namespace HAFoodWeb.AuthPage
 {
-    public partial class OTP : System.Web.UI.Page
+    public partial class OTPForgotPassword : Page
     {
         protected string Email;
         private UserBLL userBLL;
@@ -15,24 +15,23 @@ namespace HAFoodWeb.AuthPage
         {
             userBLL = new UserBLL();
 
-            Debug.WriteLine("=== OTP Page_Load ===");
-            string sessionEmail = Session["OTPEmail"] as string;
-            string queryEmail = Request.QueryString["email"];
-            Email = !string.IsNullOrEmpty(sessionEmail) ? sessionEmail : queryEmail;
+            Debug.WriteLine("=== OTPForgotPassword Page_Load ===");
 
-            Debug.WriteLine($"OTPEmail from Session = {sessionEmail}");
-            Debug.WriteLine($"OTPEmail from QueryString = {queryEmail}");
+            string sessionEmail = Session["ResetEmail"] as string;
+            string queryEmail = Request.QueryString["email"];
+            Email = !string.IsNullOrEmpty(sessionEmail) ? sessionEmail : null;
+
+            Debug.WriteLine($"ResetEmail from Session = {sessionEmail}");
             Debug.WriteLine($"Final Email used = {Email}");
 
             if (!string.IsNullOrEmpty(Email))
             {
-                Session["OTPEmail"] = Email;
-                lblEmailInfo.Text = $"Mã xác thực đã được gửi qua email: <b>{Email}</b>";
+                lblEmailInfo.Text = $"Mã OTP đã được gửi tới email: <b>{Email}</b>";
             }
             else
             {
                 lblEmailInfo.Text = "";
-                lblError.Text = "⚠️ Không xác định được email. Vui lòng đăng ký lại.";
+                lblError.Text = "⚠️ Không xác định được email. Vui lòng thử lại.";
                 btnVerifyOtp.Enabled = false;
                 btnResendOtp.Enabled = false;
                 return;
@@ -40,7 +39,6 @@ namespace HAFoodWeb.AuthPage
 
             if (!IsPostBack)
             {
-                Debug.WriteLine("Page_Load: First load, start resend timer.");
                 btnVerifyOtp.Enabled = true;
                 btnResendOtp.Enabled = false;
                 ClientScript.RegisterStartupScript(this.GetType(), "startTimer", "startResendCountdown();", true);
@@ -58,34 +56,30 @@ namespace HAFoodWeb.AuthPage
             if (string.IsNullOrEmpty(otpCode))
             {
                 lblError.Text = "Vui lòng nhập mã OTP.";
-                Debug.WriteLine("❌ OTP is empty.");
                 return;
             }
 
-            bool result = await userBLL.VerifyOtpViaApi(Email, otpCode);
-            Debug.WriteLine("VerifyOtpViaApi result = " + result);
+            // ✅ Chỉ thay đổi API verify cho forgot password
+            bool verified = await userBLL.VerifyForgotPasswordOtpViaApi(Email, otpCode);
+            Debug.WriteLine("VerifyForgotPasswordOtpViaApi result = " + verified);
 
-            if (result)
+            if (verified)
             {
-                lblSuccess.Text = "✅ Xác minh thành công! Chuyển đến trang đăng nhập...";
-                string script = "setTimeout(function(){ window.location='Login.aspx?verify=success'; }, 2000);";
+                lblSuccess.Text = "✅ Xác thực thành công! Chuyển đến trang đặt lại mật khẩu...";
+                string script = "setTimeout(function(){ window.location='ResetPassword.aspx'; }, 2000);";
                 ClientScript.RegisterStartupScript(this.GetType(), "redirect", script, true);
             }
             else
             {
-                lblError.Text = "❌ Mã OTP không đúng hoặc đã hết hạn. Vui lòng thử lại.";
+                lblError.Text = "❌ OTP không hợp lệ hoặc đã hết hạn. Vui lòng thử lại.";
             }
         }
 
-        // ✅ QUAN TRỌNG: Phải là async void và await
         protected async void btnVerifyOtp_Click(object sender, EventArgs e)
         {
-            Debug.WriteLine("btnVerifyOtp_Click triggered.");
-            Debug.WriteLine("txtOtp.Text = " + txtOtp.Text); // ✅ Kiểm tra giá trị OTP
             try
             {
                 await VerifyOtpAsync();
-                Debug.WriteLine("btnVerifyOtp_Click completed.");
             }
             catch (Exception ex)
             {
@@ -99,18 +93,15 @@ namespace HAFoodWeb.AuthPage
             lblError.Text = "";
             lblSuccess.Text = "";
 
-            Debug.WriteLine("ResendOtpAsync: Resending OTP for Email=" + Email);
-
             string deviceUuid = Session["DeviceUuid"] as string;
             if (string.IsNullOrEmpty(deviceUuid))
             {
                 deviceUuid = Guid.NewGuid().ToString();
                 Session["DeviceUuid"] = deviceUuid;
-                Debug.WriteLine("Generated new DeviceUuid = " + deviceUuid);
             }
 
+            // ✅ Dùng chung API resend cũ
             bool result = await userBLL.ResendOtpViaApi(Email, deviceUuid);
-            Debug.WriteLine("ResendOtpViaApi result = " + result);
 
             if (result)
             {
@@ -124,10 +115,8 @@ namespace HAFoodWeb.AuthPage
             }
         }
 
-        // ✅ QUAN TRỌNG: Phải là async void và await
         protected async void btnResendOtp_Click(object sender, EventArgs e)
         {
-            Debug.WriteLine("btnResendOtp_Click triggered.");
             try
             {
                 await ResendOtpAsync();

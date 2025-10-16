@@ -102,9 +102,12 @@
   <ItemGroup>
     <Content Include="About.aspx" />
     <Content Include="assets\cat\default.png" />
+    <Content Include="AuthPage\ForgotPassword.aspx" />
     <Content Include="AuthPage\Login.aspx" />
     <Content Include="AuthPage\OTP.aspx" />
+    <Content Include="AuthPage\OTPForgotPassword.aspx" />
     <Content Include="AuthPage\Register.aspx" />
+    <Content Include="AuthPage\ResetPassword.aspx" />
     <Content Include="Contact.aspx" />
     <Content Include="Content\bootstrap-grid.css" />
     <Content Include="Content\bootstrap-grid.min.css" />
@@ -203,6 +206,13 @@
       <DependentUpon>About.aspx</DependentUpon>
     </Compile>
     <Compile Include="App_Start\RouteConfig.cs" />
+    <Compile Include="AuthPage\ForgotPassword.aspx.cs">
+      <DependentUpon>ForgotPassword.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="AuthPage\ForgotPassword.aspx.designer.cs">
+      <DependentUpon>ForgotPassword.aspx</DependentUpon>
+    </Compile>
     <Compile Include="AuthPage\Login.aspx.cs">
       <DependentUpon>Login.aspx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>
@@ -217,12 +227,26 @@
     <Compile Include="AuthPage\OTP.aspx.designer.cs">
       <DependentUpon>OTP.aspx</DependentUpon>
     </Compile>
+    <Compile Include="AuthPage\OTPForgotPassword.aspx.cs">
+      <DependentUpon>OTPForgotPassword.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="AuthPage\OTPForgotPassword.aspx.designer.cs">
+      <DependentUpon>OTPForgotPassword.aspx</DependentUpon>
+    </Compile>
     <Compile Include="AuthPage\Register.aspx.cs">
       <DependentUpon>Register.aspx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>
     </Compile>
     <Compile Include="AuthPage\Register.aspx.designer.cs">
       <DependentUpon>Register.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="AuthPage\ResetPassword.aspx.cs">
+      <DependentUpon>ResetPassword.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="AuthPage\ResetPassword.aspx.designer.cs">
+      <DependentUpon>ResetPassword.aspx</DependentUpon>
     </Compile>
     <Compile Include="BLL\UserBLL.cs" />
     <Compile Include="Contact.aspx.cs">

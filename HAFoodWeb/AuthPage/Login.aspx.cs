@@ -77,9 +77,9 @@ namespace HAFoodWeb.AuthPage
                     {
                         // Lấy thông tin từ response
                         string userInfoId = loginResult.userInfoId?.ToString();
-                        string token = loginResult.token?.ToString();
+                        string jwtToken = loginResult.jwtToken?.ToString();
 
-                        System.Diagnostics.Debug.WriteLine($"UserInfoId: {userInfoId}, Token: {token}");
+                        System.Diagnostics.Debug.WriteLine($"UserInfoId: {userInfoId}, JwtToken: {jwtToken}");
 
                         // Kiểm tra userInfoId có hợp lệ không
                         if (!string.IsNullOrEmpty(userInfoId))
@@ -87,7 +87,7 @@ namespace HAFoodWeb.AuthPage
                             // Lưu thông tin vào Session
                             Session["UserId"] = userInfoId;
                             Session["UserEmail"] = email;
-                            Session["Token"] = token;
+                            Session["JwtToken"] = jwtToken;
 
                             // Có thể cần lấy thêm thông tin user từ API khác nếu cần username, phone
                             // Hoặc lưu tạm email làm username

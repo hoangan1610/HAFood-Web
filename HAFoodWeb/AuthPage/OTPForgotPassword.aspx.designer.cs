@@ -11,7 +11,7 @@ namespace HAFoodWeb.AuthPage
 {
 
 
-    public partial class OTP
+    public partial class OTPForgotPassword
     {
 
         /// <summary>
