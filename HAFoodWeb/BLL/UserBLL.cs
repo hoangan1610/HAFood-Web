@@ -62,7 +62,6 @@ namespace HAFoodWeb.BLL
             string apiUrl = $"{apiBaseUrl}/api/Auth/login";
             using (HttpClient client = new HttpClient())
             {
-                // Payload gửi lên API
                 var payload = new
                 {
                     email = email,
@@ -81,17 +80,14 @@ namespace HAFoodWeb.BLL
                     System.Diagnostics.Debug.WriteLine("Status code: " + response.StatusCode);
                     System.Diagnostics.Debug.WriteLine("Response từ API: " + respContent);
 
-                    // Kiểm tra nếu response rỗng
                     if (string.IsNullOrWhiteSpace(respContent))
                     {
                         System.Diagnostics.Debug.WriteLine("Response content is empty");
                         return null;
                     }
 
-                    // Deserialize thành JObject để kiểm tra chính xác hơn
                     var jsonResult = JsonConvert.DeserializeObject<Newtonsoft.Json.Linq.JObject>(respContent);
 
-                    // Kiểm tra success
                     bool isSuccess = false;
                     if (jsonResult["success"] != null)
                     {
@@ -102,13 +98,10 @@ namespace HAFoodWeb.BLL
                     if (isSuccess)
                     {
                         System.Diagnostics.Debug.WriteLine("Login thành công, trả về toàn bộ response");
-
-                        // Trả về toàn bộ response vì API không có trường "data"
                         return JsonConvert.DeserializeObject<dynamic>(respContent);
                     }
                     else
                     {
-                        // Log lỗi nếu có
                         if (jsonResult["message"] != null)
                         {
                             System.Diagnostics.Debug.WriteLine("Login thất bại: " + jsonResult["message"].ToString());
@@ -130,7 +123,7 @@ namespace HAFoodWeb.BLL
             {
                 using (var client = new HttpClient())
                 {
-                    var payload = new { email = email, otp = otp };
+                    var payload = new { email = email, code = otp };
                     string json = JsonConvert.SerializeObject(payload);
                     Debug.WriteLine("VerifyOtpViaApi: Sending request = " + json);
 
@@ -140,23 +133,52 @@ namespace HAFoodWeb.BLL
                     string responseContent = await response.Content.ReadAsStringAsync();
                     Debug.WriteLine("VerifyOtpViaApi: Response = " + responseContent);
 
-                    return response.IsSuccessStatusCode;
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        Debug.WriteLine($"HTTP ERROR: {(int)response.StatusCode} - {response.ReasonPhrase}");
+                        return false;
+                    }
+
+                    try
+                    {
+                        var jsonResult = Newtonsoft.Json.Linq.JObject.Parse(responseContent);
+                        bool verified = jsonResult["verified"]?.Value<bool>() ?? false;
+                        Debug.WriteLine($"VerifyOtpViaApi: verified = {verified}");
+                        return verified;
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.WriteLine("VerifyOtpViaApi JSON parse error: " + ex.Message);
+                        return false;
+                    }
                 }
             }
             catch (Exception ex)
             {
-                Debug.WriteLine("VerifyOtpViaApi Exception: " + ex.Message);
+                Debug.WriteLine("VerifyOtpViaApi Exception: " + ex.ToString());
                 return false;
             }
         }
 
-        public async Task<bool> ResendOtpViaApi(string email)
+
+        public async Task<bool> ResendOtpViaApi(string email, string deviceUuid = null)
         {
             try
             {
                 using (var client = new HttpClient())
                 {
-                    var payload = new { email = email };
+                    string uuid = deviceUuid ?? Guid.NewGuid().ToString();
+                    int purpose = 1;
+
+                    var payload = new
+                    {
+                        email = email,
+                        purpose = purpose,
+                        deviceUuid = uuid,
+                        deviceModel = (string)null,
+                        ip = (string)null
+                    };
+
                     string json = JsonConvert.SerializeObject(payload);
                     Debug.WriteLine("ResendOtpViaApi: Sending request = " + json);
 
@@ -166,12 +188,105 @@ namespace HAFoodWeb.BLL
                     string responseContent = await response.Content.ReadAsStringAsync();
                     Debug.WriteLine("ResendOtpViaApi: Response = " + responseContent);
 
-                    return response.IsSuccessStatusCode;
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        Debug.WriteLine($"HTTP Error: {(int)response.StatusCode} - {response.ReasonPhrase}");
+                        return false;
+                    }
+
+                    var jsonResult = JsonConvert.DeserializeObject<Newtonsoft.Json.Linq.JObject>(responseContent);
+
+                    // ✅ FIX: Kiểm tra field "accepted" thay vì "success"
+                    bool accepted = jsonResult["accepted"]?.Value<bool>() ?? false;
+                    Debug.WriteLine($"ResendOtpViaApi: accepted = {accepted}");
+
+                    return accepted;
                 }
             }
             catch (Exception ex)
             {
-                Debug.WriteLine("ResendOtpViaApi Exception: " + ex.Message);
+                Debug.WriteLine("ResendOtpViaApi Exception: " + ex.ToString());
+                return false;
+            }
+        }
+
+        public async Task<bool> ForgotPasswordViaApi(string email)
+        {
+            try
+            {
+                using (var client = new HttpClient())
+                {
+                    // Chỉ gửi email thôi
+                    var payload = new { email = email };
+
+                    string json = JsonConvert.SerializeObject(payload);
+                    Debug.WriteLine("ForgotPasswordViaApi: Request payload = " + json);
+
+                    var content = new StringContent(json, Encoding.UTF8, "application/json");
+                    var response = await client.PostAsync($"{apiBaseUrl}/api/Auth/password/forgot", content);
+                    string responseContent = await response.Content.ReadAsStringAsync();
+
+                    Debug.WriteLine("ForgotPasswordViaApi: Response = " + responseContent);
+
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        Debug.WriteLine($"ForgotPasswordViaApi: HTTP error {(int)response.StatusCode} - {response.ReasonPhrase}");
+                        return false;
+                    }
+
+                    var jsonResult = Newtonsoft.Json.Linq.JObject.Parse(responseContent);
+                    bool accepted = jsonResult["accepted"]?.Value<bool>() ?? false;
+                    Debug.WriteLine($"ForgotPasswordViaApi: accepted = {accepted}");
+
+                    return accepted;
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("ForgotPasswordViaApi Exception: " + ex.ToString());
+                return false;
+            }
+        }
+
+
+        public async Task<bool> VerifyForgotPasswordOtpViaApi(string email, string otp)
+        {
+            try
+            {
+                using (var client = new HttpClient())
+                {
+                    string apiUrl = $"{apiBaseUrl}/api/Auth/password/reset/verify";
+
+                    var payload = new
+                    {
+                        email = email,
+                        code = otp
+                    };
+
+                    string json = JsonConvert.SerializeObject(payload);
+                    Debug.WriteLine("VerifyForgotPasswordOtpViaApi: Sending request = " + json);
+
+                    var content = new StringContent(json, Encoding.UTF8, "application/json");
+                    var response = await client.PostAsync(apiUrl, content);
+
+                    string responseContent = await response.Content.ReadAsStringAsync();
+                    Debug.WriteLine("VerifyForgotPasswordOtpViaApi: Response = " + responseContent);
+
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        Debug.WriteLine($"HTTP ERROR: {(int)response.StatusCode} - {response.ReasonPhrase}");
+                        return false;
+                    }
+
+                    var jsonResult = JsonConvert.DeserializeObject<JObject>(responseContent);
+                    bool verified = jsonResult["verified"]?.Value<bool>() ?? false;
+
+                    return verified;
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("VerifyForgotPasswordOtpViaApi Exception: " + ex.ToString());
                 return false;
             }
         }

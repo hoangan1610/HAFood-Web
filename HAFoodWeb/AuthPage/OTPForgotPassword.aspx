@@ -1,9 +1,9 @@
-﻿<%@ Page Language="C#" AutoEventWireup="true" CodeBehind="OTP.aspx.cs" Inherits="HAFoodWeb.AuthPage.OTP" Async="true" %>
+﻿<%@ Page Language="C#" AutoEventWireup="true" CodeBehind="OTPForgotPassword.aspx.cs" Inherits="HAFoodWeb.AuthPage.OTPForgotPassword" Async="true" %>
 
 <!DOCTYPE html>
 <html>
 <head runat="server">
-    <title>Verify OTP - HAFood</title>
+    <title>Forgot Password - HAFood</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -23,7 +23,7 @@
             text-align: center;
         }
 
-        h2 { margin-bottom: 20px; color: #333; }
+        h2 { margin-bottom: 10px; color: #333; }
 
         .otp-inputs {
             display: flex;
@@ -43,8 +43,8 @@
         }
 
         .otp-inputs input:focus {
-            border-color: #e55a00;
-            box-shadow: 0 0 5px rgba(229, 90, 0, 0.3);
+            border-color: #28a745;
+            box-shadow: 0 0 5px rgba(40, 167, 69, 0.3);
         }
 
         .aspNetButton {
@@ -53,11 +53,11 @@
             margin-top: 10px;
             border: none;
             border-radius: 20px;
-            background-color: #e55a00;
+            background-color: #28a745;
             color: white;
             font-size: 16px;
             cursor: pointer;
-            box-shadow: 0 4px 10px rgba(255, 123, 0, 0.3);
+            box-shadow: 0 4px 10px rgba(40, 167, 69, 0.3);
             transition: background-color 0.3s ease, transform 0.2s;
         }
 
@@ -69,15 +69,13 @@
         }
 
         .aspNetButton:hover:not(:disabled) {
-            background-color: #d14e00;
+            background-color: #218838;
             transform: translateY(-2px);
         }
 
-        .message {
-            margin-bottom: 15px;
-            font-size: 14px;
-        }
+        .hiddenField { display: none; }
 
+        .message { font-size: 14px; margin-bottom: 10px; }
         #lblError { color: red; }
         #lblSuccess { color: green; }
     </style>
@@ -149,13 +147,11 @@
                 input.addEventListener("paste", function (e) {
                     e.preventDefault();
                     const pasted = e.clipboardData.getData('text').replace(/[^0-9]/g, '');
-                    if (pasted.length === 6) {
-                        for (let i = 0; i < 6; i++) {
-                            inputs[i].value = pasted[i];
-                        }
-                        inputs[5].focus();
-                        combineOtp();
+                    for (let i = 0; i < Math.min(6, pasted.length); i++) {
+                        inputs[i].value = pasted[i];
                     }
+                    if (pasted.length > 0) inputs[Math.min(5, pasted.length - 1)].focus();
+                    combineOtp();
                 });
             });
 
@@ -165,13 +161,14 @@
         window.onload = function () {
             setupOtpInputs();
             combineOtp();
+            startResendCountdown();
         };
     </script>
 </head>
 <body>
     <form id="form1" runat="server">
         <div class="otp-container">
-            <h2>Xác minh OTP</h2>
+            <h2>Nhập OTP</h2>
             <asp:Label ID="lblEmailInfo" runat="server" CssClass="message" ForeColor="#555" />
             <asp:Label ID="lblError" runat="server" CssClass="message" />
             <asp:Label ID="lblSuccess" runat="server" CssClass="message" />

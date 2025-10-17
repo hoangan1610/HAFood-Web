@@ -2,6 +2,8 @@
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using HAFoodWeb.BLL;
+using System.Diagnostics;
+using System.Web;
 
 namespace HAFoodWeb.AuthPage
 {
@@ -15,11 +17,13 @@ namespace HAFoodWeb.AuthPage
         {
             try
             {
+                // Xóa lỗi cũ
                 lblFullNameError.Text = "";
                 lblEmailError.Text = "";
                 lblPasswordError.Text = "";
                 lblPhoneError.Text = "";
 
+                // Lấy dữ liệu từ input
                 string fullName = txtFullName.Text.Trim();
                 string email = txtEmail.Text.Trim();
                 string password = txtPassword.Text.Trim();
@@ -27,6 +31,7 @@ namespace HAFoodWeb.AuthPage
 
                 bool isValid = true;
 
+                // Kiểm tra từng trường
                 if (string.IsNullOrEmpty(fullName))
                 {
                     lblFullNameError.Text = "Vui lòng nhập họ tên.";
@@ -70,11 +75,18 @@ namespace HAFoodWeb.AuthPage
                     return;
 
                 UserBLL userBLL = new UserBLL();
+
+                Debug.WriteLine("=== Register START ===");
+                Debug.WriteLine($"FullName={fullName}, Email={email}, Phone={phone}");
+
                 bool isRegistered = await userBLL.RegisterViaApi(fullName, email, password, phone);
+
+                Debug.WriteLine("RegisterViaApi result = " + isRegistered);
 
                 if (isRegistered)
                 {
-                    string otpUrl = $"OTP.aspx";
+                    Session["OTPEmail"] = email;
+                    string otpUrl = "OTP.aspx?email=" + HttpUtility.UrlEncode(email);
                     Response.Redirect(otpUrl, false);
                     Context.ApplicationInstance.CompleteRequest();
                 }
@@ -85,9 +97,9 @@ namespace HAFoodWeb.AuthPage
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine("Register_Click Exception: " + ex.Message);
+                Debug.WriteLine("Register_Click Exception: " + ex.Message);
                 if (ex.InnerException != null)
-                    System.Diagnostics.Debug.WriteLine("Inner: " + ex.InnerException.Message);
+                    Debug.WriteLine("Inner: " + ex.InnerException.Message);
 
                 lblEmailError.Text = "Có lỗi xảy ra trong quá trình đăng ký. Vui lòng thử lại sau.";
             }
