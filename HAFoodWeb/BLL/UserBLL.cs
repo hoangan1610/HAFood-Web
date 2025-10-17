@@ -1,6 +1,8 @@
-﻿using Newtonsoft.Json;
+﻿using HAFoodWeb.AuthPage;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
+using System.Collections.Generic;
 using System.Configuration;
 using System.Diagnostics;
 using System.Net.Http;
@@ -39,16 +41,17 @@ namespace HAFoodWeb.BLL
                 try
                 {
                     HttpResponseMessage response = await client.PostAsync(apiUrl, content);
+
                     if (response.IsSuccessStatusCode)
                         return true;
 
                     string error = await response.Content.ReadAsStringAsync();
-                    Debug.WriteLine("Register API error: " + error);
+                    System.Diagnostics.Debug.WriteLine("Register API error: " + error);
                     return false;
                 }
                 catch (Exception ex)
                 {
-                    Debug.WriteLine("RegisterViaApi Exception: " + ex.Message);
+                    System.Diagnostics.Debug.WriteLine("RegisterViaApi Exception: " + ex.Message);
                     return false;
                 }
             }
@@ -57,7 +60,6 @@ namespace HAFoodWeb.BLL
         public async Task<dynamic> LoginViaApi(string email, string password, string deviceUuid = null, string ip = null)
         {
             string apiUrl = $"{apiBaseUrl}/api/Auth/login";
-
             using (HttpClient client = new HttpClient())
             {
                 var payload = new
@@ -67,46 +69,49 @@ namespace HAFoodWeb.BLL
                     deviceUuid = deviceUuid,
                     ip = ip
                 };
-
                 string jsonPayload = JsonConvert.SerializeObject(payload);
-                Debug.WriteLine("Payload gửi đi: " + jsonPayload);
-
+                System.Diagnostics.Debug.WriteLine("Payload gửi đi: " + jsonPayload);
                 var content = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
 
                 try
                 {
                     HttpResponseMessage response = await client.PostAsync(apiUrl, content);
                     string respContent = await response.Content.ReadAsStringAsync();
-
-                    Debug.WriteLine("Status code: " + response.StatusCode);
-                    Debug.WriteLine("Response từ API: " + respContent);
+                    System.Diagnostics.Debug.WriteLine("Status code: " + response.StatusCode);
+                    System.Diagnostics.Debug.WriteLine("Response từ API: " + respContent);
 
                     if (string.IsNullOrWhiteSpace(respContent))
                     {
-                        Debug.WriteLine("Response content is empty");
+                        System.Diagnostics.Debug.WriteLine("Response content is empty");
                         return null;
                     }
 
-                    var jsonResult = JsonConvert.DeserializeObject<JObject>(respContent);
-                    bool isSuccess = jsonResult["success"]?.Value<bool>() ?? false;
+                    var jsonResult = JsonConvert.DeserializeObject<Newtonsoft.Json.Linq.JObject>(respContent);
+
+                    bool isSuccess = false;
+                    if (jsonResult["success"] != null)
+                    {
+                        isSuccess = jsonResult["success"].Value<bool>();
+                        System.Diagnostics.Debug.WriteLine("Success value: " + isSuccess);
+                    }
 
                     if (isSuccess)
                     {
-                        Debug.WriteLine("Login thành công, trả về toàn bộ response");
+                        System.Diagnostics.Debug.WriteLine("Login thành công, trả về toàn bộ response");
                         return JsonConvert.DeserializeObject<dynamic>(respContent);
                     }
                     else
                     {
                         if (jsonResult["message"] != null)
                         {
-                            Debug.WriteLine("Login thất bại: " + jsonResult["message"].ToString());
+                            System.Diagnostics.Debug.WriteLine("Login thất bại: " + jsonResult["message"].ToString());
                         }
                         return null;
                     }
                 }
                 catch (Exception ex)
                 {
-                    Debug.WriteLine("LoginViaApi Exception: " + ex.ToString());
+                    System.Diagnostics.Debug.WriteLine("LoginViaApi Exception: " + ex.ToString());
                     return null;
                 }
             }
@@ -120,14 +125,19 @@ namespace HAFoodWeb.BLL
                 {
                     string apiUrl = $"{apiBaseUrl}/api/Auth/verify-otp";
 
-                    var payload = new { email = email, code = code };
+                    var payload = new
+                    {
+                        email = email,
+                        code = code
+                    };
+
                     string json = JsonConvert.SerializeObject(payload);
                     Debug.WriteLine("VerifyRegisterOtpViaApi: Sending request = " + json);
 
                     var content = new StringContent(json, Encoding.UTF8, "application/json");
                     var response = await client.PostAsync(apiUrl, content);
-                    string responseContent = await response.Content.ReadAsStringAsync();
 
+                    string responseContent = await response.Content.ReadAsStringAsync();
                     Debug.WriteLine("VerifyRegisterOtpViaApi: Response = " + responseContent);
 
                     if (!response.IsSuccessStatusCode)
@@ -137,6 +147,7 @@ namespace HAFoodWeb.BLL
                     }
 
                     var jsonResult = JsonConvert.DeserializeObject<JObject>(responseContent);
+
                     bool verified = jsonResult["verified"]?.Value<bool>() ?? false;
                     int otpId = jsonResult["otpId"]?.Value<int>() ?? 0;
                     string message = jsonResult["message"]?.Value<string>() ?? string.Empty;
@@ -184,7 +195,9 @@ namespace HAFoodWeb.BLL
                         return false;
                     }
 
-                    var jsonResult = JsonConvert.DeserializeObject<JObject>(responseContent);
+                    var jsonResult = JsonConvert.DeserializeObject<Newtonsoft.Json.Linq.JObject>(responseContent);
+
+                    // ✅ FIX: Kiểm tra field "accepted" thay vì "success"
                     bool accepted = jsonResult["accepted"]?.Value<bool>() ?? false;
                     Debug.WriteLine($"ResendOtpViaApi: accepted = {accepted}");
 
@@ -204,6 +217,7 @@ namespace HAFoodWeb.BLL
             {
                 using (var client = new HttpClient())
                 {
+                    // Chỉ gửi email thôi
                     var payload = new { email = email };
 
                     string json = JsonConvert.SerializeObject(payload);
@@ -221,13 +235,16 @@ namespace HAFoodWeb.BLL
                         return null;
                     }
 
-                    var jsonResult = JObject.Parse(responseContent);
+                    var jsonResult = Newtonsoft.Json.Linq.JObject.Parse(responseContent);
                     bool accepted = jsonResult["accepted"]?.Value<bool>() ?? false;
                     int otpId = jsonResult["otpId"]?.Value<int>() ?? 0;
 
                     Debug.WriteLine($"ForgotPasswordViaApi: accepted = {accepted}, otpId = {otpId}");
 
-                    return accepted ? otpId : (int?)null;
+                    if (accepted)
+                        return otpId; // trả otpId khi thành công
+                    else
+                        return null;
                 }
             }
             catch (Exception ex)
@@ -236,6 +253,7 @@ namespace HAFoodWeb.BLL
                 return null;
             }
         }
+
 
         public async Task<bool> VerifyForgotPasswordOtpViaApi(string email, string otp)
         {
@@ -248,7 +266,7 @@ namespace HAFoodWeb.BLL
                     var payload = new
                     {
                         email = email,
-                        otp = otp
+                        otp = otp // ✅ Đúng theo request format
                     };
 
                     string json = JsonConvert.SerializeObject(payload);
@@ -256,8 +274,8 @@ namespace HAFoodWeb.BLL
 
                     var content = new StringContent(json, Encoding.UTF8, "application/json");
                     var response = await client.PostAsync(apiUrl, content);
-                    string responseContent = await response.Content.ReadAsStringAsync();
 
+                    string responseContent = await response.Content.ReadAsStringAsync();
                     Debug.WriteLine("VerifyForgotPasswordOtpViaApi: Response = " + responseContent);
 
                     if (!response.IsSuccessStatusCode)
@@ -268,6 +286,7 @@ namespace HAFoodWeb.BLL
 
                     var jsonResult = JsonConvert.DeserializeObject<JObject>(responseContent);
                     bool verified = jsonResult["verified"]?.Value<bool>() ?? false;
+
                     return verified;
                 }
             }
@@ -297,8 +316,8 @@ namespace HAFoodWeb.BLL
 
                     var content = new StringContent(json, Encoding.UTF8, "application/json");
                     var response = await client.PostAsync(apiUrl, content);
-                    string responseContent = await response.Content.ReadAsStringAsync();
 
+                    string responseContent = await response.Content.ReadAsStringAsync();
                     Debug.WriteLine("ResetPasswordConfirmViaApi: Response = " + responseContent);
 
                     if (!response.IsSuccessStatusCode)
@@ -307,6 +326,7 @@ namespace HAFoodWeb.BLL
                         return false;
                     }
 
+                    // Response example: { "success": true, "code": "string", "message": "string" }
                     var jsonResult = JsonConvert.DeserializeObject<JObject>(responseContent);
                     bool success = jsonResult["success"]?.Value<bool>() ?? false;
                     Debug.WriteLine("ResetPasswordConfirmViaApi: success = " + success);

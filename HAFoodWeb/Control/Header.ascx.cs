@@ -39,7 +39,7 @@ namespace HAFoodWeb.Control
 
             Session.Clear();
             Session.Abandon();
-
+            // Chuyển hướng về trang chủ
             Response.Redirect("~/HomePage/HomePage.aspx", false);
             Context.ApplicationInstance.CompleteRequest();
         }

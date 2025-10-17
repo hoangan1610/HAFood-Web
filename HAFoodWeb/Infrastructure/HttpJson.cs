@@ -22,51 +22,39 @@ namespace HAFoodWeb.Infrastructure
                 Timeout = TimeSpan.FromSeconds(15)
             };
 
-            // Header mặc định
+            // Một số proxy/WAF cần Accept & User-Agent rõ ràng
             Client.DefaultRequestHeaders.Accept.Clear();
             Client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             Client.DefaultRequestHeaders.UserAgent.ParseAdd("HAFoodWeb/1.0 (+https://hafood.id.vn)");
         }
 
         /// <summary>
-        /// Strict: ném exception nếu HTTP status không thành công (dùng khi cần thấy lỗi thật).
+        /// Strict: ném exception nếu HTTP status không thành công.
         /// </summary>
         public static async Task<T> GetJsonAsync<T>(string url)
         {
             var resp = await Client.GetAsync(url);
-            var body = await resp.Content.ReadAsStringAsync();
-            System.Diagnostics.Debug.WriteLine($"[HTTP RAW] {url}\r\nStatus={(int)resp.StatusCode} {resp.ReasonPhrase}\r\n{body}");
             resp.EnsureSuccessStatusCode();
-            return JsonConvert.DeserializeObject<T>(body);
+            var text = await resp.Content.ReadAsStringAsync();
+            return JsonConvert.DeserializeObject<T>(text);
         }
 
         /// <summary>
-        /// Safe: không ném exception; trả fallback nếu lỗi HTTP/deserialize/network (nhưng có log).
+        /// Safe: không ném exception; trả fallback nếu lỗi HTTP/deserialize/network.
         /// </summary>
         public static async Task<T> TryGetJsonAsync<T>(string url, T fallback)
         {
             try
             {
                 var resp = await Client.GetAsync(url);
-                if (!resp.IsSuccessStatusCode)
-                {
-                    var errBody = await resp.Content.ReadAsStringAsync();
-                    System.Diagnostics.Debug.WriteLine($"[HTTP {resp.StatusCode}] {url}\r\n{errBody}");
-                    return fallback;
-                }
+                if (!resp.IsSuccessStatusCode) return fallback;
 
                 var text = await resp.Content.ReadAsStringAsync();
                 var data = JsonConvert.DeserializeObject<T>(text);
-                if (data == null)
-                {
-                    System.Diagnostics.Debug.WriteLine($"[DESERIALIZE NULL] {url}\r\n{text}");
-                    return fallback;
-                }
-                return data;
+                return data == null ? fallback : data;
             }
-            catch (Exception ex)
+            catch
             {
-                System.Diagnostics.Debug.WriteLine("[HTTP EX] " + url + "\r\n" + ex);
                 return fallback;
             }
         }

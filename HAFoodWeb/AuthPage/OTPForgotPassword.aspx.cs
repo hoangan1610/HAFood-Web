@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Diagnostics;
 using System.Threading.Tasks;
 using System.Web;
 using System.Web.UI;
@@ -17,9 +16,10 @@ namespace HAFoodWeb.AuthPage
         {
             userBLL = new UserBLL();
 
-            // ✅ Lấy email từ Session hoặc QueryString
+            // Lấy dữ liệu từ Session và QueryString (fallback) cho email
             string sessionEmail = Session["ResetEmail"] as string;
             string queryEmail = Request.QueryString["email"];
+
             if (!string.IsNullOrEmpty(sessionEmail))
                 Email = sessionEmail;
             else if (!string.IsNullOrEmpty(queryEmail))
@@ -27,7 +27,7 @@ namespace HAFoodWeb.AuthPage
             else
                 Email = null;
 
-            // ✅ Lấy otpId từ Session hoặc QueryString
+            // Lấy otpId từ Session hoặc QueryString và lưu vào biến cục bộ + Session
             object s = Session["OtpId"] ?? Session["otpId"] ?? Session["OTPId"];
             if (s != null && int.TryParse(s.ToString(), out int parsedSessionOtp))
             {
@@ -43,10 +43,6 @@ namespace HAFoodWeb.AuthPage
                     Session["OtpId"] = otpId.Value;
                 }
             }
-
-            Debug.WriteLine("=== OTPForgotPassword Page_Load ===");
-            Debug.WriteLine($"ResetEmail from Session = {sessionEmail}");
-            Debug.WriteLine($"Final Email used = {Email}");
 
             if (!string.IsNullOrEmpty(Email))
             {
@@ -75,7 +71,6 @@ namespace HAFoodWeb.AuthPage
             lblSuccess.Text = "";
 
             string otpCode = txtOtp.Text?.Trim();
-            Debug.WriteLine($"VerifyOtpAsync: Email={Email}, OTP={otpCode}");
 
             if (string.IsNullOrEmpty(otpCode))
             {
@@ -92,11 +87,9 @@ namespace HAFoodWeb.AuthPage
             try
             {
                 bool verified = await userBLL.VerifyForgotPasswordOtpViaApi(Email, otpCode);
-                Debug.WriteLine("VerifyForgotPasswordOtpViaApi result = " + verified);
 
                 if (verified)
                 {
-                    // Lưu lại otpId vào session nếu có
                     if (!otpId.HasValue)
                     {
                         object s = Session["OtpId"];
@@ -125,9 +118,8 @@ namespace HAFoodWeb.AuthPage
                     lblError.Text = "❌ OTP không hợp lệ hoặc đã hết hạn. Vui lòng thử lại.";
                 }
             }
-            catch (Exception ex)
+            catch
             {
-                Debug.WriteLine("VerifyOtpAsync Exception: " + ex.ToString());
                 lblError.Text = "❌ Có lỗi xảy ra trong quá trình xác thực. Vui lòng thử lại.";
             }
         }
@@ -138,9 +130,8 @@ namespace HAFoodWeb.AuthPage
             {
                 await VerifyOtpAsync();
             }
-            catch (Exception ex)
+            catch
             {
-                Debug.WriteLine("btnVerifyOtp_Click Exception: " + ex.ToString());
                 lblError.Text = "❌ Có lỗi xảy ra. Vui lòng thử lại.";
             }
         }
@@ -183,9 +174,8 @@ namespace HAFoodWeb.AuthPage
             {
                 await ResendOtpAsync();
             }
-            catch (Exception ex)
+            catch
             {
-                Debug.WriteLine("btnResendOtp_Click Exception: " + ex.ToString());
                 lblError.Text = "❌ Có lỗi xảy ra. Vui lòng thử lại.";
             }
         }
