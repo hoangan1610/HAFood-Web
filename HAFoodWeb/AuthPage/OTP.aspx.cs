@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Threading.Tasks;
+using HAFoodWeb.BLL;
 using System.Diagnostics;
 using System.Web;
 using System.Web.UI;
-using HAFoodWeb.BLL;
 
 namespace HAFoodWeb.AuthPage
 {
@@ -15,18 +15,18 @@ namespace HAFoodWeb.AuthPage
         protected void Page_Load(object sender, EventArgs e)
         {
             userBLL = new UserBLL();
-            Debug.WriteLine("=== OTP Page_Load ===");
 
-            string sessionRegisterEmail = Session["RegisterEmail"] as string;
-            string sessionOtpEmail = Session["OTPEmail"] as string;
+            Debug.WriteLine("=== OTP Page_Load ===");
+            string sessionEmail = Session["RegisterEmail"] as string; // ✅ sửa: sử dụng session cho đăng ký
             string queryEmail = Request.QueryString["email"];
 
-            Email = sessionRegisterEmail 
-                ?? sessionOtpEmail 
-                ?? (!string.IsNullOrEmpty(queryEmail) ? HttpUtility.UrlDecode(queryEmail) : null);
+            Email = !string.IsNullOrEmpty(sessionEmail)
+                ? sessionEmail
+                : !string.IsNullOrEmpty(queryEmail)
+                    ? HttpUtility.UrlDecode(queryEmail)
+                    : null;
 
-            Debug.WriteLine($"RegisterEmail (Session) = {sessionRegisterEmail}");
-            Debug.WriteLine($"OTPEmail (Session) = {sessionOtpEmail}");
+            Debug.WriteLine($"RegisterEmail from Session = {sessionEmail}");
             Debug.WriteLine($"QueryString Email = {queryEmail}");
             Debug.WriteLine($"Final Email used = {Email}");
 
@@ -64,7 +64,6 @@ namespace HAFoodWeb.AuthPage
             if (string.IsNullOrEmpty(otpCode))
             {
                 lblError.Text = "Vui lòng nhập mã OTP.";
-                Debug.WriteLine("❌ OTP is empty.");
                 return;
             }
 
@@ -76,7 +75,7 @@ namespace HAFoodWeb.AuthPage
 
             try
             {
-                var result = await userBLL.VerifyRegisterOtpViaApi(Email, otpCode);
+                var result = await userBLL.VerifyRegisterOtpViaApi(Email, otpCode); // ✅ dùng hàm mới
 
                 Debug.WriteLine($"VerifyRegisterOtpViaApi: Verified={result.Verified}, OtpId={result.OtpId}, Message={result.Message}");
 
@@ -108,7 +107,6 @@ namespace HAFoodWeb.AuthPage
         {
             Debug.WriteLine("btnVerifyOtp_Click triggered.");
             Debug.WriteLine("txtOtp.Text = " + txtOtp.Text);
-
             try
             {
                 await VerifyOtpAsync();

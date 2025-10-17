@@ -43,7 +43,7 @@
         }
 
         .otp-inputs input:focus {
-            border-color: #28a745;
+            border-color: #e55a00;
             box-shadow: 0 0 5px rgba(40, 167, 69, 0.3);
         }
 
@@ -54,7 +54,6 @@
             border: none;
             border-radius: 20px;
             background-color: #ff6600;
-            background-color: #28a745;
             color: white;
             font-size: 16px;
             cursor: pointer;
@@ -71,7 +70,6 @@
 
         .aspNetButton:hover:not(:disabled) {
             background-color: #e55a00;
-            background-color: #218838;
             transform: translateY(-2px);
         }
 
@@ -99,7 +97,6 @@
             console.log('validateAndCombineOtp called');
             var otp = combineOtp();
             console.log('combined otp =', otp);
-            var otp = combineOtp();
             if (otp.length !== 6) {
                 alert('Vui lòng nhập đủ 6 số OTP');
                 return false;
@@ -113,8 +110,6 @@
                 } catch (e) { console.warn(e); }
             }, 50);
 
-            btn.value = '⏳ Đang xác minh...';
-            btn.disabled = true;
             return true;
         }
 
@@ -127,9 +122,6 @@
                     btn.disabled = true;
                 } catch (e) { console.warn(e); }
             }, 50);
-            var btn = document.getElementById('<%= btnResendOtp.ClientID %>');
-            btn.value = '📨 Đang gửi...';
-            btn.disabled = true;
             return true;
         }
 
@@ -137,7 +129,6 @@
             console.log('startResendCountdown called');
             var btn = document.getElementById('<%= btnResendOtp.ClientID %>');
             if (!btn) return;
-            var btn = document.getElementById('<%= btnResendOtp.ClientID %>');
             var countdown = 60;
             btn.disabled = true;
             var interval = setInterval(function () {
@@ -193,11 +184,6 @@
                 console.error('init error', e);
             }
         });
-        window.onload = function () {
-            setupOtpInputs();
-            combineOtp();
-            startResendCountdown();
-        };
     </script>
 </head>
 <body>
@@ -223,17 +209,11 @@
                 CssClass="aspNetButton"
                 OnClick="btnVerifyOtp_Click"
                 OnClientClick="console.log('btnVerifyOtp OnClientClick'); return validateAndCombineOtp();" />
-                OnClientClick="return validateAndCombineOtp();" />
 
             <asp:Button ID="btnResendOtp" runat="server" Text="Gửi lại OTP"
                 CssClass="aspNetButton"
                 OnClick="btnResendOtp_Click"
                 OnClientClick="console.log('btnResendOtp OnClientClick'); return validateResend();" />
-        </div>
-    </form>
-</body>
-</html>
-                OnClientClick="return validateResend();" />
         </div>
     </form>
 </body>
