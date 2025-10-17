@@ -59,12 +59,13 @@
       <Private>True</Private>
       <Private>True</Private>
     </Reference>
-	  <Reference Include="System.Net.Http" />
-    <Reference Include="System.Runtime, Version=4.1.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <HintPath>..\packages\System.Runtime.4.3.0\lib\net462\System.Runtime.dll</HintPath>
-      <Private>True</Private>
-      <Private>True</Private>
+
+    <Reference Include="System.Net.Http">
+      <SpecificVersion>False</SpecificVersion>
+      <Private>False</Private>
+      <!-- Copy Local = False -->
     </Reference>
+    <Reference Include="System.Runtime" />
     <Reference Include="System.Runtime.InteropServices.RuntimeInformation, Version=4.0.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>..\packages\System.Runtime.InteropServices.RuntimeInformation.4.3.0\lib\net45\System.Runtime.InteropServices.RuntimeInformation.dll</HintPath>
       <Private>True</Private>
@@ -177,6 +178,7 @@
     <Content Include="favicon.ico" />
     <Content Include="Global.asax" />
     <Content Include="HomePage\HomePage.aspx" />
+    <Content Include="HomePage\Search.aspx" />
     <Content Include="images\product-default.png" />
     <Content Include="Scripts\bootstrap.bundle.js" />
     <Content Include="Scripts\bootstrap.bundle.min.js" />
@@ -340,6 +342,13 @@
     <Compile Include="HomePage\HomePage.aspx.designer.cs">
       <DependentUpon>HomePage.aspx</DependentUpon>
     </Compile>
+    <Compile Include="HomePage\Search.aspx.cs">
+      <DependentUpon>Search.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="HomePage\Search.aspx.designer.cs">
+      <DependentUpon>Search.aspx</DependentUpon>
+    </Compile>
     <Compile Include="Infrastructure\AppCache.cs" />
     <Compile Include="Infrastructure\HttpJson.cs" />
     <Compile Include="Models\CategoryTreeDto.cs" />
@@ -348,11 +357,13 @@
     <Compile Include="Models\UserDto.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Services\CategoryService.cs" />
+    <Compile Include="Services\ISearchService.cs" />
     <Compile Include="Services\IUserService.cs" />
     <Compile Include="Services\DeviceTracker.cs" />
     <Compile Include="Services\ICategoryService.cs" />
     <Compile Include="Services\IProductCardService.cs" />
     <Compile Include="Services\ProductCardService.cs" />
+    <Compile Include="Services\SearchService.cs" />
     <Compile Include="Services\UserService.cs" />
     <Compile Include="Site.Master.cs">
       <DependentUpon>Site.Master</DependentUpon>
