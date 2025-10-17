@@ -167,7 +167,7 @@
             
             <!-- Company Info Section -->
             <div class="col-lg-6 col-md-6 footer-section">
-                <img src="<%= ResolveUrl("~/images/logo.png") %>" alt="HAFood Logo" class="footer-logo">
+                <img src="<%= ResolveUrl("~/images/HAFood_logo.png") %>" alt="HAFood Logo" class="footer-logo">
                 <div class="footer-contact-info" style="text-align: center;">
                     <p>
                         <i class="bi bi-geo-alt-fill"></i>
