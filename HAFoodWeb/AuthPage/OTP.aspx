@@ -86,54 +86,45 @@
 
     <script type="text/javascript">
         function combineOtp() {
-            try {
-                var otp = '';
-                for (var i = 1; i <= 6; i++) {
-                    var input = document.getElementById('otp' + i);
-                    if (input) otp += input.value;
-                }
-                var hiddenField = document.getElementById('<%= txtOtp.ClientID %>');
-                if (hiddenField) hiddenField.value = otp;
-                console.log('combineOtp ->', otp);
-                return otp;
-            } catch (e) {
-                console.error('combineOtp error', e);
-                return '';
+            var otp = '';
+            for (var i = 1; i <= 6; i++) {
+                var input = document.getElementById('otp' + i);
+                if (input) otp += input.value;
             }
+            var hiddenField = document.getElementById('<%= txtOtp.ClientID %>');
+            if (hiddenField) hiddenField.value = otp;
+            console.log('combineOtp ->', otp);
+            return otp;
         }
 
         function validateAndCombineOtp() {
-            console.log('validateAndCombineOtp called');
             var otp = combineOtp();
             if (otp.length !== 6) {
                 alert('Vui lòng nhập đủ 6 số OTP');
                 return false;
             }
             var btn = document.getElementById('<%= btnVerifyOtp.ClientID %>');
-            // disable nhẹ nhàng sau khi submit được khởi tạo để tránh trình duyệt hủy submit
             setTimeout(function () {
-                try {
-                    btn.value = '⏳ Đang xác minh...';
-                    btn.disabled = true;
-                } catch (e) { console.warn(e); }
+                btn.value = '⏳ Đang xác minh...';
+                btn.disabled = true;
             }, 50);
+            btn.value = '⏳ Đang xác minh...';
+            btn.disabled = true;
             return true;
         }
 
         function validateResend() {
-            console.log('validateResend called');
             var btn = document.getElementById('<%= btnResendOtp.ClientID %>');
             setTimeout(function () {
-                try {
-                    btn.value = '📨 Đang gửi...';
-                    btn.disabled = true;
-                } catch (e) { console.warn(e); }
+                btn.value = '📨 Đang gửi...';
+                btn.disabled = true;
             }, 50);
+            btn.value = '📨 Đang gửi...';
+            btn.disabled = true;
             return true;
         }
 
         function startResendCountdown() {
-            console.log('startResendCountdown called');
             var btn = document.getElementById('<%= btnResendOtp.ClientID %>');
             if (!btn) return;
             var countdown = 60;
@@ -151,48 +142,39 @@
         }
 
         function setupOtpInputs() {
-            console.log('setupOtpInputs called');
-            try {
-                const inputs = document.querySelectorAll(".otp-inputs input");
-                inputs.forEach((input, index) => {
-                    input.addEventListener("input", function () {
-                        this.value = this.value.replace(/[^0-9]/g, '');
-                        if (this.value.length === 1 && index < inputs.length - 1) {
-                            inputs[index + 1].focus();
-                        }
-                        combineOtp();
-                    });
-
-                    input.addEventListener("keydown", function (e) {
-                        if (e.key === "Backspace" && !this.value && index > 0) {
-                            inputs[index - 1].focus();
-                        }
-                    });
-
-                    input.addEventListener("paste", function (e) {
-                        e.preventDefault();
-                        const pasted = e.clipboardData.getData('text').replace(/[^0-9]/g, '');
-                        for (let i = 0; i < Math.min(6, pasted.length); i++) {
-                            inputs[i].value = pasted[i];
-                        }
-                        if (pasted.length > 0) inputs[Math.min(5, pasted.length - 1)].focus();
-                        combineOtp();
-                    });
+            const inputs = document.querySelectorAll(".otp-inputs input");
+            inputs.forEach((input, index) => {
+                input.addEventListener("input", function () {
+                    this.value = this.value.replace(/[^0-9]/g, '');
+                    if (this.value.length === 1 && index < inputs.length - 1) {
+                        inputs[index + 1].focus();
+                    }
+                    combineOtp();
                 });
 
-                if (inputs.length > 0) inputs[0].focus();
-            } catch (e) {
-                console.error('setupOtpInputs error', e);
-            }
+                input.addEventListener("keydown", function (e) {
+                    if (e.key === "Backspace" && !this.value && index > 0) {
+                        inputs[index - 1].focus();
+                    }
+                });
+
+                input.addEventListener("paste", function (e) {
+                    e.preventDefault();
+                    const pasted = e.clipboardData.getData('text').replace(/[^0-9]/g, '');
+                    for (let i = 0; i < Math.min(6, pasted.length); i++) {
+                        inputs[i].value = pasted[i];
+                    }
+                    if (pasted.length > 0) inputs[Math.min(5, pasted.length - 1)].focus();
+                    combineOtp();
+                });
+            });
+
+            if (inputs.length > 0) inputs[0].focus();
         }
 
         window.addEventListener('load', function () {
-            try {
-                setupOtpInputs();
-                combineOtp();
-            } catch (e) {
-                console.error('init error', e);
-            }
+            setupOtpInputs();
+            combineOtp();
         });
     </script>
 </head>
@@ -218,12 +200,12 @@
             <asp:Button ID="btnVerifyOtp" runat="server" Text="Xác minh OTP"
                 CssClass="aspNetButton"
                 OnClick="btnVerifyOtp_Click"
-                OnClientClick="console.log('btnVerifyOtp OnClientClick'); return validateAndCombineOtp();" />
+                OnClientClick="return validateAndCombineOtp();" />
 
             <asp:Button ID="btnResendOtp" runat="server" Text="Gửi lại OTP"
                 CssClass="aspNetButton"
                 OnClick="btnResendOtp_Click"
-                OnClientClick="console.log('btnResendOtp OnClientClick'); return validateResend();" />
+                OnClientClick="return validateResend();" />
         </div>
     </form>
 </body>

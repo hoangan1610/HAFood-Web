@@ -43,6 +43,7 @@
         .btn-container {
             display: flex;
             justify-content: center;
+            justify-content: center; /* căn giữa theo ngang */
         }
 
         .btn {
@@ -81,6 +82,7 @@
                 <asp:Button ID="btnConfirmEmail" runat="server" Text="Xác nhận email" CssClass="btn" OnClick="btnConfirmEmail_Click" />
             </div>
 
+            <asp:Label ID="lblMessage" runat="server" CssClass="message"></asp:Label>
         </div>
     </form>
 </body>

@@ -74,6 +74,9 @@ namespace HAFoodWeb.AuthPage
                         string userInfoId = loginResult.userInfoId?.ToString();
                         string jwtToken = loginResult.jwtToken?.ToString();
 
+                        System.Diagnostics.Debug.WriteLine($"UserInfoId: {userInfoId}, JwtToken: {jwtToken}");
+
+                        // Kiểm tra userInfoId có hợp lệ không
                         if (!string.IsNullOrEmpty(userInfoId))
                         {
                             Session["UserId"] = userInfoId;
