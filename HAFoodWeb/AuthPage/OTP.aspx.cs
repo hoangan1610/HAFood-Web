@@ -53,9 +53,6 @@ namespace HAFoodWeb.AuthPage
             }
         }
 
-        /// <summary>
-        /// Xác minh OTP đăng ký
-        /// </summary>
         protected async Task VerifyOtpAsync()
         {
             lblError.Text = "";
