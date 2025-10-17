@@ -54,12 +54,13 @@ namespace HAFoodWeb.Services
 
             for (int i = 0; i < details.Length; i++)
             {
-                var d = details[i];
+                var d = details[i] ?? new ProductDetailDto { Variants = new List<VariantDto>() };
                 var li = list.Items[i];
 
                 // Ảnh: ưu tiên variant -> ảnh product -> fallback
                 string img = null;
-                foreach (var v in d.Variants)
+                var variants = d.Variants ?? new List<VariantDto>();
+                foreach (var v in variants)
                 {
                     if (!string.IsNullOrWhiteSpace(v.Image)) { img = v.Image; break; }
                 }
@@ -72,8 +73,8 @@ namespace HAFoodWeb.Services
                 }
 
                 // Options dropdown
-                var opts = new List<VariantOptionVM>(d.Variants.Count);
-                foreach (var v in d.Variants)
+                var opts = new List<VariantOptionVM>(variants.Count);
+                foreach (var v in variants)
                 {
                     string name = string.IsNullOrWhiteSpace(v.Name) ? v.Sku : v.Name;
                     opts.Add(new VariantOptionVM { Id = v.Id, Label = name + " (" + FormatVnd(v.Retail_Price) + ")" });
@@ -116,15 +117,16 @@ namespace HAFoodWeb.Services
 
                 // Ảnh
                 string img = null;
-                foreach (var v in d.Variants) { if (!string.IsNullOrWhiteSpace(v.Image)) { img = v.Image; break; } }
+                var variants = d.Variants ?? new List<VariantDto>();
+                foreach (var v in variants) { if (!string.IsNullOrWhiteSpace(v.Image)) { img = v.Image; break; } }
                 if (string.IsNullOrWhiteSpace(img))
                     img = (!string.IsNullOrWhiteSpace(d.Image_Product) && d.Image_Product.StartsWith("http", StringComparison.OrdinalIgnoreCase))
                         ? d.Image_Product : "/images/product-default.png";
 
                 // Options + min/max tự tính từ variants
-                var opts = new List<VariantOptionVM>(d.Variants.Count);
+                var opts = new List<VariantOptionVM>(variants.Count);
                 decimal min = decimal.MaxValue, max = 0;
-                foreach (var v in d.Variants)
+                foreach (var v in variants)
                 {
                     if (v.Retail_Price < min) min = v.Retail_Price;
                     if (v.Retail_Price > max) max = v.Retail_Price;
@@ -162,9 +164,9 @@ namespace HAFoodWeb.Services
             var cacheKey = $"products:list:p={page}:ps={pageSize}:sort={sort}";
             return await AppCache.GetOrAddAsync(cacheKey, async () =>
             {
-                var url = string.Format(
-                    "{0}/api/products?page={1}&page_size={2}&status=1&sort={3}",
-                    _apiBase, page, pageSize, Uri.EscapeDataString(sort));
+                // ❗KHÔNG encode dấu ":" trong sort
+                var url = $"{_apiBase}/api/products?page={page}&page_size={pageSize}&status=1&sort={sort}";
+                System.Diagnostics.Debug.WriteLine("[API LIST] " + url);
 
                 var fallback = new PagedResult<ProductListItemDto>
                 {
@@ -173,7 +175,19 @@ namespace HAFoodWeb.Services
                     PageSize = pageSize,
                     TotalCount = 0
                 };
-                return await HttpJson.TryGetJsonAsync(url, fallback);
+
+                try
+                {
+                    // strict để thấy lỗi thật
+                    var data = await HttpJson.GetJsonAsync<PagedResult<ProductListItemDto>>(url);
+                    System.Diagnostics.Debug.WriteLine($"[API LIST OK] items={data?.Items?.Count ?? 0}, total={data?.TotalCount ?? 0}");
+                    return data ?? fallback;
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine("[API LIST ERR] " + ex);
+                    return fallback;
+                }
             }, seconds: 60);
         }
 
@@ -182,14 +196,27 @@ namespace HAFoodWeb.Services
             var cacheKey = $"product:detail:{id}";
             return await AppCache.GetOrAddAsync(cacheKey, async () =>
             {
-                var url = string.Format("{0}/api/products/{1}", _apiBase, id);
+                var url = $"{_apiBase}/api/products/{id}";
+                System.Diagnostics.Debug.WriteLine("[API DETAIL] " + url);
+
                 var fallback = new ProductDetailDto
                 {
                     Id = id,
                     Name = "",
                     Variants = new List<VariantDto>()
                 };
-                return await HttpJson.TryGetJsonAsync(url, fallback);
+
+                try
+                {
+                    var data = await HttpJson.GetJsonAsync<ProductDetailDto>(url);
+                    System.Diagnostics.Debug.WriteLine($"[API DETAIL OK] id={data?.Id}, name={data?.Name}");
+                    return data ?? fallback;
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine("[API DETAIL ERR] " + ex);
+                    return fallback;
+                }
             }, seconds: 300); // 5 phút
         }
 
