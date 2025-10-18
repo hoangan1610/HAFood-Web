@@ -64,7 +64,9 @@
       <HeaderTemplate><div class="row gx-3"></HeaderTemplate>
       <ItemTemplate>
         <div class="col-6 col-md-4 col-lg-3 mb-4">
-          <a href='<%# Eval("Id", "/Search.aspx?category_id={0}") %>' class="text-decoration-none">
+          <a href='<%# string.Format("{0}?category_id={1}", ResolveUrl("~/HomePage/Search"), Eval("Id")) %>' 
+   class="text-decoration-none">
+
             <div class="cat-card shadow-sm rounded-4 p-3 h-100 text-center">
               <img src='<%# Eval("ImageUrlComputed") %>' loading="lazy" width="300" height="300"
                    alt='<%# Eval("Name") %>' class="img-fluid cat-img mb-3" />
