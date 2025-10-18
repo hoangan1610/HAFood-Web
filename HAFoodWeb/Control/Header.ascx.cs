@@ -10,14 +10,13 @@ namespace HAFoodWeb.Control
         {
             if (!IsPostBack)
             {
-                // Quan trọng: để DataBinding trong <%# ... %> hoạt động
-                this.DataBind();
-
+                this.DataBind(); // cần cho <%# ... %> trong data-*
                 var token = Request.Cookies["AuthToken"]?.Value;
                 guestDropdown.Visible = string.IsNullOrEmpty(token);
                 authDropdown.Visible = !string.IsNullOrEmpty(token);
             }
         }
+
 
         protected async void btnLogout_Click(object sender, EventArgs e)
         {

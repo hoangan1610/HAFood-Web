@@ -64,4 +64,18 @@ namespace HAFoodWeb.Models
         public DateTime Updated_At { get; set; }
         public IList<VariantDto> Variants { get; set; }
     }
+
+    public class ProductSearchRequest
+    {
+        public string Query { get; set; }
+        public long? CategoryId { get; set; }
+        public string Brand { get; set; }
+        public double? MinPrice { get; set; }
+        public double? MaxPrice { get; set; }
+        public int? Status { get; set; } = 1;          // chỉ lấy hàng hoạt động
+        public bool OnlyInStock { get; set; } = false;
+        public int Page { get; set; } = 1;
+        public int PageSize { get; set; } = 20;
+        public string Sort { get; set; } = "updated_at:desc";
+    }
 }
