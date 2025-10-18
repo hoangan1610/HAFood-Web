@@ -210,107 +210,87 @@
 
 <!-- SCRIPT -->
 <script>
-document.addEventListener('DOMContentLoaded', function () {
-    const headerRoot     = document.getElementById('headerRoot');
-    const guestId        = headerRoot?.dataset.guestid;
-    const authId         = headerRoot?.dataset.authid;
+    document.addEventListener('DOMContentLoaded', function () {
+        const headerRoot = document.getElementById('headerRoot');
+        const guestId = headerRoot?.dataset.guestid;
+        const authId = headerRoot?.dataset.authid;
 
-    const guestDropdownEl= guestId ? document.getElementById(guestId) : null;
-    const authDropdownEl = authId  ? document.getElementById(authId)  : null;
+        const guestDD = guestId ? document.getElementById(guestId) : null;
+        const authDD = authId ? document.getElementById(authId) : null;
 
-    const userIcon       = document.getElementById('userIcon');
-    const openBtn        = document.getElementById('openSearch');
-    const searchDropdown = document.getElementById('searchDropdown');
-    const overlay        = document.getElementById('pageOverlay');
+        const userIcon = document.getElementById('userIcon');
+        const openBtn = document.getElementById('openSearch');
+        const searchDropdown = document.getElementById('searchDropdown');
+        const overlay = document.getElementById('pageOverlay');
 
-    function hideAllUserDropdowns() {
-        if (guestDropdownEl) guestDropdownEl.style.display = 'none';
-        if (authDropdownEl)  authDropdownEl.style.display  = 'none';
-        if (overlay) overlay.style.display = 'none';
-    }
-    function toggleDropdown(el) {
-        if (!el) return;
-        const isHidden = window.getComputedStyle(el).display === 'none';
-        hideAllUserDropdowns();
-        el.style.display = isHidden ? 'flex' : 'none';
-        overlay.style.display = isHidden ? 'block' : 'none';
-    }
+        const input = document.getElementById('headerSearch');
+        const btn = document.getElementById('headerSearchBtn');
+        const box = document.getElementById('hfSuggest');
 
-    if (userIcon) {
-        userIcon.addEventListener('click', function (e) {
-            e.stopPropagation();
-            toggleDropdown(guestDropdownEl || authDropdownEl);
-        });
-    }
+        const suggestUrl = '<%= ResolveUrl("~/Proxy/Suggest.ashx") %>';
+  const searchUrl  = '<%= ResolveUrl("~/HomePage/Search.aspx") %>';
 
-    /* ---------- CLICK TOÀN TRANG (KHÔNG ĐÓNG NẾU CLICK TRONG SEARCH) ---------- */
-    document.addEventListener('click', function (e) {
-        const clickedInsideSearch = searchDropdown && searchDropdown.contains(e.target);
-        const clickedSearchIcon   = openBtn && openBtn.contains(e.target);
+    /* ---------- helpers ---------- */
+    const visible = el => !!el && window.getComputedStyle(el).display !== 'none';
+    const hideUser = () => { if (guestDD) guestDD.style.display = 'none'; if (authDD) authDD.style.display = 'none'; };
+    const setOverlay = () => { overlay.style.display = (visible(searchDropdown) || visible(guestDD) || visible(authDD)) ? 'block' : 'none'; };
 
-        // Nếu click trong vùng search hoặc icon => bỏ qua
-        if (clickedInsideSearch || clickedSearchIcon) return;
-
-        // Đóng user dropdown nếu bấm ngoài
-        if (
-            !(guestDropdownEl && guestDropdownEl.contains(e.target)) &&
-            !(authDropdownEl  && authDropdownEl.contains(e.target))  &&
-            !(userIcon       && userIcon.contains(e.target))
-        ) {
-            hideAllUserDropdowns();
-        }
-
-        // Đóng search & gợi ý khi click ra ngoài
+    const hideSearch = () => {
         if (searchDropdown) searchDropdown.style.display = 'none';
-        document.getElementById('hfSuggest')?.classList.add('hf-hide');
+        box?.classList.add('hf-hide');
+        setOverlay();
+    };
+    const showSearch = () => {
+        hideUser();                          // luôn đóng user trước
+        if (searchDropdown) searchDropdown.style.display = 'flex';
+        overlay.style.display = 'block';
+    };
+
+    /* ---------- user icon ---------- */
+    userIcon?.addEventListener('click', e => {
+        e.stopPropagation();
+        const target = guestDD || authDD;
+        const willShow = !visible(target);
+        hideSearch();                         // đóng search trước
+        hideUser();
+        if (willShow && target) target.style.display = 'flex';
+        setOverlay();
     });
 
-    if (overlay) {
-        overlay.addEventListener('click', function () {
-            hideAllUserDropdowns();
-            if (searchDropdown) searchDropdown.style.display = 'none';
-            document.getElementById('hfSuggest')?.classList.add('hf-hide');
-        });
-    }
+    /* ---------- open search icon ---------- */
+    openBtn?.addEventListener('click', e => {
+        e.stopPropagation();
+        const willShow = !visible(searchDropdown);
+        hideUser();                           // đóng user trước
+        if (willShow) showSearch(); else hideSearch();
+    });
 
-    if (openBtn) {
-        openBtn.addEventListener('click', function (ev) {
-            ev.stopPropagation();
-            const isVisible = window.getComputedStyle(searchDropdown).display === 'flex';
-            searchDropdown.style.display = isVisible ? 'none' : 'flex';
-            overlay.style.display        = isVisible ? 'none' : 'block';
-            if (!isVisible) {
-                const inp = document.getElementById('headerSearch');
-                inp?.focus();
-                const box = document.getElementById('hfSuggest');
-                if (box){ box.innerHTML=''; box.classList.add('hf-hide'); }
-            }
-        });
-    }
+    /* ---------- click ngoài ---------- */
+    document.addEventListener('click', e => {
+        // bỏ qua nếu click trong vùng search
+        if (searchDropdown?.contains(e.target) || openBtn?.contains(e.target)) return;
+        // đóng user nếu click ngoài
+        if (!userIcon?.contains(e.target) && !guestDD?.contains(e.target) && !authDD?.contains(e.target)) {
+            hideUser();
+        }
+        hideSearch();
+    });
+    overlay?.addEventListener('click', () => { hideUser(); hideSearch(); });
 
-    /* =================== AUTOCOMPLETE SUGGEST =================== */
-    const input = document.getElementById('headerSearch');
-    const btn   = document.getElementById('headerSearchBtn');
-    const box   = document.getElementById('hfSuggest');
-
-    // Proxy cùng origin (tránh CORS)
-    const suggestUrl = '<%= ResolveUrl("~/Proxy/Suggest.ashx") %>';
-    // Trang search thực tế
-    const searchUrl  = '<%= ResolveUrl("~/HomePage/Search.aspx") %>';
-
-    // Ngăn nổi bọt bên trong ô search/suggest để không bị đóng
+    // chặn nổi bọt trong vùng search/suggest
+    searchDropdown?.addEventListener('click', e => e.stopPropagation());
     input?.addEventListener('click', e => e.stopPropagation());
     input?.addEventListener('focus', e => e.stopPropagation());
     box?.addEventListener('click', e => e.stopPropagation());
 
+    /* =================== AUTOCOMPLETE SUGGEST =================== */
     const debounce = (fn, ms) => { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); } };
     let ctrl = null;
 
     function render(items) {
         if (!box) return;
         if (!items || !items.length) { box.classList.add('hf-hide'); box.innerHTML = ''; return; }
-        box.innerHTML = items.map((s, i) =>
-            `<div class="hf-suggest-item${i === 0 ? ' active' : ''}" data-v="${s}">${s}</div>`).join('');
+        box.innerHTML = items.map((s, i) => `<div class="hf-suggest-item${i === 0 ? ' active' : ''}" data-v="${s}">${s}</div>`).join('');
         box.classList.remove('hf-hide');
     }
 
@@ -318,7 +298,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const q = (input?.value || '').trim();
         if (q.length < 2) { render([]); return; }
         try {
-            if (ctrl) ctrl.abort();
+            ctrl?.abort();
             ctrl = new AbortController();
             const r = await fetch(`${suggestUrl}?q=${encodeURIComponent(q)}`, { signal: ctrl.signal });
             if (!r.ok) { render([]); return; }
@@ -328,56 +308,42 @@ document.addEventListener('DOMContentLoaded', function () {
     }, 220);
 
     function gotoSearch(q) {
-        if (!q) return;
-        window.location.href = `${searchUrl}?q=${encodeURIComponent(q)}`;
+        q = (q || '').trim();
+        const url = q ? `${searchUrl}?q=${encodeURIComponent(q)}` : `${searchUrl}`;
+        window.location.href = url;
     }
 
-    // events
     input?.addEventListener('input', doSuggest);
-    input?.addEventListener('keydown', (e) => {
+    input?.addEventListener('keydown', e => {
         const isOpen = box && !box.classList.contains('hf-hide');
         if (!isOpen) {
-            if (e.key === 'Enter') { e.preventDefault(); gotoSearch(input.value.trim()); }
+            if (e.key === 'Enter') { e.preventDefault(); gotoSearch(input.value); }
             return;
         }
         const items = Array.from(box.querySelectorAll('.hf-suggest-item'));
-        if (items.length === 0) return;
-
+        if (!items.length) return;
         let idx = items.findIndex(x => x.classList.contains('active'));
         if (e.key === 'ArrowDown') {
-            e.preventDefault();
-            idx = (idx + 1) % items.length;
-            items.forEach(x => x.classList.remove('active'));
-            items[idx].classList.add('active');
+            e.preventDefault(); idx = (idx + 1) % items.length;
+            items.forEach(x => x.classList.remove('active')); items[idx].classList.add('active');
             input.value = items[idx].dataset.v;
         } else if (e.key === 'ArrowUp') {
-            e.preventDefault();
-            idx = (idx - 1 + items.length) % items.length;
-            items.forEach(x => x.classList.remove('active'));
-            items[idx].classList.add('active');
+            e.preventDefault(); idx = (idx - 1 + items.length) % items.length;
+            items.forEach(x => x.classList.remove('active')); items[idx].classList.add('active');
             input.value = items[idx].dataset.v;
         } else if (e.key === 'Enter') {
-            e.preventDefault();
-            gotoSearch(input.value.trim());
+            e.preventDefault(); gotoSearch(input.value);
         } else if (e.key === 'Escape') {
             box.classList.add('hf-hide');
         }
     });
 
-    btn?.addEventListener('click', () => gotoSearch(input?.value.trim()));
+    btn?.addEventListener('click', () => gotoSearch(input?.value));
+    box?.addEventListener('click', e => { const it = e.target.closest('.hf-suggest-item'); if (it) { e.stopPropagation(); gotoSearch(it.dataset.v); } });
 
-    // Click chọn item gợi ý (không để nổi bọt)
-    box?.addEventListener('click', (e) => {
-        const it = e.target.closest('.hf-suggest-item');
-        if (it) { e.stopPropagation(); gotoSearch(it.dataset.v); }
-    });
-
-    // Nếu ô search nằm trong form khác, chặn submit để dùng URL sạch
     if (input && input.form) {
-        input.form.addEventListener('submit', function (e) {
-            e.preventDefault();
-            gotoSearch(input.value.trim());
-        });
+        input.form.addEventListener('submit', e => { e.preventDefault(); gotoSearch(input.value); });
     }
 });
 </script>
+
