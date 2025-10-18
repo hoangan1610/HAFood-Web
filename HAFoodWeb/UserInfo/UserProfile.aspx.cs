@@ -1,12 +1,13 @@
-﻿using System;
-using System.Web;
+﻿using HAFoodWeb.Models;
 using HAFoodWeb.Services;
+using System;
+using System.Web.UI;
 
 namespace HAFoodWeb
 {
-    public partial class UserProfile : System.Web.UI.Page
+    public partial class UserProfile : Page
     {
-        private readonly IUserService _userService = new UserService();
+        private readonly UserService _userService = new UserService();
 
         protected async void Page_Load(object sender, EventArgs e)
         {
@@ -19,22 +20,25 @@ namespace HAFoodWeb
                     return;
                 }
 
-                // ✅ Lấy thông tin user từ API
-                var resp = await _userService.GetProfileAsync(token);
-                if (resp != null && resp.user != null)
+                var profile = await _userService.GetProfileAsync(token);
+                if (profile != null && profile.user != null)
                 {
-                    var u = resp.user;
-                    lblFullName.Text = u.fullName;
-                    lblPhone.Text = u.phone;
-                    lblEmail.Text = u.email;
-                    imgAvatar.ImageUrl = string.IsNullOrWhiteSpace(u.avatar)
-                        ? "/assets/default-avatar.png"
-                        : u.avatar;
-                }
-                else
-                {
-                    // Nếu không lấy được thông tin → về login
-                    Response.Redirect("~/AuthPage/Login.aspx");
+                    lblFullName.Text = profile.user.fullName;
+                    lblEmail.Text = profile.user.email;
+                    lblPhone.Text = profile.user.phone;
+
+                    string avatarUrl = string.IsNullOrEmpty(profile.user.avatar)
+                        ? ResolveUrl("~/images/default-avatar.png")
+                        : profile.user.avatar;
+
+                    // ✅ Nếu avatar trả về là đường dẫn tương đối → nối với domain
+                    if (!avatarUrl.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+                    {
+                        avatarUrl = "https://api.hafood.id.vn" + avatarUrl;
+                    }
+
+                    // ✅ Thêm timestamp để tránh cache ảnh cũ
+                    imgAvatar.ImageUrl = avatarUrl + (avatarUrl.Contains("?") ? "&" : "?") + "t=" + DateTime.Now.Ticks;
                 }
             }
         }

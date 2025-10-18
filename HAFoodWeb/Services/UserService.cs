@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -78,6 +79,42 @@ namespace HAFoodWeb.Services
                     Success = false,
                     Message = "Không thể cập nhật profile"
                 };
+            }
+        }
+        public async Task<ApiBaseResponse> UpdateAvatarAsync(string token, System.Web.UI.WebControls.FileUpload fileUpload)
+        {
+            var url = $"{_apiBase}/api/users/me/avatar";
+
+            try
+            {
+                using (var httpClient = new HttpClient())
+                {
+                    httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+                    using (var form = new MultipartFormDataContent())
+                    {
+                        var fileContent = new StreamContent(fileUpload.FileContent);
+                        fileContent.Headers.ContentType = new MediaTypeHeaderValue(fileUpload.PostedFile.ContentType);
+
+                        form.Add(fileContent, "file", fileUpload.FileName);
+
+                        var response = await httpClient.PostAsync(url, form);
+                        var responseJson = await response.Content.ReadAsStringAsync();
+
+                        if (!response.IsSuccessStatusCode)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"[Avatar Upload] {response.StatusCode} - {responseJson}");
+                            return new ApiBaseResponse { Success = false, Message = "Upload avatar thất bại" };
+                        }
+
+                        return JsonConvert.DeserializeObject<ApiBaseResponse>(responseJson);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("UpdateAvatar failed: " + ex);
+                return new ApiBaseResponse { Success = false, Message = "Không thể upload avatar" };
             }
         }
     }
