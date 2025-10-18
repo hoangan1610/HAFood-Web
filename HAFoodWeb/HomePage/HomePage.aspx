@@ -87,32 +87,47 @@
     </div>
 
     <div class="shelf">
-      <asp:Repeater ID="rpNew" runat="server">
-        <ItemTemplate>
-          <div class="shelf-item">
-            <div class="card product-card shadow-sm h-100">
-              <div class="ratio ratio-4x3 bg-light position-relative">
-                <img src="<%# Eval("ImageUrl") %>" loading="lazy"
-                     class="w-100 h-100 of-contain p-2" alt="<%# Eval("Name") %>"
-                     onerror="this.src='/images/product-default.png';" />
-                <%# Eval("DiscountBadgeHtml") %>
-                <span class="badge bg-success position-absolute top-0 start-0 m-2">Mới</span>
-              </div>
-              <div class="card-body d-flex flex-column">
-                <h6 class="mb-1 text-truncate-2"><%# Eval("Name") %></h6>
-                <div class="mb-2"><%# Eval("PriceRangeHtml") %></div>
-                <select class="form-select form-select-sm mb-2">
-                  <asp:Repeater ID="rpVar" runat="server" DataSource='<%# Eval("Variants") %>'>
-                    <ItemTemplate><option value="<%# Eval("Id") %>"><%# Eval("Label") %></option></ItemTemplate>
-                  </asp:Repeater>
-                </select>
-                <a class="btn btn-warning btn-sm mt-auto w-100" href='<%# Eval("Id", "/product.aspx?id={0}") %>'>Mua</a>
-              </div>
+  <asp:Repeater ID="rpNew" runat="server">
+    <ItemTemplate>
+      <div class="shelf-item">
+        <div class="card product-card shadow-sm h-100">
+          <!-- ẢNH: bọc bằng <a> -->
+          <a href='<%# Eval("Id", ResolveUrl("~/product/Product.aspx?id={0}")) %>' class="text-decoration-none">
+            <div class="ratio ratio-4x3 bg-light position-relative">
+              <img src="<%# Eval("ImageUrl") %>" loading="lazy"
+                   class="w-100 h-100 of-contain p-2" alt="<%# Eval("Name") %>"
+                   onerror="this.src='/images/product-default.png';" />
+              <%# Eval("DiscountBadgeHtml") %>
+              <span class="badge bg-success position-absolute top-0 start-0 m-2">Mới</span>
             </div>
+          </a>
+
+          <div class="card-body d-flex flex-column">
+            <!-- TÊN: bọc bằng <a> -->
+            <h6 class="mb-1 text-truncate-2">
+              <a class="text-dark text-decoration-none"
+                 href='<%# Eval("Id", ResolveUrl("~/product/Product.aspx?id={0}")) %>'><%# Eval("Name") %></a>
+            </h6>
+
+            <div class="mb-2"><%# Eval("PriceRangeHtml") %></div>
+
+            <select class="form-select form-select-sm mb-2">
+              <asp:Repeater ID="rpVar" runat="server" DataSource='<%# Eval("Variants") %>'>
+                <ItemTemplate>
+                  <option value="<%# Eval("Id") %>"><%# Eval("Label") %></option>
+                </ItemTemplate>
+              </asp:Repeater>
+            </select>
+
+            <a class="btn btn-warning btn-sm mt-auto w-100"
+               href='<%# Eval("Id", ResolveUrl("~/product/Product.aspx?id={0}")) %>'>Mua</a>
           </div>
-        </ItemTemplate>
-      </asp:Repeater>
-    </div>
+        </div>
+      </div>
+    </ItemTemplate>
+  </asp:Repeater>
+</div>
+
   </div>
 
   <!-- RECOMMENDED GRID -->
@@ -120,43 +135,51 @@
     <h3 class="text-center fw-semibold mb-4" style="color:#ff6a00">Gợi Ý Cho Bạn Hôm Nay!</h3>
 
     <asp:Repeater ID="rpProducts" runat="server">
-      <HeaderTemplate><div class="row gx-3 gy-4"></HeaderTemplate>
-      <ItemTemplate>
-        <div class="col-12 col-sm-6 col-lg-3">
-          <div class="card product-card h-100 shadow-sm d-flex">
-            <div class="position-relative">
-              <div class="ratio ratio-4x3 bg-light">
-                <img src="<%# Eval("ImageUrl") %>" loading="lazy"
-                     class="w-100 h-100 of-contain p-2"
-                     onerror="this.src='/images/product-default.png';"
-                     alt="<%# Eval("Name") %>" />
-              </div>
-              <%# Eval("DiscountBadgeHtml") %>
-            </div>
+  <HeaderTemplate><div class="row gx-3 gy-4"></HeaderTemplate>
+  <ItemTemplate>
+    <div class="col-12 col-sm-6 col-lg-3">
+      <div class="card product-card h-100 shadow-sm d-flex">
+        <!-- ẢNH: bọc bằng <a> -->
+        <a href='<%# Eval("Id", ResolveUrl("~/product/Product.aspx?id={0}")) %>' class="text-decoration-none">
+          <div class="ratio ratio-4x3 bg-light">
+            <img src="<%# Eval("ImageUrl") %>" loading="lazy"
+                 class="w-100 h-100 of-contain p-2"
+                 onerror="this.src='/images/product-default.png';"
+                 alt="<%# Eval("Name") %>" />
+          </div>
+        </a>
+        <%# Eval("DiscountBadgeHtml") %>
 
-            <div class="card-body d-flex flex-column">
-              <h6 class="card-title text-truncate-2 mb-2"><%# Eval("Name") %></h6>
-              <div class="mb-2"><%# Eval("PriceRangeHtml") %></div>
+        <div class="card-body d-flex flex-column">
+          <!-- TÊN: bọc bằng <a> -->
+          <h6 class="card-title text-truncate-2 mb-2">
+            <a class="text-dark text-decoration-none"
+               href='<%# Eval("Id", ResolveUrl("~/product/Product.aspx?id={0}")) %>'><%# Eval("Name") %></a>
+          </h6>
 
-              <div class="mb-2">
-                <select class="form-select form-select-sm">
-                  <asp:Repeater ID="rpVariantInner" runat="server" DataSource='<%# Eval("Variants") %>'>
-                    <ItemTemplate><option value="<%# Eval("Id") %>"><%# Eval("Label") %></option></ItemTemplate>
-                  </asp:Repeater>
-                </select>
-              </div>
+          <div class="mb-2"><%# Eval("PriceRangeHtml") %></div>
 
-              <div class="d-flex align-items-center gap-2 mt-auto">
-                <label class="me-2">SL</label>
-                <input type="number" class="form-control form-control-sm" style="width:90px" value="1" min="1" />
-                <a class="btn btn-warning btn-sm ms-auto" href='<%# Eval("Id", "/product.aspx?id={0}") %>'>Mua</a>
-              </div>
-            </div>
+          <div class="mb-2">
+            <select class="form-select form-select-sm">
+              <asp:Repeater ID="rpVariantInner" runat="server" DataSource='<%# Eval("Variants") %>'>
+                <ItemTemplate><option value="<%# Eval("Id") %>"><%# Eval("Label") %></option></ItemTemplate>
+              </asp:Repeater>
+            </select>
+          </div>
+
+          <div class="d-flex align-items-center gap-2 mt-auto">
+            <label class="me-2">SL</label>
+            <input type="number" class="form-control form-control-sm" style="width:90px" value="1" min="1" />
+            <a class="btn btn-warning btn-sm ms-auto"
+               href='<%# Eval("Id", ResolveUrl("~/product/Product.aspx?id={0}")) %>'>Mua</a>
           </div>
         </div>
-      </ItemTemplate>
-      <FooterTemplate></div></FooterTemplate>
-    </asp:Repeater>
+      </div>
+    </div>
+  </ItemTemplate>
+  <FooterTemplate></div></FooterTemplate>
+</asp:Repeater>
+
   </div>
 
   <!-- FOOTER -->
