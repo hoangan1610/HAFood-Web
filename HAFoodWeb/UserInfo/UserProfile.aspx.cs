@@ -47,5 +47,10 @@ namespace HAFoodWeb
         {
             Response.Redirect("~/UserInfo/UserProfileEdit.aspx");
         }
+
+        protected void btnChangePassword_Click(object sender, EventArgs e)
+        {
+            Response.Redirect("~/UserInfo/ChangePassword.aspx");
+        }
     }
 }

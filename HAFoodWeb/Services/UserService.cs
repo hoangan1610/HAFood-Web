@@ -117,5 +117,54 @@ namespace HAFoodWeb.Services
                 return new ApiBaseResponse { Success = false, Message = "Không thể upload avatar" };
             }
         }
+
+        public async Task<ApiBaseResponse> ChangePasswordAsync(string token, string oldPassword, string newPassword)
+        {
+            var url = $"{_apiBase}/api/Auth/password/change";
+
+            try
+            {
+                using (var client = new HttpClient())
+                {
+                    client.DefaultRequestHeaders.Authorization =
+                        new AuthenticationHeaderValue("Bearer", token);
+
+                    var requestBody = new
+                    {
+                        oldPassword = oldPassword,
+                        newPassword = newPassword
+                    };
+
+                    var json = JsonConvert.SerializeObject(requestBody);
+                    var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                    var response = await client.PostAsync(url, content);
+                    var responseJson = await response.Content.ReadAsStringAsync();
+
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[ChangePassword] {response.StatusCode}: {responseJson}");
+                        // Thử parse để lấy message chi tiết từ server
+                        var errorResponse = JsonConvert.DeserializeObject<ApiBaseResponse>(responseJson);
+                        return errorResponse ?? new ApiBaseResponse
+                        {
+                            Success = false,
+                            Message = "Đổi mật khẩu thất bại"
+                        };
+                    }
+
+                    return JsonConvert.DeserializeObject<ApiBaseResponse>(responseJson);
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("[ChangePassword] Lỗi: " + ex.Message);
+                return new ApiBaseResponse
+                {
+                    Success = false,
+                    Message = "Không thể kết nối máy chủ"
+                };
+            }
+        }
     }
 }

@@ -53,7 +53,7 @@
 
         /* Nút cam giống yêu cầu */
         .aspNetButton {
-            width: 100%;
+            width: 60%;
             padding: 12px;
             margin-top: 18px;
             border: none;
@@ -101,6 +101,10 @@
                         Text="Chỉnh sửa thông tin"
                         CssClass="aspNetButton"
                         OnClick="btnEdit_Click" />
+            <asp:Button ID="btnChangePassword" runat="server"
+                        Text="Thay đổi mật khẩu"
+                        CssClass="aspNetButton"
+                        OnClick="btnChangePassword_Click" />
         </div>
 
         <!-- Footer -->

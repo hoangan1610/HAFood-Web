@@ -122,7 +122,7 @@ namespace HAFoodWeb.AuthPage
 
         private string GetOrCreateDeviceUuid()
         {
-            string cookieName = "HADeviceUuid";
+            string cookieName = "HADeviceID";
             var cookie = Request.Cookies[cookieName];
             if (cookie != null && !string.IsNullOrWhiteSpace(cookie.Value))
                 return cookie.Value;

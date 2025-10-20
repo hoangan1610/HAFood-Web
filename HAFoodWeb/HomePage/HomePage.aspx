@@ -1,5 +1,4 @@
-﻿<%@ Page Language="C#" AutoEventWireup="true" CodeBehind="HomePage.aspx.cs"
-    Inherits="HAFoodWeb.HomePage.HomePage" Async="true" %>
+﻿<%@ Page Language="C#" AutoEventWireup="true" CodeBehind="HomePage.aspx.cs" Inherits="HAFoodWeb.HomePage.HomePage" Async="true" %>
 
 <%@ Register Src="~/Control/Header.ascx" TagPrefix="uc" TagName="Header" %>
 <%@ Register Src="~/Control/SlideShow.ascx" TagPrefix="uc" TagName="Slideshow" %>

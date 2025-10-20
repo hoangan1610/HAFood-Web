@@ -8,5 +8,6 @@ namespace HAFoodWeb.Services
         Task<AuthMeResponse> GetProfileAsync(string token);
         Task<bool> LogoutAsync(string token);
         Task<ApiBaseResponse> UpdateProfileAsync(string token, UserUpdateRequest request);
+        Task<ApiBaseResponse> ChangePasswordAsync(string token, string oldPassword, string newPassword);
     }
 }
