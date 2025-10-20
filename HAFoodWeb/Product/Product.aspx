@@ -27,12 +27,11 @@
 </head>
 <body>
 <form runat="server">
-  <asp:ScriptManager ID="sm" runat="server" />
 
   <uc:Header ID="Header1" runat="server" />
 
   <div class="container my-4">
-    <!-- BREADCRUMB đơn giản -->
+    <!-- BREADCRUMB -->
     <nav class="mb-3" aria-label="breadcrumb">
       <ol class="breadcrumb">
         <li class="breadcrumb-item"><a href="/">Trang chủ</a></li>
@@ -74,11 +73,26 @@
           </div>
           <div class="col-sm-3">
             <label class="form-label mb-1">Số lượng</label>
-            <input id="qty" type="number" class="form-control form-control-sm" value="1" min="1" />
+            <input id="qty" name="qty" type="number" class="form-control form-control-sm" value="1" min="1" />
           </div>
           <div class="col-sm-3 d-grid">
             <a id="btnBuy" class="btn btn-warning btn-sm">Mua ngay</a>
           </div>
+          <asp:ScriptManager ID="ScriptManager1" runat="server" EnablePartialRendering="true" />
+          <!-- ✅ UpdatePanel cho nút thêm vào giỏ -->
+          <asp:UpdatePanel ID="upAddCart" runat="server" UpdateMode="Conditional">
+            <ContentTemplate>
+              <div class="col-sm-3 d-grid mt-2 mt-sm-0">
+                <asp:Button ID="btnAddToCart" runat="server" Text="Thêm vào giỏ"
+                    CssClass="btn btn-success btn-sm"
+                    OnClick="btnAddToCart_Click" />
+              </div>
+            </ContentTemplate>
+            <Triggers>
+              <asp:AsyncPostBackTrigger ControlID="btnAddToCart" EventName="Click" />
+            </Triggers>
+          </asp:UpdatePanel>
+
         </div>
 
         <div class="mt-3 small text-muted">
@@ -94,7 +108,7 @@
       </div>
     </div>
 
-    <!-- Related / Gợi ý -->
+    <!-- Related -->
     <div class="mt-5">
       <h4 class="fw-semibold mb-3">Gợi ý cho bạn</h4>
       <asp:Repeater ID="rpRelated" runat="server">
@@ -122,6 +136,7 @@
   <uc:Footer ID="Footer1" runat="server" />
 
   <asp:HiddenField ID="hVariantsJson" runat="server" />
+
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
   <script>
@@ -144,29 +159,52 @@
       const stockEl = document.getElementById('stock');
       const imgMain = document.getElementById('<%= imgMain.ClientID %>');
 
-      function formatVnd(n){ try{ return n.toLocaleString('vi-VN') + 'đ'; }catch(e){ return n + 'đ'; } }
+        function formatVnd(n) { try { return n.toLocaleString('vi-VN') + 'đ'; } catch (e) { return n + 'đ'; } }
 
-      function apply(v){
-        if(!v) return;
-        priceEl.innerText = formatVnd(v.retailPrice);
-        skuEl.innerText = v.sku || '';
-        stockEl.innerText = (v.stock ?? 0);
-        if (v.image) imgMain.src = v.image;
-      }
+        function apply(v) {
+            if (!v) return;
+            priceEl.innerText = formatVnd(v.retailPrice);
+            skuEl.innerText = v.sku || '';
+            stockEl.innerText = (v.stock ?? 0);
+            if (v.image) imgMain.src = v.image;
+        }
 
-      ddl && ddl.addEventListener('change', function(){
-        const id = Number(this.value);
-        const v = variants.find(x => x.id === id);
-        apply(v);
-      });
+        ddl && ddl.addEventListener('change', function () {
+            const id = Number(this.value);
+            const v = variants.find(x => x.id === id);
+            apply(v);
+        });
 
-      // áp dụng cho biến thể ban đầu (nếu có)
-      if (ddl && ddl.value) {
-        const v0 = variants.find(x => x.id === Number(ddl.value));
-        apply(v0);
-      }
+        // áp dụng cho biến thể ban đầu (nếu có)
+        if (ddl && ddl.value) {
+            const v0 = variants.find(x => x.id === Number(ddl.value));
+            apply(v0);
+        }
     });
   </script>
+
+    <script type="text/javascript">
+        function updateCartBadge() {
+            // Tìm badge bằng data attribute thay vì FindControl
+            const badge = document.querySelector('[data-cart-badge="true"]');
+
+            if (badge) {
+                // Gọi WebMethod để lấy số lượng
+                if (typeof PageMethods !== 'undefined') {
+                    PageMethods.GetCartCount(
+                        function (count) {
+                            badge.innerText = count;
+                            badge.style.display = count > 0 ? 'inline-block' : 'none';
+                        },
+                        function (err) {
+                            console.error("Lỗi khi cập nhật cart badge:", err);
+                        }
+                    );
+                }
+            }
+        }
+    </script>
+
 </form>
 </body>
 </html>

@@ -64,7 +64,7 @@
         }
 
         .aspNetButton {
-            width: 100%;
+            width: 60%;
             padding: 12px;
             margin-top: 10px;
             border: none;

@@ -88,7 +88,8 @@ namespace HAFoodWeb.AuthPage
                                 {
                                     HttpOnly = true,
                                     Secure = Request.IsSecureConnection,
-                                    Expires = DateTime.UtcNow.AddDays(7)
+                                    Expires = DateTime.UtcNow.AddDays(7),
+                                    Path = "/"
                                 };
                                 Response.Cookies.Add(authCookie);
                             }
@@ -121,7 +122,7 @@ namespace HAFoodWeb.AuthPage
 
         private string GetOrCreateDeviceUuid()
         {
-            string cookieName = "HADeviceUuid";
+            string cookieName = "HADeviceID";
             var cookie = Request.Cookies[cookieName];
             if (cookie != null && !string.IsNullOrWhiteSpace(cookie.Value))
                 return cookie.Value;

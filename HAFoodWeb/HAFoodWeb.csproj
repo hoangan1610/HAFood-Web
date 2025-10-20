@@ -59,6 +59,12 @@
       <Private>True</Private>
       <Private>True</Private>
     </Reference>
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Runtime, Version=4.1.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Runtime.4.3.0\lib\net462\System.Runtime.dll</HintPath>
+      <Private>True</Private>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="System.Net.Http">
       <SpecificVersion>False</SpecificVersion>
       <Private>False</Private>
@@ -152,6 +158,9 @@
     <Content Include="AuthPage\OTPForgotPassword.aspx" />
     <Content Include="AuthPage\Register.aspx" />
     <Content Include="AuthPage\ResetPassword.aspx" />
+    <Content Include="CartPage\CartPage.aspx" />
+    <Content Include="CartPage\CartItem.ascx" />
+    <Content Include="CartPage\CheckoutPanel.ascx" />
     <Content Include="Contact.aspx" />
     <Content Include="Content\bootstrap-grid.css" />
     <Content Include="Content\bootstrap-grid.min.css" />
@@ -238,6 +247,7 @@
     <Content Include="Scripts\WebForms\WebParts.js" />
     <Content Include="Scripts\WebForms\WebUIValidation.js" />
     <Content Include="Site.Master" />
+    <Content Include="UserInfo\ChangePassword.aspx" />
     <Content Include="UserInfo\UserProfile.aspx" />
     <Content Include="UserInfo\UserProfileEdit.aspx" />
     <Content Include="ViewSwitcher.ascx" />
@@ -298,6 +308,27 @@
       <DependentUpon>ResetPassword.aspx</DependentUpon>
     </Compile>
     <Compile Include="BLL\UserBLL.cs" />
+    <Compile Include="CartPage\CartPage.aspx.cs">
+      <DependentUpon>CartPage.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="CartPage\CartPage.aspx.designer.cs">
+      <DependentUpon>CartPage.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="CartPage\CartItem.ascx.cs">
+      <DependentUpon>CartItem.ascx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="CartPage\CartItem.ascx.designer.cs">
+      <DependentUpon>CartItem.ascx</DependentUpon>
+    </Compile>
+    <Compile Include="CartPage\CheckoutPanel.ascx.cs">
+      <DependentUpon>CheckoutPanel.ascx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="CartPage\CheckoutPanel.ascx.designer.cs">
+      <DependentUpon>CheckoutPanel.ascx</DependentUpon>
+    </Compile>
     <Compile Include="Contact.aspx.cs">
       <DependentUpon>Contact.aspx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>
@@ -352,6 +383,10 @@
     </Compile>
     <Compile Include="Infrastructure\AppCache.cs" />
     <Compile Include="Infrastructure\HttpJson.cs" />
+    <Compile Include="Models\CartHeaderDto.cs" />
+    <Compile Include="Models\CartItemDto.cs" />
+    <Compile Include="Models\CartRequest.cs" />
+    <Compile Include="Models\CartResponseDto.cs" />
     <Compile Include="Models\CategoryTreeDto.cs" />
     <Compile Include="Models\ProductCardVM.cs" />
     <Compile Include="Models\ProductDtos.cs" />
@@ -367,7 +402,9 @@
     <Compile Include="Proxy\Suggest.ashx.cs">
       <DependentUpon>Suggest.ashx</DependentUpon>
     </Compile>
+    <Compile Include="Services\CartService.cs" />
     <Compile Include="Services\CategoryService.cs" />
+    <Compile Include="Services\ICartService.cs" />
     <Compile Include="Services\IProductDetailService.cs" />
     <Compile Include="Services\ISearchService.cs" />
     <Compile Include="Services\IUserService.cs" />
@@ -391,6 +428,13 @@
     </Compile>
     <Compile Include="Site.Mobile.Master.designer.cs">
       <DependentUpon>Site.Mobile.Master</DependentUpon>
+    </Compile>
+    <Compile Include="UserInfo\ChangePassword.aspx.cs">
+      <DependentUpon>ChangePassword.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="UserInfo\ChangePassword.aspx.designer.cs">
+      <DependentUpon>ChangePassword.aspx</DependentUpon>
     </Compile>
     <Compile Include="UserInfo\UserProfile.aspx.cs">
       <DependentUpon>UserProfile.aspx</DependentUpon>

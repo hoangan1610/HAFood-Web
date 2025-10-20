@@ -1,5 +1,4 @@
-﻿<%@ Control Language="C#" AutoEventWireup="true" CodeBehind="Header.ascx.cs" Inherits="HAFoodWeb.Control.Header" %>
-
+﻿<%@ Control Language="C#" AutoEventWireup="true" CodeBehind="Header.ascx.cs" Inherits="HAFoodWeb.Control.Header"  %>
 <!-- CSS -->
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet" />
@@ -135,6 +134,40 @@
     .hf-suggest-item { padding: .5rem .75rem; cursor: pointer; }
     .hf-suggest-item:hover, .hf-suggest-item.active { background: #f8f9fa; }
     .hf-hide { display: none !important; }
+
+    /* ===== CART BADGE ===== */
+    .cart-link {
+        position: relative;
+        display: inline-block;
+    }
+
+    .cart-link i {
+        font-size: 22px;
+        color: #000;
+        transition: color 0.3s;
+    }
+
+    .cart-link i:hover {
+        color: #28a745;
+    }
+
+    .cart-badge {
+        position: absolute;
+        top: -6px;
+        right: -10px;
+        background-color: #000;
+        color: #fff;
+        font-size: 12px;
+        font-weight: bold;
+        border-radius: 50%;
+        width: 20px;
+        height: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        line-height: 1;
+    }
+
 </style>
 
 <!-- NAVBAR -->
@@ -158,10 +191,10 @@
             <li class="nav-item"><a class="nav-link" href="#">More</a></li>
         </ul>
 
-        <div class="nav-icons d-flex align-items-center"
-             id="headerRoot"
-             data-guestid="<%= guestDropdown.ClientID %>"
-             data-authid="<%= authDropdown.ClientID %>">
+       <div class="nav-icons d-flex align-items-center"
+         id="headerRoot"
+         data-guestid='<%# guestDropdown.ClientID %>'
+         data-authid='<%# authDropdown.ClientID %>'>
 
             <i class="bi bi-search" id="openSearch"></i>
 
@@ -191,7 +224,15 @@
                 </div>
             </div>
 
-            <i class="bi bi-basket"></i>
+            <!-- CART  -->
+       
+                    <div class="position-relative">
+                        <asp:HyperLink ID="lnkCart" runat="server" NavigateUrl="~/CartPage/CartPage.aspx" CssClass="cart-link">
+                            <i class="bi bi-basket"></i>
+                            <span id="cartCountBadge" runat="server" class="cart-badge" data-cart-badge="true">0</span>
+                        </asp:HyperLink>
+                    </div>
+
         </div>
     </div>
 </nav>
@@ -241,7 +282,7 @@
         setOverlay();
     };
     const showSearch = () => {
-        hideUser();                          // luôn đóng user trước
+        hideUser();                         
         if (searchDropdown) searchDropdown.style.display = 'flex';
         overlay.style.display = 'block';
     };
@@ -251,7 +292,7 @@
         e.stopPropagation();
         const target = guestDD || authDD;
         const willShow = !visible(target);
-        hideSearch();                         // đóng search trước
+        hideSearch();                         
         hideUser();
         if (willShow && target) target.style.display = 'flex';
         setOverlay();
@@ -342,7 +383,30 @@
     box?.addEventListener('click', e => { const it = e.target.closest('.hf-suggest-item'); if (it) { e.stopPropagation(); gotoSearch(it.dataset.v); } });
 
     if (input && input.form) {
-        input.form.addEventListener('submit', e => { e.preventDefault(); gotoSearch(input.value); });
+        input.form.addEventListener('submit', e => {
+        // ✅ Chỉ xử lý khi ô search đang focus để tránh chặn nút Login
+            if (document.activeElement === input) {
+                e.preventDefault();
+                gotoSearch(input.value);
+            }
+        });
+    }
+
+    async function refreshCartCount() {
+        try {
+            const r = await fetch('<%= ResolveUrl("~/Control/Header.ascx/GetCartCount") %>', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+        const count = await r.json();
+            const badge = document.getElementById('<%= cartCountBadge.ClientID %>');
+            if (badge) {
+                badge.innerText = count;
+                badge.style.display = count > 0 ? 'flex' : 'none';
+            }
+        } catch (e) {
+            console.error('refreshCartCount failed', e);
+        }
     }
 });
 </script>
