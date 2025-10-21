@@ -1,5 +1,6 @@
 ﻿using System;
 
+
 namespace HAFoodWeb.Models
 {
     public class CartHeaderDto
@@ -11,6 +12,6 @@ namespace HAFoodWeb.Models
         public DateTime created_At { get; set; }
         public DateTime updated_At { get; set; }
         public int item_Count { get; set; }
-        public double subtotal { get; set; }
+        public decimal subtotal { get; set; } // decimal
     }
 }

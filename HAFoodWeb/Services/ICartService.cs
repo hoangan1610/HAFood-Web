@@ -3,9 +3,9 @@ using System.Threading.Tasks;
 
 public interface ICartService
 {
-    Task<CartResponseDto> GetCartAsync(long deviceId);
-    Task<CartResponseDto> AddCartItemAsync(long deviceId, CartAddRequest item);
-    Task<CartResponseDto> UpdateQuantityAsync(long variantId, long deviceId, int quantity);
-    Task<CartResponseDto> DeleteCartItemAsync(long variantId, long deviceId);
-    Task<CartResponseDto> ClearCartAsync(long deviceId);
+    Task<CartResponseDto> GetCartAsync(string deviceUuid);
+    Task<CartResponseDto> AddCartItemAsync(string deviceUuid, CartAddRequest item);
+    Task<CartResponseDto> UpdateQuantityAsync(long variantId, string deviceUuid, int quantity);
+    Task<CartResponseDto> DeleteCartItemAsync(long variantId, string deviceUuid);
+    Task<CartResponseDto> ClearCartAsync(string deviceUuid);
 }

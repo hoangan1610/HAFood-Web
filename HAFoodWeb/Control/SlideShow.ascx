@@ -38,11 +38,11 @@
 </style>
 
 <div class="slide-container">
-    <div class="slide active" style='background-image: url("<%= ResolveUrl("~/images/slide1.png") %>");'>
+    <div class="slide active" style='background-image: url("<%= ResolveUrl("~/images/slide1.jpg") %>");'>
         <h1>Daily Fresh & Organic</h1>
         <p>We believe that healthy eating starts with clean, natural ingredients and a fresh mindset.</p>
     </div>
-    <div class="slide" style='background-image: url("<%= ResolveUrl("~/images/slide2.png") %>");'>
+    <div class="slide" style='background-image: url("<%= ResolveUrl("~/images/slide2.jpg") %>");'>
         <h1>Fresh Fruits Everyday</h1>
         <p>Discover the best seasonal fruits delivered straight to your door.</p>
     </div>

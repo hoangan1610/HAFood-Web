@@ -1,9 +1,11 @@
-﻿using System;
+﻿using HAFoodWeb.Infrastructure;
+using System;
 using System.Configuration;
 using System.Linq;
+using System.Security.Cryptography;
+using System.Text;
 using System.Threading.Tasks;
 using System.Web;
-using HAFoodWeb.Infrastructure;
 
 namespace HAFoodWeb.Services
 {
@@ -102,5 +104,29 @@ namespace HAFoodWeb.Services
                 System.Diagnostics.Debug.WriteLine("[DeviceTracker] send fail: " + ex);
             }
         }
+        public long GetDeviceIdAsLong()
+        {
+            var uuid = GetOrCreateDeviceUuid();
+            return HashUuidToLong(uuid);
+        }
+
+        private static long HashUuidToLong(string uuid)
+        {
+            if (string.IsNullOrWhiteSpace(uuid))
+                return 1;
+
+            using (var sha = SHA256.Create())
+            {
+                var bytes = sha.ComputeHash(Encoding.UTF8.GetBytes(uuid));
+                // Lấy 8 byte đầu để tạo long
+                long val = BitConverter.ToInt64(bytes, 0);
+                if (val == long.MinValue) val = 1;  // tránh overflow khi Abs
+                val = Math.Abs(val);
+                if (val == 0) val = 1;              // tránh 0
+                return val;
+            }
+        }
     }
+
+
 }

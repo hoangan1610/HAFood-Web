@@ -16,33 +16,17 @@ namespace HAFoodWeb.Cart
                 ViewState["VariantId"] = value;
                 try
                 {
-                    // đảm bảo nút có CommandArgument ngay khi setter được gọi
                     btnDecrease.CommandArgument = value.ToString();
                     btnIncrease.CommandArgument = value.ToString();
                     btnRemove.CommandArgument = value.ToString();
                 }
-                catch { /* control có thể chưa khởi tạo */ }
+                catch { }
             }
         }
 
-        public string ProductName
-        {
-            set { litProductName.Text = Server.HtmlEncode(value ?? ""); }
-        }
-
-        public string VariantName
-        {
-            set { litVariantName.Text = Server.HtmlEncode(value ?? ""); }
-        }
-
-        public string ImageUrl
-        {
-            set
-            {
-                var url = value ?? "/images/product-default.png";
-                imgProduct.Src = url;
-            }
-        }
+        public string ProductName { set { litProductName.Text = Server.HtmlEncode(value ?? ""); } }
+        public string VariantName { set { litVariantName.Text = Server.HtmlEncode(value ?? ""); } }
+        public string ImageUrl { set { imgProduct.Src = value ?? "/images/product-default.png"; } }
 
         public decimal Price
         {
@@ -62,13 +46,11 @@ namespace HAFoodWeb.Cart
             {
                 ViewState["Quantity"] = value;
                 litQty.Text = value.ToString();
-                // nếu quantity <= 1 thì disable nút decrease (không cho giảm xuống 0)
                 try
                 {
                     if (value <= 1)
                     {
                         btnDecrease.Enabled = false;
-                        // style để trông disabled (an toàn ngay cả khi control render <span>)
                         btnDecrease.CssClass = "btn-qty btn-qty-disabled";
                     }
                     else
@@ -77,17 +59,12 @@ namespace HAFoodWeb.Cart
                         btnDecrease.CssClass = "btn-qty";
                     }
                 }
-                catch { /* ignore nếu control chưa sẵn sàng */ }
-
+                catch { }
                 UpdateTotal();
             }
         }
 
-        public bool Selected
-        {
-            get { return chkSelect.Checked; }
-            set { chkSelect.Checked = value; }
-        }
+        public bool Selected { get { return chkSelect.Checked; } set { chkSelect.Checked = value; } }
 
         protected void chkSelect_CheckedChanged(object sender, EventArgs e)
         {
@@ -96,7 +73,19 @@ namespace HAFoodWeb.Cart
 
         private void UpdateTotal()
         {
-            litTotal.Text = string.Format(System.Globalization.CultureInfo.GetCultureInfo("vi-VN"), "{0:N0} ₫", Price * Quantity);
+            var total = Price * Quantity;
+            litTotal.Text = string.Format(System.Globalization.CultureInfo.GetCultureInfo("vi-VN"), "{0:N0} ₫", total);
+        }
+
+        // đảm bảo Command của LinkButton bubble lên Repeater
+        protected override bool OnBubbleEvent(object source, EventArgs args)
+        {
+            if (args is CommandEventArgs cmd)
+            {
+                RaiseBubbleEvent(this, cmd);
+                return true;
+            }
+            return base.OnBubbleEvent(source, args);
         }
     }
 }

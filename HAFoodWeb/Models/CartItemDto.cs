@@ -1,5 +1,6 @@
 ﻿using System;
 
+
 namespace HAFoodWeb.Models
 {
     public class CartItemDto
@@ -8,7 +9,7 @@ namespace HAFoodWeb.Models
         public long cart_Id { get; set; }
         public long variant_Id { get; set; }
         public string name_Variant { get; set; }
-        public double price_Variant { get; set; }
+        public decimal price_Variant { get; set; } // decimal
         public string image_Variant { get; set; }
         public int quantity { get; set; }
         public int status { get; set; }
@@ -16,7 +17,7 @@ namespace HAFoodWeb.Models
         public DateTime updated_At { get; set; }
         public string sku { get; set; }
         public string variant_Name { get; set; }
-        public double variant_Retail_Price { get; set; }
+        public decimal variant_Retail_Price { get; set; } // decimal
         public int variant_Stock { get; set; }
         public long product_Id { get; set; }
         public string product_Name { get; set; }
