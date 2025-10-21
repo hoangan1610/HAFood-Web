@@ -33,7 +33,6 @@ namespace HAFoodWeb
             string deviceUuid = tracker.GetOrCreateDeviceUuid();
             var cart = await _cartService.GetCartAsync(deviceUuid);
 
-
             if (cart?.items == null || !cart.items.Any())
             {
                 rptCart.Visible = false;
@@ -65,22 +64,30 @@ namespace HAFoodWeb
             int newQty = currentQty;
             switch (e.CommandName)
             {
-                case "Increase": newQty = currentQty + 1; break;
-                case "Decrease": newQty = Math.Max(1, currentQty - 1); break;
+                case "Increase":
+                    newQty = currentQty + 1;
+                    break;
+
+                case "Decrease":
+                    newQty = Math.Max(1, currentQty - 1);
+                    break;
+
                 case "Remove":
                     await _cartService.DeleteCartItemAsync(variantId, deviceUuid); // 🔁
                     await BindCart();
                     AttachSelectionHandlers();
+                    updCart.Update(); // ✅ chỉ update vùng UpdatePanel
                     return;
-                default: return;
+
+                default:
+                    return;
             }
 
             await _cartService.UpdateQuantityAsync(variantId, deviceUuid, newQty); // 🔁
             await BindCart();
             AttachSelectionHandlers();
+            updCart.Update(); // ✅ chỉ update vùng UpdatePanel
         }
-
-       
 
         private void AttachSelectionHandlers()
         {
@@ -127,8 +134,8 @@ namespace HAFoodWeb
         private void CartItem_SelectionChanged(object sender, EventArgs e)
         {
             UpdateTotal();
+            updCart.Update(); // ✅ update vùng tổng thanh toán
         }
-
 
         private void UpdateTotal()
         {
@@ -141,7 +148,10 @@ namespace HAFoodWeb
                     total += cartItem.Price * cartItem.Quantity;
                 }
             }
-            lblTotal.Text = string.Format(System.Globalization.CultureInfo.GetCultureInfo("vi-VN"), "{0:N0} ₫", total);
+            lblTotal.Text = string.Format(
+                System.Globalization.CultureInfo.GetCultureInfo("vi-VN"),
+                "{0:N0} ₫", total
+            );
         }
 
         protected void chkSelectAll_CheckedChanged(object sender, EventArgs e)
@@ -154,6 +164,7 @@ namespace HAFoodWeb
                     cartItem.Selected = checkedAll;
             }
             UpdateTotal();
+            updCart.Update(); // ✅ đồng bộ lại UI trong UpdatePanel
         }
     }
 }

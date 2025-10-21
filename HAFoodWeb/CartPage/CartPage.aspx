@@ -27,7 +27,14 @@
 </head>
 <body>
     <form id="form1" runat="server">
+
+         <asp:ScriptManager ID="sm" runat="server" EnablePartialRendering="true" />
+
         <uc:Header ID="Header1" runat="server" />
+
+        <asp:UpdatePanel ID="updCart" runat="server" UpdateMode="Conditional" ChildrenAsTriggers="true">
+        <ContentTemplate>
+
 
         <div class="cart-container">
             <div class="cart-title">Giỏ hàng</div>
@@ -59,6 +66,9 @@
                 Tổng thanh toán: <asp:Label ID="lblTotal" runat="server" Text="0 ₫"></asp:Label>
             </div>
         </div>
+
+            </ContentTemplate>
+    </asp:UpdatePanel>
 
         <uc:Footer ID="Footer1" runat="server" />
     </form>
