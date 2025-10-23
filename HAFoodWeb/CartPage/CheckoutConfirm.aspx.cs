@@ -136,6 +136,13 @@ namespace HAFoodWeb
             {
                 var resp = await _orderService.CheckoutAsync(req);
 
+                if (!string.IsNullOrWhiteSpace(resp.payment_Url))
+                {
+                    Response.Redirect(resp.payment_Url, false);
+                    Context.ApplicationInstance.CompleteRequest();
+                    return;
+                }
+
                 if (resp == null || (resp.order_Id <= 0 && string.IsNullOrWhiteSpace(resp.order_Code)))
                 {
                     ShowError("Không tạo được đơn hàng. Phản hồi trống từ máy chủ.");

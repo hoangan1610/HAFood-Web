@@ -101,6 +101,9 @@ namespace HAFoodWeb.Services
     {
         public long order_Id { get; set; }
         public string order_Code { get; set; }
+
+        public string payment_Url { get; set; }
+
         // Nếu backend sau này thêm payUrl / redirectUrl, bổ sung ở đây
         // public string payment_Url { get; set; }
     }
