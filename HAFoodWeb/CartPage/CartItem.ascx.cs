@@ -8,6 +8,12 @@ namespace HAFoodWeb.Cart
     {
         public event EventHandler SelectionChanged;
 
+        public long LineId
+        {
+            get { return ViewState["LineId"] != null ? (long)ViewState["LineId"] : 0L; }
+            set { ViewState["LineId"] = value; }
+        }
+
         public long VariantId
         {
             get { return ViewState["VariantId"] != null ? (long)ViewState["VariantId"] : 0L; }
@@ -27,6 +33,7 @@ namespace HAFoodWeb.Cart
         public string ProductName { set { litProductName.Text = Server.HtmlEncode(value ?? ""); } }
         public string VariantName { set { litVariantName.Text = Server.HtmlEncode(value ?? ""); } }
         public string ImageUrl { set { imgProduct.Src = value ?? "/images/product-default.png"; } }
+        public decimal WeightPerUnit { get; set; } // gram
 
         public decimal Price
         {
@@ -51,12 +58,12 @@ namespace HAFoodWeb.Cart
                     if (value <= 1)
                     {
                         btnDecrease.Enabled = false;
-                        btnDecrease.CssClass = "btn-qty btn-qty-disabled";
+                        btnDecrease.CssClass = "qty-btn btn-qty-disabled";
                     }
                     else
                     {
                         btnDecrease.Enabled = true;
-                        btnDecrease.CssClass = "btn-qty";
+                        btnDecrease.CssClass = "qty-btn";
                     }
                 }
                 catch { }
@@ -77,7 +84,6 @@ namespace HAFoodWeb.Cart
             litTotal.Text = string.Format(System.Globalization.CultureInfo.GetCultureInfo("vi-VN"), "{0:N0} ₫", total);
         }
 
-        // đảm bảo Command của LinkButton bubble lên Repeater
         protected override bool OnBubbleEvent(object source, EventArgs args)
         {
             if (args is CommandEventArgs cmd)

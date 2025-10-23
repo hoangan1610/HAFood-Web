@@ -9,7 +9,7 @@ using System.Web.UI;
 
 namespace HAFoodWeb.Control
 {
-    public partial class Header : System.Web.UI.UserControl
+    public partial class Header : UserControl
     {
         protected void Page_Load(object sender, EventArgs e)
         {
@@ -19,23 +19,36 @@ namespace HAFoodWeb.Control
             guestDropdown.Visible = string.IsNullOrEmpty(token);
             authDropdown.Visible = !string.IsNullOrEmpty(token);
 
-            // Đảm bảo có UUID & cập nhật device về server (userInfoId nếu có)
-            Page.RegisterAsyncTask(new PageAsyncTask(async () =>
+            // Thử đăng ký async; nếu trang không hỗ trợ thì chạy sync
+            try
             {
-                var tracker = new DeviceTracker(Request, Response);
-
-                // parse userInfoId từ Session nếu có
-                int? userInfoId = null;
-                try
+                Page.RegisterAsyncTask(new PageAsyncTask(async () =>
                 {
-                    if (int.TryParse(Convert.ToString(Session["UserId"]), out var tmp))
-                        userInfoId = tmp;
-                }
-                catch { }
+                    await EnsureDeviceAndCartAsync();
+                }));
+            }
+            catch (InvalidOperationException)
+            {
+                // Trang không Async="true"
+                EnsureDeviceAndCartAsync().GetAwaiter().GetResult();
+            }
+        }
 
-                await tracker.SendAsync(userInfoId);   // <-- post lên server
-                await LoadCartCountAsync();           
-            }));
+        private async Task EnsureDeviceAndCartAsync()
+        {
+            var tracker = new DeviceTracker(Request, Response);
+
+            int? userInfoId = null;
+            try
+            {
+                if (int.TryParse(Convert.ToString(Session["UserId"]), out var tmp))
+                    userInfoId = tmp;
+            }
+            catch { }
+
+            tracker.GetOrCreateDeviceUuid();
+            await tracker.SendAsync(userInfoId);
+            await LoadCartCountAsync();
         }
 
         private async Task LoadCartCountAsync()
@@ -43,15 +56,14 @@ namespace HAFoodWeb.Control
             try
             {
                 var tracker = new DeviceTracker(Request, Response);
-                string deviceUuid = tracker.GetOrCreateDeviceUuid();
+                var deviceUuid = tracker.GetOrCreateDeviceUuid();
 
                 var cartService = new CartService();
                 var cart = await cartService.GetCartAsync(deviceUuid);
 
-                int count = cart?.header?.item_Count ?? 0;
+                var count = cart?.header?.item_Count ?? 0;
                 cartCountBadge.InnerText = count.ToString();
                 cartCountBadge.Visible = count > 0;
-
             }
             catch
             {
@@ -62,27 +74,20 @@ namespace HAFoodWeb.Control
 
         [WebMethod]
         [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
-        public static async Task<int> GetCartCount()
+        public static int GetCartCount()
         {
             try
             {
                 var ctx = HttpContext.Current;
                 var tracker = new DeviceTracker(ctx.Request, ctx.Response);
-
-                // Lấy UUID từ cookie (HADeviceUuid)
-                string deviceUuid = tracker.GetOrCreateDeviceUuid();
+                var deviceUuid = tracker.GetOrCreateDeviceUuid();
 
                 var cartService = new CartService();
-                var cart = await cartService.GetCartAsync(deviceUuid); // <-- dùng overload nhận string
-
+                var cart = cartService.GetCartAsync(deviceUuid).GetAwaiter().GetResult();
                 return cart?.header?.item_Count ?? 0;
             }
-            catch
-            {
-                return 0;
-            }
+            catch { return 0; }
         }
-
 
         protected async void btnLogout_Click(object sender, EventArgs e)
         {
@@ -107,8 +112,3 @@ namespace HAFoodWeb.Control
         }
     }
 }
-
-        
-        
-    
-

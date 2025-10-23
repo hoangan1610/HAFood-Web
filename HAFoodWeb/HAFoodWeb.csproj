@@ -160,7 +160,9 @@
     <Content Include="AuthPage\ResetPassword.aspx" />
     <Content Include="CartPage\CartPage.aspx" />
     <Content Include="CartPage\CartItem.ascx" />
+    <Content Include="CartPage\CheckoutConfirm.aspx" />
     <Content Include="CartPage\CheckoutPanel.ascx" />
+    <Content Include="CartPage\ThankYou.aspx" />
     <Content Include="Contact.aspx" />
     <Content Include="Content\bootstrap-grid.css" />
     <Content Include="Content\bootstrap-grid.min.css" />
@@ -328,12 +330,26 @@
     <Compile Include="CartPage\CartItem.ascx.designer.cs">
       <DependentUpon>CartItem.ascx</DependentUpon>
     </Compile>
+    <Compile Include="CartPage\CheckoutConfirm.aspx.cs">
+      <DependentUpon>CheckoutConfirm.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="CartPage\CheckoutConfirm.aspx.designer.cs">
+      <DependentUpon>CheckoutConfirm.aspx</DependentUpon>
+    </Compile>
     <Compile Include="CartPage\CheckoutPanel.ascx.cs">
       <DependentUpon>CheckoutPanel.ascx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>
     </Compile>
     <Compile Include="CartPage\CheckoutPanel.ascx.designer.cs">
       <DependentUpon>CheckoutPanel.ascx</DependentUpon>
+    </Compile>
+    <Compile Include="CartPage\ThankYou.aspx.cs">
+      <DependentUpon>ThankYou.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="CartPage\ThankYou.aspx.designer.cs">
+      <DependentUpon>ThankYou.aspx</DependentUpon>
     </Compile>
     <Compile Include="Contact.aspx.cs">
       <DependentUpon>Contact.aspx</DependentUpon>
@@ -417,6 +433,7 @@
     <Compile Include="Services\DeviceTracker.cs" />
     <Compile Include="Services\ICategoryService.cs" />
     <Compile Include="Services\IProductCardService.cs" />
+    <Compile Include="Services\OrderService.cs" />
     <Compile Include="Services\ProductCardService.cs" />
     <Compile Include="Services\ProductDetailService.cs" />
     <Compile Include="Services\SearchService.cs" />
