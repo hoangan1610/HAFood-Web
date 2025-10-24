@@ -62,15 +62,21 @@ namespace HAFoodWeb.Control
                 var cart = await cartService.GetCartAsync(deviceUuid);
 
                 var count = cart?.header?.item_Count ?? 0;
+
+                // ✅ Luôn render badge, chỉ điều khiển hiển thị bằng style
+                cartCountBadge.Visible = true;
                 cartCountBadge.InnerText = count.ToString();
-                cartCountBadge.Visible = count > 0;
+                cartCountBadge.Attributes["style"] = count > 0 ? "display:flex;" : "display:none;";
             }
             catch
             {
+                // ✅ Luôn render
+                cartCountBadge.Visible = true;
                 cartCountBadge.InnerText = "0";
-                cartCountBadge.Visible = false;
+                cartCountBadge.Attributes["style"] = "display:none;";
             }
         }
+
 
         [WebMethod]
         [ScriptMethod(ResponseFormat = ResponseFormat.Json)]

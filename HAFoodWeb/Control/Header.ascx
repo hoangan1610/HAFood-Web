@@ -193,8 +193,8 @@
 
        <div class="nav-icons d-flex align-items-center"
          id="headerRoot"
-         data-guestid='<%# guestDropdown.ClientID %>'
-         data-authid='<%# authDropdown.ClientID %>'>
+         data-guestid='<%= guestDropdown.ClientID %>'
+         data-authid='<%= authDropdown.ClientID %>'
 
             <i class="bi bi-search" id="openSearch"></i>
 
@@ -270,7 +270,8 @@
             const r = await fetch(url, { method: 'GET', credentials: 'include', cache: 'no-store' });
             if (!r.ok) throw new Error('HTTP ' + r.status);
             const j = await r.json();
-            if (j?.ok) window.setCartBadge(j.count);
+            const c = Number(j?.count);
+            if (Number.isFinite(c)) window.setCartBadge(c);
         } catch (e) { console.error('refreshCartCount failed', e); }
     };
 
