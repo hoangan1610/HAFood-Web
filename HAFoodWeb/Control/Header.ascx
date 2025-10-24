@@ -192,9 +192,10 @@
         </ul>
 
        <div class="nav-icons d-flex align-items-center"
-         id="headerRoot"
-         data-guestid='<%= guestDropdown.ClientID %>'
-         data-authid='<%= authDropdown.ClientID %>'
+  id="headerRoot"
+  data-guestid='<%= guestDropdown.ClientID %>'
+  data-authid='<%= authDropdown.ClientID %>'>
+
 
             <i class="bi bi-search" id="openSearch"></i>
 
