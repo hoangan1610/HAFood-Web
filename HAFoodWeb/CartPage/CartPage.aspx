@@ -321,192 +321,243 @@
         }
     </script>
 
-    <!-- Cart JS: sync chọn item <-> hidden + SelectAll -->
-    <script>
-        (function () {
-            const API = document.getElementById('<%= hidApiBase.ClientID %>').value || '';
-            const UUID = document.getElementById('<%= hidDeviceUuid.ClientID %>').value || '';
-            const JWT = (document.getElementById('<%= hidJwt.ClientID %>')?.value || '').trim();
+    <!-- Cart JS: sync chọn item <-> hidden + SelectAll + 🔔 badge -->
+    <!-- Cart JS: sync chọn item <-> hidden + SelectAll + 🔔 badge (có polyfill + delta) -->
+<script>
+    (function () {
+        const API = document.getElementById('<%= hidApiBase.ClientID %>').value || '';
+    const UUID = document.getElementById('<%= hidDeviceUuid.ClientID %>').value || '';
+    const JWT = (document.getElementById('<%= hidJwt.ClientID %>')?.value || '').trim();
 
-            let sameOrigin = false; try { sameOrigin = new URL(API).host === location.host; } catch { }
-            const HAS_JWT = !!JWT;
-            const USE_USER = HAS_JWT || sameOrigin;
-            const USE_GUEST = !USE_USER;
+    let sameOrigin = false; try { sameOrigin = new URL(API).host === location.host; } catch { }
+    const HAS_JWT = !!JWT;
+    const USE_USER = HAS_JWT || sameOrigin;
+    const USE_GUEST = !USE_USER;
 
-            const fmt = n => (n || 0).toLocaleString('vi-VN') + ' ₫';
+    const fmt = n => (n || 0).toLocaleString('vi-VN') + ' ₫';
 
-            const selectAll = document.getElementById('<%= chkSelectAll.ClientID %>');
-            const hidSelected = document.getElementById('<%= hidSelectedLines.ClientID %>');
+    const selectAll = document.getElementById('<%= chkSelectAll.ClientID %>');
+    const hidSelected = document.getElementById('<%= hidSelectedLines.ClientID %>');
 
-            function withAuthQuery(url) {
-                if (USE_GUEST && UUID) return url + (url.includes('?') ? '&' : '?') + 'device_uuid=' + encodeURIComponent(UUID);
-                return url;
-            }
-            function ensure(opts) {
-                const headers = { 'Content-Type': 'application/json' };
-                if (HAS_JWT) headers['Authorization'] = 'Bearer ' + JWT;
-                return Object.assign({ credentials: 'include', headers }, opts || {});
-            }
-            async function safeJson(resp) { try { return await resp.json(); } catch { return {}; } }
-
-            function syncSelectedHidden() {
-                const selected = [];
-                document.querySelectorAll('.cart-item').forEach(row => {
-                    const cb = row.querySelector('input[type="checkbox"]');
-                    if (cb && cb.checked) {
-                        const lineId = row.getAttribute('data-line-id');
-                        if (lineId) selected.push(lineId);
-                    }
-                });
-                hidSelected.value = selected.join(',');
-            }
-
-            function updateSelectAllUI() {
-                const cbs = Array.from(document.querySelectorAll('.cart-item input[type="checkbox"]'));
-                if (!selectAll) return;
-                if (cbs.length === 0) { selectAll.checked = false; selectAll.indeterminate = false; return; }
-                const checkedCount = cbs.filter(x => x.checked).length;
-                selectAll.checked = (checkedCount === cbs.length);
-                selectAll.indeterminate = (checkedCount > 0 && checkedCount < cbs.length);
-            }
-
-            function patchTotals(payload) {
-                if (payload && payload.totals) {
-                    const t = payload.totals;
-                    document.getElementById('<%= lblSubtotal.ClientID %>').textContent = fmt(t.subtotal);
-                    document.getElementById('<%= lblVat.ClientID %>').textContent      = fmt(t.vat);
-                    document.getElementById('<%= lblShipping.ClientID %>').textContent = fmt(t.shipping);
-                    document.getElementById('<%= lblGrandTotal.ClientID %>').textContent= fmt(t.grand);
-                    document.getElementById('<%= lblTotal.ClientID %>').textContent    = fmt(t.subtotal);
-                }
-            }
-
-            function recalcTotals() {
-                let subtotal = 0, sumItems = 0;
-                document.querySelectorAll('.cart-item').forEach(row => {
-                    const cb = row.querySelector('input[type="checkbox"]');
-                    if (!cb || !cb.checked) return;
-                    const price = Number(row.getAttribute('data-price')) || 0;
-                    const qtyEl = row.querySelector('.qty-num');
-                    const qty = Number(qtyEl?.textContent.trim() || '1') || 1;
-                    subtotal += price * qty; sumItems += qty;
-                });
-                const vat = Math.round(subtotal * 0.08), ship = 0, grand = subtotal + vat + ship;
-                document.getElementById('<%= lblSubtotal.ClientID %>').textContent   = fmt(subtotal);
-                document.getElementById('<%= lblVat.ClientID %>').textContent        = fmt(vat);
-                document.getElementById('<%= lblShipping.ClientID %>').textContent   = fmt(ship);
-                document.getElementById('<%= lblGrandTotal.ClientID %>').textContent = fmt(grand);
-                document.getElementById('<%= lblTotal.ClientID %>').textContent      = fmt(subtotal);
-                document.getElementById('<%= lblSumItems.ClientID %>').textContent   = sumItems.toString();
-            }
-            window.__cartAfterMutate = () => { recalcTotals(); updateSelectAllUI(); syncSelectedHidden(); };
-
-            document.addEventListener('change', (e) => {
-                if (e.target.matches('.cart-item input[type="checkbox"]')) {
-                    recalcTotals();
-                    updateSelectAllUI();
-                    syncSelectedHidden();
-                }
-                if (selectAll && e.target.id === '<%= chkSelectAll.ClientID %>') {
-                    const checked = e.target.checked;
-                    document.querySelectorAll('.cart-item input[type="checkbox"]').forEach(cb => cb.checked = checked);
-                    selectAll.indeterminate = false;
-                    recalcTotals();
-                    syncSelectedHidden();
-                }
+    /* ========== 🔔 POLYFILL BADGE + HELPERS ========== */
+    function badgeEl() { return document.querySelector('[data-cart-badge="true"]'); }
+    function readBadge() {
+        const el = badgeEl(); if (!el) return 0;
+        const n = parseInt((el.textContent || '0').trim(), 10);
+        return Number.isFinite(n) ? n : 0;
+    }
+    function writeBadge(n) {
+        const el = badgeEl(); if (!el) return;
+        const v = Math.max(0, parseInt(n || 0, 10));
+        el.textContent = v;
+        el.style.display = v > 0 ? 'flex' : 'none';
+    }
+    function bumpBadge(delta) {
+        writeBadge(readBadge() + (parseInt(delta || 0, 10)));
+    }
+    // Nếu Header chưa gắn các hàm toàn cục thì polyfill tại chỗ
+    if (typeof window.setCartBadge !== 'function') {
+        window.setCartBadge = writeBadge;
+    }
+    if (typeof window.refreshCartCount !== 'function') {
+        // Fallback đơn giản: tính từ DOM hiện tại (không gọi server)
+        window.refreshCartCount = function () {
+            let sum = 0;
+            document.querySelectorAll('.cart-item .qty-num').forEach(el => {
+                sum += parseInt((el.textContent || '0').trim(), 10) || 0;
             });
+            writeBadge(sum);
+        };
+    }
 
-            document.addEventListener('click', async (e) => {
-                const inc = e.target.closest('.qty-btn[data-inc]');
-                const dec = e.target.closest('.qty-btn[data-dec]');
-                const rm  = e.target.closest('[data-remove]');
-                if (!inc && !dec && !rm) return;
+    /* ========== Request helpers ========== */
+    function withAuthQuery(url) {
+        if (USE_GUEST && UUID) return url + (url.includes('?') ? '&' : '?') + 'device_uuid=' + encodeURIComponent(UUID);
+        return url;
+    }
+    function ensure(opts) {
+        const headers = { 'Content-Type': 'application/json' };
+        if (HAS_JWT) headers['Authorization'] = 'Bearer ' + JWT;
+        return Object.assign({ credentials: 'include', headers }, opts || {});
+    }
+    async function safeJson(resp) { try { return await resp.json(); } catch { return {}; } }
 
-                const row = (inc || dec || rm).closest('.cart-item');
-                if (!row) return;
+    /* ========== UI helpers ========== */
+    function syncSelectedHidden() {
+        const selected = [];
+        document.querySelectorAll('.cart-item').forEach(row => {
+            const cb = row.querySelector('input[type="checkbox"]');
+            if (cb && cb.checked) {
+                const id = row.getAttribute('data-line-id');
+                if (id) selected.push(id);
+            }
+        });
+        hidSelected.value = selected.join(',');
+    }
 
-                const lineId = Number(row.getAttribute('data-line-id'));
-                const price  = Number(row.getAttribute('data-price')) || 0;
+    function updateSelectAllUI() {
+        const cbs = Array.from(document.querySelectorAll('.cart-item input[type="checkbox"]'));
+        if (!selectAll) return;
+        if (cbs.length === 0) { selectAll.checked = false; selectAll.indeterminate = false; return; }
+        const checkedCount = cbs.filter(x => x.checked).length;
+        selectAll.checked = (checkedCount === cbs.length);
+        selectAll.indeterminate = (checkedCount > 0 && checkedCount < cbs.length);
+    }
 
-                if (rm) {
-                    try {
-                        let url = withAuthQuery(`${API}/api/cart/lines/${lineId}`);
-                        let resp = await fetch(url, ensure({ method: 'DELETE' }));
-                        let json = await safeJson(resp);
+    // Bắt cả totals + header.item_Count (nếu API trả), nếu không có thì giữ im
+    function patchTotals(payload) {
+        if (payload && payload.totals) {
+            const t = payload.totals;
+            document.getElementById('<%= lblSubtotal.ClientID %>').textContent = fmt(t.subtotal);
+        document.getElementById('<%= lblVat.ClientID %>').textContent = fmt(t.vat);
+        document.getElementById('<%= lblShipping.ClientID %>').textContent = fmt(t.shipping);
+        document.getElementById('<%= lblGrandTotal.ClientID %>').textContent  = fmt(t.grand);
+      document.getElementById('<%= lblTotal.ClientID %>').textContent       = fmt(t.subtotal);
+    }
+    if (payload?.header?.item_Count != null){
+      window.setCartBadge(payload.header.item_Count);
+    }
+  }
 
-                        if (!resp.ok && json?.code === 'MISSING_USER_OR_DEVICE' && UUID) {
-                            url  = `${API}/api/cart/lines/${lineId}?device_uuid=${encodeURIComponent(UUID)}`;
-                            resp = await fetch(url, ensure({ method: 'DELETE' }));
-                            json = await safeJson(resp);
-                        }
+  function recalcTotals(){
+    let subtotal=0, sumItems=0;
+    document.querySelectorAll('.cart-item').forEach(row=>{
+      const cb = row.querySelector('input[type="checkbox"]');
+      if (!cb || !cb.checked) return;
+      const price = Number(row.getAttribute('data-price')) || 0;
+      const qtyEl = row.querySelector('.qty-num');
+      const qty   = Number(qtyEl?.textContent.trim() || '1') || 1;
+      subtotal += price * qty; sumItems += qty;
+    });
+    const vat = Math.round(subtotal * 0.08), ship=0, grand=subtotal+vat+ship;
+    document.getElementById('<%= lblSubtotal.ClientID %>').textContent    = fmt(subtotal);
+    document.getElementById('<%= lblVat.ClientID %>').textContent         = fmt(vat);
+    document.getElementById('<%= lblShipping.ClientID %>').textContent    = fmt(ship);
+    document.getElementById('<%= lblGrandTotal.ClientID %>').textContent  = fmt(grand);
+    document.getElementById('<%= lblTotal.ClientID %>').textContent       = fmt(subtotal);
+    document.getElementById('<%= lblSumItems.ClientID %>').textContent    = String(sumItems);
+  }
+  window.__cartAfterMutate = () => { recalcTotals(); updateSelectAllUI(); syncSelectedHidden(); };
 
-                        if (!resp.ok) {
-                            if (json?.code === 'CART_LINE_NOT_FOUND') location.reload();
-                            console.error('Delete failed', json);
-                            return;
-                        }
-                        row.remove();
-                        if (json?.totals) patchTotals(json);
-                        recalcTotals();
-                        updateSelectAllUI();
-                        syncSelectedHidden();
-                    } catch (err) { console.error(err); }
-                    return;
-                }
+  /* ========== Events ========== */
+  document.addEventListener('change', (e)=>{
+    if (e.target.matches('.cart-item input[type="checkbox"]')){
+      recalcTotals(); updateSelectAllUI(); syncSelectedHidden();
+    }
+    if (selectAll && e.target.id === '<%= chkSelectAll.ClientID %>'){
+      const checked = e.target.checked;
+      document.querySelectorAll('.cart-item input[type="checkbox"]').forEach(cb=>cb.checked=checked);
+      selectAll.indeterminate = false;
+      recalcTotals(); syncSelectedHidden();
+    }
+  });
 
-                const qtyEl = row.querySelector('.qty-num');
-                let q = Number(qtyEl.textContent.trim()) || 1;
-                q = inc ? q + 1 : Math.max(1, q - 1);
+  document.addEventListener('click', async (e)=>{
+    const inc = e.target.closest('.qty-btn[data-inc]');
+    const dec = e.target.closest('.qty-btn[data-dec]');
+    const rm  = e.target.closest('[data-remove]');
+    if (!inc && !dec && !rm) return;
 
-                qtyEl.textContent = q;
-                const totalEl = row.querySelector('.cart-item-total');
-                if (totalEl) totalEl.textContent = fmt(price * q);
+    const row = (inc || dec || rm).closest('.cart-item');
+    if (!row) return;
 
-                try {
-                    const url  = withAuthQuery(`${API}/api/cart/lines/batch?compact=1`);
-                    let body   = USE_USER ? { changes: [{ line_id: lineId, quantity: q }] }
-                                          : { device_uuid: UUID || null, changes: [{ line_id: lineId, quantity: q }] };
+    const lineId = Number(row.getAttribute('data-line-id'));
+    const price  = Number(row.getAttribute('data-price')) || 0;
 
-                    let resp = await fetch(url, ensure({ method: 'PUT', body: JSON.stringify(body) }));
-                    let json = await safeJson(resp);
+    /* ====== XOÁ DÒNG ====== */
+    if (rm){
+      try{
+        const qtyBefore = Number(row.querySelector('.qty-num')?.textContent.trim() || '1') || 1;
 
-                    if (!resp.ok && json?.code === 'MISSING_USER_OR_DEVICE' && UUID) {
-                        body = { device_uuid: UUID, changes: [{ line_id: lineId, quantity: q }] };
-                        resp = await fetch(`${API}/api/cart/lines/batch?compact=1`, ensure({ method: 'PUT', body: JSON.stringify(body) }));
-                        json = await safeJson(resp);
-                    }
+        let url  = withAuthQuery(`${API}/api/cart/lines/${lineId}`);
+        let resp = await fetch(url, ensure({ method:'DELETE' }));
+        let json = await safeJson(resp);
 
-                    if (!resp.ok) {
-                        if (json?.code === 'CART_LINE_NOT_FOUND') location.reload();
-                        console.error('Update qty failed', json);
-                        return;
-                    }
-                    if (json?.totals) patchTotals(json);
-                    recalcTotals();
-                    updateSelectAllUI();
-                    syncSelectedHidden();
-                } catch (err) { console.error(err); }
-            });
+        if (!resp.ok && json?.code === 'MISSING_USER_OR_DEVICE' && UUID){
+          url  = `${API}/api/cart/lines/${lineId}?device_uuid=${encodeURIComponent(UUID)}`;
+          resp = await fetch(url, ensure({ method:'DELETE' }));
+          json = await safeJson(resp);
+        }
+        if (!resp.ok){
+          if (json?.code === 'CART_LINE_NOT_FOUND') location.reload();
+          console.error('Delete failed', json); return;
+        }
 
-            window.addEventListener('DOMContentLoaded', () => {
-                // Mobile keyboard số cho phone
-                var phone = document.getElementById('<%= txtPhone.ClientID %>');
-                if (phone) {
-                    phone.setAttribute('type', 'tel');
-                    phone.setAttribute('inputmode', 'tel');
-                    phone.setAttribute('autocomplete', 'tel');
-                }
-                // Mặc định chọn tất cả
-                if (selectAll) {
-                    selectAll.checked = true;
-                    document.querySelectorAll('.cart-item input[type="checkbox"]').forEach(cb => cb.checked = true);
-                }
-                recalcTotals();
-                updateSelectAllUI();
-                syncSelectedHidden();
-            });
-        })();
-    </script>
+        row.remove();
+        if (json?.totals || json?.header) patchTotals(json);
+
+        // 🔔 Badge: ưu tiên số từ server; nếu không có → giảm theo delta
+        if (json?.header?.item_Count != null){
+          window.setCartBadge(json.header.item_Count);
+        } else {
+          bumpBadge(-qtyBefore);
+        }
+
+        recalcTotals(); updateSelectAllUI(); syncSelectedHidden();
+      } catch(err){ console.error(err); }
+      return;
+    }
+
+    /* ====== TĂNG / GIẢM SỐ LƯỢNG ====== */
+    const qtyEl = row.querySelector('.qty-num');
+    const qOld  = Number(qtyEl.textContent.trim()) || 1;
+    const q     = inc ? qOld + 1 : Math.max(1, qOld - 1);
+    const delta = q - qOld;
+
+    // Optimistic UI
+    qtyEl.textContent = q;
+    const totalEl = row.querySelector('.cart-item-total');
+    if (totalEl) totalEl.textContent = fmt(price * q);
+
+    try{
+      const url  = withAuthQuery(`${API}/api/cart/lines/batch?compact=1`);
+      let body   = USE_USER ? { changes:[{ line_id: lineId, quantity: q }] }
+                            : { device_uuid: UUID || null, changes:[{ line_id: lineId, quantity: q }] };
+
+      let resp = await fetch(url, ensure({ method:'PUT', body: JSON.stringify(body) }));
+      let json = await safeJson(resp);
+
+      if (!resp.ok && json?.code === 'MISSING_USER_OR_DEVICE' && UUID){
+        body = { device_uuid: UUID, changes:[{ line_id: lineId, quantity: q }] };
+        resp = await fetch(`${API}/api/cart/lines/batch?compact=1`, ensure({ method:'PUT', body: JSON.stringify(body) }));
+        json = await safeJson(resp);
+      }
+      if (!resp.ok){
+        if (json?.code === 'CART_LINE_NOT_FOUND') location.reload();
+        console.error('Update qty failed', json); return;
+      }
+
+      if (json?.totals || json?.header) patchTotals(json);
+
+      // 🔔 Badge: nếu server không trả tổng, ta cộng theo delta
+      if (json?.header?.item_Count != null){
+        window.setCartBadge(json.header.item_Count);
+      } else if (delta !== 0){
+        bumpBadge(delta);
+      }
+
+      recalcTotals(); updateSelectAllUI(); syncSelectedHidden();
+    } catch(err){ console.error(err); }
+  });
+
+  window.addEventListener('DOMContentLoaded', ()=>{
+    // Mobile keyboard cho phone
+    var phone = document.getElementById('<%= txtPhone.ClientID %>');
+      if (phone) { phone.setAttribute('type', 'tel'); phone.setAttribute('inputmode', 'tel'); phone.setAttribute('autocomplete', 'tel'); }
+
+      // Mặc định chọn tất cả
+      if (selectAll) {
+          selectAll.checked = true;
+          document.querySelectorAll('.cart-item input[type="checkbox"]').forEach(cb => cb.checked = true);
+      }
+      recalcTotals(); updateSelectAllUI(); syncSelectedHidden();
+
+      // Đồng bộ badge lần đầu (nếu Header chưa gắn)
+      try { window.refreshCartCount(); } catch { }
+  });
+    })();
+</script>
+
 
 </form>
 </body>
