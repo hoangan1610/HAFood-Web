@@ -28,8 +28,16 @@
         .btn-primary{background:#ff7a00;color:#fff}
         .fv{color:#dc3545;font-size:13px;margin-top:6px}
         .alert{margin:0 0 12px 0;padding:10px 12px;border-radius:10px;background:#ffe6e9;color:#9f2a37;border:1px solid #f5c2c7}
-        .pay-item{display:flex;gap:10px;align-items:center;padding:10px;border:1px solid var(--border);border-radius:10px;cursor:pointer}
-        .pay-item:hover{background:#fafafa}
+
+        /* Alert đẹp mắt */
+        .alertx{display:flex;gap:10px;padding:12px 14px;border-radius:12px;align-items:flex-start;border:1px solid #f5c2c7;background:#fff1f3;color:#9f2a37;margin:0 0 12px 0}
+        .alertx i{font-size:20px;line-height:1;margin-top:2px}
+        .alertx .ax-body{flex:1}
+        .alertx .ax-title{font-weight:800;margin-bottom:4px}
+        .alertx .ax-msg{margin:0}
+        .ax-actions{margin-top:8px;display:flex;gap:8px;flex-wrap:wrap}
+        .btn-link{background:transparent;border:none;color:#c62828;cursor:pointer;text-decoration:underline;padding:0;font-weight:700}
+        .btn-soft{background:#ffe4e8;border:1px solid #ffcdd2;border-radius:999px;padding:6px 12px;cursor:pointer;font-weight:600}
     </style>
 </head>
 <body>
@@ -87,6 +95,9 @@
             <div class="card">
                 <div class="card-h">Chọn phương thức thanh toán</div>
                 <div class="card-b">
+                    <!-- Alert lỗi đẹp mắt -->
+                    <asp:Literal ID="litError" runat="server" Visible="false" />
+
                     <asp:RadioButtonList ID="rblPayment" runat="server" RepeatDirection="Vertical" CssClass="list">
                         <asp:ListItem Value="0" Selected="True">
                             <div class="pay-item"><i class="bi bi-truck"></i> Thanh toán khi nhận hàng (COD)</div>
@@ -109,8 +120,6 @@
                             OnClick="btnPlaceOrder_Click"
                             CausesValidation="true" ValidationGroup="PlaceOrder" />
                     </div>
-
-                    <asp:Label ID="lblError" runat="server" CssClass="fv" Visible="false" />
                 </div>
             </div>
         </div>

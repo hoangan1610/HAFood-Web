@@ -21,13 +21,85 @@ namespace HAFoodWeb.Services
                 req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
         }
 
+        // === NEW: Đổi phương thức thanh toán cho order đã tạo ===
+        public async Task SwitchPaymentAsync(string orderCode, int newMethod, string reason = null)
+        {
+            if (string.IsNullOrWhiteSpace(_apiBase))
+                throw new InvalidOperationException("ApiBaseUrl is not configured.");
+
+            var url = $"{_apiBase}/api/orders/switch-payment/{Uri.EscapeDataString(orderCode)}";
+
+            var body = new { New_Method = newMethod, Reason = reason };
+            var json = JsonConvert.SerializeObject(body);
+
+            var req = new HttpRequestMessage(HttpMethod.Post, url)
+            {
+                Content = new StringContent(json, Encoding.UTF8, "application/json")
+            };
+            req.Headers.Accept.Clear();
+            req.Headers.Accept.ParseAdd("*/*");
+            AttachAuthHeader(req);
+
+            var resp = await HttpJson.Client.SendAsync(req);
+            var text = await resp.Content.ReadAsStringAsync();
+            System.Diagnostics.Debug.WriteLine($"POST {url}\nREQ: {json}\nRESP({(int)resp.StatusCode}): {text}");
+
+            if (!resp.IsSuccessStatusCode)
+                throw new ApplicationException($"SwitchPayment failed {(int)resp.StatusCode}: {text}");
+        }
+
+        // === NEW: Xin link thanh toán mới cho order đã có ===
+        // Ưu tiên endpoint: POST /api/orders/{code}/payment-link { method }
+        // Nếu BE dùng endpoint khác, ta fallback thử /api/orders/checkout (sẽ thất bại nếu cart đóng).
+        public async Task<string> CreatePaymentLinkForOrderAsync(string orderCode, int method)
+        {
+            if (string.IsNullOrWhiteSpace(_apiBase))
+                throw new InvalidOperationException("ApiBaseUrl is not configured.");
+
+            // 1) Thử endpoint chuyên dụng (khớp gợi ý BE)
+            var url1 = $"{_apiBase}/api/orders/{Uri.EscapeDataString(orderCode)}/payment-link";
+            var body = new { method };
+            var json = JsonConvert.SerializeObject(body);
+
+            var req1 = new HttpRequestMessage(HttpMethod.Post, url1)
+            {
+                Content = new StringContent(json, Encoding.UTF8, "application/json")
+            };
+            req1.Headers.Accept.Clear();
+            req1.Headers.Accept.ParseAdd("*/*");
+            AttachAuthHeader(req1);
+
+            var resp1 = await HttpJson.Client.SendAsync(req1);
+            var text1 = await resp1.Content.ReadAsStringAsync();
+            System.Diagnostics.Debug.WriteLine($"POST {url1}\nREQ: {json}\nRESP({(int)resp1.StatusCode}): {text1}");
+
+            if (resp1.IsSuccessStatusCode)
+            {
+                // Chuẩn: trả JSON { payment_Url: "..." } hoặc trả plain text
+                try
+                {
+                    var obj = JsonConvert.DeserializeObject<dynamic>(text1);
+                    string payUrl = obj?.payment_Url ?? obj?.payUrl ?? obj?.url;
+                    if (!string.IsNullOrWhiteSpace(payUrl)) return (string)payUrl;
+                }
+                catch { /* ignore */ }
+
+                var trimmed = (text1 ?? "").Trim('"', ' ', '\n', '\r', '\t');
+                if (trimmed.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+                    return trimmed;
+            }
+
+            // 2) Nếu endpoint trên không tồn tại (404) hoặc không success → báo lỗi rõ
+            throw new ApplicationException($"Create payment link failed {(int)resp1.StatusCode}: {text1}");
+        }
+
+        // ====== GIỮ NGUYÊN CheckoutAsync như bạn đã có ======
         public async Task<OrderCheckoutResponse> CheckoutAsync(OrderCheckoutRequest body)
         {
             if (string.IsNullOrWhiteSpace(_apiBase))
                 throw new InvalidOperationException("ApiBaseUrl is not configured.");
 
             var url = $"{_apiBase}/api/orders/checkout";
-
             var json = JsonConvert.SerializeObject(body, new JsonSerializerSettings
             {
                 Culture = System.Globalization.CultureInfo.InvariantCulture,
@@ -38,11 +110,8 @@ namespace HAFoodWeb.Services
             {
                 Content = new StringContent(json, Encoding.UTF8, "application/json")
             };
-
-            // Backend ghi "text/plain", nên chấp nhận mọi kiểu để an toàn
             req.Headers.Accept.Clear();
             req.Headers.Accept.ParseAdd("*/*");
-
             AttachAuthHeader(req);
 
             var resp = await HttpJson.Client.SendAsync(req);
@@ -53,7 +122,6 @@ namespace HAFoodWeb.Services
             if (!resp.IsSuccessStatusCode)
                 throw new ApplicationException($"Checkout failed {(int)resp.StatusCode}: {respText}");
 
-            // Thử parse JSON trước (kể cả khi server trả text/plain)
             try
             {
                 var parsed = JsonConvert.DeserializeObject<OrderCheckoutResponse>(respText);
@@ -63,9 +131,8 @@ namespace HAFoodWeb.Services
                     return parsed;
                 }
             }
-            catch { /* sẽ fallback */ }
+            catch { /* fallback */ }
 
-            // Fallback: coi toàn bộ body là mã đơn (text)
             var trimmed = (respText ?? "").Trim().Trim('"');
             if (!string.IsNullOrEmpty(trimmed))
                 return new OrderCheckoutResponse { order_Code = trimmed };

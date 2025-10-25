@@ -18,6 +18,17 @@ namespace HAFoodWeb
         private readonly ICartService _cartService = new CartService();
         private const decimal VAT_RATE = 0.08m;
 
+        // ===== NEW: Item snapshot để hiển thị ở CheckoutConfirm khi quay về từ cổng thanh toán
+        public class CheckoutDraftItem
+        {
+            public long VariantId { get; set; }
+            public int Quantity { get; set; }
+            public string ProductName { get; set; }
+            public string VariantName { get; set; }
+            public string ImageUrl { get; set; }
+            public decimal Price { get; set; } // đơn giá
+        }
+
         public class CheckoutDraft
         {
             public string ShipName { get; set; }
@@ -30,6 +41,13 @@ namespace HAFoodWeb
             public string DeviceUuid { get; set; }
             public string CityCode { get; set; }
             public string WardCode { get; set; }
+
+            // ===== NEW: snapshot + totals để fallback khi giỏ bị đóng
+            public CheckoutDraftItem[] Snapshot { get; set; }
+            public decimal SnapshotSubtotal { get; set; }
+            public decimal SnapshotVat { get; set; }
+            public decimal SnapshotShipping { get; set; }
+            public decimal SnapshotGrand { get; set; }
         }
 
         protected async void Page_Load(object sender, EventArgs e)
@@ -240,13 +258,33 @@ namespace HAFoodWeb
             var items = new List<(long variant_Id, int quantity)>();
             var lineIds = new List<long>();
 
+            // ===== NEW: tạo snapshot + tổng ngay tại đây =====
+            var snapshot = new List<CheckoutDraftItem>();
+            decimal subtotal = 0m, shipping = 0m;
+
             if (cartNow?.items != null)
             {
                 foreach (var line in cartNow.items)
                 {
                     if (!selectedLineIds.Contains(line.id)) continue;
+
                     lineIds.Add(line.id);
                     items.Add((line.variant_Id, line.quantity)); // SL mới nhất
+
+                    var price = line.price_Variant;
+                    var qty = line.quantity;
+
+                    snapshot.Add(new CheckoutDraftItem
+                    {
+                        VariantId = line.variant_Id,
+                        Quantity = qty,
+                        ProductName = line.product_Name,
+                        VariantName = line.variant_Name,
+                        ImageUrl = string.IsNullOrWhiteSpace(line.image_Variant) ? "/images/product-default.png" : line.image_Variant,
+                        Price = price
+                    });
+
+                    subtotal += price * qty;
                 }
             }
 
@@ -255,6 +293,9 @@ namespace HAFoodWeb
                 AddPageError("Vui lòng chọn ít nhất 1 sản phẩm để tiếp tục.");
                 return;
             }
+
+            var vat = Math.Round(subtotal * VAT_RATE, 0, MidpointRounding.AwayFromZero);
+            var grand = subtotal + shipping + vat;
 
             string cityText = txtCitySel.Text?.Trim();
             string wardText = txtWardSel.Text?.Trim();
@@ -272,6 +313,13 @@ namespace HAFoodWeb
                 DeviceUuid = deviceUuid,
                 CityCode = txtCityCode.Text?.Trim(),
                 WardCode = txtWardCode.Text?.Trim(),
+
+                // NEW: lưu snapshot & totals để fallback
+                Snapshot = snapshot.ToArray(),
+                SnapshotSubtotal = subtotal,
+                SnapshotVat = vat,
+                SnapshotShipping = shipping,
+                SnapshotGrand = grand
             };
 
             // LƯU draft vào session
