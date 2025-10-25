@@ -1,0 +1,138 @@
+[
+  {
+    "code": "an-giang",
+    "name": "An Giang"
+  },
+  {
+    "code": "bac-ninh",
+    "name": "Bắc Ninh"
+  },
+  {
+    "code": "cao-bang",
+    "name": "Cao Bằng"
+  },
+  {
+    "code": "ca-mau",
+    "name": "Cà Mau"
+  },
+  {
+    "code": "can-tho",
+    "name": "Cần Thơ"
+  },
+  {
+    "code": "gia-lai",
+    "name": "Gia Lai"
+  },
+  {
+    "code": "hue",
+    "name": "Huế"
+  },
+  {
+    "code": "ha-noi",
+    "name": "Hà Nội"
+  },
+  {
+    "code": "ha-tinh",
+    "name": "Hà Tĩnh"
+  },
+  {
+    "code": "hung-yen",
+    "name": "Hưng Yên"
+  },
+  {
+    "code": "hai-phong",
+    "name": "Hải Phòng"
+  },
+  {
+    "code": "khanh-hoa",
+    "name": "Khánh Hòa"
+  },
+  {
+    "code": "lai-chau",
+    "name": "Lai Châu"
+  },
+  {
+    "code": "lao-cai",
+    "name": "Lào Cai"
+  },
+  {
+    "code": "lam-dong",
+    "name": "Lâm Đồng"
+  },
+  {
+    "code": "lang-son",
+    "name": "Lạng Sơn"
+  },
+  {
+    "code": "nghe-an",
+    "name": "Nghệ An"
+  },
+  {
+    "code": "ninh-binh",
+    "name": "Ninh Bình"
+  },
+  {
+    "code": "phu-tho",
+    "name": "Phú Thọ"
+  },
+  {
+    "code": "quang-ngai",
+    "name": "Quảng Ngãi"
+  },
+  {
+    "code": "quang-ninh",
+    "name": "Quảng Ninh"
+  },
+  {
+    "code": "quang-tri",
+    "name": "Quảng Trị"
+  },
+  {
+    "code": "son-la",
+    "name": "Sơn La"
+  },
+  {
+    "code": "tp-ho-chi-minh",
+    "name": "TP. Hồ Chí Minh"
+  },
+  {
+    "code": "thanh-hoa",
+    "name": "Thanh Hóa"
+  },
+  {
+    "code": "thai-nguyen",
+    "name": "Thái Nguyên"
+  },
+  {
+    "code": "tuyen-quang",
+    "name": "Tuyên Quang"
+  },
+  {
+    "code": "tay-ninh",
+    "name": "Tây Ninh"
+  },
+  {
+    "code": "vinh-long",
+    "name": "Vĩnh Long"
+  },
+  {
+    "code": "dien-bien",
+    "name": "Điện Biên"
+  },
+  {
+    "code": "da-nang",
+    "name": "Đà Nẵng"
+  },
+  {
+    "code": "dak-lak",
+    "name": "Đắk Lắk"
+  },
+  {
+    "code": "dong-nai",
+    "name": "Đồng Nai"
+  },
+  {
+    "code": "dong-thap",
+    "name": "Đồng Tháp"
+  }
+]

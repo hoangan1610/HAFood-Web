@@ -1,9 +1,13 @@
-﻿using HAFoodWeb.Models;
+﻿using HAFoodWeb.Cart;
+using HAFoodWeb.Models;
 using HAFoodWeb.Services;
-using HAFoodWeb.Cart;
 using System;
+using System.Collections.Generic;
+using System.Configuration;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using System.Web;
 using System.Web.UI;
 using System.Web.UI.WebControls;
 
@@ -11,7 +15,7 @@ namespace HAFoodWeb
 {
     public partial class CartPage : Page
     {
-        private readonly CartService _cartService = new CartService();
+        private readonly ICartService _cartService = new CartService();
         private const decimal VAT_RATE = 0.08m;
 
         public class CheckoutDraft
@@ -24,25 +28,52 @@ namespace HAFoodWeb
             public long[] SelectedLineIds { get; set; }
             public (long variant_Id, int quantity)[] Items { get; set; }
             public string DeviceUuid { get; set; }
+            public string CityCode { get; set; }
+            public string WardCode { get; set; }
         }
 
         protected async void Page_Load(object sender, EventArgs e)
         {
+            // Chống cache khi back
+            Response.Cache.SetCacheability(System.Web.HttpCacheability.NoCache);
+            Response.Cache.SetNoStore();
+            Response.Cache.SetRevalidation(HttpCacheRevalidation.AllCaches);
+            Response.Cache.SetExpires(DateTime.UtcNow.AddSeconds(-1));
+
+            // Base API cho JS
+            hidApiBase.Value = (ConfigurationManager.AppSettings["ApiBaseUrl"] ?? "").TrimEnd('/');
+
+            // Lấy/khởi tạo device_uuid
             var tracker = new DeviceTracker(Request, Response);
-            tracker.GetOrCreateDeviceUuid();
+            var deviceUuid = tracker.GetOrCreateDeviceUuid();
+            hidDeviceUuid.Value = deviceUuid;
+
+            // (optional) tracking
             await tracker.SendAsync(null);
+
+            // Flag login cho JS
+            hidIsAuth.Value = IsLoggedIn() ? "1" : "0";
+
+            // Nếu chạy localhost: đính JWT cho JS tự gắn Authorization
+            var host = Request.Url.Host?.ToLowerInvariant();
+            if (host == "localhost" || host == "127.0.0.1")
+            {
+                var jwt = Session["JwtToken"] as string;
+                if (!string.IsNullOrWhiteSpace(jwt))
+                    hidJwt.Value = jwt;
+            }
 
             if (!IsPostBack)
                 await BindCart();
-
-            AttachSelectionHandlers();
         }
 
         private async Task BindCart()
         {
             var tracker = new DeviceTracker(Request, Response);
             string deviceUuid = tracker.GetOrCreateDeviceUuid();
-            var cart = await _cartService.GetCartAsync(deviceUuid);
+
+            // Bind theo device_uuid để khớp các request JS
+            CartResponseDto cart = await _cartService.GetCartAsync(deviceUuid);
 
             if (cart?.items == null || !cart.items.Any())
             {
@@ -65,13 +96,11 @@ namespace HAFoodWeb
                 rptCart.DataSource = cart.items;
                 rptCart.DataBind();
 
-                // Auto-select tất cả
+                // Chỉ dùng để set tổng lần đầu (client sẽ tính lại sau)
                 SelectAllCartItems(true);
-                chkSelectAll.Checked = true;
-
                 UpdateTotalsPanel();
             }
-            // update panels
+
             updCart.Update();
             updSummary.Update();
         }
@@ -85,48 +114,6 @@ namespace HAFoodWeb
             }
         }
 
-        protected async void rptCart_ItemCommand(object source, RepeaterCommandEventArgs e)
-        {
-            if (!long.TryParse(e.CommandArgument?.ToString(), out var variantId))
-                return;
-
-            var tracker = new DeviceTracker(Request, Response);
-            string deviceUuid = tracker.GetOrCreateDeviceUuid();
-
-            var cartControl = e.Item.FindControl("CartItemControl") as CartItem;
-            int currentQty = cartControl?.Quantity ?? 0;
-            int newQty = currentQty;
-
-            switch (e.CommandName)
-            {
-                case "Increase": newQty = currentQty + 1; break;
-                case "Decrease": newQty = Math.Max(1, currentQty - 1); break;
-                case "Remove":
-                    await _cartService.DeleteCartItemAsync(variantId, deviceUuid);
-                    await BindCart();
-                    AttachSelectionHandlers();
-                    return;
-                default: return;
-            }
-
-            await _cartService.UpdateQuantityAsync(variantId, deviceUuid, newQty);
-            await BindCart();
-            AttachSelectionHandlers();
-        }
-
-        private void AttachSelectionHandlers()
-        {
-            if (rptCart == null) return;
-            foreach (RepeaterItem item in rptCart.Items)
-            {
-                var cartItem = item.FindControl("CartItemControl") as CartItem;
-                if (cartItem == null) continue;
-
-                cartItem.SelectionChanged -= CartItem_SelectionChanged;
-                cartItem.SelectionChanged += CartItem_SelectionChanged;
-            }
-        }
-
         protected void rptCart_ItemDataBound(object sender, RepeaterItemEventArgs e)
         {
             if (e.Item.ItemType != ListItemType.Item && e.Item.ItemType != ListItemType.AlternatingItem) return;
@@ -135,47 +122,14 @@ namespace HAFoodWeb
             var cartItem = (CartItem)e.Item.FindControl("CartItemControl");
             if (cartItem == null || data == null) return;
 
+            cartItem.LineId = data.id;
             cartItem.VariantId = data.variant_Id;
             cartItem.ProductName = data.product_Name;
             cartItem.VariantName = data.variant_Name;
             cartItem.ImageUrl = data.image_Variant;
             cartItem.Price = data.price_Variant;
             cartItem.Quantity = data.quantity;
-
-            cartItem.WeightPerUnit = 0m; // TODO: bind khi backend có
-
-            var btnInc = cartItem.FindControl("btnIncrease") as LinkButton;
-            var btnDec = cartItem.FindControl("btnDecrease") as LinkButton;
-            var btnRem = cartItem.FindControl("btnRemove") as LinkButton;
-
-            var vid = data.variant_Id.ToString();
-            if (btnInc != null) btnInc.CommandArgument = vid;
-            if (btnDec != null) btnDec.CommandArgument = vid;
-            if (btnRem != null) btnRem.CommandArgument = vid;
-        }
-
-        private void CartItem_SelectionChanged(object sender, EventArgs e)
-        {
-            bool allSelected = true;
-            foreach (RepeaterItem item in rptCart.Items)
-            {
-                var ci = item.FindControl("CartItemControl") as CartItem;
-                if (ci == null) continue;
-                if (!ci.Selected) { allSelected = false; break; }
-            }
-            chkSelectAll.Checked = allSelected;
-
-            UpdateTotalsPanel();
-            updSummary.Update();
-        }
-
-        protected void chkSelectAll_CheckedChanged(object sender, EventArgs e)
-        {
-            bool checkedAll = chkSelectAll.Checked;
-            SelectAllCartItems(checkedAll);
-            UpdateTotalsPanel();
-            updCart.Update();
-            updSummary.Update();
+            cartItem.WeightPerUnit = 0m;
         }
 
         private void UpdateTotalsPanel()
@@ -183,7 +137,7 @@ namespace HAFoodWeb
             decimal subtotal = 0m;
             int sumItems = 0;
             decimal shipping = 0m;
-            decimal weight = 0m; // gram
+            decimal weight = 0m;
 
             foreach (RepeaterItem item in rptCart.Items)
             {
@@ -192,7 +146,6 @@ namespace HAFoodWeb
                 {
                     subtotal += cartItem.Price * cartItem.Quantity;
                     sumItems += cartItem.Quantity;
-                    // weight += cartItem.WeightPerUnit * cartItem.Quantity;
                 }
             }
 
@@ -209,7 +162,6 @@ namespace HAFoodWeb
             lblGrandTotal.Text = string.Format(viVN, "{0:N0} ₫", grand);
         }
 
-        // ===== Helpers =====
         private static string MergeAddress(string street, string wardText, string cityText)
         {
             string[] parts = new[] { street, wardText, cityText };
@@ -238,20 +190,66 @@ namespace HAFoodWeb
             return hasToken || (Context?.User?.Identity?.IsAuthenticated ?? false);
         }
 
-        // ===== SINGLE handler duy nhất =====
-        protected void btnCheckout_Click(object sender, EventArgs e)
+        // Phone validator (server)
+        protected void cvPhone_ServerValidate(object source, ServerValidateEventArgs args)
         {
+            var s = args.Value ?? "";
+            s = Regex.Replace(s, @"[\s\.\-]", "");         // bỏ khoảng trắng/dấu
+            s = Regex.Replace(s, @"^\+840", "+84");        // +840xxxxxxxx -> +84xxxxxxxx
+            args.IsValid = Regex.IsMatch(s, @"^(0\d{9}|\+84\d{9})$");
+            if (args.IsValid)
+            {
+                // Ghi lại bản chuẩn hoá vào textbox
+                txtPhone.Text = s;
+            }
+        }
+
+        // City/Ward validator (server)
+        protected void cvCity_ServerValidate(object source, ServerValidateEventArgs args)
+        {
+            args.IsValid = !string.IsNullOrWhiteSpace(txtCitySel.Text);
+        }
+        protected void cvWard_ServerValidate(object source, ServerValidateEventArgs args)
+        {
+            args.IsValid = !string.IsNullOrWhiteSpace(txtWardSel.Text);
+        }
+
+        protected async void btnCheckout_Click(object sender, EventArgs e)
+        {
+            // Server guard: bắt buộc có City/Ward
+            if (string.IsNullOrWhiteSpace(txtCitySel.Text) || string.IsNullOrWhiteSpace(txtWardSel.Text))
+            {
+                AddPageError("Vui lòng chọn Tỉnh/Thành và Xã/Phường.");
+                return;
+            }
             if (!Page.IsValid) return;
 
-            var items = new System.Collections.Generic.List<(long, int)>();
-            var lineIds = new System.Collections.Generic.List<long>();
-            foreach (RepeaterItem it in rptCart.Items)
+            // Lấy danh sách line_id đã chọn từ hidden (client truth)
+            var rawSelected = hidSelectedLines.Value ?? "";
+            var selectedLineIds = new HashSet<long>(
+                rawSelected.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
+                           .Select(s => long.TryParse(s, out var x) ? x : -1)
+                           .Where(x => x > 0)
+            );
+
+            // Đọc giỏ mới nhất từ API theo deviceUuid
+            var tracker = new DeviceTracker(Request, Response);
+            var deviceUuid = tracker.GetOrCreateDeviceUuid();
+            var cartNow = await _cartService.GetCartAsync(deviceUuid);
+
+            var items = new List<(long variant_Id, int quantity)>();
+            var lineIds = new List<long>();
+
+            if (cartNow?.items != null)
             {
-                var ci = it.FindControl("CartItemControl") as Cart.CartItem;
-                if (ci == null || !ci.Selected) continue;
-                if (ci.LineId > 0) lineIds.Add(ci.LineId);
-                items.Add((ci.VariantId, ci.Quantity));
+                foreach (var line in cartNow.items)
+                {
+                    if (!selectedLineIds.Contains(line.id)) continue;
+                    lineIds.Add(line.id);
+                    items.Add((line.variant_Id, line.quantity)); // SL mới nhất
+                }
             }
+
             if (items.Count == 0)
             {
                 AddPageError("Vui lòng chọn ít nhất 1 sản phẩm để tiếp tục.");
@@ -262,9 +260,6 @@ namespace HAFoodWeb
             string wardText = txtWardSel.Text?.Trim();
             string fullAddr = MergeAddress(txtAddress.Text, wardText, cityText);
 
-            var tracker = new DeviceTracker(Request, Response);
-            var deviceUuid = tracker.GetOrCreateDeviceUuid();
-
             var draft = new CheckoutDraft
             {
                 ShipName = txtReceiver.Text.Trim(),
@@ -274,13 +269,14 @@ namespace HAFoodWeb
                 Note = txtNote?.Text?.Trim(),
                 SelectedLineIds = lineIds.Count > 0 ? lineIds.ToArray() : null,
                 Items = items.ToArray(),
-                DeviceUuid = deviceUuid
+                DeviceUuid = deviceUuid,
+                CityCode = txtCityCode.Text?.Trim(),
+                WardCode = txtWardCode.Text?.Trim(),
             };
 
-            // Lưu draft trước khi điều hướng
+            // LƯU draft vào session
             Session["checkout_draft"] = draft;
 
-            // Bắt đăng nhập
             if (!IsLoggedIn())
             {
                 var returnUrl = Server.UrlEncode(ResolveUrl("~/CartPage/CheckoutConfirm.aspx"));
@@ -291,7 +287,6 @@ namespace HAFoodWeb
                 return;
             }
 
-            // Đã đăng nhập -> sang trang xác nhận
             var url = ResolveUrl("~/CartPage/CheckoutConfirm.aspx");
             Response.Redirect(url, false);
             Context.ApplicationInstance.CompleteRequest();

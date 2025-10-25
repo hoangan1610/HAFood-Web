@@ -1,0 +1,386 @@
+[
+  {
+    "code": "21034",
+    "name": "An Phú"
+  },
+  {
+    "code": "21499",
+    "name": "Ba Dinh"
+  },
+  {
+    "code": "21205",
+    "name": "Ba Gia"
+  },
+  {
+    "code": "21523",
+    "name": "Ba Tô"
+  },
+  {
+    "code": "21484",
+    "name": "Ba Tơ"
+  },
+  {
+    "code": "21490",
+    "name": "Ba Vinh"
+  },
+  {
+    "code": "21529",
+    "name": "Ba Vì"
+  },
+  {
+    "code": "21538",
+    "name": "Ba Xa"
+  },
+  {
+    "code": "21496",
+    "name": "Ba Động"
+  },
+  {
+    "code": "21100",
+    "name": "Bình Chương"
+  },
+  {
+    "code": "21085",
+    "name": "Bình Minh"
+  },
+  {
+    "code": "21040",
+    "name": "Bình Sơn"
+  },
+  {
+    "code": "23377",
+    "name": "Bờ Y"
+  },
+  {
+    "code": "21136",
+    "name": "Cà Đam"
+  },
+  {
+    "code": "21025",
+    "name": "Cẩm Thành"
+  },
+  {
+    "code": "23383",
+    "name": "Dục Nông"
+  },
+  {
+    "code": "23326",
+    "name": "Ia Chim"
+  },
+  {
+    "code": "23538",
+    "name": "Ia Tơi"
+  },
+  {
+    "code": "23535",
+    "name": "Ia Đal"
+  },
+  {
+    "code": "21472",
+    "name": "Khánh Cường"
+  },
+  {
+    "code": "23497",
+    "name": "Kon Braih"
+  },
+  {
+    "code": "23476",
+    "name": "Kon Plông"
+  },
+  {
+    "code": "23293",
+    "name": "Kon Tum"
+  },
+  {
+    "code": "23430",
+    "name": "Kon Đào"
+  },
+  {
+    "code": "21409",
+    "name": "Long Phụng"
+  },
+  {
+    "code": "21433",
+    "name": "Lân Phong"
+  },
+  {
+    "code": "21548",
+    "name": "Lý Sơn"
+  },
+  {
+    "code": "21361",
+    "name": "Minh Long"
+  },
+  {
+    "code": "21421",
+    "name": "Mỏ Cày"
+  },
+  {
+    "code": "23536",
+    "name": "Mô Rai"
+  },
+  {
+    "code": "23455",
+    "name": "Măng Bút"
+  },
+  {
+    "code": "23446",
+    "name": "Măng Ri"
+  },
+  {
+    "code": "23473",
+    "name": "Măng Đen"
+  },
+  {
+    "code": "21400",
+    "name": "Mộ Đức"
+  },
+  {
+    "code": "21250",
+    "name": "Nghĩa Giang"
+  },
+  {
+    "code": "21364",
+    "name": "Nghĩa Hành"
+  },
+  {
+    "code": "21028",
+    "name": "Nghĩa Lộ"
+  },
+  {
+    "code": "21457",
+    "name": "Nguyễn Nghiêm"
+  },
+  {
+    "code": "23365",
+    "name": "Ngọc Linh"
+  },
+  {
+    "code": "23317",
+    "name": "Ngọk Bay"
+  },
+  {
+    "code": "23515",
+    "name": "Ngọk Réo"
+  },
+  {
+    "code": "23428",
+    "name": "Ngọk Tụ"
+  },
+  {
+    "code": "21370",
+    "name": "Phước Giang"
+  },
+  {
+    "code": "23530",
+    "name": "Rờ Kơi"
+  },
+  {
+    "code": "23534",
+    "name": "Sa Bình"
+  },
+  {
+    "code": "21478",
+    "name": "Sa Huỳnh"
+  },
+  {
+    "code": "23392",
+    "name": "Sa Loong"
+  },
+  {
+    "code": "23527",
+    "name": "Sa Thầy"
+  },
+  {
+    "code": "21289",
+    "name": "Sơn Hà"
+  },
+  {
+    "code": "21292",
+    "name": "Sơn Hạ"
+  },
+  {
+    "code": "21325",
+    "name": "Sơn Kỳ"
+  },
+  {
+    "code": "21307",
+    "name": "Sơn Linh"
+  },
+  {
+    "code": "21349",
+    "name": "Sơn Mai"
+  },
+  {
+    "code": "21319",
+    "name": "Sơn Thủy"
+  },
+  {
+    "code": "21340",
+    "name": "Sơn Tây"
+  },
+  {
+    "code": "21343",
+    "name": "Sơn Tây Hạ"
+  },
+  {
+    "code": "21334",
+    "name": "Sơn Tây Thượng"
+  },
+  {
+    "code": "21220",
+    "name": "Sơn Tịnh"
+  },
+  {
+    "code": "21124",
+    "name": "Thanh Bồng"
+  },
+  {
+    "code": "21388",
+    "name": "Thiện Tín"
+  },
+  {
+    "code": "21181",
+    "name": "Thọ Phong"
+  },
+  {
+    "code": "21115",
+    "name": "Trà Bồng"
+  },
+  {
+    "code": "21451",
+    "name": "Trà Câu"
+  },
+  {
+    "code": "21244",
+    "name": "Trà Giang"
+  },
+  {
+    "code": "21172",
+    "name": "Trương Quang Trọng"
+  },
+  {
+    "code": "21196",
+    "name": "Trường Giang"
+  },
+  {
+    "code": "23425",
+    "name": "Tu Mơ Rông"
+  },
+  {
+    "code": "21154",
+    "name": "Tây Trà"
+  },
+  {
+    "code": "21157",
+    "name": "Tây Trà Bồng"
+  },
+  {
+    "code": "21235",
+    "name": "Tư Nghĩa"
+  },
+  {
+    "code": "21211",
+    "name": "Tịnh Khê"
+  },
+  {
+    "code": "21061",
+    "name": "Vạn Tường"
+  },
+  {
+    "code": "21238",
+    "name": "Vệ Giang"
+  },
+  {
+    "code": "23356",
+    "name": "Xốp"
+  },
+  {
+    "code": "23548",
+    "name": "Ya Ly"
+  },
+  {
+    "code": "21385",
+    "name": "Đình Cương"
+  },
+  {
+    "code": "21109",
+    "name": "Đông Sơn"
+  },
+  {
+    "code": "21127",
+    "name": "Đông Trà Bồng"
+  },
+  {
+    "code": "23302",
+    "name": "Đăk BLa"
+  },
+  {
+    "code": "23284",
+    "name": "Đăk Cấm"
+  },
+  {
+    "code": "23500",
+    "name": "Đăk Hà"
+  },
+  {
+    "code": "23485",
+    "name": "Đăk Kôi"
+  },
+  {
+    "code": "23368",
+    "name": "Đăk Long"
+  },
+  {
+    "code": "23512",
+    "name": "Đăk Mar"
+  },
+  {
+    "code": "23374",
+    "name": "Đăk Môn"
+  },
+  {
+    "code": "23344",
+    "name": "Đăk Plô"
+  },
+  {
+    "code": "23504",
+    "name": "Đăk Pxi"
+  },
+  {
+    "code": "23341",
+    "name": "Đăk Pék"
+  },
+  {
+    "code": "23479",
+    "name": "Đăk Rve"
+  },
+  {
+    "code": "23332",
+    "name": "Đăk Rơ Wa"
+  },
+  {
+    "code": "23416",
+    "name": "Đăk Sao"
+  },
+  {
+    "code": "23401",
+    "name": "Đăk Tô"
+  },
+  {
+    "code": "23419",
+    "name": "Đăk Tờ Kan"
+  },
+  {
+    "code": "23510",
+    "name": "Đăk Ui"
+  },
+  {
+    "code": "21520",
+    "name": "Đặng Thùy Trâm"
+  },
+  {
+    "code": "21439",
+    "name": "Đức Phổ"
+  }
+]

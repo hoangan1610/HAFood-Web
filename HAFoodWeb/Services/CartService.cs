@@ -8,104 +8,119 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Web;
 
-public class CartService : ICartService
+namespace HAFoodWeb.Services
 {
-    private readonly string _apiBase = ConfigurationManager.AppSettings["ApiBaseUrl"]?.TrimEnd('/');
-
-    private void AttachAuthHeader(HttpRequestMessage req)
+    public class CartService : ICartService
     {
-        var token = HttpContext.Current?.Request?.Cookies["AuthToken"]?.Value;
-        if (!string.IsNullOrEmpty(token))
-            req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
-    }
+        private readonly string _apiBase = ConfigurationManager.AppSettings["ApiBaseUrl"]?.TrimEnd('/');
 
-    public async Task<CartResponseDto> GetCartAsync(string deviceUuid)
-    {
-        var url = $"{_apiBase}/api/cart?device_uuid={HttpUtility.UrlEncode(deviceUuid)}";
-        var req = new HttpRequestMessage(HttpMethod.Get, url);
-        AttachAuthHeader(req);
-        var resp = await HttpJson.Client.SendAsync(req);
-        var json = await resp.Content.ReadAsStringAsync();
-        if (!resp.IsSuccessStatusCode)
+        private void AttachAuthHeader(HttpRequestMessage req)
         {
-            System.Diagnostics.Debug.WriteLine($"GET {url} FAILED: {(int)resp.StatusCode}\n{json}");
-            return null;
+            var token = System.Web.HttpContext.Current?.Request?.Cookies["AuthToken"]?.Value;
+            if (!string.IsNullOrEmpty(token))
+                req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
         }
-        return JsonConvert.DeserializeObject<CartResponseDto>(json);
-    }
 
-    public async Task<CartResponseDto> AddCartItemAsync(string deviceUuid, CartAddRequest item)
-    {
-        var url = $"{_apiBase}/api/cart/items?device_uuid={HttpUtility.UrlEncode(deviceUuid)}";
-        var settings = new JsonSerializerSettings
-        {
-            Culture = System.Globalization.CultureInfo.InvariantCulture,
-            NullValueHandling = NullValueHandling.Ignore
-        };
-        var content = new StringContent(JsonConvert.SerializeObject(item, settings), Encoding.UTF8, "application/json");
-        var req = new HttpRequestMessage(HttpMethod.Post, url) { Content = content };
-        AttachAuthHeader(req);
+        // === Lấy giỏ: ĐÃ ĐĂNG NHẬP (KHÔNG kèm device_uuid) ===
+        public Task<CartResponseDto> GetCartAsync()
+            => GetCartInternalAsync(null);
 
-        var resp = await HttpJson.Client.SendAsync(req);
-        var json = await resp.Content.ReadAsStringAsync();
-        if (!resp.IsSuccessStatusCode)
+        // === Lấy giỏ: KHÁCH (CÓ kèm device_uuid) ===
+        public Task<CartResponseDto> GetCartAsync(string deviceUuid)
+            => GetCartInternalAsync(deviceUuid);
+
+        private async Task<CartResponseDto> GetCartInternalAsync(string deviceUuidOrNull)
         {
-            System.Diagnostics.Debug.WriteLine($"POST {url} FAILED\nBody:{await content.ReadAsStringAsync()}\nResp:{json}");
-            return null;
+            var url = string.IsNullOrWhiteSpace(deviceUuidOrNull)
+                ? $"{_apiBase}/api/cart"
+                : $"{_apiBase}/api/cart?device_uuid={HttpUtility.UrlEncode(deviceUuidOrNull)}";
+
+            var req = new HttpRequestMessage(HttpMethod.Get, url);
+            AttachAuthHeader(req);
+
+            var resp = await HttpJson.Client.SendAsync(req);
+            var json = await resp.Content.ReadAsStringAsync();
+            if (!resp.IsSuccessStatusCode)
+            {
+                System.Diagnostics.Debug.WriteLine($"GET {url} FAILED: {(int)resp.StatusCode}\n{json}");
+                return null;
+            }
+            return JsonConvert.DeserializeObject<CartResponseDto>(json);
         }
-        return JsonConvert.DeserializeObject<CartResponseDto>(json);
-    }
 
-    public async Task<CartResponseDto> UpdateQuantityAsync(long variantId, string deviceUuid, int quantity)
-    {
-        var url = $"{_apiBase}/api/cart/items/{variantId}?device_uuid={HttpUtility.UrlEncode(deviceUuid)}";
-        var body = new { quantity };
-        var content = new StringContent(JsonConvert.SerializeObject(body, new JsonSerializerSettings
+        public async Task<CartResponseDto> AddCartItemAsync(string deviceUuid, CartAddRequest item)
         {
-            Culture = System.Globalization.CultureInfo.InvariantCulture
-        }), Encoding.UTF8, "application/json");
-        var req = new HttpRequestMessage(HttpMethod.Put, url) { Content = content };
-        AttachAuthHeader(req);
+            var url = $"{_apiBase}/api/cart/items?device_uuid={HttpUtility.UrlEncode(deviceUuid)}";
+            var settings = new JsonSerializerSettings
+            {
+                Culture = System.Globalization.CultureInfo.InvariantCulture,
+                NullValueHandling = NullValueHandling.Ignore
+            };
+            var content = new StringContent(JsonConvert.SerializeObject(item, settings), Encoding.UTF8, "application/json");
+            var req = new HttpRequestMessage(HttpMethod.Post, url) { Content = content };
+            AttachAuthHeader(req);
 
-        var resp = await HttpJson.Client.SendAsync(req);
-        var json = await resp.Content.ReadAsStringAsync();
-        if (!resp.IsSuccessStatusCode)
-        {
-            System.Diagnostics.Debug.WriteLine($"PUT {url} FAILED\nBody:{await content.ReadAsStringAsync()}\nResp:{json}");
-            return null;
+            var resp = await HttpJson.Client.SendAsync(req);
+            var json = await resp.Content.ReadAsStringAsync();
+            if (!resp.IsSuccessStatusCode)
+            {
+                System.Diagnostics.Debug.WriteLine($"POST {url} FAILED\nBody:{await content.ReadAsStringAsync()}\nResp:{json}");
+                return null;
+            }
+            return JsonConvert.DeserializeObject<CartResponseDto>(json);
         }
-        return JsonConvert.DeserializeObject<CartResponseDto>(json);
-    }
 
-    public async Task<CartResponseDto> DeleteCartItemAsync(long variantId, string deviceUuid)
-    {
-        var url = $"{_apiBase}/api/cart/items/{variantId}?device_uuid={HttpUtility.UrlEncode(deviceUuid)}";
-        var req = new HttpRequestMessage(HttpMethod.Delete, url);
-        AttachAuthHeader(req);
-
-        var resp = await HttpJson.Client.SendAsync(req);
-        var json = await resp.Content.ReadAsStringAsync();
-        if (!resp.IsSuccessStatusCode)
+        public async Task<CartResponseDto> UpdateQuantityAsync(long variantId, string deviceUuid, int quantity)
         {
-            System.Diagnostics.Debug.WriteLine($"DELETE {url} FAILED\n{json}");
-            return null;
+            var url = $"{_apiBase}/api/cart/items/{variantId}?device_uuid={HttpUtility.UrlEncode(deviceUuid)}";
+            var body = new { quantity };
+            var content = new StringContent(JsonConvert.SerializeObject(body, new JsonSerializerSettings
+            {
+                Culture = System.Globalization.CultureInfo.InvariantCulture
+            }), Encoding.UTF8, "application/json");
+            var req = new HttpRequestMessage(HttpMethod.Put, url) { Content = content };
+            AttachAuthHeader(req);
+
+            var resp = await HttpJson.Client.SendAsync(req);
+            var json = await resp.Content.ReadAsStringAsync();
+            if (!resp.IsSuccessStatusCode)
+            {
+                System.Diagnostics.Debug.WriteLine($"PUT {url} FAILED\nBody:{await content.ReadAsStringAsync()}\nResp:{json}");
+                return null;
+            }
+            return JsonConvert.DeserializeObject<CartResponseDto>(json);
         }
-        return JsonConvert.DeserializeObject<CartResponseDto>(json);
-    }
 
-    public async Task<CartResponseDto> ClearCartAsync(string deviceUuid)
-    {
-        var url = $"{_apiBase}/api/cart/items?device_uuid={HttpUtility.UrlEncode(deviceUuid)}";
-        var req = new HttpRequestMessage(HttpMethod.Delete, url);
-        AttachAuthHeader(req);
-
-        var resp = await HttpJson.Client.SendAsync(req);
-        var json = await resp.Content.ReadAsStringAsync();
-        if (!resp.IsSuccessStatusCode)
+        public async Task<CartResponseDto> DeleteCartItemAsync(long variantId, string deviceUuid)
         {
-            System.Diagnostics.Debug.WriteLine($"DELETE {url} FAILED\n{json}");
-            return null;
+            var url = $"{_apiBase}/api/cart/items/{variantId}?device_uuid={HttpUtility.UrlEncode(deviceUuid)}";
+            var req = new HttpRequestMessage(HttpMethod.Delete, url);
+            AttachAuthHeader(req);
+
+            var resp = await HttpJson.Client.SendAsync(req);
+            var json = await resp.Content.ReadAsStringAsync();
+            if (!resp.IsSuccessStatusCode)
+            {
+                System.Diagnostics.Debug.WriteLine($"DELETE {url} FAILED\n{json}");
+                return null;
+            }
+            return JsonConvert.DeserializeObject<CartResponseDto>(json);
         }
-        return JsonConvert.DeserializeObject<CartResponseDto>(json);
+
+        public async Task<CartResponseDto> ClearCartAsync(string deviceUuid)
+        {
+            var url = $"{_apiBase}/api/cart/items?device_uuid={HttpUtility.UrlEncode(deviceUuid)}";
+            var req = new HttpRequestMessage(HttpMethod.Delete, url);
+            AttachAuthHeader(req);
+
+            var resp = await HttpJson.Client.SendAsync(req);
+            var json = await resp.Content.ReadAsStringAsync();
+            if (!resp.IsSuccessStatusCode)
+            {
+                System.Diagnostics.Debug.WriteLine($"DELETE {url} FAILED\n{json}");
+                return null;
+            }
+            return JsonConvert.DeserializeObject<CartResponseDto>(json);
+        }
     }
 }

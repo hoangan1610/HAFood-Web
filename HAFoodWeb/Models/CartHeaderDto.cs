@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 
 namespace HAFoodWeb.Models
@@ -13,5 +14,11 @@ namespace HAFoodWeb.Models
         public DateTime updated_At { get; set; }
         public int item_Count { get; set; }
         public decimal subtotal { get; set; } // decimal
+    }
+
+    public class CartViewDto
+    {
+        public CartHeaderDto header { get; set; }
+        public List<CartItemDto> items { get; set; }
     }
 }

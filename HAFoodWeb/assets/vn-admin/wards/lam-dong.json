@@ -1,0 +1,498 @@
+[
+  {
+    "code": "24823",
+    "name": "1 Bảo Lộc"
+  },
+  {
+    "code": "24820",
+    "name": "2 Bảo Lộc"
+  },
+  {
+    "code": "24841",
+    "name": "3 Bảo Lộc"
+  },
+  {
+    "code": "22960",
+    "name": "Bình Thuận"
+  },
+  {
+    "code": "25054",
+    "name": "Bảo Lâm 1"
+  },
+  {
+    "code": "25084",
+    "name": "Bảo Lâm 2"
+  },
+  {
+    "code": "25093",
+    "name": "Bảo Lâm 3"
+  },
+  {
+    "code": "25063",
+    "name": "Bảo Lâm 4"
+  },
+  {
+    "code": "25057",
+    "name": "Bảo Lâm 5"
+  },
+  {
+    "code": "25018",
+    "name": "Bảo Thuận"
+  },
+  {
+    "code": "23005",
+    "name": "Bắc Bình"
+  },
+  {
+    "code": "24611",
+    "name": "Bắc Gia Nghĩa"
+  },
+  {
+    "code": "23152",
+    "name": "Bắc Ruộng"
+  },
+  {
+    "code": "24829",
+    "name": "B’Lao"
+  },
+  {
+    "code": "24787",
+    "name": "Cam Ly - Đà Lạt"
+  },
+  {
+    "code": "25159",
+    "name": "Cát Tiên"
+  },
+  {
+    "code": "25180",
+    "name": "Cát Tiên 2"
+  },
+  {
+    "code": "25162",
+    "name": "Cát Tiên 3"
+  },
+  {
+    "code": "24640",
+    "name": "Cư Jút"
+  },
+  {
+    "code": "25000",
+    "name": "Di Linh"
+  },
+  {
+    "code": "24934",
+    "name": "D’Ran"
+  },
+  {
+    "code": "25015",
+    "name": "Gia Hiệp"
+  },
+  {
+    "code": "24967",
+    "name": "Hiệp Thạnh"
+  },
+  {
+    "code": "23194",
+    "name": "Hoài Đức"
+  },
+  {
+    "code": "23128",
+    "name": "Hàm Kiệm"
+  },
+  {
+    "code": "23095",
+    "name": "Hàm Liêm"
+  },
+  {
+    "code": "23059",
+    "name": "Hàm Thuận"
+  },
+  {
+    "code": "23089",
+    "name": "Hàm Thuận Bắc"
+  },
+  {
+    "code": "23110",
+    "name": "Hàm Thuận Nam"
+  },
+  {
+    "code": "23122",
+    "name": "Hàm Thạnh"
+  },
+  {
+    "code": "22933",
+    "name": "Hàm Thắng"
+  },
+  {
+    "code": "23236",
+    "name": "Hàm Tân"
+  },
+  {
+    "code": "25042",
+    "name": "Hòa Bắc"
+  },
+  {
+    "code": "25036",
+    "name": "Hòa Ninh"
+  },
+  {
+    "code": "23053",
+    "name": "Hòa Thắng"
+  },
+  {
+    "code": "23020",
+    "name": "Hải Ninh"
+  },
+  {
+    "code": "23086",
+    "name": "Hồng Sơn"
+  },
+  {
+    "code": "23041",
+    "name": "Hồng Thái"
+  },
+  {
+    "code": "24943",
+    "name": "Ka Đô"
+  },
+  {
+    "code": "24733",
+    "name": "Kiến Đức"
+  },
+  {
+    "code": "24688",
+    "name": "Krông Nô"
+  },
+  {
+    "code": "23065",
+    "name": "La Dạ"
+  },
+  {
+    "code": "23235",
+    "name": "La Gi"
+  },
+  {
+    "code": "24846",
+    "name": "Lang Biang - Đà Lạt"
+  },
+  {
+    "code": "22969",
+    "name": "Liên Hương"
+  },
+  {
+    "code": "24778",
+    "name": "Lâm Viên - Đà Lạt"
+  },
+  {
+    "code": "23032",
+    "name": "Lương Sơn"
+  },
+  {
+    "code": "24848",
+    "name": "Lạc Dương"
+  },
+  {
+    "code": "22918",
+    "name": "Mũi Né"
+  },
+  {
+    "code": "24868",
+    "name": "Nam Ban Lâm Hà"
+  },
+  {
+    "code": "24649",
+    "name": "Nam Dong"
+  },
+  {
+    "code": "24615",
+    "name": "Nam Gia Nghĩa"
+  },
+  {
+    "code": "24883",
+    "name": "Nam Hà Lâm Hà"
+  },
+  {
+    "code": "23200",
+    "name": "Nam Thành"
+  },
+  {
+    "code": "24697",
+    "name": "Nam Đà"
+  },
+  {
+    "code": "23158",
+    "name": "Nghị Đức"
+  },
+  {
+    "code": "24751",
+    "name": "Nhân Cơ"
+  },
+  {
+    "code": "24985",
+    "name": "Ninh Gia"
+  },
+  {
+    "code": "24703",
+    "name": "Nâm Nung"
+  },
+  {
+    "code": "22972",
+    "name": "Phan Rí Cửa"
+  },
+  {
+    "code": "23008",
+    "name": "Phan Sơn"
+  },
+  {
+    "code": "22945",
+    "name": "Phan Thiết"
+  },
+  {
+    "code": "23272",
+    "name": "Phú Quý"
+  },
+  {
+    "code": "24895",
+    "name": "Phú Sơn Lâm Hà"
+  },
+  {
+    "code": "22924",
+    "name": "Phú Thủy"
+  },
+  {
+    "code": "24907",
+    "name": "Phúc Thọ Lâm Hà"
+  },
+  {
+    "code": "23231",
+    "name": "Phước Hội"
+  },
+  {
+    "code": "24620",
+    "name": "Quảng Hòa"
+  },
+  {
+    "code": "24631",
+    "name": "Quảng Khê"
+  },
+  {
+    "code": "24955",
+    "name": "Quảng Lập"
+  },
+  {
+    "code": "24712",
+    "name": "Quảng Phú"
+  },
+  {
+    "code": "24616",
+    "name": "Quảng Sơn"
+  },
+  {
+    "code": "24736",
+    "name": "Quảng Trực"
+  },
+  {
+    "code": "24748",
+    "name": "Quảng Tân"
+  },
+  {
+    "code": "24760",
+    "name": "Quảng Tín"
+  },
+  {
+    "code": "23188",
+    "name": "Suối Kiết"
+  },
+  {
+    "code": "23023",
+    "name": "Sông Lũy"
+  },
+  {
+    "code": "23266",
+    "name": "Sơn Mỹ"
+  },
+  {
+    "code": "25051",
+    "name": "Sơn Điền"
+  },
+  {
+    "code": "24682",
+    "name": "Thuận An"
+  },
+  {
+    "code": "24722",
+    "name": "Thuận Hạnh"
+  },
+  {
+    "code": "22954",
+    "name": "Tiến Thành"
+  },
+  {
+    "code": "23227",
+    "name": "Trà Tân"
+  },
+  {
+    "code": "24730",
+    "name": "Trường Xuân"
+  },
+  {
+    "code": "22978",
+    "name": "Tuy Phong"
+  },
+  {
+    "code": "24739",
+    "name": "Tuy Đức"
+  },
+  {
+    "code": "22963",
+    "name": "Tuyên Quang"
+  },
+  {
+    "code": "24991",
+    "name": "Tà Hine"
+  },
+  {
+    "code": "24988",
+    "name": "Tà Năng"
+  },
+  {
+    "code": "24637",
+    "name": "Tà Đùng"
+  },
+  {
+    "code": "23149",
+    "name": "Tánh Linh"
+  },
+  {
+    "code": "24916",
+    "name": "Tân Hà Lâm Hà"
+  },
+  {
+    "code": "23246",
+    "name": "Tân Hải"
+  },
+  {
+    "code": "24976",
+    "name": "Tân Hội"
+  },
+  {
+    "code": "23134",
+    "name": "Tân Lập"
+  },
+  {
+    "code": "23230",
+    "name": "Tân Minh"
+  },
+  {
+    "code": "23143",
+    "name": "Tân Thành"
+  },
+  {
+    "code": "22981",
+    "name": "Vĩnh Hảo"
+  },
+  {
+    "code": "24781",
+    "name": "Xuân Hương - Đà Lạt"
+  },
+  {
+    "code": "24805",
+    "name": "Xuân Trường - Đà Lạt"
+  },
+  {
+    "code": "24886",
+    "name": "Đam Rông 1"
+  },
+  {
+    "code": "24877",
+    "name": "Đam Rông 2"
+  },
+  {
+    "code": "24875",
+    "name": "Đam Rông 3"
+  },
+  {
+    "code": "24853",
+    "name": "Đam Rông 4"
+  },
+  {
+    "code": "25007",
+    "name": "Đinh Trang Thượng"
+  },
+  {
+    "code": "24871",
+    "name": "Đinh Văn Lâm Hà"
+  },
+  {
+    "code": "24617",
+    "name": "Đông Gia Nghĩa"
+  },
+  {
+    "code": "23074",
+    "name": "Đông Giang"
+  },
+  {
+    "code": "24931",
+    "name": "Đơn Dương"
+  },
+  {
+    "code": "25099",
+    "name": "Đạ Huoai"
+  },
+  {
+    "code": "25105",
+    "name": "Đạ Huoai 2"
+  },
+  {
+    "code": "25114",
+    "name": "Đạ Huoai 3"
+  },
+  {
+    "code": "25126",
+    "name": "Đạ Tẻh"
+  },
+  {
+    "code": "25138",
+    "name": "Đạ Tẻh 2"
+  },
+  {
+    "code": "25135",
+    "name": "Đạ Tẻh 3"
+  },
+  {
+    "code": "24670",
+    "name": "Đắk Mil"
+  },
+  {
+    "code": "24678",
+    "name": "Đắk Sắk"
+  },
+  {
+    "code": "24646",
+    "name": "Đắk Wil"
+  },
+  {
+    "code": "24718",
+    "name": "Đắk song"
+  },
+  {
+    "code": "23173",
+    "name": "Đồng Kho"
+  },
+  {
+    "code": "24717",
+    "name": "Đức An"
+  },
+  {
+    "code": "23191",
+    "name": "Đức Linh"
+  },
+  {
+    "code": "24664",
+    "name": "Đức Lập"
+  },
+  {
+    "code": "24958",
+    "name": "Đức Trọng"
+  }
+]

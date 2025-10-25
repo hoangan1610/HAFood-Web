@@ -1,0 +1,398 @@
+[
+  {
+    "code": "02686",
+    "name": "A Mú Sung"
+  },
+  {
+    "code": "02683",
+    "name": "Bát Xát"
+  },
+  {
+    "code": "03046",
+    "name": "Bản Hồ"
+  },
+  {
+    "code": "02869",
+    "name": "Bản Liền"
+  },
+  {
+    "code": "02788",
+    "name": "Bản Lầu"
+  },
+  {
+    "code": "02725",
+    "name": "Bản Xèo"
+  },
+  {
+    "code": "02989",
+    "name": "Bảo Hà"
+  },
+  {
+    "code": "02890",
+    "name": "Bảo Nhai"
+  },
+  {
+    "code": "02905",
+    "name": "Bảo Thắng"
+  },
+  {
+    "code": "02947",
+    "name": "Bảo Yên"
+  },
+  {
+    "code": "04750",
+    "name": "Bảo Ái"
+  },
+  {
+    "code": "02839",
+    "name": "Bắc Hà"
+  },
+  {
+    "code": "02671",
+    "name": "Cam Đường"
+  },
+  {
+    "code": "02782",
+    "name": "Cao Sơn"
+  },
+  {
+    "code": "03091",
+    "name": "Chiềng Ken"
+  },
+  {
+    "code": "04387",
+    "name": "Châu Quế"
+  },
+  {
+    "code": "04699",
+    "name": "Chấn Thịnh"
+  },
+  {
+    "code": "04489",
+    "name": "Chế Tạo"
+  },
+  {
+    "code": "04693",
+    "name": "Cát Thịnh"
+  },
+  {
+    "code": "04726",
+    "name": "Cảm Nhân"
+  },
+  {
+    "code": "04681",
+    "name": "Cầu Thia"
+  },
+  {
+    "code": "02896",
+    "name": "Cốc Lầu"
+  },
+  {
+    "code": "02746",
+    "name": "Cốc San"
+  },
+  {
+    "code": "03106",
+    "name": "Dương Quỳ"
+  },
+  {
+    "code": "02707",
+    "name": "Dền Sáng"
+  },
+  {
+    "code": "04636",
+    "name": "Gia Hội"
+  },
+  {
+    "code": "02923",
+    "name": "Gia Phú"
+  },
+  {
+    "code": "04576",
+    "name": "Hưng Khánh"
+  },
+  {
+    "code": "04585",
+    "name": "Hạnh Phúc"
+  },
+  {
+    "code": "02680",
+    "name": "Hợp Thành"
+  },
+  {
+    "code": "04465",
+    "name": "Khao Mang"
+  },
+  {
+    "code": "04342",
+    "name": "Khánh Hòa"
+  },
+  {
+    "code": "03103",
+    "name": "Khánh Yên"
+  },
+  {
+    "code": "04474",
+    "name": "Lao Chải"
+  },
+  {
+    "code": "04660",
+    "name": "Liên Sơn"
+  },
+  {
+    "code": "02647",
+    "name": "Lào Cai"
+  },
+  {
+    "code": "04381",
+    "name": "Lâm Giang"
+  },
+  {
+    "code": "04309",
+    "name": "Lâm Thượng"
+  },
+  {
+    "code": "02848",
+    "name": "Lùng Phình"
+  },
+  {
+    "code": "04537",
+    "name": "Lương Thịnh"
+  },
+  {
+    "code": "04303",
+    "name": "Lục Yên"
+  },
+  {
+    "code": "03121",
+    "name": "Minh Lương"
+  },
+  {
+    "code": "04456",
+    "name": "Mù Cang Chải"
+  },
+  {
+    "code": "03043",
+    "name": "Mường Bo"
+  },
+  {
+    "code": "02728",
+    "name": "Mường Hum"
+  },
+  {
+    "code": "02761",
+    "name": "Mường Khương"
+  },
+  {
+    "code": "04345",
+    "name": "Mường Lai"
+  },
+  {
+    "code": "04375",
+    "name": "Mậu A"
+  },
+  {
+    "code": "04450",
+    "name": "Mỏ Vàng"
+  },
+  {
+    "code": "04273",
+    "name": "Nam Cường"
+  },
+  {
+    "code": "04288",
+    "name": "Nghĩa Lộ"
+  },
+  {
+    "code": "04711",
+    "name": "Nghĩa Tâm"
+  },
+  {
+    "code": "02953",
+    "name": "Nghĩa Đô"
+  },
+  {
+    "code": "03004",
+    "name": "Ngũ Chỉ Sơn"
+  },
+  {
+    "code": "03076",
+    "name": "Nậm Chày"
+  },
+  {
+    "code": "04462",
+    "name": "Nậm Có"
+  },
+  {
+    "code": "03085",
+    "name": "Nậm Xé"
+  },
+  {
+    "code": "02752",
+    "name": "Pha Long"
+  },
+  {
+    "code": "04402",
+    "name": "Phong Dụ Hạ"
+  },
+  {
+    "code": "04423",
+    "name": "Phong Dụ Thượng"
+  },
+  {
+    "code": "02902",
+    "name": "Phong Hải"
+  },
+  {
+    "code": "04609",
+    "name": "Phình Hồ"
+  },
+  {
+    "code": "02998",
+    "name": "Phúc Khánh"
+  },
+  {
+    "code": "04363",
+    "name": "Phúc Lợi"
+  },
+  {
+    "code": "04492",
+    "name": "Púng Luông"
+  },
+  {
+    "code": "04531",
+    "name": "Quy Mông"
+  },
+  {
+    "code": "03006",
+    "name": "Sa Pa"
+  },
+  {
+    "code": "02809",
+    "name": "Si Ma Cai"
+  },
+  {
+    "code": "02824",
+    "name": "Sín Chéng"
+  },
+  {
+    "code": "04651",
+    "name": "Sơn Lương"
+  },
+  {
+    "code": "04717",
+    "name": "Thác Bà"
+  },
+  {
+    "code": "04705",
+    "name": "Thượng Bằng La"
+  },
+  {
+    "code": "02968",
+    "name": "Thượng Hà"
+  },
+  {
+    "code": "04663",
+    "name": "Trung Tâm"
+  },
+  {
+    "code": "04606",
+    "name": "Trạm Tấu"
+  },
+  {
+    "code": "04498",
+    "name": "Trấn Yên"
+  },
+  {
+    "code": "02695",
+    "name": "Trịnh Tường"
+  },
+  {
+    "code": "04603",
+    "name": "Tà Xi Láng"
+  },
+  {
+    "code": "04429",
+    "name": "Tân Hợp"
+  },
+  {
+    "code": "04336",
+    "name": "Tân Lĩnh"
+  },
+  {
+    "code": "04630",
+    "name": "Tú Lệ"
+  },
+  {
+    "code": "02842",
+    "name": "Tả Củ Tỷ"
+  },
+  {
+    "code": "03013",
+    "name": "Tả Phìn"
+  },
+  {
+    "code": "03037",
+    "name": "Tả Van"
+  },
+  {
+    "code": "02908",
+    "name": "Tằng Loỏng"
+  },
+  {
+    "code": "04564",
+    "name": "Việt Hồng"
+  },
+  {
+    "code": "03061",
+    "name": "Võ Lao"
+  },
+  {
+    "code": "03082",
+    "name": "Văn Bàn"
+  },
+  {
+    "code": "04672",
+    "name": "Văn Chấn"
+  },
+  {
+    "code": "04279",
+    "name": "Văn Phú"
+  },
+  {
+    "code": "02962",
+    "name": "Xuân Hòa"
+  },
+  {
+    "code": "02926",
+    "name": "Xuân Quang"
+  },
+  {
+    "code": "04441",
+    "name": "Xuân Ái"
+  },
+  {
+    "code": "02701",
+    "name": "Y Tý"
+  },
+  {
+    "code": "04252",
+    "name": "Yên Bái"
+  },
+  {
+    "code": "04714",
+    "name": "Yên Bình"
+  },
+  {
+    "code": "04744",
+    "name": "Yên Thành"
+  },
+  {
+    "code": "04543",
+    "name": "Âu Lâu"
+  },
+  {
+    "code": "04399",
+    "name": "Đông Cuông"
+  }
+]

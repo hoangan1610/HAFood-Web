@@ -1,0 +1,674 @@
+[
+  {
+    "code": "26882",
+    "name": "An Hội Tây"
+  },
+  {
+    "code": "26878",
+    "name": "An Hội Đông"
+  },
+  {
+    "code": "27094",
+    "name": "An Khánh"
+  },
+  {
+    "code": "25867",
+    "name": "An Long"
+  },
+  {
+    "code": "27460",
+    "name": "An Lạc"
+  },
+  {
+    "code": "26876",
+    "name": "An Nhơn"
+  },
+  {
+    "code": "27508",
+    "name": "An Nhơn Tây"
+  },
+  {
+    "code": "25975",
+    "name": "An Phú"
+  },
+  {
+    "code": "26767",
+    "name": "An Phú Đông"
+  },
+  {
+    "code": "27673",
+    "name": "An Thới Đông"
+  },
+  {
+    "code": "27316",
+    "name": "An Đông"
+  },
+  {
+    "code": "26560",
+    "name": "Bà Rịa"
+  },
+  {
+    "code": "27592",
+    "name": "Bà Điểm"
+  },
+  {
+    "code": "27154",
+    "name": "Bàn Cờ"
+  },
+  {
+    "code": "25822",
+    "name": "Bàu Bàng"
+  },
+  {
+    "code": "26638",
+    "name": "Bàu Lâm"
+  },
+  {
+    "code": "27637",
+    "name": "Bình Chánh"
+  },
+  {
+    "code": "26656",
+    "name": "Bình Châu"
+  },
+  {
+    "code": "25915",
+    "name": "Bình Cơ"
+  },
+  {
+    "code": "25760",
+    "name": "Bình Dương"
+  },
+  {
+    "code": "26590",
+    "name": "Bình Giã"
+  },
+  {
+    "code": "25987",
+    "name": "Bình Hòa"
+  },
+  {
+    "code": "27619",
+    "name": "Bình Hưng"
+  },
+  {
+    "code": "27439",
+    "name": "Bình Hưng Hòa"
+  },
+  {
+    "code": "27667",
+    "name": "Bình Khánh"
+  },
+  {
+    "code": "27610",
+    "name": "Bình Lợi"
+  },
+  {
+    "code": "26905",
+    "name": "Bình Lợi Trung"
+  },
+  {
+    "code": "27544",
+    "name": "Bình Mỹ"
+  },
+  {
+    "code": "27364",
+    "name": "Bình Phú"
+  },
+  {
+    "code": "26911",
+    "name": "Bình Quới"
+  },
+  {
+    "code": "26929",
+    "name": "Bình Thạnh"
+  },
+  {
+    "code": "27232",
+    "name": "Bình Thới"
+  },
+  {
+    "code": "27373",
+    "name": "Bình Tiên"
+  },
+  {
+    "code": "27097",
+    "name": "Bình Trưng"
+  },
+  {
+    "code": "27448",
+    "name": "Bình Trị Đông"
+  },
+  {
+    "code": "27442",
+    "name": "Bình Tân"
+  },
+  {
+    "code": "27367",
+    "name": "Bình Tây"
+  },
+  {
+    "code": "27424",
+    "name": "Bình Đông"
+  },
+  {
+    "code": "26983",
+    "name": "Bảy Hiền"
+  },
+  {
+    "code": "25906",
+    "name": "Bắc Tân Uyên"
+  },
+  {
+    "code": "25813",
+    "name": "Bến Cát"
+  },
+  {
+    "code": "26743",
+    "name": "Bến Thành"
+  },
+  {
+    "code": "25771",
+    "name": "Chánh Hiệp"
+  },
+  {
+    "code": "27418",
+    "name": "Chánh Hưng"
+  },
+  {
+    "code": "25837",
+    "name": "Chánh Phú Hòa"
+  },
+  {
+    "code": "26728",
+    "name": "Châu Pha"
+  },
+  {
+    "code": "26596",
+    "name": "Châu Đức"
+  },
+  {
+    "code": "27343",
+    "name": "Chợ Lớn"
+  },
+  {
+    "code": "27301",
+    "name": "Chợ Quán"
+  },
+  {
+    "code": "27112",
+    "name": "Cát Lái"
+  },
+  {
+    "code": "26732",
+    "name": "Côn Đảo"
+  },
+  {
+    "code": "27664",
+    "name": "Cần Giờ"
+  },
+  {
+    "code": "27058",
+    "name": "Cầu Kiệu"
+  },
+  {
+    "code": "26758",
+    "name": "Cầu Ông Lãnh"
+  },
+  {
+    "code": "27553",
+    "name": "Củ Chi"
+  },
+  {
+    "code": "27169",
+    "name": "Diên Hồng"
+  },
+  {
+    "code": "25942",
+    "name": "Dĩ An"
+  },
+  {
+    "code": "25777",
+    "name": "Dầu Tiếng"
+  },
+  {
+    "code": "26944",
+    "name": "Gia Định"
+  },
+  {
+    "code": "26884",
+    "name": "Gò Vấp"
+  },
+  {
+    "code": "26809",
+    "name": "Hiệp Bình"
+  },
+  {
+    "code": "27658",
+    "name": "Hiệp Phước"
+  },
+  {
+    "code": "27211",
+    "name": "Hòa Bình"
+  },
+  {
+    "code": "26647",
+    "name": "Hòa Hiệp"
+  },
+  {
+    "code": "27163",
+    "name": "Hòa Hưng"
+  },
+  {
+    "code": "26641",
+    "name": "Hòa Hội"
+  },
+  {
+    "code": "25849",
+    "name": "Hòa Lợi"
+  },
+  {
+    "code": "27559",
+    "name": "Hóc Môn"
+  },
+  {
+    "code": "27628",
+    "name": "Hưng Long"
+  },
+  {
+    "code": "26890",
+    "name": "Hạnh Thông"
+  },
+  {
+    "code": "26620",
+    "name": "Hồ Tràm"
+  },
+  {
+    "code": "27265",
+    "name": "Khánh Hội"
+  },
+  {
+    "code": "26608",
+    "name": "Kim Long"
+  },
+  {
+    "code": "26800",
+    "name": "Linh Xuân"
+  },
+  {
+    "code": "26833",
+    "name": "Long Bình"
+  },
+  {
+    "code": "25792",
+    "name": "Long Hòa"
+  },
+  {
+    "code": "26566",
+    "name": "Long Hương"
+  },
+  {
+    "code": "26662",
+    "name": "Long Hải"
+  },
+  {
+    "code": "25840",
+    "name": "Long Nguyên"
+  },
+  {
+    "code": "26857",
+    "name": "Long Phước"
+  },
+  {
+    "code": "26545",
+    "name": "Long Sơn"
+  },
+  {
+    "code": "26860",
+    "name": "Long Trường"
+  },
+  {
+    "code": "26659",
+    "name": "Long Điền"
+  },
+  {
+    "code": "25966",
+    "name": "Lái Thiêu"
+  },
+  {
+    "code": "27238",
+    "name": "Minh Phụng"
+  },
+  {
+    "code": "25780",
+    "name": "Minh Thạnh"
+  },
+  {
+    "code": "26617",
+    "name": "Nghĩa Thành"
+  },
+  {
+    "code": "26575",
+    "name": "Ngãi Giao"
+  },
+  {
+    "code": "27142",
+    "name": "Nhiêu Lộc"
+  },
+  {
+    "code": "27511",
+    "name": "Nhuận Đức"
+  },
+  {
+    "code": "27655",
+    "name": "Nhà Bè"
+  },
+  {
+    "code": "25768",
+    "name": "Phú An"
+  },
+  {
+    "code": "25858",
+    "name": "Phú Giáo"
+  },
+  {
+    "code": "27541",
+    "name": "Phú Hòa Đông"
+  },
+  {
+    "code": "27349",
+    "name": "Phú Lâm"
+  },
+  {
+    "code": "25750",
+    "name": "Phú Lợi"
+  },
+  {
+    "code": "26704",
+    "name": "Phú Mỹ"
+  },
+  {
+    "code": "27073",
+    "name": "Phú Nhuận"
+  },
+  {
+    "code": "27484",
+    "name": "Phú Thuận"
+  },
+  {
+    "code": "27028",
+    "name": "Phú Thạnh"
+  },
+  {
+    "code": "27226",
+    "name": "Phú Thọ"
+  },
+  {
+    "code": "27022",
+    "name": "Phú Thọ Hòa"
+  },
+  {
+    "code": "27427",
+    "name": "Phú Định"
+  },
+  {
+    "code": "25882",
+    "name": "Phước Hòa"
+  },
+  {
+    "code": "26686",
+    "name": "Phước Hải"
+  },
+  {
+    "code": "26848",
+    "name": "Phước Long"
+  },
+  {
+    "code": "25864",
+    "name": "Phước Thành"
+  },
+  {
+    "code": "26542",
+    "name": "Phước Thắng"
+  },
+  {
+    "code": "26536",
+    "name": "Rạch Dừa"
+  },
+  {
+    "code": "26740",
+    "name": "Sài Gòn"
+  },
+  {
+    "code": "26803",
+    "name": "Tam Bình"
+  },
+  {
+    "code": "26572",
+    "name": "Tam Long"
+  },
+  {
+    "code": "26526",
+    "name": "Tam Thắng"
+  },
+  {
+    "code": "25807",
+    "name": "Thanh An"
+  },
+  {
+    "code": "25978",
+    "name": "Thuận An"
+  },
+  {
+    "code": "25969",
+    "name": "Thuận Giao"
+  },
+  {
+    "code": "27526",
+    "name": "Thái Mỹ"
+  },
+  {
+    "code": "26898",
+    "name": "Thông Tây Hội"
+  },
+  {
+    "code": "25909",
+    "name": "Thường Tân"
+  },
+  {
+    "code": "27676",
+    "name": "Thạnh An"
+  },
+  {
+    "code": "26956",
+    "name": "Thạnh Mỹ Tây"
+  },
+  {
+    "code": "26773",
+    "name": "Thới An"
+  },
+  {
+    "code": "25846",
+    "name": "Thới Hòa"
+  },
+  {
+    "code": "25747",
+    "name": "Thủ Dầu Một"
+  },
+  {
+    "code": "26824",
+    "name": "Thủ Đức"
+  },
+  {
+    "code": "26785",
+    "name": "Trung Mỹ Tây"
+  },
+  {
+    "code": "25819",
+    "name": "Trừ Văn Thố"
+  },
+  {
+    "code": "27496",
+    "name": "Tân An Hội"
+  },
+  {
+    "code": "27004",
+    "name": "Tân Bình"
+  },
+  {
+    "code": "25920",
+    "name": "Tân Hiệp"
+  },
+  {
+    "code": "26995",
+    "name": "Tân Hòa"
+  },
+  {
+    "code": "27475",
+    "name": "Tân Hưng"
+  },
+  {
+    "code": "26710",
+    "name": "Tân Hải"
+  },
+  {
+    "code": "25891",
+    "name": "Tân Khánh"
+  },
+  {
+    "code": "27487",
+    "name": "Tân Mỹ"
+  },
+  {
+    "code": "27595",
+    "name": "Tân Nhựt"
+  },
+  {
+    "code": "27031",
+    "name": "Tân Phú"
+  },
+  {
+    "code": "26713",
+    "name": "Tân Phước"
+  },
+  {
+    "code": "27007",
+    "name": "Tân Sơn"
+  },
+  {
+    "code": "26977",
+    "name": "Tân Sơn Hòa"
+  },
+  {
+    "code": "27019",
+    "name": "Tân Sơn Nhì"
+  },
+  {
+    "code": "26968",
+    "name": "Tân Sơn Nhất"
+  },
+  {
+    "code": "27478",
+    "name": "Tân Thuận"
+  },
+  {
+    "code": "26725",
+    "name": "Tân Thành"
+  },
+  {
+    "code": "26782",
+    "name": "Tân Thới Hiệp"
+  },
+  {
+    "code": "27457",
+    "name": "Tân Tạo"
+  },
+  {
+    "code": "25888",
+    "name": "Tân Uyên"
+  },
+  {
+    "code": "27604",
+    "name": "Tân Vĩnh Lộc"
+  },
+  {
+    "code": "25945",
+    "name": "Tân Đông Hiệp"
+  },
+  {
+    "code": "26737",
+    "name": "Tân Định"
+  },
+  {
+    "code": "25843",
+    "name": "Tây Nam"
+  },
+  {
+    "code": "27013",
+    "name": "Tây Thạnh"
+  },
+  {
+    "code": "26842",
+    "name": "Tăng Nhơn Phú"
+  },
+  {
+    "code": "27286",
+    "name": "Vĩnh Hội"
+  },
+  {
+    "code": "27601",
+    "name": "Vĩnh Lộc"
+  },
+  {
+    "code": "25912",
+    "name": "Vĩnh Tân"
+  },
+  {
+    "code": "26506",
+    "name": "Vũng Tàu"
+  },
+  {
+    "code": "27190",
+    "name": "Vườn Lài"
+  },
+  {
+    "code": "26632",
+    "name": "Xuyên Mộc"
+  },
+  {
+    "code": "27139",
+    "name": "Xuân Hòa"
+  },
+  {
+    "code": "26584",
+    "name": "Xuân Sơn"
+  },
+  {
+    "code": "27577",
+    "name": "Xuân Thới Sơn"
+  },
+  {
+    "code": "27259",
+    "name": "Xóm Chiếu"
+  },
+  {
+    "code": "25951",
+    "name": "Đông Hòa"
+  },
+  {
+    "code": "26791",
+    "name": "Đông Hưng Thuận"
+  },
+  {
+    "code": "27568",
+    "name": "Đông Thạnh"
+  },
+  {
+    "code": "26680",
+    "name": "Đất Đỏ"
+  },
+  {
+    "code": "27043",
+    "name": "Đức Nhuận"
+  }
+]

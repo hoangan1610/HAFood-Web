@@ -1,0 +1,398 @@
+[
+  {
+    "code": "07654",
+    "name": "An Lạc"
+  },
+  {
+    "code": "07537",
+    "name": "Biên Sơn"
+  },
+  {
+    "code": "07573",
+    "name": "Biển Động"
+  },
+  {
+    "code": "07462",
+    "name": "Bảo Đài"
+  },
+  {
+    "code": "07210",
+    "name": "Bắc Giang"
+  },
+  {
+    "code": "07498",
+    "name": "Bắc Lũng"
+  },
+  {
+    "code": "07294",
+    "name": "Bố Hạ"
+  },
+  {
+    "code": "09295",
+    "name": "Bồng Lai"
+  },
+  {
+    "code": "09466",
+    "name": "Cao Đức"
+  },
+  {
+    "code": "09313",
+    "name": "Chi Lăng"
+  },
+  {
+    "code": "07525",
+    "name": "Chũ"
+  },
+  {
+    "code": "07738",
+    "name": "Cảnh Thụy"
+  },
+  {
+    "code": "07519",
+    "name": "Cẩm Lý"
+  },
+  {
+    "code": "07672",
+    "name": "Dương Hưu"
+  },
+  {
+    "code": "09454",
+    "name": "Gia Bình"
+  },
+  {
+    "code": "07840",
+    "name": "Hiệp Hòa"
+  },
+  {
+    "code": "07822",
+    "name": "Hoàng Vân"
+  },
+  {
+    "code": "09325",
+    "name": "Hạp Lĩnh"
+  },
+  {
+    "code": "07864",
+    "name": "Hợp Thịnh"
+  },
+  {
+    "code": "09187",
+    "name": "Kinh Bắc"
+  },
+  {
+    "code": "07552",
+    "name": "Kiên Lao"
+  },
+  {
+    "code": "07399",
+    "name": "Kép"
+  },
+  {
+    "code": "09334",
+    "name": "Liên Bão"
+  },
+  {
+    "code": "09529",
+    "name": "Lâm Thao"
+  },
+  {
+    "code": "09496",
+    "name": "Lương Tài"
+  },
+  {
+    "code": "07375",
+    "name": "Lạng Giang"
+  },
+  {
+    "code": "07444",
+    "name": "Lục Nam"
+  },
+  {
+    "code": "07582",
+    "name": "Lục Ngạn"
+  },
+  {
+    "code": "07492",
+    "name": "Lục Sơn"
+  },
+  {
+    "code": "09409",
+    "name": "Mão Điền"
+  },
+  {
+    "code": "07420",
+    "name": "Mỹ Thái"
+  },
+  {
+    "code": "07603",
+    "name": "Nam Dương"
+  },
+  {
+    "code": "09286",
+    "name": "Nam Sơn"
+  },
+  {
+    "code": "07486",
+    "name": "Nghĩa Phương"
+  },
+  {
+    "code": "07351",
+    "name": "Ngọc Thiện"
+  },
+  {
+    "code": "09253",
+    "name": "Nhân Hòa"
+  },
+  {
+    "code": "09475",
+    "name": "Nhân Thắng"
+  },
+  {
+    "code": "07306",
+    "name": "Nhã Nam"
+  },
+  {
+    "code": "09445",
+    "name": "Ninh Xá"
+  },
+  {
+    "code": "07795",
+    "name": "Nếnh"
+  },
+  {
+    "code": "09379",
+    "name": "Phù Khê"
+  },
+  {
+    "code": "09292",
+    "name": "Phù Lãng"
+  },
+  {
+    "code": "07330",
+    "name": "Phúc Hòa"
+  },
+  {
+    "code": "09265",
+    "name": "Phương Liễu"
+  },
+  {
+    "code": "07612",
+    "name": "Phượng Sơn"
+  },
+  {
+    "code": "09349",
+    "name": "Phật Tích"
+  },
+  {
+    "code": "07333",
+    "name": "Quang Trung"
+  },
+  {
+    "code": "09247",
+    "name": "Quế Võ"
+  },
+  {
+    "code": "07534",
+    "name": "Sa Lý"
+  },
+  {
+    "code": "09433",
+    "name": "Song Liễu"
+  },
+  {
+    "code": "07543",
+    "name": "Sơn Hải"
+  },
+  {
+    "code": "07615",
+    "name": "Sơn Động"
+  },
+  {
+    "code": "09202",
+    "name": "Tam Giang"
+  },
+  {
+    "code": "09370",
+    "name": "Tam Sơn"
+  },
+  {
+    "code": "07264",
+    "name": "Tam Tiến"
+  },
+  {
+    "code": "09208",
+    "name": "Tam Đa"
+  },
+  {
+    "code": "09400",
+    "name": "Thuận Thành"
+  },
+  {
+    "code": "09319",
+    "name": "Tiên Du"
+  },
+  {
+    "code": "07381",
+    "name": "Tiên Lục"
+  },
+  {
+    "code": "07696",
+    "name": "Tiền Phong"
+  },
+  {
+    "code": "09523",
+    "name": "Trung Chính"
+  },
+  {
+    "code": "09499",
+    "name": "Trung Kênh"
+  },
+  {
+    "code": "09427",
+    "name": "Trí Quả"
+  },
+  {
+    "code": "07489",
+    "name": "Trường Sơn"
+  },
+  {
+    "code": "09430",
+    "name": "Trạm Lộ"
+  },
+  {
+    "code": "07663",
+    "name": "Tuấn Đạo"
+  },
+  {
+    "code": "07682",
+    "name": "Tân An"
+  },
+  {
+    "code": "09343",
+    "name": "Tân Chi"
+  },
+  {
+    "code": "07432",
+    "name": "Tân Dĩnh"
+  },
+  {
+    "code": "07531",
+    "name": "Tân Sơn"
+  },
+  {
+    "code": "07699",
+    "name": "Tân Tiến"
+  },
+  {
+    "code": "07339",
+    "name": "Tân Yên"
+  },
+  {
+    "code": "07616",
+    "name": "Tây Yên Tử"
+  },
+  {
+    "code": "09367",
+    "name": "Từ Sơn"
+  },
+  {
+    "code": "07774",
+    "name": "Tự Lạn"
+  },
+  {
+    "code": "07777",
+    "name": "Việt Yên"
+  },
+  {
+    "code": "07798",
+    "name": "Vân Hà"
+  },
+  {
+    "code": "07621",
+    "name": "Vân Sơn"
+  },
+  {
+    "code": "09190",
+    "name": "Võ Cường"
+  },
+  {
+    "code": "09238",
+    "name": "Văn Môn"
+  },
+  {
+    "code": "09169",
+    "name": "Vũ Ninh"
+  },
+  {
+    "code": "07870",
+    "name": "Xuân Cẩm"
+  },
+  {
+    "code": "07246",
+    "name": "Xuân Lương"
+  },
+  {
+    "code": "07681",
+    "name": "Yên Dũng"
+  },
+  {
+    "code": "09193",
+    "name": "Yên Phong"
+  },
+  {
+    "code": "07288",
+    "name": "Yên Thế"
+  },
+  {
+    "code": "09205",
+    "name": "Yên Trung"
+  },
+  {
+    "code": "07642",
+    "name": "Yên Định"
+  },
+  {
+    "code": "07228",
+    "name": "Đa Mai"
+  },
+  {
+    "code": "09301",
+    "name": "Đào Viên"
+  },
+  {
+    "code": "07594",
+    "name": "Đèo Gia"
+  },
+  {
+    "code": "09487",
+    "name": "Đông Cứu"
+  },
+  {
+    "code": "07450",
+    "name": "Đông Phú"
+  },
+  {
+    "code": "09469",
+    "name": "Đại Lai"
+  },
+  {
+    "code": "07627",
+    "name": "Đại Sơn"
+  },
+  {
+    "code": "09340",
+    "name": "Đại Đồng"
+  },
+  {
+    "code": "07282",
+    "name": "Đồng Kỳ"
+  },
+  {
+    "code": "09385",
+    "name": "Đồng Nguyên"
+  },
+  {
+    "code": "07735",
+    "name": "Đồng Việt"
+  }
+]

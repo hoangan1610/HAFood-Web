@@ -16,17 +16,19 @@ namespace HAFoodWeb
         protected async void Page_Load(object sender, EventArgs e)
         {
             if (!IsPostBack)
+            {
+                // Bắt đăng nhập
                 if (!(Request.Cookies["AuthToken"] != null && !string.IsNullOrWhiteSpace(Request.Cookies["AuthToken"].Value))
-            && !(Context?.User?.Identity?.IsAuthenticated ?? false))
+                    && !(Context?.User?.Identity?.IsAuthenticated ?? false))
                 {
                     var returnUrl = Server.UrlEncode(ResolveUrl("~/CartPage/CheckoutConfirm.aspx"));
                     Response.Redirect(ResolveUrl("~/AuthPage/Login.aspx") + "?returnUrl=" + returnUrl, false);
                     Context.ApplicationInstance.CompleteRequest();
                     return;
                 }
+            }
 
             await LoadDraftAndBindAsync();
-        
         }
 
         private async Task LoadDraftAndBindAsync()
@@ -44,45 +46,53 @@ namespace HAFoodWeb
             lblShipAddress.Text = draft.ShipAddress;
             lblPromo.Text = string.IsNullOrWhiteSpace(draft.PromoCode) ? "(không)" : draft.PromoCode;
 
-            decimal subtotal = 0m;
-            decimal shipping = 0m; // có công thức thì set ở đây
             var viVN = System.Globalization.CultureInfo.GetCultureInfo("vi-VN");
+            decimal subtotal = 0m;
+            decimal shipping = 0m;
 
             var cart = await _cartService.GetCartAsync(draft.DeviceUuid);
-            var selectedVariantIds = draft.Items.Select(i => i.variant_Id).ToHashSet();
             var selectedLines = (draft.SelectedLineIds ?? new long[0]).ToHashSet();
 
-            var displayItems = cart?.items?
-                .Where(x =>
-                    selectedVariantIds.Contains(x.variant_Id) ||
-                    (selectedLines.Count > 0 && selectedLines.Contains(x.id)))
-                .Select(x =>
-                {
-                    var d = draft.Items.FirstOrDefault(i => i.variant_Id == x.variant_Id);
-                    int qty = d.quantity > 0 ? d.quantity : x.quantity;
+            System.Collections.Generic.List<object> displayItems;
 
-                    var lineTotal = x.price_Variant * qty;
-                    subtotal += lineTotal;
-
-                    return new
+            if (cart?.items != null && cart.items.Any())
+            {
+                var freshItems = cart.items
+                    .Where(x => selectedLines.Contains(x.id))
+                    .Select(x =>
                     {
-                        ProductName = x.product_Name,
-                        VariantName = x.variant_Name,
-                        Quantity = qty,
-                        ImageUrl = string.IsNullOrWhiteSpace(x.image_Variant) ? "/images/product-default.png" : x.image_Variant,
-                        LineTotal = string.Format(viVN, "{0:N0} ₫", lineTotal)
-                    };
-                })
-                .ToList()
-                // fallback nếu vì lý do gì giỏ rỗng ở API
-                ?? draft.Items.Select(it => new
+                        var lineTotal = x.price_Variant * x.quantity;
+                        subtotal += lineTotal;
+                        return new
+                        {
+                            ProductName = x.product_Name,
+                            VariantName = x.variant_Name,
+                            Quantity = x.quantity,
+                            ImageUrl = string.IsNullOrWhiteSpace(x.image_Variant) ? "/images/product-default.png" : x.image_Variant,
+                            LineTotal = string.Format(viVN, "{0:N0} ₫", lineTotal),
+                            VariantId = x.variant_Id
+                        };
+                    })
+                    .ToList();
+
+                displayItems = freshItems.Cast<object>().ToList();
+
+                // Cập nhật draft.Items theo giỏ hiện tại để lần “quay lại” vẫn đúng
+                draft.Items = freshItems.Select(fi => (fi.VariantId, fi.Quantity)).ToArray();
+                Session["checkout_draft"] = draft;
+            }
+            else
+            {
+                // Fallback hiếm khi giỏ rỗng: hiển thị từ draft (không có giá)
+                displayItems = draft.Items.Select(it => new
                 {
                     ProductName = $"Sản phẩm #{it.variant_Id}",
                     VariantName = $"Biến thể #{it.variant_Id}",
                     Quantity = it.quantity,
                     ImageUrl = "/images/product-default.png",
                     LineTotal = "—"
-                }).ToList();
+                }).Cast<object>().ToList();
+            }
 
             rptItems.DataSource = displayItems;
             rptItems.DataBind();
@@ -122,7 +132,7 @@ namespace HAFoodWeb
                 ip = Request.UserHostAddress,
                 note = draft.Note,
                 address_Id = 0,
-                device_Id = 0, // map id thiết bị nếu backend yêu cầu; tạm = 0
+                device_Id = 0,
                 promo_Code = draft.PromoCode,
                 selected_Line_Ids = draft.SelectedLineIds ?? new long[0],
                 items = draft.Items.Select(i => new OrderItem
@@ -149,8 +159,7 @@ namespace HAFoodWeb
                     return;
                 }
 
-                // Nếu backend trả cổng thanh toán (VD: resp.payment_Url) thì redirect ở đây
-
+                // Clear draft
                 Session.Remove("checkout_draft");
                 var code = !string.IsNullOrWhiteSpace(resp.order_Code) ? resp.order_Code : resp.order_Id.ToString();
 

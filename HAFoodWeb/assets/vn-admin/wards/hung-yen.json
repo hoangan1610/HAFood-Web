@@ -1,0 +1,418 @@
+[
+  {
+    "code": "12499",
+    "name": "A Sào"
+  },
+  {
+    "code": "13096",
+    "name": "Bình Nguyên"
+  },
+  {
+    "code": "13183",
+    "name": "Bình Thanh"
+  },
+  {
+    "code": "13186",
+    "name": "Bình Định"
+  },
+  {
+    "code": "12916",
+    "name": "Bắc Thái Ninh"
+  },
+  {
+    "code": "12859",
+    "name": "Bắc Thụy Anh"
+  },
+  {
+    "code": "12700",
+    "name": "Bắc Tiên Hưng"
+  },
+  {
+    "code": "12694",
+    "name": "Bắc Đông Hưng"
+  },
+  {
+    "code": "12745",
+    "name": "Bắc Đông Quan"
+  },
+  {
+    "code": "12247",
+    "name": "Châu Ninh"
+  },
+  {
+    "code": "12271",
+    "name": "Chí Minh"
+  },
+  {
+    "code": "12619",
+    "name": "Diên Hà"
+  },
+  {
+    "code": "12322",
+    "name": "Hiệp Cường"
+  },
+  {
+    "code": "12070",
+    "name": "Hoàn Long"
+  },
+  {
+    "code": "12337",
+    "name": "Hoàng Hoa Thám"
+  },
+  {
+    "code": "12586",
+    "name": "Hưng Hà"
+  },
+  {
+    "code": "13066",
+    "name": "Hưng Phú"
+  },
+  {
+    "code": "11980",
+    "name": "Hồng Châu"
+  },
+  {
+    "code": "12685",
+    "name": "Hồng Minh"
+  },
+  {
+    "code": "12196",
+    "name": "Hồng Quang"
+  },
+  {
+    "code": "13159",
+    "name": "Hồng Vũ"
+  },
+  {
+    "code": "12205",
+    "name": "Khoái Châu"
+  },
+  {
+    "code": "13075",
+    "name": "Kiến Xương"
+  },
+  {
+    "code": "12613",
+    "name": "Long Hưng"
+  },
+  {
+    "code": "13120",
+    "name": "Lê Lợi"
+  },
+  {
+    "code": "12676",
+    "name": "Lê Quý Đôn"
+  },
+  {
+    "code": "12280",
+    "name": "Lương Bằng"
+  },
+  {
+    "code": "11992",
+    "name": "Lạc Đạo"
+  },
+  {
+    "code": "12511",
+    "name": "Minh Thọ"
+  },
+  {
+    "code": "12049",
+    "name": "Mễ Sở"
+  },
+  {
+    "code": "12103",
+    "name": "Mỹ Hào"
+  },
+  {
+    "code": "13057",
+    "name": "Nam Cường"
+  },
+  {
+    "code": "12961",
+    "name": "Nam Thái Ninh"
+  },
+  {
+    "code": "12904",
+    "name": "Nam Thụy Anh"
+  },
+  {
+    "code": "12763",
+    "name": "Nam Tiên Hưng"
+  },
+  {
+    "code": "13063",
+    "name": "Nam Tiền Hải"
+  },
+  {
+    "code": "12775",
+    "name": "Nam Đông Hưng"
+  },
+  {
+    "code": "12286",
+    "name": "Nghĩa Dân"
+  },
+  {
+    "code": "12031",
+    "name": "Nghĩa Trụ"
+  },
+  {
+    "code": "12532",
+    "name": "Nguyễn Du"
+  },
+  {
+    "code": "12184",
+    "name": "Nguyễn Trãi"
+  },
+  {
+    "code": "12064",
+    "name": "Nguyễn Văn Linh"
+  },
+  {
+    "code": "12517",
+    "name": "Ngọc Lâm"
+  },
+  {
+    "code": "12595",
+    "name": "Ngự Thiên"
+  },
+  {
+    "code": "12004",
+    "name": "Như Quỳnh"
+  },
+  {
+    "code": "12148",
+    "name": "Phạm Ngũ Lão"
+  },
+  {
+    "code": "11953",
+    "name": "Phố Hiến"
+  },
+  {
+    "code": "12523",
+    "name": "Phụ Dực"
+  },
+  {
+    "code": "12025",
+    "name": "Phụng Công"
+  },
+  {
+    "code": "12391",
+    "name": "Quang Hưng"
+  },
+  {
+    "code": "13132",
+    "name": "Quang Lịch"
+  },
+  {
+    "code": "12577",
+    "name": "Quỳnh An"
+  },
+  {
+    "code": "12472",
+    "name": "Quỳnh Phụ"
+  },
+  {
+    "code": "11983",
+    "name": "Sơn Nam"
+  },
+  {
+    "code": "13225",
+    "name": "Thái Bình"
+  },
+  {
+    "code": "12922",
+    "name": "Thái Ninh"
+  },
+  {
+    "code": "12826",
+    "name": "Thái Thụy"
+  },
+  {
+    "code": "13222",
+    "name": "Thư Trì"
+  },
+  {
+    "code": "13264",
+    "name": "Thư Vũ"
+  },
+  {
+    "code": "12127",
+    "name": "Thượng Hồng"
+  },
+  {
+    "code": "12631",
+    "name": "Thần Khê"
+  },
+  {
+    "code": "12865",
+    "name": "Thụy Anh"
+  },
+  {
+    "code": "12361",
+    "name": "Tiên Hoa"
+  },
+  {
+    "code": "12754",
+    "name": "Tiên Hưng"
+  },
+  {
+    "code": "12634",
+    "name": "Tiên La"
+  },
+  {
+    "code": "12364",
+    "name": "Tiên Lữ"
+  },
+  {
+    "code": "12424",
+    "name": "Tiên Tiến"
+  },
+  {
+    "code": "12970",
+    "name": "Tiền Hải"
+  },
+  {
+    "code": "12223",
+    "name": "Triệu Việt Vương"
+  },
+  {
+    "code": "13093",
+    "name": "Trà Giang"
+  },
+  {
+    "code": "12817",
+    "name": "Trà Lý"
+  },
+  {
+    "code": "12452",
+    "name": "Trần Hưng Đạo"
+  },
+  {
+    "code": "12454",
+    "name": "Trần Lãm"
+  },
+  {
+    "code": "11977",
+    "name": "Tân Hưng"
+  },
+  {
+    "code": "13246",
+    "name": "Tân Thuận"
+  },
+  {
+    "code": "12583",
+    "name": "Tân Tiến"
+  },
+  {
+    "code": "12919",
+    "name": "Tây Thái Ninh"
+  },
+  {
+    "code": "12850",
+    "name": "Tây Thụy Anh"
+  },
+  {
+    "code": "13039",
+    "name": "Tây Tiền Hải"
+  },
+  {
+    "code": "12427",
+    "name": "Tống Trân"
+  },
+  {
+    "code": "12238",
+    "name": "Việt Tiến"
+  },
+  {
+    "code": "12091",
+    "name": "Việt Yên"
+  },
+  {
+    "code": "12019",
+    "name": "Văn Giang"
+  },
+  {
+    "code": "12466",
+    "name": "Vũ Phúc"
+  },
+  {
+    "code": "13141",
+    "name": "Vũ Quý"
+  },
+  {
+    "code": "13192",
+    "name": "Vũ Thư"
+  },
+  {
+    "code": "13279",
+    "name": "Vũ Tiên"
+  },
+  {
+    "code": "13219",
+    "name": "Vạn Xuân"
+  },
+  {
+    "code": "12166",
+    "name": "Xuân Trúc"
+  },
+  {
+    "code": "12073",
+    "name": "Yên Mỹ"
+  },
+  {
+    "code": "13021",
+    "name": "Ái Quốc"
+  },
+  {
+    "code": "12142",
+    "name": "Ân Thi"
+  },
+  {
+    "code": "12406",
+    "name": "Đoàn Đào"
+  },
+  {
+    "code": "12688",
+    "name": "Đông Hưng"
+  },
+  {
+    "code": "12793",
+    "name": "Đông Quan"
+  },
+  {
+    "code": "12943",
+    "name": "Đông Thái Ninh"
+  },
+  {
+    "code": "12862",
+    "name": "Đông Thụy Anh"
+  },
+  {
+    "code": "12736",
+    "name": "Đông Tiên Hưng"
+  },
+  {
+    "code": "12988",
+    "name": "Đông Tiền Hải"
+  },
+  {
+    "code": "12133",
+    "name": "Đường Hào"
+  },
+  {
+    "code": "11995",
+    "name": "Đại Đồng"
+  },
+  {
+    "code": "12526",
+    "name": "Đồng Bằng"
+  },
+  {
+    "code": "13003",
+    "name": "Đồng Châu"
+  },
+  {
+    "code": "12313",
+    "name": "Đức Hợp"
+  }
+]

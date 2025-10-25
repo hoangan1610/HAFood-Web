@@ -1,0 +1,498 @@
+[
+  {
+    "code": "29584",
+    "name": "An Bình"
+  },
+  {
+    "code": "29158",
+    "name": "An Hiệp"
+  },
+  {
+    "code": "28777",
+    "name": "An Hội"
+  },
+  {
+    "code": "29143",
+    "name": "An Ngãi Trung"
+  },
+  {
+    "code": "29317",
+    "name": "An Phú Tân"
+  },
+  {
+    "code": "29224",
+    "name": "An Qui"
+  },
+  {
+    "code": "29275",
+    "name": "An Trường"
+  },
+  {
+    "code": "28957",
+    "name": "An Định"
+  },
+  {
+    "code": "29110",
+    "name": "Ba Tri"
+  },
+  {
+    "code": "29771",
+    "name": "Bình Minh"
+  },
+  {
+    "code": "29287",
+    "name": "Bình Phú"
+  },
+  {
+    "code": "29638",
+    "name": "Bình Phước"
+  },
+  {
+    "code": "29050",
+    "name": "Bình Đại"
+  },
+  {
+    "code": "29125",
+    "name": "Bảo Thạnh"
+  },
+  {
+    "code": "28789",
+    "name": "Bến Tre"
+  },
+  {
+    "code": "28996",
+    "name": "Châu Hòa"
+  },
+  {
+    "code": "29083",
+    "name": "Châu Hưng"
+  },
+  {
+    "code": "29374",
+    "name": "Châu Thành"
+  },
+  {
+    "code": "28870",
+    "name": "Chợ Lách"
+  },
+  {
+    "code": "29266",
+    "name": "Càng Long"
+  },
+  {
+    "code": "29728",
+    "name": "Cái Ngang"
+  },
+  {
+    "code": "29641",
+    "name": "Cái Nhum"
+  },
+  {
+    "code": "29770",
+    "name": "Cái Vồn"
+  },
+  {
+    "code": "29308",
+    "name": "Cầu Kè"
+  },
+  {
+    "code": "29416",
+    "name": "Cầu Ngang"
+  },
+  {
+    "code": "29512",
+    "name": "Duyên Hải"
+  },
+  {
+    "code": "28807",
+    "name": "Giao Long"
+  },
+  {
+    "code": "28984",
+    "name": "Giồng Trôm"
+  },
+  {
+    "code": "29701",
+    "name": "Hiếu Phụng"
+  },
+  {
+    "code": "29713",
+    "name": "Hiếu Thành"
+  },
+  {
+    "code": "29455",
+    "name": "Hiệp Mỹ"
+  },
+  {
+    "code": "29489",
+    "name": "Hàm Giang"
+  },
+  {
+    "code": "29830",
+    "name": "Hòa Bình"
+  },
+  {
+    "code": "29734",
+    "name": "Hòa Hiệp"
+  },
+  {
+    "code": "29410",
+    "name": "Hòa Minh"
+  },
+  {
+    "code": "29398",
+    "name": "Hòa Thuận"
+  },
+  {
+    "code": "29362",
+    "name": "Hùng Hòa"
+  },
+  {
+    "code": "28901",
+    "name": "Hưng Khánh Trung"
+  },
+  {
+    "code": "29407",
+    "name": "Hưng Mỹ"
+  },
+  {
+    "code": "29044",
+    "name": "Hưng Nhượng"
+  },
+  {
+    "code": "28981",
+    "name": "Hương Mỹ"
+  },
+  {
+    "code": "29551",
+    "name": "Long Châu"
+  },
+  {
+    "code": "29506",
+    "name": "Long Hiệp"
+  },
+  {
+    "code": "29413",
+    "name": "Long Hòa"
+  },
+  {
+    "code": "29602",
+    "name": "Long Hồ"
+  },
+  {
+    "code": "29518",
+    "name": "Long Hữu"
+  },
+  {
+    "code": "29513",
+    "name": "Long Thành"
+  },
+  {
+    "code": "29533",
+    "name": "Long Vĩnh"
+  },
+  {
+    "code": "29263",
+    "name": "Long Đức"
+  },
+  {
+    "code": "29476",
+    "name": "Lưu Nghiệp Anh"
+  },
+  {
+    "code": "28987",
+    "name": "Lương Hòa"
+  },
+  {
+    "code": "28993",
+    "name": "Lương Phú"
+  },
+  {
+    "code": "29077",
+    "name": "Lộc Thuận"
+  },
+  {
+    "code": "29857",
+    "name": "Lục Sĩ Thành"
+  },
+  {
+    "code": "28903",
+    "name": "Mỏ Cày"
+  },
+  {
+    "code": "29122",
+    "name": "Mỹ Chánh Hòa"
+  },
+  {
+    "code": "29419",
+    "name": "Mỹ Long"
+  },
+  {
+    "code": "29788",
+    "name": "Mỹ Thuận"
+  },
+  {
+    "code": "29254",
+    "name": "Nguyệt Hóa"
+  },
+  {
+    "code": "29767",
+    "name": "Ngãi Tứ"
+  },
+  {
+    "code": "29530",
+    "name": "Ngũ Lạc"
+  },
+  {
+    "code": "28948",
+    "name": "Nhuận Phú Tân"
+  },
+  {
+    "code": "29623",
+    "name": "Nhơn Phú"
+  },
+  {
+    "code": "29302",
+    "name": "Nhị Long"
+  },
+  {
+    "code": "29446",
+    "name": "Nhị Trường"
+  },
+  {
+    "code": "29329",
+    "name": "Phong Thạnh"
+  },
+  {
+    "code": "28756",
+    "name": "Phú Khương"
+  },
+  {
+    "code": "28879",
+    "name": "Phú Phụng"
+  },
+  {
+    "code": "29611",
+    "name": "Phú Quới"
+  },
+  {
+    "code": "29062",
+    "name": "Phú Thuận"
+  },
+  {
+    "code": "28858",
+    "name": "Phú Tân"
+  },
+  {
+    "code": "28810",
+    "name": "Phú Túc"
+  },
+  {
+    "code": "29557",
+    "name": "Phước Hậu"
+  },
+  {
+    "code": "29020",
+    "name": "Phước Long"
+  },
+  {
+    "code": "28915",
+    "name": "Phước Mỹ Trung"
+  },
+  {
+    "code": "29668",
+    "name": "Quới An"
+  },
+  {
+    "code": "29677",
+    "name": "Quới Thiện"
+  },
+  {
+    "code": "29191",
+    "name": "Quới Điền"
+  },
+  {
+    "code": "29386",
+    "name": "Song Lộc"
+  },
+  {
+    "code": "29740",
+    "name": "Song Phú"
+  },
+  {
+    "code": "28783",
+    "name": "Sơn Đông"
+  },
+  {
+    "code": "29719",
+    "name": "Tam Bình"
+  },
+  {
+    "code": "29335",
+    "name": "Tam Ngãi"
+  },
+  {
+    "code": "29590",
+    "name": "Thanh Đức"
+  },
+  {
+    "code": "28969",
+    "name": "Thành Thới"
+  },
+  {
+    "code": "29221",
+    "name": "Thạnh Hải"
+  },
+  {
+    "code": "29227",
+    "name": "Thạnh Phong"
+  },
+  {
+    "code": "29182",
+    "name": "Thạnh Phú"
+  },
+  {
+    "code": "29104",
+    "name": "Thạnh Phước"
+  },
+  {
+    "code": "29089",
+    "name": "Thạnh Trị"
+  },
+  {
+    "code": "29107",
+    "name": "Thới Thuận"
+  },
+  {
+    "code": "28861",
+    "name": "Tiên Thủy"
+  },
+  {
+    "code": "29341",
+    "name": "Tiểu Cần"
+  },
+  {
+    "code": "29683",
+    "name": "Trung Hiệp"
+  },
+  {
+    "code": "29698",
+    "name": "Trung Ngãi"
+  },
+  {
+    "code": "29659",
+    "name": "Trung Thành"
+  },
+  {
+    "code": "29836",
+    "name": "Trà Côn"
+  },
+  {
+    "code": "29461",
+    "name": "Trà Cú"
+  },
+  {
+    "code": "29242",
+    "name": "Trà Vinh"
+  },
+  {
+    "code": "29821",
+    "name": "Trà Ôn"
+  },
+  {
+    "code": "29516",
+    "name": "Trường Long Hòa"
+  },
+  {
+    "code": "29278",
+    "name": "Tân An"
+  },
+  {
+    "code": "29029",
+    "name": "Tân Hào"
+  },
+  {
+    "code": "29371",
+    "name": "Tân Hòa"
+  },
+  {
+    "code": "29593",
+    "name": "Tân Hạnh"
+  },
+  {
+    "code": "29653",
+    "name": "Tân Long Hội"
+  },
+  {
+    "code": "29785",
+    "name": "Tân Lược"
+  },
+  {
+    "code": "29566",
+    "name": "Tân Ngãi"
+  },
+  {
+    "code": "28840",
+    "name": "Tân Phú"
+  },
+  {
+    "code": "29800",
+    "name": "Tân Quới"
+  },
+  {
+    "code": "28921",
+    "name": "Tân Thành Bình"
+  },
+  {
+    "code": "29167",
+    "name": "Tân Thủy"
+  },
+  {
+    "code": "29137",
+    "name": "Tân Xuân"
+  },
+  {
+    "code": "29365",
+    "name": "Tập Ngãi"
+  },
+  {
+    "code": "29467",
+    "name": "Tập Sơn"
+  },
+  {
+    "code": "29431",
+    "name": "Vinh Kim"
+  },
+  {
+    "code": "28894",
+    "name": "Vĩnh Thành"
+  },
+  {
+    "code": "29845",
+    "name": "Vĩnh Xuân"
+  },
+  {
+    "code": "29497",
+    "name": "Đôn Châu"
+  },
+  {
+    "code": "29536",
+    "name": "Đông Hải"
+  },
+  {
+    "code": "29812",
+    "name": "Đông Thành"
+  },
+  {
+    "code": "29491",
+    "name": "Đại An"
+  },
+  {
+    "code": "29194",
+    "name": "Đại Điền"
+  },
+  {
+    "code": "28945",
+    "name": "Đồng Khởi"
+  }
+]

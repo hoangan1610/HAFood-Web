@@ -1,0 +1,262 @@
+[
+  {
+    "code": "22828",
+    "name": "Anh Dũng"
+  },
+  {
+    "code": "22423",
+    "name": "Ba Ngòi"
+  },
+  {
+    "code": "22795",
+    "name": "Bác Ái"
+  },
+  {
+    "code": "22786",
+    "name": "Bác Ái Tây"
+  },
+  {
+    "code": "22801",
+    "name": "Bác Ái Đông"
+  },
+  {
+    "code": "22741",
+    "name": "Bảo An"
+  },
+  {
+    "code": "22411",
+    "name": "Bắc Cam Ranh"
+  },
+  {
+    "code": "22615",
+    "name": "Bắc Khánh Vĩnh"
+  },
+  {
+    "code": "22333",
+    "name": "Bắc Nha Trang"
+  },
+  {
+    "code": "22546",
+    "name": "Bắc Ninh Hòa"
+  },
+  {
+    "code": "22465",
+    "name": "Cam An"
+  },
+  {
+    "code": "22435",
+    "name": "Cam Hiệp"
+  },
+  {
+    "code": "22432",
+    "name": "Cam Linh"
+  },
+  {
+    "code": "22453",
+    "name": "Cam Lâm"
+  },
+  {
+    "code": "22420",
+    "name": "Cam Ranh"
+  },
+  {
+    "code": "22909",
+    "name": "Cà Ná"
+  },
+  {
+    "code": "22840",
+    "name": "Công Hải"
+  },
+  {
+    "code": "22651",
+    "name": "Diên Khánh"
+  },
+  {
+    "code": "22660",
+    "name": "Diên Lâm"
+  },
+  {
+    "code": "22678",
+    "name": "Diên Lạc"
+  },
+  {
+    "code": "22672",
+    "name": "Diên Thọ"
+  },
+  {
+    "code": "22657",
+    "name": "Diên Điền"
+  },
+  {
+    "code": "22591",
+    "name": "Hòa Thắng"
+  },
+  {
+    "code": "22558",
+    "name": "Hòa Trí"
+  },
+  {
+    "code": "22714",
+    "name": "Khánh Sơn"
+  },
+  {
+    "code": "22609",
+    "name": "Khánh Vĩnh"
+  },
+  {
+    "code": "22813",
+    "name": "Lâm Sơn"
+  },
+  {
+    "code": "22822",
+    "name": "Mỹ Sơn"
+  },
+  {
+    "code": "22480",
+    "name": "Nam Cam Ranh"
+  },
+  {
+    "code": "22648",
+    "name": "Nam Khánh Vĩnh"
+  },
+  {
+    "code": "22402",
+    "name": "Nam Nha Trang"
+  },
+  {
+    "code": "22597",
+    "name": "Nam Ninh Hòa"
+  },
+  {
+    "code": "22366",
+    "name": "Nha Trang"
+  },
+  {
+    "code": "22834",
+    "name": "Ninh Chử"
+  },
+  {
+    "code": "22528",
+    "name": "Ninh Hòa"
+  },
+  {
+    "code": "22852",
+    "name": "Ninh Hải"
+  },
+  {
+    "code": "22870",
+    "name": "Ninh Phước"
+  },
+  {
+    "code": "22810",
+    "name": "Ninh Sơn"
+  },
+  {
+    "code": "22759",
+    "name": "Phan Rang"
+  },
+  {
+    "code": "22888",
+    "name": "Phước Dinh"
+  },
+  {
+    "code": "22900",
+    "name": "Phước Hà"
+  },
+  {
+    "code": "22873",
+    "name": "Phước Hậu"
+  },
+  {
+    "code": "22891",
+    "name": "Phước Hữu"
+  },
+  {
+    "code": "22708",
+    "name": "Suối Dầu"
+  },
+  {
+    "code": "22702",
+    "name": "Suối Hiệp"
+  },
+  {
+    "code": "22849",
+    "name": "Thuận Bắc"
+  },
+  {
+    "code": "22897",
+    "name": "Thuận Nam"
+  },
+  {
+    "code": "22612",
+    "name": "Trung Khánh Vĩnh"
+  },
+  {
+    "code": "22736",
+    "name": "Trường Sa"
+  },
+  {
+    "code": "22498",
+    "name": "Tu Bông"
+  },
+  {
+    "code": "22576",
+    "name": "Tân Định"
+  },
+  {
+    "code": "22720",
+    "name": "Tây Khánh Sơn"
+  },
+  {
+    "code": "22624",
+    "name": "Tây Khánh Vĩnh"
+  },
+  {
+    "code": "22390",
+    "name": "Tây Nha Trang"
+  },
+  {
+    "code": "22552",
+    "name": "Tây Ninh Hòa"
+  },
+  {
+    "code": "22846",
+    "name": "Vĩnh Hải"
+  },
+  {
+    "code": "22525",
+    "name": "Vạn Hưng"
+  },
+  {
+    "code": "22489",
+    "name": "Vạn Ninh"
+  },
+  {
+    "code": "22516",
+    "name": "Vạn Thắng"
+  },
+  {
+    "code": "22861",
+    "name": "Xuân Hải"
+  },
+  {
+    "code": "22738",
+    "name": "Đô Vinh"
+  },
+  {
+    "code": "22780",
+    "name": "Đông Hải"
+  },
+  {
+    "code": "22732",
+    "name": "Đông Khánh Sơn"
+  },
+  {
+    "code": "22561",
+    "name": "Đông Ninh Hòa"
+  },
+  {
+    "code": "22504",
+    "name": "Đại Lãnh"
+  }
+]

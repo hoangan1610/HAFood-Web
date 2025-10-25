@@ -1,0 +1,314 @@
+[
+  {
+    "code": "19483",
+    "name": "A Dơi"
+  },
+  {
+    "code": "19567",
+    "name": "Ba Lòng"
+  },
+  {
+    "code": "19009",
+    "name": "Ba Đồn"
+  },
+  {
+    "code": "19066",
+    "name": "Bắc Gianh"
+  },
+  {
+    "code": "19126",
+    "name": "Bắc Trạch"
+  },
+  {
+    "code": "19501",
+    "name": "Bến Hải"
+  },
+  {
+    "code": "19366",
+    "name": "Bến Quan"
+  },
+  {
+    "code": "19141",
+    "name": "Bố Trạch"
+  },
+  {
+    "code": "19255",
+    "name": "Cam Hồng"
+  },
+  {
+    "code": "19597",
+    "name": "Cam Lộ"
+  },
+  {
+    "code": "19742",
+    "name": "Cồn Cỏ"
+  },
+  {
+    "code": "19537",
+    "name": "Cồn Tiên"
+  },
+  {
+    "code": "19414",
+    "name": "Cửa Tùng"
+  },
+  {
+    "code": "19496",
+    "name": "Cửa Việt"
+  },
+  {
+    "code": "19681",
+    "name": "Diên Sanh"
+  },
+  {
+    "code": "18904",
+    "name": "Dân Hóa"
+  },
+  {
+    "code": "19495",
+    "name": "Gio Linh"
+  },
+  {
+    "code": "19603",
+    "name": "Hiếu Giang"
+  },
+  {
+    "code": "19111",
+    "name": "Hoàn Lão"
+  },
+  {
+    "code": "19033",
+    "name": "Hòa Trạch"
+  },
+  {
+    "code": "19555",
+    "name": "Hướng Hiệp"
+  },
+  {
+    "code": "19435",
+    "name": "Hướng Lập"
+  },
+  {
+    "code": "19441",
+    "name": "Hướng Phùng"
+  },
+  {
+    "code": "19702",
+    "name": "Hải Lăng"
+  },
+  {
+    "code": "19429",
+    "name": "Khe Sanh"
+  },
+  {
+    "code": "19318",
+    "name": "Kim Ngân"
+  },
+  {
+    "code": "18943",
+    "name": "Kim Phú"
+  },
+  {
+    "code": "18922",
+    "name": "Kim Điền"
+  },
+  {
+    "code": "19594",
+    "name": "La Lay"
+  },
+  {
+    "code": "19432",
+    "name": "Lao Bảo"
+  },
+  {
+    "code": "19489",
+    "name": "Lìa"
+  },
+  {
+    "code": "19246",
+    "name": "Lệ Ninh"
+  },
+  {
+    "code": "19249",
+    "name": "Lệ Thủy"
+  },
+  {
+    "code": "18901",
+    "name": "Minh Hóa"
+  },
+  {
+    "code": "19741",
+    "name": "Mỹ Thủy"
+  },
+  {
+    "code": "19075",
+    "name": "Nam Ba Đồn"
+  },
+  {
+    "code": "19639",
+    "name": "Nam Cửa Việt"
+  },
+  {
+    "code": "19093",
+    "name": "Nam Gianh"
+  },
+  {
+    "code": "19735",
+    "name": "Nam Hải Lăng"
+  },
+  {
+    "code": "19198",
+    "name": "Nam Trạch"
+  },
+  {
+    "code": "19351",
+    "name": "Nam Đông Hà"
+  },
+  {
+    "code": "19225",
+    "name": "Ninh Châu"
+  },
+  {
+    "code": "19138",
+    "name": "Phong Nha"
+  },
+  {
+    "code": "19021",
+    "name": "Phú Trạch"
+  },
+  {
+    "code": "19207",
+    "name": "Quảng Ninh"
+  },
+  {
+    "code": "19057",
+    "name": "Quảng Trạch"
+  },
+  {
+    "code": "19360",
+    "name": "Quảng Trị"
+  },
+  {
+    "code": "19288",
+    "name": "Sen Ngư"
+  },
+  {
+    "code": "19147",
+    "name": "Thượng Trạch"
+  },
+  {
+    "code": "19645",
+    "name": "Triệu Bình"
+  },
+  {
+    "code": "19654",
+    "name": "Triệu Cơ"
+  },
+  {
+    "code": "19624",
+    "name": "Triệu Phong"
+  },
+  {
+    "code": "19030",
+    "name": "Trung Thuần"
+  },
+  {
+    "code": "19237",
+    "name": "Trường Ninh"
+  },
+  {
+    "code": "19309",
+    "name": "Trường Phú"
+  },
+  {
+    "code": "19204",
+    "name": "Trường Sơn"
+  },
+  {
+    "code": "18991",
+    "name": "Tuyên Bình"
+  },
+  {
+    "code": "18997",
+    "name": "Tuyên Hóa"
+  },
+  {
+    "code": "18958",
+    "name": "Tuyên Lâm"
+  },
+  {
+    "code": "18985",
+    "name": "Tuyên Phú"
+  },
+  {
+    "code": "18952",
+    "name": "Tuyên Sơn"
+  },
+  {
+    "code": "19588",
+    "name": "Tà Rụt"
+  },
+  {
+    "code": "19051",
+    "name": "Tân Gianh"
+  },
+  {
+    "code": "19462",
+    "name": "Tân Lập"
+  },
+  {
+    "code": "19291",
+    "name": "Tân Mỹ"
+  },
+  {
+    "code": "18919",
+    "name": "Tân Thành"
+  },
+  {
+    "code": "19372",
+    "name": "Vĩnh Hoàng"
+  },
+  {
+    "code": "19363",
+    "name": "Vĩnh Linh"
+  },
+  {
+    "code": "19405",
+    "name": "Vĩnh Thủy"
+  },
+  {
+    "code": "19699",
+    "name": "Vĩnh Định"
+  },
+  {
+    "code": "19669",
+    "name": "Ái Tử"
+  },
+  {
+    "code": "19564",
+    "name": "Đakrông"
+  },
+  {
+    "code": "19333",
+    "name": "Đông Hà"
+  },
+  {
+    "code": "19159",
+    "name": "Đông Trạch"
+  },
+  {
+    "code": "18880",
+    "name": "Đồng Hới"
+  },
+  {
+    "code": "18949",
+    "name": "Đồng Lê"
+  },
+  {
+    "code": "18871",
+    "name": "Đồng Sơn"
+  },
+  {
+    "code": "18859",
+    "name": "Đồng Thuận"
+  }
+]

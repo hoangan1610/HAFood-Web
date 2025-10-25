@@ -15,6 +15,15 @@ namespace HAFoodWeb.Cart
     {
 
         /// <summary>
+        /// wrap control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.HtmlControls.HtmlGenericControl wrap;
+
+        /// <summary>
         /// chkSelect control.
         /// </summary>
         /// <remarks>
@@ -60,15 +69,6 @@ namespace HAFoodWeb.Cart
         protected global::System.Web.UI.WebControls.Literal litPrice;
 
         /// <summary>
-        /// btnIncrease control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.LinkButton btnIncrease;
-
-        /// <summary>
         /// litQty control.
         /// </summary>
         /// <remarks>
@@ -78,15 +78,6 @@ namespace HAFoodWeb.Cart
         protected global::System.Web.UI.WebControls.Literal litQty;
 
         /// <summary>
-        /// btnDecrease control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.LinkButton btnDecrease;
-
-        /// <summary>
         /// litTotal control.
         /// </summary>
         /// <remarks>
@@ -94,14 +85,5 @@ namespace HAFoodWeb.Cart
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
         protected global::System.Web.UI.WebControls.Literal litTotal;
-
-        /// <summary>
-        /// btnRemove control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.LinkButton btnRemove;
     }
 }

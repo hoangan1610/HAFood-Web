@@ -1,0 +1,506 @@
+[
+  {
+    "code": "09877",
+    "name": "An Khánh"
+  },
+  {
+    "code": "09700",
+    "name": "Ba Vì"
+  },
+  {
+    "code": "00004",
+    "name": "Ba Đình"
+  },
+  {
+    "code": "00577",
+    "name": "Bát Tràng"
+  },
+  {
+    "code": "10126",
+    "name": "Bình Minh"
+  },
+  {
+    "code": "00292",
+    "name": "Bạch Mai"
+  },
+  {
+    "code": "09676",
+    "name": "Bất Bạt"
+  },
+  {
+    "code": "00118",
+    "name": "Bồ Đề"
+  },
+  {
+    "code": "10330",
+    "name": "Chuyên Mỹ"
+  },
+  {
+    "code": "10237",
+    "name": "Chương Dương"
+  },
+  {
+    "code": "10015",
+    "name": "Chương Mỹ"
+  },
+  {
+    "code": "00166",
+    "name": "Cầu Giấy"
+  },
+  {
+    "code": "09634",
+    "name": "Cổ Đô"
+  },
+  {
+    "code": "00082",
+    "name": "Cửa Nam"
+  },
+  {
+    "code": "10180",
+    "name": "Dân Hòa"
+  },
+  {
+    "code": "09856",
+    "name": "Dương Hòa"
+  },
+  {
+    "code": "09886",
+    "name": "Dương Nội"
+  },
+  {
+    "code": "00565",
+    "name": "Gia Lâm"
+  },
+  {
+    "code": "00025",
+    "name": "Giảng Võ"
+  },
+  {
+    "code": "00256",
+    "name": "Hai Bà Trưng"
+  },
+  {
+    "code": "09832",
+    "name": "Hoài Đức"
+  },
+  {
+    "code": "00070",
+    "name": "Hoàn Kiếm"
+  },
+  {
+    "code": "00337",
+    "name": "Hoàng Liệt"
+  },
+  {
+    "code": "00331",
+    "name": "Hoàng Mai"
+  },
+  {
+    "code": "09556",
+    "name": "Hà Đông"
+  },
+  {
+    "code": "09772",
+    "name": "Hát Môn"
+  },
+  {
+    "code": "09988",
+    "name": "Hòa Lạc"
+  },
+  {
+    "code": "10096",
+    "name": "Hòa Phú"
+  },
+  {
+    "code": "10417",
+    "name": "Hòa Xá"
+  },
+  {
+    "code": "09931",
+    "name": "Hưng Đạo"
+  },
+  {
+    "code": "10489",
+    "name": "Hương Sơn"
+  },
+  {
+    "code": "09982",
+    "name": "Hạ Bằng"
+  },
+  {
+    "code": "00097",
+    "name": "Hồng Hà"
+  },
+  {
+    "code": "10465",
+    "name": "Hồng Sơn"
+  },
+  {
+    "code": "10210",
+    "name": "Hồng Vân"
+  },
+  {
+    "code": "00364",
+    "name": "Khương Đình"
+  },
+  {
+    "code": "00382",
+    "name": "Kim Anh"
+  },
+  {
+    "code": "00229",
+    "name": "Kim Liên"
+  },
+  {
+    "code": "09552",
+    "name": "Kiến Hưng"
+  },
+  {
+    "code": "09910",
+    "name": "Kiều Phú"
+  },
+  {
+    "code": "09787",
+    "name": "Liên Minh"
+  },
+  {
+    "code": "00145",
+    "name": "Long Biên"
+  },
+  {
+    "code": "00199",
+    "name": "Láng"
+  },
+  {
+    "code": "00328",
+    "name": "Lĩnh Nam"
+  },
+  {
+    "code": "09661",
+    "name": "Minh Châu"
+  },
+  {
+    "code": "09022",
+    "name": "Mê Linh"
+  },
+  {
+    "code": "10441",
+    "name": "Mỹ Đức"
+  },
+  {
+    "code": "00685",
+    "name": "Nam Phù"
+  },
+  {
+    "code": "00160",
+    "name": "Nghĩa Đô"
+  },
+  {
+    "code": "00008",
+    "name": "Ngọc Hà"
+  },
+  {
+    "code": "00679",
+    "name": "Ngọc Hồi"
+  },
+  {
+    "code": "00433",
+    "name": "Nội Bài"
+  },
+  {
+    "code": "00541",
+    "name": "Phù Đổng"
+  },
+  {
+    "code": "09952",
+    "name": "Phú Cát"
+  },
+  {
+    "code": "00619",
+    "name": "Phú Diễn"
+  },
+  {
+    "code": "09568",
+    "name": "Phú Lương"
+  },
+  {
+    "code": "10030",
+    "name": "Phú Nghĩa"
+  },
+  {
+    "code": "00091",
+    "name": "Phú Thượng"
+  },
+  {
+    "code": "10273",
+    "name": "Phú Xuyên"
+  },
+  {
+    "code": "09739",
+    "name": "Phúc Lộc"
+  },
+  {
+    "code": "00136",
+    "name": "Phúc Lợi"
+  },
+  {
+    "code": "10459",
+    "name": "Phúc Sơn"
+  },
+  {
+    "code": "00466",
+    "name": "Phúc Thịnh"
+  },
+  {
+    "code": "09715",
+    "name": "Phúc Thọ"
+  },
+  {
+    "code": "00352",
+    "name": "Phương Liệt"
+  },
+  {
+    "code": "10279",
+    "name": "Phượng Dực"
+  },
+  {
+    "code": "08974",
+    "name": "Quang Minh"
+  },
+  {
+    "code": "10072",
+    "name": "Quảng Bị"
+  },
+  {
+    "code": "09619",
+    "name": "Quảng Oai"
+  },
+  {
+    "code": "09895",
+    "name": "Quốc Oai"
+  },
+  {
+    "code": "09694",
+    "name": "Suối Hai"
+  },
+  {
+    "code": "00376",
+    "name": "Sóc Sơn"
+  },
+  {
+    "code": "09574",
+    "name": "Sơn Tây"
+  },
+  {
+    "code": "09871",
+    "name": "Sơn Đồng"
+  },
+  {
+    "code": "10144",
+    "name": "Tam Hưng"
+  },
+  {
+    "code": "00643",
+    "name": "Thanh Liệt"
+  },
+  {
+    "code": "10114",
+    "name": "Thanh Oai"
+  },
+  {
+    "code": "00640",
+    "name": "Thanh Trì"
+  },
+  {
+    "code": "00367",
+    "name": "Thanh Xuân"
+  },
+  {
+    "code": "00493",
+    "name": "Thiên Lộc"
+  },
+  {
+    "code": "00562",
+    "name": "Thuận An"
+  },
+  {
+    "code": "00475",
+    "name": "Thư Lâm"
+  },
+  {
+    "code": "10183",
+    "name": "Thường Tín"
+  },
+  {
+    "code": "00598",
+    "name": "Thượng Cát"
+  },
+  {
+    "code": "10231",
+    "name": "Thượng Phúc"
+  },
+  {
+    "code": "09955",
+    "name": "Thạch Thất"
+  },
+  {
+    "code": "08995",
+    "name": "Tiến Thắng"
+  },
+  {
+    "code": "00385",
+    "name": "Trung Giã"
+  },
+  {
+    "code": "10081",
+    "name": "Trần Phú"
+  },
+  {
+    "code": "00103",
+    "name": "Tây Hồ"
+  },
+  {
+    "code": "00634",
+    "name": "Tây Mỗ"
+  },
+  {
+    "code": "10003",
+    "name": "Tây Phương"
+  },
+  {
+    "code": "00613",
+    "name": "Tây Tựu"
+  },
+  {
+    "code": "09604",
+    "name": "Tùng Thiện"
+  },
+  {
+    "code": "00322",
+    "name": "Tương Mai"
+  },
+  {
+    "code": "00592",
+    "name": "Từ Liêm"
+  },
+  {
+    "code": "00127",
+    "name": "Việt Hưng"
+  },
+  {
+    "code": "10354",
+    "name": "Vân Đình"
+  },
+  {
+    "code": "00226",
+    "name": "Văn Miếu - Quốc Tử Giám"
+  },
+  {
+    "code": "00301",
+    "name": "Vĩnh Hưng"
+  },
+  {
+    "code": "00508",
+    "name": "Vĩnh Thanh"
+  },
+  {
+    "code": "00283",
+    "name": "Vĩnh Tuy"
+  },
+  {
+    "code": "09664",
+    "name": "Vật Lại"
+  },
+  {
+    "code": "10045",
+    "name": "Xuân Mai"
+  },
+  {
+    "code": "00622",
+    "name": "Xuân Phương"
+  },
+  {
+    "code": "00611",
+    "name": "Xuân Đỉnh"
+  },
+  {
+    "code": "09706",
+    "name": "Yên Bài"
+  },
+  {
+    "code": "00175",
+    "name": "Yên Hòa"
+  },
+  {
+    "code": "08980",
+    "name": "Yên Lãng"
+  },
+  {
+    "code": "09562",
+    "name": "Yên Nghĩa"
+  },
+  {
+    "code": "00340",
+    "name": "Yên Sở"
+  },
+  {
+    "code": "04930",
+    "name": "Yên Xuân"
+  },
+  {
+    "code": "00190",
+    "name": "Ô Chợ Dừa"
+  },
+  {
+    "code": "09817",
+    "name": "Ô Diên"
+  },
+  {
+    "code": "00430",
+    "name": "Đa Phúc"
+  },
+  {
+    "code": "09784",
+    "name": "Đan Phượng"
+  },
+  {
+    "code": "09616",
+    "name": "Đoài Phương"
+  },
+  {
+    "code": "00454",
+    "name": "Đông Anh"
+  },
+  {
+    "code": "00602",
+    "name": "Đông Ngạc"
+  },
+  {
+    "code": "00637",
+    "name": "Đại Mỗ"
+  },
+  {
+    "code": "00664",
+    "name": "Đại Thanh"
+  },
+  {
+    "code": "10342",
+    "name": "Đại Xuyên"
+  },
+  {
+    "code": "00316",
+    "name": "Định Công"
+  },
+  {
+    "code": "00235",
+    "name": "Đống Đa"
+  },
+  {
+    "code": "10402",
+    "name": "Ứng Hòa"
+  },
+  {
+    "code": "10369",
+    "name": "Ứng Thiên"
+  }
+]

@@ -15,7 +15,6 @@
         .page{max-width:1280px;margin:24px auto;padding:0 16px}
         .page-grid{display:grid;grid-template-columns: 2fr 1fr;gap:16px;align-items:start}
         @media (max-width: 992px){.page-grid{grid-template-columns:1fr}}
-
         .cart-box{background:#fff;border-radius:var(--radius);box-shadow:0 4px 10px rgba(0,0,0,.05)}
         .cart-header{display:grid;grid-template-columns: 40px 120px 1fr 120px 160px 120px 60px;gap:12px;align-items:center;padding:14px 16px;border-bottom:2px solid #e9ecef}
         .cart-header > div:nth-child(3){ text-align:left; padding-left:20px; }
@@ -25,7 +24,6 @@
         .cart-header > div:nth-child(7){ text-align:center; }
         .cart-list{padding:0 8px 8px}
         .total-row{padding:16px;border-top:2px solid var(--border);display:flex;gap:8px;justify-content:flex-end;font-weight:700}
-
         .panel{background:#fff;border-radius:var(--radius);box-shadow:0 4px 10px rgba(0,0,0,.05)}
         .panel-title{padding:14px 16px;border-bottom:2px solid var(--border);font-weight:700;display:flex;align-items:center;gap:8px}
         .panel-body{padding:16px}
@@ -34,7 +32,6 @@
         .form-row .req::before{content:'* ';color:#e53935}
         .form-control{width:100%;height:40px;border:1px solid var(--border);border-radius:8px;padding:0 12px;font-family:inherit}
         .fv{margin-top:4px;color:#dc3545;font-size:13px}
-
         .summary{background:#fff;border-radius:var(--radius);margin-top:16px;box-shadow:0 4px 10px rgba(0,0,0,.05)}
         .summary-row{display:flex;justify-content:space-between;padding:10px 16px;border-bottom:1px dashed var(--border)}
         .summary-row:last-child{border-bottom:none}
@@ -45,25 +42,35 @@
         .invisible-input{position:absolute;left:-9999px;top:auto;width:1px;height:1px;opacity:0;pointer-events:none}
     </style>
 </head>
+
 <body>
 <form id="form1" runat="server">
     <asp:ScriptManager ID="sm" runat="server" EnablePartialRendering="true" />
     <uc:Header ID="Header1" runat="server" />
 
-    <!-- Hidden TextBox mirror cho validator -->
+    <!-- Flags/params cho JS -->
+    <asp:HiddenField ID="hidDeviceUuid" runat="server" />
+    <asp:HiddenField ID="hidApiBase" runat="server" />
+    <asp:HiddenField ID="hidIsAuth" runat="server" />
+    <asp:HiddenField ID="hidJwt" runat="server" />
+
+    <!-- Hidden mirror cho validator (Tên hiển thị) -->
     <asp:TextBox ID="txtCitySel" runat="server" CssClass="invisible-input" />
     <asp:TextBox ID="txtWardSel" runat="server" CssClass="invisible-input" />
+    <!-- Hidden giữ CODE để restore lựa chọn sau postback -->
+    <asp:TextBox ID="txtCityCode" runat="server" CssClass="invisible-input" />
+    <asp:TextBox ID="txtWardCode" runat="server" CssClass="invisible-input" />
+    <!-- NEW: mirror line_id đã chọn -->
+    <asp:HiddenField ID="hidSelectedLines" runat="server" />
 
     <div class="page">
         <div class="page-grid">
-            <!-- LEFT: CART -->
+            <!-- LEFT -->
             <asp:UpdatePanel ID="updCart" runat="server" UpdateMode="Conditional" ChildrenAsTriggers="true">
                 <ContentTemplate>
                     <div class="cart-box">
                         <div class="cart-header">
-                            <div>
-                                <asp:CheckBox ID="chkSelectAll" runat="server" AutoPostBack="true" OnCheckedChanged="chkSelectAll_CheckedChanged" />
-                            </div>
+                            <div><asp:CheckBox ID="chkSelectAll" runat="server" /></div>
                             <div></div><div>SẢN PHẨM</div><div>GIÁ</div><div>SL</div><div>SỐ TIỀN</div><div></div>
                         </div>
 
@@ -72,12 +79,8 @@
                         </asp:Panel>
 
                         <div class="cart-list">
-                            <asp:Repeater ID="rptCart" runat="server"
-                                OnItemCommand="rptCart_ItemCommand"
-                                OnItemDataBound="rptCart_ItemDataBound">
-                                <ItemTemplate>
-                                    <uc:CartItem ID="CartItemControl" runat="server" />
-                                </ItemTemplate>
+                            <asp:Repeater ID="rptCart" runat="server" OnItemDataBound="rptCart_ItemDataBound">
+                                <ItemTemplate><uc:CartItem ID="CartItemControl" runat="server" /></ItemTemplate>
                             </asp:Repeater>
                         </div>
 
@@ -88,35 +91,39 @@
                 </ContentTemplate>
             </asp:UpdatePanel>
 
-            <!-- RIGHT: ADDRESS (ngoài UpdatePanel để không bị reset) + SUMMARY (UpdatePanel riêng) -->
+            <!-- RIGHT -->
             <div>
-                <!-- ValidationSummary tổng -->
-                <asp:ValidationSummary ID="valSummary" runat="server"
-                    ValidationGroup="Checkout" ShowSummary="true"
-                    DisplayMode="BulletList" CssClass="alert"
-                    HeaderText="Vui lòng kiểm tra:" />
+                <asp:ValidationSummary ID="valSummary" runat="server" ValidationGroup="Checkout" ShowSummary="true"
+                    DisplayMode="BulletList" CssClass="alert" HeaderText="Vui lòng kiểm tra:" />
 
-                <!-- ADDRESS (ngoài UpdatePanel) -->
                 <div class="panel">
                     <div class="panel-title"><span class="pill">i</span> Thông tin địa chỉ nhận hàng</div>
                     <div class="panel-body">
                         <div class="form-row">
                             <label class="req">Tỉnh/Thành</label>
                             <select id="ddlCityV2" class="form-control"></select>
-                            <asp:RequiredFieldValidator runat="server"
-                                ControlToValidate="txtCitySel"
+                            <asp:RequiredFieldValidator runat="server" ControlToValidate="txtCitySel"
                                 ErrorMessage="Vui lòng chọn Tỉnh/Thành."
-                                Display="Dynamic" CssClass="fv"
-                                ValidationGroup="Checkout" />
+                                Display="Dynamic" CssClass="fv" ValidationGroup="Checkout" />
+                            <asp:CustomValidator ID="cvCity" runat="server" ControlToValidate="txtCitySel"
+                                ClientValidationFunction="validateCity"
+                                OnServerValidate="cvCity_ServerValidate"
+                                ValidateEmptyText="true"
+                                ErrorMessage="Vui lòng chọn Tỉnh/Thành."
+                                Display="Dynamic" CssClass="fv" ValidationGroup="Checkout" />
                         </div>
                         <div class="form-row">
                             <label class="req">Xã/Phường</label>
                             <select id="ddlWardV2" class="form-control"></select>
-                            <asp:RequiredFieldValidator runat="server"
-                                ControlToValidate="txtWardSel"
+                            <asp:RequiredFieldValidator runat="server" ControlToValidate="txtWardSel"
                                 ErrorMessage="Vui lòng chọn Xã/Phường."
-                                Display="Dynamic" CssClass="fv"
-                                ValidationGroup="Checkout" />
+                                Display="Dynamic" CssClass="fv" ValidationGroup="Checkout" />
+                            <asp:CustomValidator ID="cvWard" runat="server" ControlToValidate="txtWardSel"
+                                ClientValidationFunction="validateWard"
+                                OnServerValidate="cvWard_ServerValidate"
+                                ValidateEmptyText="true"
+                                ErrorMessage="Vui lòng chọn Xã/Phường."
+                                Display="Dynamic" CssClass="fv" ValidationGroup="Checkout" />
                         </div>
                         <div class="form-row">
                             <label class="req">Địa chỉ nhận hàng</label>
@@ -127,14 +134,15 @@
                         </div>
                         <div class="form-row">
                             <label class="req">Số điện thoại liên lạc</label>
-                            <asp:TextBox ID="txtPhone" runat="server" CssClass="form-control" />
+                            <asp:TextBox ID="txtPhone" runat="server" CssClass="form-control" TextMode="SingleLine" MaxLength="20" />
                             <asp:RequiredFieldValidator runat="server" ControlToValidate="txtPhone"
                                 ErrorMessage="Vui lòng nhập số điện thoại."
                                 Display="Dynamic" CssClass="fv" ValidationGroup="Checkout" />
-                            <asp:RegularExpressionValidator runat="server" ControlToValidate="txtPhone"
-                                ValidationExpression=^(?:0\d{9}|\+84\d{9})$
+                            <asp:CustomValidator ID="cvPhone" runat="server" ControlToValidate="txtPhone"
+                                ClientValidationFunction="validatePhone"
+                                OnServerValidate="cvPhone_ServerValidate"
                                 ErrorMessage="Số điện thoại không hợp lệ."
-                                Display="Dynamic" CssClass="fv" ValidationGroup="Checkout" />
+                                Display="Dynamic" CssClass="fv" ValidationGroup="Checkout" SetFocusOnError="true" />
                         </div>
                         <div class="form-row">
                             <label class="req">Tên người nhận hàng</label>
@@ -148,7 +156,6 @@
                     </div>
                 </div>
 
-                <!-- SUMMARY (UpdatePanel riêng để cập nhật số tiền mà không reset form) -->
                 <asp:UpdatePanel ID="updSummary" runat="server" UpdateMode="Conditional">
                     <ContentTemplate>
                         <div class="summary">
@@ -159,17 +166,14 @@
                             <div class="summary-row"><span>VAT (8%):</span><asp:Label ID="lblVat" runat="server" Text="0 ₫" /></div>
                             <div class="grand">Tổng thanh toán: <asp:Label ID="lblGrandTotal" runat="server" Text="0 ₫" /></div>
                             <div style="padding:0 16px 16px">
-                                <asp:Button ID="btnCheckout" runat="server"
-        CssClass="btn-primary"
-        Text="Tiếp Tục Đặt Hàng"
-        ValidationGroup="Checkout" CausesValidation="true"
-        OnClick="btnCheckout_Click" />
+                                <!-- Mirror & validate trước khi postback -->
+                                <asp:Button ID="btnCheckout" runat="server" CssClass="btn-primary" Text="Tiếp Tục Đặt Hàng"
+                                    ValidationGroup="Checkout" CausesValidation="true" OnClick="btnCheckout_Click"
+                                    OnClientClick="return beforeCheckoutSubmit();" />
                             </div>
                         </div>
                     </ContentTemplate>
-                    <Triggers>
-    <asp:PostBackTrigger ControlID="btnCheckout" />
-  </Triggers>
+                    <Triggers><asp:PostBackTrigger ControlID="btnCheckout" /></Triggers>
                 </asp:UpdatePanel>
             </div>
         </div>
@@ -177,107 +181,333 @@
 
     <uc:Footer ID="Footer1" runat="server" />
 
-    <!-- JS provinces.open-api.vn v2 + cache + mirror hidden textbox -->
+    <!-- Provinces script -->
     <script>
         (function () {
-            const BASE_V2 = 'https://provinces.open-api.vn/api/v2';
-            const TTL_DAYS = 7, ttlMs = TTL_DAYS * 24 * 60 * 60 * 1000;
+            const citySel = document.getElementById('ddlCityV2');
+            const wardSel = document.getElementById('ddlWardV2');
 
-            const ddlCity = document.getElementById('ddlCityV2');
-            const ddlWard = document.getElementById('ddlWardV2');
+            const hidCityName = document.getElementById('<%= txtCitySel.ClientID %>');
+            const hidWardName = document.getElementById('<%= txtWardSel.ClientID %>');
+            const hidCityCode = document.getElementById('<%= txtCityCode.ClientID %>');
+            const hidWardCode = document.getElementById('<%= txtWardCode.ClientID %>');
 
-            const txtCitySel = document.getElementById('<%= txtCitySel.ClientID %>');
-            const txtWardSel = document.getElementById('<%= txtWardSel.ClientID %>');
+            const DATA_BASE = '<%= ResolveClientUrl("~/assets/vn-admin") %>';
 
-            function cacheGet(key) {
-                try {
-                    const raw = localStorage.getItem(key);
-                    if (!raw) return null;
-                    const { ts, data } = JSON.parse(raw);
-                    if (Date.now() - ts > ttlMs) { localStorage.removeItem(key); return null; }
-                    return data;
-                } catch (e) { return null; }
-            }
-            function cacheSet(key, data) {
-                try { localStorage.setItem(key, JSON.stringify({ ts: Date.now(), data })); } catch (e) { }
-            }
-            async function fetchJson(url, cacheKey) {
-                const cached = cacheGet(cacheKey);
-                if (cached) return cached;
-                const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
-                if (!res.ok) throw new Error('HTTP ' + res.status);
-                const data = await res.json();
-                cacheSet(cacheKey, data);
-                return data;
-            }
-            function resetSelect(sel, ph) {
+            function clearOptions(sel, placeholder) {
                 sel.innerHTML = '';
-                const o = document.createElement('option');
-                o.value = ''; o.textContent = ph || '-- Chọn --';
-                sel.appendChild(o);
+                const opt0 = document.createElement('option');
+                opt0.value = '';
+                opt0.textContent = placeholder;
+                sel.appendChild(opt0);
             }
-
-            async function loadCitiesV2() {
-                resetSelect(ddlCity, '-- Chọn Tỉnh/Thành --');
-                resetSelect(ddlWard, '-- Chọn Xã/Phường --');
-                const data = await fetchJson(`${BASE_V2}/p/`, 'v2:p');
-                (data || []).forEach(p => {
-                    const o = document.createElement('option');
-                    o.value = p.code; o.textContent = p.name;
-                    ddlCity.appendChild(o);
-                });
-                // khôi phục nếu có mirror
-                if (txtCitySel.value) {
-                    for (let i = 0; i < ddlCity.options.length; i++) {
-                        if (ddlCity.options[i].text === txtCitySel.value) { ddlCity.selectedIndex = i; break; }
-                    }
-                    if (ddlCity.value) await loadWardsByProvinceV2(ddlCity.value);
-                }
+            function selectedText(sel) {
+                return sel.options[sel.selectedIndex]?.text?.trim() || '';
             }
+            function mirrorHidden() {
+                hidCityName.value = selectedText(citySel);
+                hidWardName.value = selectedText(wardSel);
+                hidCityCode.value = citySel.value || '';
+                hidWardCode.value = wardSel.value || '';
+            }
+            const rmDiacritics = (s) => (s || '')
+                .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+                .replace(/đ/g, 'd').replace(/Đ/g, 'D')
+                .replace(/\s+/g, ' ').trim().toLowerCase();
 
-            async function loadWardsByProvinceV2(provinceCode) {
-                resetSelect(ddlWard, '-- Chọn Xã/Phường --');
-                if (!provinceCode) return;
+            async function loadProvinces() {
+                clearOptions(citySel, '— Chọn Tỉnh/Thành —');
                 try {
-                    const prov = await fetchJson(`${BASE_V2}/p/${provinceCode}?depth=2`, `v2:p:${provinceCode}:d2`);
-                    const wards = (prov && prov.wards) || [];
-                    wards.forEach(w => {
-                        const o = document.createElement('option');
-                        o.value = w.code; o.textContent = w.name;
-                        ddlWard.appendChild(o);
-                    });
-                } catch (e) {
-                    const all = await fetchJson(`${BASE_V2}/w/`, 'v2:w:all');
-                    const wards = (all || []).filter(w => String(w.province_code) === String(provinceCode));
-                    wards.forEach(w => {
-                        const o = document.createElement('option');
-                        o.value = w.code; o.textContent = w.name;
-                        ddlWard.appendChild(o);
-                    });
-                }
-                // khôi phục ward nếu có mirror
-                if (txtWardSel.value) {
-                    for (let i = 0; i < ddlWard.options.length; i++) {
-                        if (ddlWard.options[i].text === txtWardSel.value) { ddlWard.selectedIndex = i; break; }
+                    const resp = await fetch(`${DATA_BASE}/provinces.json`, { cache: 'force-cache' });
+                    const list = await resp.json();
+                    for (const p of list) {
+                        const opt = document.createElement('option');
+                        opt.value = p.code;
+                        opt.textContent = p.name;
+                        citySel.appendChild(opt);
                     }
-                }
+                    if (hidCityCode.value) {
+                        citySel.value = hidCityCode.value;
+                        if (citySel.value !== hidCityCode.value && hidCityName.value) {
+                            const target = rmDiacritics(hidCityName.value);
+                            for (const o of citySel.options) {
+                                if (rmDiacritics(o.text) === target) { citySel.value = o.value; break; }
+                            }
+                        }
+                    }
+                } catch (e) { console.error('Load provinces.json failed:', e); }
+                mirrorHidden();
             }
 
-            ddlCity.addEventListener('change', async function () {
-                const text = ddlCity.options[ddlCity.selectedIndex]?.text || '';
-                txtCitySel.value = text;
-                txtWardSel.value = '';
-                await loadWardsByProvinceV2(ddlCity.value);
+            async function loadWards(provSlug) {
+                clearOptions(wardSel, '— Chọn Xã/Phường —');
+                if (!provSlug) { mirrorHidden(); return; }
+                try {
+                    const resp = await fetch(`${DATA_BASE}/wards/${encodeURIComponent(provSlug)}.json`, { cache: 'force-cache' });
+                    if (!resp.ok) { console.warn('Không có wards cho', provSlug); mirrorHidden(); return; }
+                    const wards = await resp.json();
+                    for (const w of wards) {
+                        const opt = document.createElement('option');
+                        opt.value = String(w.code);
+                        opt.textContent = w.name;
+                        wardSel.appendChild(opt);
+                    }
+                    if (hidWardCode.value) wardSel.value = hidWardCode.value;
+                    if (!wardSel.value && hidWardName.value) {
+                        const target = rmDiacritics(hidWardName.value);
+                        for (const o of wardSel.options) {
+                            if (rmDiacritics(o.text) === target) { wardSel.value = o.value; break; }
+                        }
+                    }
+                } catch (e) { console.error('Load wards failed:', e); }
+                mirrorHidden();
+            }
+
+            citySel.addEventListener('change', async () => {
+                await loadWards(citySel.value);
+                mirrorHidden();
             });
-            ddlWard.addEventListener('change', function () {
-                const text = ddlWard.options[ddlWard.selectedIndex]?.text || '';
-                txtWardSel.value = text;
+            wardSel.addEventListener('change', mirrorHidden);
+
+            document.addEventListener('DOMContentLoaded', async () => {
+                await loadProvinces();
+                await loadWards(citySel.value);
             });
 
-            // init
-            loadCitiesV2().catch(console.error);
+            // Expose cho beforeCheckoutSubmit()
+            window.__mirrorLocationHidden = mirrorHidden;
         })();
     </script>
+
+    <!-- Phone + City/Ward validators (client) -->
+    <script>
+        function normalizePhone(s) {
+            if (!s) return '';
+            s = String(s).replace(/[\s\.\-]/g, '').trim();
+            s = s.replace(/^\+840/, '+84');
+            return s;
+        }
+        function validatePhone(sender, args) {
+            const s = normalizePhone(args.Value);
+            args.IsValid = /^(0\d{9}|\+84\d{9})$/.test(s);
+        }
+        function validateCity(sender, args) {
+            if (window.__mirrorLocationHidden) window.__mirrorLocationHidden();
+            var citySel = document.getElementById('ddlCityV2');
+            args.IsValid = !!(citySel && citySel.value);
+        }
+        function validateWard(sender, args) {
+            if (window.__mirrorLocationHidden) window.__mirrorLocationHidden();
+            var wardSel = document.getElementById('ddlWardV2');
+            args.IsValid = !!(wardSel && wardSel.value);
+        }
+    </script>
+
+    <!-- Submit guard -->
+    <script>
+        function beforeCheckoutSubmit() {
+            if (window.__mirrorLocationHidden) window.__mirrorLocationHidden();
+
+            if (typeof (Page_ClientValidate) === 'function') {
+                if (!Page_ClientValidate('Checkout')) return false;
+            }
+            var citySel = document.getElementById('ddlCityV2');
+            var wardSel = document.getElementById('ddlWardV2');
+            if (!citySel.value || !wardSel.value) {
+                alert('Vui lòng chọn Tỉnh/Thành và Xã/Phường.');
+                return false;
+            }
+            return true;
+        }
+    </script>
+
+    <!-- Cart JS: sync chọn item <-> hidden + SelectAll -->
+    <script>
+        (function () {
+            const API = document.getElementById('<%= hidApiBase.ClientID %>').value || '';
+            const UUID = document.getElementById('<%= hidDeviceUuid.ClientID %>').value || '';
+            const JWT = (document.getElementById('<%= hidJwt.ClientID %>')?.value || '').trim();
+
+            let sameOrigin = false; try { sameOrigin = new URL(API).host === location.host; } catch { }
+            const HAS_JWT = !!JWT;
+            const USE_USER = HAS_JWT || sameOrigin;
+            const USE_GUEST = !USE_USER;
+
+            const fmt = n => (n || 0).toLocaleString('vi-VN') + ' ₫';
+
+            const selectAll = document.getElementById('<%= chkSelectAll.ClientID %>');
+            const hidSelected = document.getElementById('<%= hidSelectedLines.ClientID %>');
+
+            function withAuthQuery(url) {
+                if (USE_GUEST && UUID) return url + (url.includes('?') ? '&' : '?') + 'device_uuid=' + encodeURIComponent(UUID);
+                return url;
+            }
+            function ensure(opts) {
+                const headers = { 'Content-Type': 'application/json' };
+                if (HAS_JWT) headers['Authorization'] = 'Bearer ' + JWT;
+                return Object.assign({ credentials: 'include', headers }, opts || {});
+            }
+            async function safeJson(resp) { try { return await resp.json(); } catch { return {}; } }
+
+            function syncSelectedHidden() {
+                const selected = [];
+                document.querySelectorAll('.cart-item').forEach(row => {
+                    const cb = row.querySelector('input[type="checkbox"]');
+                    if (cb && cb.checked) {
+                        const lineId = row.getAttribute('data-line-id');
+                        if (lineId) selected.push(lineId);
+                    }
+                });
+                hidSelected.value = selected.join(',');
+            }
+
+            function updateSelectAllUI() {
+                const cbs = Array.from(document.querySelectorAll('.cart-item input[type="checkbox"]'));
+                if (!selectAll) return;
+                if (cbs.length === 0) { selectAll.checked = false; selectAll.indeterminate = false; return; }
+                const checkedCount = cbs.filter(x => x.checked).length;
+                selectAll.checked = (checkedCount === cbs.length);
+                selectAll.indeterminate = (checkedCount > 0 && checkedCount < cbs.length);
+            }
+
+            function patchTotals(payload) {
+                if (payload && payload.totals) {
+                    const t = payload.totals;
+                    document.getElementById('<%= lblSubtotal.ClientID %>').textContent = fmt(t.subtotal);
+                    document.getElementById('<%= lblVat.ClientID %>').textContent      = fmt(t.vat);
+                    document.getElementById('<%= lblShipping.ClientID %>').textContent = fmt(t.shipping);
+                    document.getElementById('<%= lblGrandTotal.ClientID %>').textContent= fmt(t.grand);
+                    document.getElementById('<%= lblTotal.ClientID %>').textContent    = fmt(t.subtotal);
+                }
+            }
+
+            function recalcTotals() {
+                let subtotal = 0, sumItems = 0;
+                document.querySelectorAll('.cart-item').forEach(row => {
+                    const cb = row.querySelector('input[type="checkbox"]');
+                    if (!cb || !cb.checked) return;
+                    const price = Number(row.getAttribute('data-price')) || 0;
+                    const qtyEl = row.querySelector('.qty-num');
+                    const qty = Number(qtyEl?.textContent.trim() || '1') || 1;
+                    subtotal += price * qty; sumItems += qty;
+                });
+                const vat = Math.round(subtotal * 0.08), ship = 0, grand = subtotal + vat + ship;
+                document.getElementById('<%= lblSubtotal.ClientID %>').textContent   = fmt(subtotal);
+                document.getElementById('<%= lblVat.ClientID %>').textContent        = fmt(vat);
+                document.getElementById('<%= lblShipping.ClientID %>').textContent   = fmt(ship);
+                document.getElementById('<%= lblGrandTotal.ClientID %>').textContent = fmt(grand);
+                document.getElementById('<%= lblTotal.ClientID %>').textContent      = fmt(subtotal);
+                document.getElementById('<%= lblSumItems.ClientID %>').textContent   = sumItems.toString();
+            }
+            window.__cartAfterMutate = () => { recalcTotals(); updateSelectAllUI(); syncSelectedHidden(); };
+
+            document.addEventListener('change', (e) => {
+                if (e.target.matches('.cart-item input[type="checkbox"]')) {
+                    recalcTotals();
+                    updateSelectAllUI();
+                    syncSelectedHidden();
+                }
+                if (selectAll && e.target.id === '<%= chkSelectAll.ClientID %>') {
+                    const checked = e.target.checked;
+                    document.querySelectorAll('.cart-item input[type="checkbox"]').forEach(cb => cb.checked = checked);
+                    selectAll.indeterminate = false;
+                    recalcTotals();
+                    syncSelectedHidden();
+                }
+            });
+
+            document.addEventListener('click', async (e) => {
+                const inc = e.target.closest('.qty-btn[data-inc]');
+                const dec = e.target.closest('.qty-btn[data-dec]');
+                const rm  = e.target.closest('[data-remove]');
+                if (!inc && !dec && !rm) return;
+
+                const row = (inc || dec || rm).closest('.cart-item');
+                if (!row) return;
+
+                const lineId = Number(row.getAttribute('data-line-id'));
+                const price  = Number(row.getAttribute('data-price')) || 0;
+
+                if (rm) {
+                    try {
+                        let url = withAuthQuery(`${API}/api/cart/lines/${lineId}`);
+                        let resp = await fetch(url, ensure({ method: 'DELETE' }));
+                        let json = await safeJson(resp);
+
+                        if (!resp.ok && json?.code === 'MISSING_USER_OR_DEVICE' && UUID) {
+                            url  = `${API}/api/cart/lines/${lineId}?device_uuid=${encodeURIComponent(UUID)}`;
+                            resp = await fetch(url, ensure({ method: 'DELETE' }));
+                            json = await safeJson(resp);
+                        }
+
+                        if (!resp.ok) {
+                            if (json?.code === 'CART_LINE_NOT_FOUND') location.reload();
+                            console.error('Delete failed', json);
+                            return;
+                        }
+                        row.remove();
+                        if (json?.totals) patchTotals(json);
+                        recalcTotals();
+                        updateSelectAllUI();
+                        syncSelectedHidden();
+                    } catch (err) { console.error(err); }
+                    return;
+                }
+
+                const qtyEl = row.querySelector('.qty-num');
+                let q = Number(qtyEl.textContent.trim()) || 1;
+                q = inc ? q + 1 : Math.max(1, q - 1);
+
+                qtyEl.textContent = q;
+                const totalEl = row.querySelector('.cart-item-total');
+                if (totalEl) totalEl.textContent = fmt(price * q);
+
+                try {
+                    const url  = withAuthQuery(`${API}/api/cart/lines/batch?compact=1`);
+                    let body   = USE_USER ? { changes: [{ line_id: lineId, quantity: q }] }
+                                          : { device_uuid: UUID || null, changes: [{ line_id: lineId, quantity: q }] };
+
+                    let resp = await fetch(url, ensure({ method: 'PUT', body: JSON.stringify(body) }));
+                    let json = await safeJson(resp);
+
+                    if (!resp.ok && json?.code === 'MISSING_USER_OR_DEVICE' && UUID) {
+                        body = { device_uuid: UUID, changes: [{ line_id: lineId, quantity: q }] };
+                        resp = await fetch(`${API}/api/cart/lines/batch?compact=1`, ensure({ method: 'PUT', body: JSON.stringify(body) }));
+                        json = await safeJson(resp);
+                    }
+
+                    if (!resp.ok) {
+                        if (json?.code === 'CART_LINE_NOT_FOUND') location.reload();
+                        console.error('Update qty failed', json);
+                        return;
+                    }
+                    if (json?.totals) patchTotals(json);
+                    recalcTotals();
+                    updateSelectAllUI();
+                    syncSelectedHidden();
+                } catch (err) { console.error(err); }
+            });
+
+            window.addEventListener('DOMContentLoaded', () => {
+                // Mobile keyboard số cho phone
+                var phone = document.getElementById('<%= txtPhone.ClientID %>');
+                if (phone) {
+                    phone.setAttribute('type', 'tel');
+                    phone.setAttribute('inputmode', 'tel');
+                    phone.setAttribute('autocomplete', 'tel');
+                }
+                // Mặc định chọn tất cả
+                if (selectAll) {
+                    selectAll.checked = true;
+                    document.querySelectorAll('.cart-item input[type="checkbox"]').forEach(cb => cb.checked = true);
+                }
+                recalcTotals();
+                updateSelectAllUI();
+                syncSelectedHidden();
+            });
+        })();
+    </script>
+
 </form>
 </body>
 </html>
