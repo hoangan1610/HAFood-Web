@@ -207,7 +207,11 @@
                     <asp:HyperLink ID="lnkProfile" runat="server" NavigateUrl="~/UserInfo/UserProfile.aspx" CssClass="d-flex align-items-center">
                         <i class="bi bi-person-circle me-2"></i>Hồ sơ của tôi
                     </asp:HyperLink>
-                    <span title="Trang danh sách đơn hàng">Đơn hàng của tôi</span>
+
+                    <asp:HyperLink ID="lnkOrders" runat="server" NavigateUrl="~/OrderPage/OrderPage.aspx" CssClass="d-flex align-items-center">
+                        <i class="bi bi-basket2-fill me-2"></i>Đơn hàng của tôi
+                    </asp:HyperLink>
+
                     <asp:LinkButton ID="btnLogout" runat="server" OnClick="btnLogout_Click">
                         <i class="bi bi-box-arrow-right me-2"></i>Đăng xuất
                     </asp:LinkButton>

@@ -5,7 +5,7 @@
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head runat="server">
-    <title>Login - HAFood</title>
+    <title>Đăng nhập - HAFood</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
 
     <style>
@@ -67,6 +67,17 @@
             margin-top: 5px;
             display: block;
         }
+
+         .return-link {
+             text-decoration: none;
+             color: #6c757d;
+             font-size: 16px;
+             transition: color 0.3s ease;
+         }
+
+         .return-link:hover {
+             color: #000000;
+         }
     </style>
 </head>
 <body>
@@ -74,27 +85,33 @@
     <uc:Header runat="server" ID="HeaderControl" />
 
     <div class="login-container">
-        <h3>Login</h3>
+        <h3>Đăng nhập</h3>
 
         <div class="mb-3">
-            <asp:TextBox ID="txtEmail" runat="server" CssClass="form-control" placeholder="Email" />
+            <asp:TextBox ID="txtEmail" runat="server" CssClass="form-control" placeholder="Nhập email" />
             <asp:Label ID="lblEmailError" runat="server" CssClass="text-danger"></asp:Label>
         </div>
 
         <div class="mb-3">
-            <asp:TextBox ID="txtPassword" runat="server" CssClass="form-control" TextMode="Password" placeholder="Password" />
+            <asp:TextBox ID="txtPassword" runat="server" CssClass="form-control" TextMode="Password" placeholder="Nhập mật khẩu" />
             <asp:Label ID="lblPasswordError" runat="server" CssClass="text-danger"></asp:Label>
         </div>
 
             <asp:Label ID="lblLoginError" runat="server" CssClass="text-danger text-center mb-2"></asp:Label>
 
         <div class="text-center mb-3">
-            <asp:HyperLink ID="lnkCreateAccount" runat="server" NavigateUrl="~/AuthPage/Register.aspx" CssClass="link-option">Create Account</asp:HyperLink>
-            <asp:HyperLink ID="lnkForgotPassword" runat="server" NavigateUrl="~/AuthPage/ForgotPassword.aspx" CssClass="link-option">Forgot Password</asp:HyperLink>
+            <asp:HyperLink ID="lnkCreateAccount" runat="server" NavigateUrl="~/AuthPage/Register.aspx" CssClass="link-option">Tạo tài khoản</asp:HyperLink>
+            <asp:HyperLink ID="lnkForgotPassword" runat="server" NavigateUrl="~/AuthPage/ForgotPassword.aspx" CssClass="link-option">Quên mật khẩu</asp:HyperLink>
         </div>
 
         <div class="text-center">
-            <asp:Button ID="btnLogin" runat="server" Text="Login" CssClass="btn btn-login" OnClick="btnLogin_Click" />
+            <asp:Button ID="btnLogin" runat="server" Text="Đăng nhập" CssClass="btn btn-login" OnClick="btnLogin_Click" />
+        </div>
+
+        <div class="mt-3 text-center">
+            <asp:HyperLink ID="lnkReturn" runat="server" NavigateUrl="~/HomePage/HomePage.aspx" CssClass="return-link">
+                &lt; Trở về trang chủ
+            </asp:HyperLink>
         </div>
     </div>
 

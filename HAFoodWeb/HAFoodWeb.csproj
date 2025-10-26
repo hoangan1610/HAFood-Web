@@ -191,6 +191,8 @@
     <Content Include="images\product-default.png" />
     <Content Include="images\slide1.jpg" />
     <Content Include="images\slide2.jpg" />
+    <Content Include="OrderPage\OrderDetail.aspx" />
+    <Content Include="OrderPage\OrderPage.aspx" />
     <Content Include="Product\Product.aspx" />
     <Content Include="Scripts\bootstrap.bundle.js" />
     <Content Include="Scripts\bootstrap.bundle.min.js" />
@@ -437,9 +439,27 @@
     <Compile Include="Models\CartRequest.cs" />
     <Compile Include="Models\CartResponseDto.cs" />
     <Compile Include="Models\CategoryTreeDto.cs" />
+    <Compile Include="Models\OrderDetailDto.cs" />
+    <Compile Include="Models\OrderHeaderDto.cs" />
+    <Compile Include="Models\OrderItemDto.cs" />
+    <Compile Include="Models\OrderPageDto.cs" />
     <Compile Include="Models\ProductCardVM.cs" />
     <Compile Include="Models\ProductDtos.cs" />
     <Compile Include="Models\UserDto.cs" />
+    <Compile Include="OrderPage\OrderDetail.aspx.cs">
+      <DependentUpon>OrderDetail.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="OrderPage\OrderDetail.aspx.designer.cs">
+      <DependentUpon>OrderDetail.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="OrderPage\OrderPage.aspx.cs">
+      <DependentUpon>OrderPage.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="OrderPage\OrderPage.aspx.designer.cs">
+      <DependentUpon>OrderPage.aspx</DependentUpon>
+    </Compile>
     <Compile Include="Product\Product.aspx.cs">
       <DependentUpon>Product.aspx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>
@@ -454,6 +474,7 @@
     <Compile Include="Services\CartService.cs" />
     <Compile Include="Services\CategoryService.cs" />
     <Compile Include="Services\ICartService.cs" />
+    <Compile Include="Services\IOrderService.cs" />
     <Compile Include="Services\IProductDetailService.cs" />
     <Compile Include="Services\ISearchService.cs" />
     <Compile Include="Services\IUserService.cs" />
