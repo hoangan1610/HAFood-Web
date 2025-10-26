@@ -49,15 +49,9 @@ namespace HAFoodWeb
             };
         }
 
-        // ====================== HELPERS ======================
+        // ===== Helpers =====
+        private string CurrentSearchPath() => ResolveUrl(Request.CurrentExecutionFilePath);
 
-        // Path trang hiện tại (vd: /HomePage/Search hoặc /HomePage/Search.aspx)
-        private string CurrentSearchPath()
-        {
-            return ResolveUrl(Request.CurrentExecutionFilePath);
-        }
-
-        // Build URL giữ nguyên query hiện có, chỉ thay category_id và reset page=1
         private string BuildCategoryLink(long id)
         {
             var qs = Request.QueryString.AllKeys
@@ -84,13 +78,11 @@ namespace HAFoodWeb
             return sb.ToString();
         }
 
-        // ====================== CATEGORY TREE ======================
-
+        // ===== Category tree =====
         private async Task BindCategoryTreeAsync()
         {
             var all = await _cats.GetAllAsync() ?? new List<CategoryTreeDto>();
 
-            // Nhóm con theo Parent_Id (key non-null)
             var byParent = all
                 .Where(x => x.Parent_Id.HasValue)
                 .GroupBy(x => x.Parent_Id.Value)
@@ -101,7 +93,6 @@ namespace HAFoodWeb
                           .ToList()
                 );
 
-            // ROOTS: Parent_Id is null hoặc Parent_Id không nằm trong danh sách Id
             var idSet = new HashSet<long>(all.Select(x => x.Id));
             var roots = all
                 .Where(x => !x.Parent_Id.HasValue || !idSet.Contains(x.Parent_Id.Value))
@@ -109,7 +100,6 @@ namespace HAFoodWeb
                 .ThenBy(x => x.Name)
                 .ToList();
 
-            // Nhánh cần mở (ancestor của category đang chọn)
             var expandSet = new HashSet<long>();
             long selId;
             if (long.TryParse(Request["category_id"], out selId))
@@ -130,7 +120,6 @@ namespace HAFoodWeb
             ltCategoryTree.Text = sb.ToString();
         }
 
-        // Render 1 node (đệ quy)
         private void RenderNode(
             CategoryTreeDto n,
             StringBuilder sb,
@@ -170,16 +159,14 @@ namespace HAFoodWeb
             sb.Append("</div>");
         }
 
-        // ====================== PRODUCTS ======================
-
+        // ===== Products =====
         protected async Task BindAsync()
         {
             var req = ReadRequest();
 
-            var list = await _search.SearchListAsync(req);   // danh sách để lấy total/paging
-            var cards = await _search.BuildCardsAsync(req);   // có ảnh + variants
+            var list = await _search.SearchListAsync(req);
+            var cards = await _search.BuildCardsAsync(req);
 
-            // Lọc trọng lượng client-side theo label biến thể (nếu có tick)
             var ranges = ParseWeightFiltersFromRequest();
             if (ranges.Any())
                 cards = FilterCardsByWeight(cards, ranges);
@@ -217,7 +204,7 @@ namespace HAFoodWeb
                 return null;
 
             var unit = m.Groups[2].Value.ToLowerInvariant();
-            return unit == "kg" ? (int)Math.Round(v * 1000) : (int)Math.Round(v); // g
+            return unit == "kg" ? (int)Math.Round(v * 1000) : (int)Math.Round(v);
         }
 
         private IList<ProductCardVM> FilterCardsByWeight(IList<ProductCardVM> cards, IReadOnlyList<(int From, int To)> ranges)

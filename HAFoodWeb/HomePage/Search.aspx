@@ -20,15 +20,13 @@
     .suggest-box{position:absolute;z-index:10;background:#fff;border:1px solid #ddd;border-radius:.5rem;overflow:hidden}
     .suggest-item{padding:.5rem .75rem;cursor:pointer}
     .suggest-item:hover{background:#f8f9fa}
-
-    /* Category tree */
     .cat-node{margin:.35rem 0}
     .cat-children{margin-left:.75rem;border-left:1px dashed #eee;padding-left:.5rem}
     .cat-toggle{cursor:pointer;user-select:none}
   </style>
 </head>
 <body>
-<form id="form1" runat="server"> <%-- KHÔNG dùng method="get" để tránh VIEWSTATE trên URL --%>
+<form id="form1" runat="server">
   <asp:ScriptManager ID="sm" runat="server" />
   <uc:Header ID="Header1" runat="server" />
 
@@ -38,7 +36,6 @@
       <div class="col-lg-3 mb-4">
         <div class="card">
           <div class="card-body">
-
             <h5 class="card-title mb-3">Danh Mục</h5>
             <div class="mb-4">
               <asp:Literal ID="ltCategoryTree" runat="server" />
@@ -46,7 +43,6 @@
 
             <h5 class="card-title mb-3">Bộ Lọc Tìm Kiếm</h5>
 
-            <!-- Từ khóa + suggest -->
             <div class="mb-3 position-relative">
               <label class="form-label">Từ khóa</label>
               <input id="txtQ" name="q" type="text" class="form-control" autocomplete="off"
@@ -54,14 +50,12 @@
               <div id="suggest" class="suggest-box d-none w-100"></div>
             </div>
 
-            <!-- Brand -->
             <div class="mb-3">
               <label class="form-label">Thương hiệu</label>
               <input name="brand" type="text" class="form-control"
                      value="<%= Server.HtmlEncode(Request["brand"] ?? "") %>" />
             </div>
 
-            <!-- Khoảng giá (dual-range) -->
             <div class="mb-3">
               <label class="form-label d-block">Khoảng giá (đ)</label>
               <div class="small text-muted d-flex justify-content-between">
@@ -76,7 +70,6 @@
               <input id="maxPrice" name="max_price" type="hidden" value="<%= Server.HtmlEncode(Request["max_price"] ?? "") %>" />
             </div>
 
-            <!-- Trọng lượng (lọc client-side) -->
             <div class="mb-3">
               <label class="form-label d-block">Trọng lượng</label>
               <div class="form-check"><input class="form-check-input" type="checkbox" name="w_100_250" id="w1" <%= Request["w_100_250"]=="on"?"checked":"" %> /><label class="form-check-label" for="w1">100–250g</label></div>
@@ -86,23 +79,20 @@
               <div class="form-check"><input class="form-check-input" type="checkbox" name="w_5000" id="w5" <%= Request["w_5000"]=="on"?"checked":"" %> /><label class="form-check-label" for="w5">Trên 5kg</label></div>
             </div>
 
-            <!-- Chỉ còn hàng -->
             <div class="form-check mb-3">
               <input class="form-check-input" type="checkbox" id="inStock" name="only_in_stock"
                      <%= (Request["only_in_stock"]=="true") ? "checked" : "" %> />
               <label class="form-check-label" for="inStock">Chỉ còn hàng</label>
             </div>
 
-            <!-- Giữ category id nếu tới từ Home -->
             <input type="hidden" name="category_id" value="<%= Server.HtmlEncode(Request["category_id"] ?? "") %>" />
 
-            <!-- KHÔNG submit form; gọi JS để build URL sạch -->
             <button type="button" class="btn btn-success w-100" onclick="applyFilters()">Áp dụng</button>
           </div>
         </div>
       </div>
 
-      <!-- Kết quả -->
+      <!-- Results -->
       <div class="col-lg-9">
         <div class="d-flex align-items-center justify-content-between mb-3">
           <div>
@@ -133,25 +123,31 @@
           <ItemTemplate>
             <div class="col-12 col-sm-6 col-lg-4">
               <div class="card product-card h-100 shadow-sm d-flex">
-                <div class="ratio ratio-4x3 bg-light">
+                <a href='<%# ResolveUrl("~/Product/Product.aspx?id=" + Eval("Id")) %>' class="ratio ratio-4x3 bg-light d-block">
                   <img src="<%# Eval("ImageUrl") %>" class="w-100 h-100 of-contain p-2"
                        loading="lazy" onerror="this.src='/images/product-default.png';"
                        alt="<%# Eval("Name") %>" />
-                </div>
+                </a>
                 <div class="card-body d-flex flex-column">
-                  <h6 class="text-truncate-2 mb-2"><%# Eval("Name") %></h6>
+                  <h6 class="text-truncate-2 mb-2">
+                    <a class="text-decoration-none text-dark" href='<%# ResolveUrl("~/Product/Product.aspx?id=" + Eval("Id")) %>'>
+                      <%# Eval("Name") %>
+                    </a>
+                  </h6>
                   <div class="mb-2"><%# Eval("PriceRangeHtml") %></div>
                   <div class="mb-2">
                     <select class="form-select form-select-sm">
                       <asp:Repeater ID="rpVar" runat="server" DataSource='<%# Eval("Variants") %>'>
-                        <ItemTemplate><option value="<%# Eval("Id") %>"><%# Eval("Label") %></option></ItemTemplate>
+                        <ItemTemplate>
+                          <option value="<%# Eval("Id") %>"><%# Eval("Label") %></option>
+                        </ItemTemplate>
                       </asp:Repeater>
                     </select>
                   </div>
                   <div class="d-flex align-items-center gap-2 mt-auto">
                     <label class="me-2">SL</label>
                     <input type="number" class="form-control form-control-sm" style="width:90px" value="1" min="1" />
-                    <a class="btn btn-warning btn-sm ms-auto" href='<%# Eval("Id", "/product.aspx?id={0}") %>'>Mua</a>
+                    <a class="btn btn-warning btn-sm ms-auto" href='<%# ResolveUrl("~/Product/Product.aspx?id=" + Eval("Id")) %>'>Mua</a>
                   </div>
                 </div>
               </div>
@@ -160,7 +156,6 @@
           <FooterTemplate></div></FooterTemplate>
         </asp:Repeater>
 
-        <!-- Phân trang -->
         <div class="d-flex justify-content-center mt-4">
           <nav aria-label="page">
             <ul class="pagination">
@@ -176,10 +171,9 @@
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   <script>
-    // Debounce
     const debounce=(fn,ms)=>{let t;return(...args)=>{clearTimeout(t);t=setTimeout(()=>fn.apply(this,args),ms)}};
 
-    // ======= Autocomplete suggest =======
+    // Suggest
     const box = document.getElementById('suggest');
     const input = document.getElementById('txtQ');
     const apiBase = '<%= System.Configuration.ConfigurationManager.AppSettings["ApiBaseUrl"]?.TrimEnd('/') %>';
@@ -206,7 +200,7 @@
       input.addEventListener('input', doSuggest);
       document.addEventListener('click', (e) => { if (!box.contains(e.target) && e.target !== input) { box.classList.add('d-none'); } });
 
-      // ======= Dual-range price =======
+      // Dual-range price
       const fmtVnd = n => '₫' + (+n || 0).toLocaleString('vi-VN');
       const minEl = document.getElementById('rangeMin'), maxEl = document.getElementById('rangeMax');
       const hMin = document.getElementById('minPrice'), hMax = document.getElementById('maxPrice');
@@ -227,7 +221,7 @@
       minEl.addEventListener('input', syncRange);
       maxEl.addEventListener('input', syncRange);
 
-      // ======= Toggle Category nodes =======
+      // Toggle Category nodes
       document.addEventListener('click', function (e) {
           const t = e.target.closest('[data-toggle-cat]'); if (!t) return;
           const id = t.getAttribute('data-toggle-cat');
@@ -235,46 +229,36 @@
           if (sub) sub.classList.toggle('d-none');
       });
 
-      // ======= Build URL sạch & điều hướng (không submit form) =======
+      // Build URL sạch
       function readVal(sel) { const el = document.querySelector(sel); return el ? (el.value || '').trim() : ''; }
       function isCheckedByName(name) { const el = document.querySelector(`[name="${name}"]`); return !!(el && el.checked); }
 
       function applyFilters(page) {
           const p = new URLSearchParams();
 
-          // Từ khóa & brand
           const q = readVal('#txtQ'); if (q) p.set('q', q);
           const brand = readVal('[name="brand"]'); if (brand) p.set('brand', brand);
 
-          // Giá: hỗ trợ cả hidden (#minPrice/#maxPrice) lẫn input number name=min_price/max_price (nếu có)
           const min = readVal('#minPrice') || readVal('[name="min_price"]');
           const max = readVal('#maxPrice') || readVal('[name="max_price"]');
           if (min) p.set('min_price', min);
           if (max) p.set('max_price', max);
 
-          // Còn hàng
           if (document.getElementById('inStock')?.checked) p.set('only_in_stock', 'true');
 
-          // Danh mục
           const cat = readVal('[name="category_id"]'); if (cat) p.set('category_id', cat);
 
-          // Sort
           const sortEl = document.getElementById('ddlSort');
           if (sortEl && sortEl.value) p.set('sort', sortEl.value);
 
-          // Trọng lượng (giữ trạng thái trên URL để server đọc & lọc client-side)
           ['w_100_250', 'w_250_500', 'w_500_1000', 'w_1000_5000', 'w_5000'].forEach(n => {
               if (isCheckedByName(n)) p.set(n, 'on');
           });
 
-          // Reset page về 1 khi đổi filter/sort
           p.set('page', page || 1);
-
-          // Điều hướng (GET sạch, không VIEWSTATE)
           window.location.href = location.pathname + '?' + p.toString();
       }
 
-      // Chặn submit form mặc định (kể cả Enter) để luôn dùng applyFilters()
       document.getElementById('form1').addEventListener('submit', function (e) {
           e.preventDefault();
           applyFilters();
