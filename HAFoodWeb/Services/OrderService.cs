@@ -1,7 +1,9 @@
 ﻿using HAFoodWeb.Infrastructure;
+using HAFoodWeb.Models;
 using Newtonsoft.Json;
 using System;
 using System.Configuration;
+using System.Diagnostics;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
@@ -10,7 +12,7 @@ using System.Web;
 
 namespace HAFoodWeb.Services
 {
-    public class OrderService
+    public class OrderService : IOrderService
     {
         private readonly string _apiBase = ConfigurationManager.AppSettings["ApiBaseUrl"]?.TrimEnd('/');
 
@@ -139,6 +141,60 @@ namespace HAFoodWeb.Services
 
             return null;
         }
+
+        //Lấy danh sách đơn hàng của user
+        public async Task<OrderPageDto> GetOrdersByUserAsync(long userId, int? status = null, int page = 1, int pageSize = 20)
+        {
+            var url = $"{_apiBase}/api/orders?userId={userId}&page={page}&page_size={pageSize}";
+
+            if (status.HasValue)
+                url += $"&status={status.Value}";
+
+            var req = new HttpRequestMessage(HttpMethod.Get, url);
+            AttachAuthHeader(req);
+
+            var resp = await HttpJson.Client.SendAsync(req);
+            var json = await resp.Content.ReadAsStringAsync();
+
+            if (!resp.IsSuccessStatusCode)
+            {
+                Debug.WriteLine($"GET {url} FAILED: {(int)resp.StatusCode}\n{json}");
+                return null;
+            }
+
+            return JsonConvert.DeserializeObject<OrderPageDto>(json);
+        }
+
+        //Lấy chi tiết đơn hàng theo id
+        public async Task<OrderDetailDto> GetOrderDetailAsync(long orderId)
+        {
+            var url = $"{_apiBase}/api/orders/{orderId}";
+            var req = new HttpRequestMessage(HttpMethod.Get, url);
+            AttachAuthHeader(req);
+
+            var resp = await HttpJson.Client.SendAsync(req);
+            var json = await resp.Content.ReadAsStringAsync();
+
+            Debug.WriteLine($"GET {url} => {(int)resp.StatusCode}");
+            Debug.WriteLine(json);
+
+            if (!resp.IsSuccessStatusCode)
+            {
+                Debug.WriteLine($"GET {url} FAILED: {(int)resp.StatusCode}\n{json}");
+                return null;
+            }
+
+            try
+            {
+                return JsonConvert.DeserializeObject<OrderDetailDto>(json);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("❌ Deserialize OrderDetailDto: " + ex);
+                return null;
+            }
+        }
+
     }
 
     // ==== DTO theo schema bạn cung cấp ====

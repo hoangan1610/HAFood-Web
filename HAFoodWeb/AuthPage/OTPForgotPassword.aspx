@@ -3,7 +3,7 @@
 <!DOCTYPE html>
 <html>
 <head runat="server">
-    <title>Forgot Password - HAFood</title>
+    <title>Quên mật khẩu - HAFood</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -205,7 +205,7 @@
 
             <asp:TextBox ID="txtOtp" runat="server" CssClass="hiddenField" TextMode="SingleLine" EnableViewState="true" />
 
-            <asp:Button ID="btnVerifyOtp" runat="server" Text="Xác minh OTP"
+            <asp:Button ID="btnVerifyOtp" runat="server" Text="Xác thực OTP"
                 CssClass="aspNetButton"
                 OnClick="btnVerifyOtp_Click"
                 OnClientClick="console.log('btnVerifyOtp OnClientClick'); return validateAndCombineOtp();" />

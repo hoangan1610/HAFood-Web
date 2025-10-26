@@ -3,7 +3,7 @@
 <!DOCTYPE html>
 <html>
 <head runat="server">
-    <title>Forgot Password - HAFood</title>
+    <title>Quên mật khẩu - HAFood</title>
     <style>
         body {
             font-family: Arial, sans-serif;

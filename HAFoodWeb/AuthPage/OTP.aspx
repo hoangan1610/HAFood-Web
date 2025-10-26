@@ -3,7 +3,7 @@
 <!DOCTYPE html>
 <html>
 <head runat="server">
-    <title>Verify OTP - HAFood</title>
+    <title>Xác thực OTP - HAFood</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -199,7 +199,7 @@
 <body>
     <form id="form1" runat="server">
         <div class="otp-container">
-            <h2>Xác minh OTP</h2>
+            <h2>Xác thực OTP</h2>
             <asp:Label ID="lblEmailInfo" runat="server" CssClass="message" ForeColor="#555" />
             <asp:Label ID="lblError" runat="server" CssClass="message" />
             <asp:Label ID="lblSuccess" runat="server" CssClass="message" />
@@ -215,7 +215,7 @@
 
             <asp:TextBox ID="txtOtp" runat="server" CssClass="hiddenField" TextMode="SingleLine" EnableViewState="true" />
 
-            <asp:Button ID="btnVerifyOtp" runat="server" Text="Xác minh OTP"
+            <asp:Button ID="btnVerifyOtp" runat="server" Text="Xác thực OTP"
                 CssClass="aspNetButton"
                 OnClick="btnVerifyOtp_Click"
                 OnClientClick="console.log('btnVerifyOtp OnClientClick'); return validateAndCombineOtp();" />

@@ -7,101 +7,101 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace HAFoodWeb.Control
+namespace HAFoodWeb
 {
 
 
-    public partial class Header
+    public partial class OrderPage
     {
 
         /// <summary>
-        /// lnkLogo control.
+        /// form1 control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.HyperLink lnkLogo;
+        protected global::System.Web.UI.HtmlControls.HtmlForm form1;
 
         /// <summary>
-        /// imgLogo control.
+        /// Header1 control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Image imgLogo;
+        protected global::HAFoodWeb.Control.Header Header1;
 
         /// <summary>
-        /// lnkHome control.
+        /// litDebug control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.HyperLink lnkHome;
+        protected global::System.Web.UI.WebControls.Literal litDebug;
 
         /// <summary>
-        /// guestDropdown control.
+        /// rpOrders control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.HtmlControls.HtmlGenericControl guestDropdown;
+        protected global::System.Web.UI.WebControls.Repeater rpOrders;
 
         /// <summary>
-        /// authDropdown control.
+        /// pnlEmpty control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.HtmlControls.HtmlGenericControl authDropdown;
+        protected global::System.Web.UI.WebControls.Panel pnlEmpty;
 
         /// <summary>
-        /// lnkProfile control.
+        /// pnlPagination control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.HyperLink lnkProfile;
+        protected global::System.Web.UI.WebControls.Panel pnlPagination;
 
         /// <summary>
-        /// lnkOrders control.
+        /// btnPrev control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.HyperLink lnkOrders;
+        protected global::System.Web.UI.WebControls.Button btnPrev;
 
         /// <summary>
-        /// btnLogout control.
+        /// rpPaging control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.LinkButton btnLogout;
+        protected global::System.Web.UI.WebControls.Repeater rpPaging;
 
         /// <summary>
-        /// lnkCart control.
+        /// btnNext control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.HyperLink lnkCart;
+        protected global::System.Web.UI.WebControls.Button btnNext;
 
         /// <summary>
-        /// cartCountBadge control.
+        /// Footer1 control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.HtmlControls.HtmlGenericControl cartCountBadge;
+        protected global::HAFoodWeb.Control.Footer Footer1;
     }
 }

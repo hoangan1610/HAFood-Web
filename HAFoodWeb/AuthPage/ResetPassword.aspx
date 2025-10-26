@@ -3,7 +3,7 @@
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head runat="server">
-    <title>Reset Password - HAFood</title>
+    <title>Khôi phục mật khẩu - HAFood</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -61,7 +61,7 @@
 <body>
     <form id="form1" runat="server">
         <div class="card">
-            <h2>Đặt lại mật khẩu</h2>
+            <h2>Khôi phục mật khẩu</h2>
 
             <asp:Label ID="lblInfo" runat="server" CssClass="message" />
 

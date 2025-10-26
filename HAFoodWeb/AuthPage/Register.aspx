@@ -5,7 +5,7 @@
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head runat="server">
-    <title>Create Account - HAFood</title>
+    <title>Tạo tài khoản - HAFood</title>
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
 
@@ -72,11 +72,11 @@
     <uc:Header runat="server" ID="HeaderControl" />
 
     <div class="register-container">
-        <h3>Create Account</h3>
+        <h3>Tạo tài khoản</h3>
 
         <!-- Full Name -->
         <div class="mb-3">
-            <asp:TextBox ID="txtFullName" runat="server" CssClass="form-control" placeholder="Full Name" />
+            <asp:TextBox ID="txtFullName" runat="server" CssClass="form-control" placeholder="Họ và tên" />
             <asp:Label ID="lblFullNameError" runat="server" CssClass="text-danger" />
         </div>
 
@@ -88,23 +88,23 @@
 
         <!-- Password -->
         <div class="mb-3">
-            <asp:TextBox ID="txtPassword" runat="server" CssClass="form-control" TextMode="Password" placeholder="Password" />
+            <asp:TextBox ID="txtPassword" runat="server" CssClass="form-control" TextMode="Password" placeholder="Mật khẩu" />
             <asp:Label ID="lblPasswordError" runat="server" CssClass="text-danger" />
         </div>
 
         <!-- Phone -->
         <div class="mb-3">
-            <asp:TextBox ID="txtPhone" runat="server" CssClass="form-control" placeholder="Phone Number" />
+            <asp:TextBox ID="txtPhone" runat="server" CssClass="form-control" placeholder="Số điện thoại" />
             <asp:Label ID="lblPhoneError" runat="server" CssClass="text-danger" />
         </div>
 
         <div class="text-center">
-            <asp:Button ID="btnRegister" runat="server" Text="Create" CssClass="btn btn-register" OnClick="btnRegister_Click" />
+            <asp:Button ID="btnRegister" runat="server" Text="Đăng ký" CssClass="btn btn-register" OnClick="btnRegister_Click" />
         </div>
 
         <div class="mt-3 text-center">
             <asp:HyperLink ID="lnkReturn" runat="server" NavigateUrl="~/HomePage/HomePage.aspx" CssClass="return-link">
-                &lt; Return to Store
+                &lt; Trở về trang chủ
             </asp:HyperLink>
         </div>
     </div>

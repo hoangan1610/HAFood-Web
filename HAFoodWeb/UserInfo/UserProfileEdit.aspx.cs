@@ -48,12 +48,59 @@ namespace HAFoodWeb
             var token = Request.Cookies["AuthToken"]?.Value;
             if (string.IsNullOrEmpty(token)) return;
 
+            // --- Kiểm tra tên: không rỗng, không chứa ký tự đặc biệt hoặc số ---
+            string fullName = txtFullName.Text?.Trim() ?? string.Empty;
+            if (string.IsNullOrEmpty(fullName))
+            {
+                lblMessage.Text = "❌ Vui lòng nhập họ và tên.";
+                lblMessage.CssClass = "error-message";
+                return;
+            }
+
+            if (!System.Text.RegularExpressions.Regex.IsMatch(fullName, @"^[\p{L}\s]+$"))
+            {
+                lblMessage.Text = "❌ Tên không được chứa ký tự đặc biệt hoặc số.";
+                lblMessage.CssClass = "error-message";
+                return;
+            }
+
+            // --- Kiểm tra số điện thoại ---
+            string phone = txtPhone.Text?.Trim() ?? string.Empty;
+            if (string.IsNullOrEmpty(phone))
+            {
+                lblMessage.Text = "❌ Vui lòng nhập số điện thoại.";
+                lblMessage.CssClass = "error-message";
+                return;
+            }
+
+            if (phone.Length != 9)
+            {
+                lblMessage.Text = "❌ Số điện thoại phải gồm đúng 9 chữ số.";
+                lblMessage.CssClass = "error-message";
+                return;
+            }
+
+            if (!phone.StartsWith("0"))
+            {
+                lblMessage.Text = "❌ Số điện thoại phải bắt đầu bằng số 0.";
+                lblMessage.CssClass = "error-message";
+                return;
+            }
+
+            if (!System.Text.RegularExpressions.Regex.IsMatch(phone, @"^0\d{8}$"))
+            {
+                lblMessage.Text = "❌ Số điện thoại phải gồm 9 chữ số và bắt đầu bằng số 0.";
+                lblMessage.CssClass = "error-message";
+                return;
+            }
+
             // 1️⃣ Upload ảnh nếu có chọn
             if (fileAvatar.HasFile)
             {
                 var avatarResult = await _userService.UpdateAvatarAsync(token, fileAvatar);
                 if (!avatarResult.Success)
                 {
+                    // giữ lỗi input hiển thị bên dưới form (không phải toast)
                     lblMessage.Text = "❌ Cập nhật ảnh thất bại.";
                     lblMessage.CssClass = "error-message";
                     return;
@@ -77,25 +124,29 @@ namespace HAFoodWeb
             // 2️⃣ Cập nhật thông tin
             var updateRequest = new UserUpdateRequest
             {
-                fullName = txtFullName.Text.Trim(),
-                phone = txtPhone.Text.Trim(),
+                fullName = fullName,
+                phone = phone,
             };
 
             var profileResult = await _userService.UpdateProfileAsync(token, updateRequest);
 
             if (profileResult != null && profileResult.Success)
             {
-                lblMessage.Text = "✅ Bạn đã thay đổi thông tin thành công!";
-                lblMessage.CssClass = "success-message";
+                // ẩn server label lỗi nếu còn
+                lblMessage.Text = string.Empty;
 
-                // ✅ Redirect nhẹ về trang profile sau 1s
+                // Hiển thị toast success (3s) và redirect nhẹ
+                ScriptManager.RegisterStartupScript(this, GetType(), "showSuccess",
+                    "showToast('Cập nhật thông tin thành công!', 'success');", true);
+
                 ScriptManager.RegisterStartupScript(this, GetType(), "redirectProfile",
                     "setTimeout(function(){ window.location.href = '../UserInfo/UserProfile.aspx?t=' + new Date().getTime(); }, 1000);", true);
             }
             else
             {
-                lblMessage.Text = "❌ Cập nhật thông tin thất bại, vui lòng thử lại.";
-                lblMessage.CssClass = "error-message";
+                // Hiển thị toast error (3s)
+                ScriptManager.RegisterStartupScript(this, GetType(), "showError",
+                    "showToast('Cập nhật thông tin thất bại, vui lòng thử lại.', 'error');", true);
             }
         }
     }

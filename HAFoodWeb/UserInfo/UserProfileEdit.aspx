@@ -7,6 +7,7 @@
 <html>
 <head runat="server">
     <title>Chỉnh sửa thông tin cá nhân</title>
+    <meta charset="utf-8" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
 
     <style>
@@ -42,7 +43,7 @@
         }
 
         .form-field {
-            margin-bottom: 15px;
+            margin-bottom: 12px;
         }
 
         .form-field label {
@@ -57,6 +58,7 @@
             padding: 10px;
             border: 1px solid #ccc;
             border-radius: 6px;
+            box-sizing: border-box;
         }
 
         .form-field input[disabled] {
@@ -75,6 +77,9 @@
             cursor: pointer;
             box-shadow: 0 4px 10px rgba(255, 123, 0, 0.3);
             transition: background-color 0.3s ease, transform 0.2s;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
         }
 
         .aspNetButton:hover:not(:disabled) {
@@ -95,6 +100,47 @@
             margin-bottom: 15px;
             font-weight: bold;
         }
+
+        .field-error {
+            color: #d9534f;
+            font-size: 13px;
+            margin-top: 6px;
+            display: none;
+        }
+
+        /* Toast nhỏ gọn, nổi trên cùng header */
+        .toast {
+            position: fixed;
+            top: 20px;             
+            right: 15px;           
+            background-color: #28a745;
+            color: #fff;
+            padding: 8px 14px;      
+            border-radius: 6px;
+            font-size: 14px;        
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            opacity: 0;
+            transform: translateY(-15px);
+            transition: all 0.35s ease;
+            z-index: 99999; 
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .toast.success { background-color: #28a745; }
+        .toast.error   { background-color: #d9534f; }
+
+        .toast i {
+            font-size: 16px;
+        }
+
     </style>
 </head>
 
@@ -114,25 +160,149 @@
 
             <div class="form-field">
                 <label for="txtFullName">Họ và tên</label>
-                <asp:TextBox ID="txtFullName" runat="server"></asp:TextBox>
+                <asp:TextBox ID="txtFullName" runat="server" />
+                <div id="fullNameError" class="field-error">Thông báo lỗi tên</div>
             </div>
 
             <div class="form-field">
                 <label for="txtEmail">Email</label>
-                <asp:TextBox ID="txtEmail" runat="server" Enabled="false"></asp:TextBox>
+                <asp:TextBox ID="txtEmail" runat="server" Enabled="false" />
             </div>
 
             <div class="form-field">
                 <label for="txtPhone">Số điện thoại</label>
-                <asp:TextBox ID="txtPhone" runat="server"></asp:TextBox>
+                <asp:TextBox ID="txtPhone" runat="server" MaxLength="9" />
+                <div id="phoneError" class="field-error">Thông báo lỗi số điện thoại</div>
             </div>
 
-                <asp:Label ID="lblMessage" runat="server" EnableViewState="false"></asp:Label>
+            <!-- Server-side chung -->
+            <asp:Label ID="lblMessage" runat="server" EnableViewState="false"></asp:Label>
 
-            <asp:Button ID="btnSave" runat="server" Text="Lưu thay đổi" CssClass="aspNetButton" OnClick="btnSave_Click" />
+            <!-- OnClientClick trả về false sẽ ngăn postback -->
+            <asp:Button ID="btnSave" runat="server" Text="Lưu thay đổi" CssClass="aspNetButton"
+                        OnClick="btnSave_Click" OnClientClick="return validateForm();" />
         </div>
 
         <uc:Footer ID="FooterControl" runat="server" />
+
+        <!-- Toast (dùng 1 div, type được set bằng class) -->
+        <div id="toast" class="toast">
+            <i id="toastIcon" class="fa-solid fa-circle-check"></i>
+            <span id="toastMessage"></span>
+        </div>
+
+        <script>
+            // Client-side regexes
+            var nameRegex = /^\p{L}[\p{L}\s]*$/u;
+            var phoneRegex = /^0\d{8}$/;
+
+            var fullNameInput = document.getElementById('<%= txtFullName.ClientID %>');
+            var phoneInput = document.getElementById('<%= txtPhone.ClientID %>');
+            var fullNameError = document.getElementById('fullNameError');
+            var phoneError = document.getElementById('phoneError');
+            var lblMessageClientId = '<%= lblMessage.ClientID %>';
+
+            function validateFullName() {
+                var val = fullNameInput.value.trim();
+                if (!val) {
+                    fullNameError.innerText = '❌ Vui lòng nhập họ và tên.';
+                    fullNameError.style.display = 'block';
+                    return false;
+                }
+                try {
+                    if (!nameRegex.test(val)) {
+                        fullNameError.innerText = '❌ Tên không được chứa ký tự đặc biệt hoặc số.';
+                        fullNameError.style.display = 'block';
+                        return false;
+                    }
+                } catch (e) {
+                    var fallback = /^[A-Za-zÀ-ỹ\s]+$/u;
+                    if (!fallback.test(val)) {
+                        fullNameError.innerText = '❌ Tên không được chứa ký tự đặc biệt hoặc số.';
+                        fullNameError.style.display = 'block';
+                        return false;
+                    }
+                }
+                fullNameError.style.display = 'none';
+                return true;
+            }
+
+            function validatePhone() {
+                var val = phoneInput.value.trim();
+                if (!val) {
+                    phoneError.innerText = '❌ Vui lòng nhập số điện thoại.';
+                    phoneError.style.display = 'block';
+                    return false;
+                }
+                if (val.length !== 9) {
+                    phoneError.innerText = '❌ Số điện thoại phải gồm đúng 9 chữ số.';
+                    phoneError.style.display = 'block';
+                    return false;
+                }
+                if (!val.startsWith('0')) {
+                    phoneError.innerText = '❌ Số điện thoại phải bắt đầu bằng số 0.';
+                    phoneError.style.display = 'block';
+                    return false;
+                }
+                if (!phoneRegex.test(val)) {
+                    phoneError.innerText = '❌ Số điện thoại chỉ được chứa ký tự số.';
+                    phoneError.style.display = 'block';
+                    return false;
+                }
+                phoneError.style.display = 'none';
+                return true;
+            }
+
+            function validateForm() {
+                var lbl = document.getElementById(lblMessageClientId);
+                if (lbl) lbl.innerText = '';
+
+                var okName = validateFullName();
+                var okPhone = validatePhone();
+                return okName && okPhone;
+            }
+
+            fullNameInput.addEventListener('input', function () {
+                var lbl = document.getElementById(lblMessageClientId);
+                if (lbl) lbl.innerText = '';
+                validateFullName();
+            });
+            fullNameInput.addEventListener('blur', validateFullName);
+
+            phoneInput.addEventListener('input', function () {
+                var lbl = document.getElementById(lblMessageClientId);
+                if (lbl) lbl.innerText = '';
+                validatePhone();
+            });
+            phoneInput.addEventListener('blur', validatePhone);
+
+            // showToast(message, type) : type = 'success' | 'error'
+            function showToast(message, type) {
+                var toast = document.getElementById("toast");
+                var toastMsg = document.getElementById("toastMessage");
+                var toastIcon = document.getElementById("toastIcon");
+
+                // reset classes
+                toast.classList.remove('success', 'error', 'show');
+
+                if (type === 'success') {
+                    toast.classList.add('success');
+                    toastIcon.className = 'fa-solid fa-circle-check';
+                } else {
+                    toast.classList.add('error');
+                    toastIcon.className = 'fa-solid fa-triangle-exclamation';
+                }
+
+                toastMsg.innerText = message;
+                // show
+                toast.classList.add("show");
+
+                // hide after 3 seconds
+                setTimeout(function () {
+                    toast.classList.remove("show");
+                }, 3000);
+            }
+        </script>
     </form>
 </body>
 </html>
