@@ -40,11 +40,30 @@ namespace HAFoodWeb
 
                 var payFail = string.Equals(Request.QueryString["payfail"], "1", StringComparison.OrdinalIgnoreCase)
                            || string.Equals(Request.QueryString["fail"], "1", StringComparison.OrdinalIgnoreCase);
+
                 if (payFail)
                 {
+                    // Xác định cổng thanh toán để hiển thị thông báo đúng
+                    var provQ = (Request.QueryString["prov"] ?? "").Trim().ToLowerInvariant();
+                    string provName;
+                    if (!string.IsNullOrWhiteSpace(provQ))
+                    {
+                        provName = provQ == "zalopay" ? "ZaloPay"
+                                   : provQ == "vnpay" ? "VNPay"
+                                   : "cổng thanh toán";
+                    }
+                    else
+                    {
+                        var mObj = Session[SK_PENDING_PAYMENT_METHOD];
+                        int? m = mObj is int i ? i : (mObj as int?);
+                        provName = m == 2 ? "VNPay"
+                                  : m == 1 ? "ZaloPay"
+                                  : "cổng thanh toán";
+                    }
+
                     ShowNiceError(
                         code: "PAY_CANCEL",
-                        title: "Bạn vừa hủy thanh toán VNPay",
+                        title: $"Bạn vừa hủy thanh toán {provName}",
                         message: "Bạn có thể chọn phương thức khác hoặc thử thanh toán lại.",
                         actionsHtml:
                             $"<button class='btn-soft' onclick=\"location.reload()\">Thử lại</button>" +
@@ -187,7 +206,7 @@ namespace HAFoodWeb
             if (!Page.IsValid) return;
 
             if (!int.TryParse(rblPayment.SelectedValue, out var paymentMethod))
-                paymentMethod = 0; // 0=COD, 1=MoMo, 2=VNPay
+                paymentMethod = 0; // 0=COD, 1=ZaloPay, 2=VNPay
 
             var pendingCode = Session[SK_PENDING_ORDER_CODE] as string;
 
@@ -198,39 +217,68 @@ namespace HAFoodWeb
                 {
                     if (paymentMethod == 0)
                     {
-                        // 1) Đổi sang COD để DB không còn Pending VNPay/MoMo
-                        await _orderService.SwitchPaymentAsync(pendingCode, 0, "USER_SWITCH_TO_COD");
-
-                        // 2) Dọn session + ThankYou
+                        var sw = await _orderService.SwitchPaymentSafeAsync(pendingCode, 0, "USER_SWITCH_TO_COD");
+                        // Dọn session + ThankYou (kể cả AlreadyPaid cũng cho về trang cảm ơn)
                         Session.Remove(SK_PENDING_PAYMENT_URL);
                         Session.Remove(SK_PENDING_PAYMENT_CREATED);
                         Session.Remove(SK_PENDING_PAYMENT_METHOD);
                         Session.Remove(SK_DRAFT);
 
-                        Response.Redirect("~/CartPage/ThankYou.aspx?code=" + Uri.EscapeDataString(pendingCode) + "&cod=1", false);
+                        var suffix = (sw.Outcome == SwitchPaymentOutcome.AlreadyPaid) ? "&paid=1" : "&cod=1";
+                        Response.Redirect("~/CartPage/ThankYou.aspx?code=" + Uri.EscapeDataString(pendingCode) + suffix, false);
                         Context.ApplicationInstance.CompleteRequest();
                         return;
                     }
+
                     else
                     {
                         // 1) Nếu link cũ cùng cổng còn hạn → reuse
                         if (TryRedirectPendingPaymentIfAny(paymentMethod)) return;
 
-                        // 2) Đổi cổng trên DB
-                        await _orderService.SwitchPaymentAsync(pendingCode, paymentMethod, "USER_SWITCH_GATEWAY");
+                        // 2) Đổi cổng trên DB (safe)
+                        var sw = await _orderService.SwitchPaymentSafeAsync(pendingCode, paymentMethod, "USER_SWITCH_GATEWAY");
 
-                        // 3) Xin link thanh toán mới cho CHÍNH order này
-                        var newPayUrl = await _orderService.CreatePaymentLinkForOrderAsync(pendingCode, paymentMethod);
+                        if (sw.Outcome == SwitchPaymentOutcome.AlreadyPaid)
+                        {
+                            Session.Remove(SK_PENDING_PAYMENT_URL);
+                            Session.Remove(SK_PENDING_PAYMENT_CREATED);
+                            Session.Remove(SK_PENDING_PAYMENT_METHOD);
+                            Session.Remove(SK_DRAFT);
 
-                        // 4) Cache & redirect
-                        Session[SK_PENDING_PAYMENT_URL] = newPayUrl;
-                        Session[SK_PENDING_PAYMENT_CREATED] = DateTime.UtcNow;
-                        Session[SK_PENDING_PAYMENT_METHOD] = paymentMethod;
+                            Response.Redirect("~/CartPage/ThankYou.aspx?code=" + Uri.EscapeDataString(pendingCode) + "&paid=1", false);
+                            Context.ApplicationInstance.CompleteRequest();
+                            return;
+                        }
+                        if (sw.Outcome == SwitchPaymentOutcome.Switched)
+                        {
+                            var newPayUrl = await _orderService.CreatePaymentLinkForOrderAsync(pendingCode, paymentMethod);
+                            Session[SK_PENDING_PAYMENT_URL] = newPayUrl;
+                            Session[SK_PENDING_PAYMENT_CREATED] = DateTime.UtcNow;
+                            Session[SK_PENDING_PAYMENT_METHOD] = paymentMethod;
 
-                        Response.Redirect(newPayUrl, false);
-                        Context.ApplicationInstance.CompleteRequest();
+                            Response.Redirect(newPayUrl, false);
+                            Context.ApplicationInstance.CompleteRequest();
+                            return;
+                        }
+                        if (sw.Outcome == SwitchPaymentOutcome.NotFound)
+                        {
+                            ShowNiceError("ORDER_NOT_FOUND", "Không tìm thấy đơn hàng", "Vui lòng đặt lại đơn mới.");
+                            return;
+                        }
+                        if (sw.Outcome == SwitchPaymentOutcome.Unauthorized)
+                        {
+                            Response.Redirect("~/AuthPage/Login.aspx?returnUrl=" + Server.UrlEncode(Request.RawUrl), false);
+                            Context.ApplicationInstance.CompleteRequest();
+                            return;
+                        }
+
+                        // lỗi khác
+                        ShowNiceError("SWITCH_PAYMENT_FAILED", "Không chuyển phương thức/khởi tạo link thanh toán được",
+                            Server.HtmlEncode(sw?.Message ?? sw?.RawBody ?? "Lỗi không xác định"),
+                            actionsHtml: $"<button class='btn-soft' onclick=\"location.reload()\">Thử lại</button>");
                         return;
                     }
+
                 }
                 catch (Exception ex)
                 {
@@ -348,7 +396,6 @@ namespace HAFoodWeb
                     actionsHtml: $"<button class='btn-soft' onclick=\"location.reload()\">Thử lại</button>");
             }
         }
-
 
         // RENDER alert đẹp mắt
         private void ShowNiceError(string code, string title, string message, string actionsHtml = null)

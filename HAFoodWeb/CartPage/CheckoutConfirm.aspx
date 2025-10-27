@@ -99,16 +99,20 @@
                     <asp:Literal ID="litError" runat="server" Visible="false" />
 
                     <asp:RadioButtonList ID="rblPayment" runat="server" RepeatDirection="Vertical" CssClass="list">
-                        <asp:ListItem Value="0" Selected="True">
-                            <div class="pay-item"><i class="bi bi-truck"></i> Thanh toán khi nhận hàng (COD)</div>
-                        </asp:ListItem>
-                        <asp:ListItem Value="1">
-                            <div class="pay-item"><img alt="" src="https://img.icons8.com/color/24/momo.png"/> Ví MoMo</div>
-                        </asp:ListItem>
-                        <asp:ListItem Value="2">
-                            <div class="pay-item"><img alt="" src="https://img.icons8.com/color/24/vnpay.png"/> VNPAY</div>
-                        </asp:ListItem>
-                    </asp:RadioButtonList>
+    <asp:ListItem Value="0" Selected="True">
+        <div class="pay-item"><i class="bi bi-truck"></i> Thanh toán khi nhận hàng (COD)</div>
+    </asp:ListItem>
+
+    <%-- Đổi MoMo -> ZaloPay, GIỮ Value=1 --%>
+    <asp:ListItem Value="1">
+        <div class="pay-item"><img alt="" src="https://img.icons8.com/fluency/24/wallet.png" /> ZaloPay</div>
+    </asp:ListItem>
+
+    <asp:ListItem Value="2">
+        <div class="pay-item"><img alt="" src="https://img.icons8.com/color/24/vnpay.png" /> VNPAY</div>
+    </asp:ListItem>
+</asp:RadioButtonList>
+
 
                     <asp:RequiredFieldValidator runat="server" ControlToValidate="rblPayment"
                         InitialValue="" ErrorMessage="Vui lòng chọn phương thức thanh toán."
@@ -126,6 +130,14 @@
     </div>
 
     <uc:Footer ID="Footer1" runat="server" />
+
+    <script>
+  // Nếu trang được restore từ bfcache, reload để đồng bộ session/state
+  window.addEventListener('pageshow', function (e) {
+    if (e.persisted) location.reload();
+  });
+    </script>
+
 </form>
 </body>
 </html>
