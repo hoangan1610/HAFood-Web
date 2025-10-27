@@ -15,42 +15,59 @@ namespace HAFoodWeb.Control
         {
             if (!IsPostBack) DataBind();
 
-            var token = Request.Cookies["AuthToken"]?.Value;
-            guestDropdown.Visible = string.IsNullOrEmpty(token);
-            authDropdown.Visible = !string.IsNullOrEmpty(token);
+            var token = Request?.Cookies["AuthToken"]?.Value;
+            var isAuth = !string.IsNullOrEmpty(token);
 
-            // Thử đăng ký async; nếu trang không hỗ trợ thì chạy sync
+            if (guestDropdown != null) guestDropdown.Visible = !isAuth;
+            if (authDropdown != null) authDropdown.Visible = isAuth;
+
+            if (hfIsAuth != null) hfIsAuth.Value = isAuth ? "1" : "0";
+
             try
             {
                 Page.RegisterAsyncTask(new PageAsyncTask(async () =>
                 {
-                    await EnsureDeviceAndCartAsync();
+                    await EnsureDeviceAndCartAsync().ConfigureAwait(false);
                 }));
             }
             catch (InvalidOperationException)
             {
-                // Trang không Async="true"
                 EnsureDeviceAndCartAsync().GetAwaiter().GetResult();
+            }
+            catch (Exception)
+            {
             }
         }
 
         private async Task EnsureDeviceAndCartAsync()
         {
-            var tracker = new DeviceTracker(Request, Response);
-
-            int? userInfoId = null;
             try
             {
-                if (int.TryParse(Convert.ToString(Session["UserId"]), out var tmp))
-                    userInfoId = tmp;
-            }
-            catch { }
+                var tracker = new DeviceTracker(Request, Response);
 
-            tracker.GetOrCreateDeviceUuid();
-            await tracker.SendAsync(userInfoId);
-            await LoadCartCountAsync();
+                int? userInfoId = null;
+                try
+                {
+                    if (Session != null && Session["UserId"] != null)
+                    {
+                        if (int.TryParse(Convert.ToString(Session["UserId"]), out var tmp))
+                            userInfoId = tmp;
+                    }
+                }
+                catch {  }
+
+                tracker.GetOrCreateDeviceUuid();
+
+                await tracker.SendAsync(userInfoId).ConfigureAwait(false);
+
+                await LoadCartCountAsync().ConfigureAwait(false);
+            }
+            catch
+            {
+            }
         }
 
+       
         private async Task LoadCartCountAsync()
         {
             try
@@ -59,25 +76,29 @@ namespace HAFoodWeb.Control
                 var deviceUuid = tracker.GetOrCreateDeviceUuid();
 
                 var cartService = new CartService();
-                var cart = await cartService.GetCartAsync(deviceUuid);
+                var cart = await cartService.GetCartAsync(deviceUuid).ConfigureAwait(false);
 
                 var count = cart?.header?.item_Count ?? 0;
 
-                // ✅ Luôn render badge, chỉ điều khiển hiển thị bằng style
-                cartCountBadge.Visible = true;
-                cartCountBadge.InnerText = count.ToString();
-                cartCountBadge.Attributes["style"] = count > 0 ? "display:flex;" : "display:none;";
+                if (cartCountBadge != null)
+                {
+                    cartCountBadge.Visible = true;
+                    cartCountBadge.InnerText = count.ToString();
+                    cartCountBadge.Attributes["style"] = count > 0 ? "display:flex;" : "display:none;";
+                }
             }
             catch
             {
-                // ✅ Luôn render
-                cartCountBadge.Visible = true;
-                cartCountBadge.InnerText = "0";
-                cartCountBadge.Attributes["style"] = "display:none;";
+                if (cartCountBadge != null)
+                {
+                    cartCountBadge.Visible = true;
+                    cartCountBadge.InnerText = "0";
+                    cartCountBadge.Attributes["style"] = "display:none;";
+                }
             }
         }
 
-
+    
         [WebMethod]
         [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
         public static int GetCartCount()
@@ -85,36 +106,71 @@ namespace HAFoodWeb.Control
             try
             {
                 var ctx = HttpContext.Current;
+                if (ctx == null) return 0;
+
                 var tracker = new DeviceTracker(ctx.Request, ctx.Response);
                 var deviceUuid = tracker.GetOrCreateDeviceUuid();
 
                 var cartService = new CartService();
                 var cart = cartService.GetCartAsync(deviceUuid).GetAwaiter().GetResult();
+
                 return cart?.header?.item_Count ?? 0;
             }
-            catch { return 0; }
+            catch
+            {
+                return 0;
+            }
         }
 
+      
         protected async void btnLogout_Click(object sender, EventArgs e)
         {
-            var token = Request.Cookies["AuthToken"]?.Value;
-            if (!string.IsNullOrEmpty(token))
+            try
             {
-                var userService = new UserService();
-                await userService.LogoutAsync(token);
-            }
+                var token = Request?.Cookies["AuthToken"]?.Value;
+                if (!string.IsNullOrEmpty(token))
+                {
+                    var userService = new UserService();
+                    try
+                    {
+                        await userService.LogoutAsync(token).ConfigureAwait(false);
+                    }
+                    catch
+                    {
+                    }
+                }
 
-            if (Request.Cookies["AuthToken"] != null)
+                if (Request?.Cookies["AuthToken"] != null)
+                {
+                    var cookie = new HttpCookie("AuthToken", "")
+                    {
+                        Expires = DateTime.UtcNow.AddDays(-1),
+                        Path = "/"
+                    };
+                    Response.Cookies.Add(cookie);
+                }
+
+                // Clear session
+                try
+                {
+                    Session?.Clear();
+                    Session?.Abandon();
+                }
+                catch { }
+
+                // Redirect an toàn (không dùng Response.End)
+                Response.Redirect("~/HomePage/HomePage.aspx", false);
+                Context.ApplicationInstance.CompleteRequest();
+            }
+            catch
             {
-                var cookie = new HttpCookie("AuthToken") { Expires = DateTime.Now.AddDays(-1) };
-                Response.Cookies.Add(cookie);
+                try
+                {
+                    Response.Redirect("~/HomePage/HomePage.aspx", false);
+                    Context.ApplicationInstance.CompleteRequest();
+                }
+                catch { }
             }
-
-            Session.Clear();
-            Session.Abandon();
-
-            Response.Redirect("~/HomePage/HomePage.aspx", false);
-            Context.ApplicationInstance.CompleteRequest();
         }
     }
 }

@@ -73,7 +73,7 @@ namespace HAFoodWeb
                 return;
             }
 
-            if (phone.Length != 9)
+            if (phone.Length != 10)
             {
                 lblMessage.Text = "❌ Số điện thoại phải gồm đúng 9 chữ số.";
                 lblMessage.CssClass = "error-message";
@@ -87,9 +87,9 @@ namespace HAFoodWeb
                 return;
             }
 
-            if (!System.Text.RegularExpressions.Regex.IsMatch(phone, @"^0\d{8}$"))
+            if (!System.Text.RegularExpressions.Regex.IsMatch(phone, @"^0\d{9}$"))
             {
-                lblMessage.Text = "❌ Số điện thoại phải gồm 9 chữ số và bắt đầu bằng số 0.";
+                lblMessage.Text = "❌ Số điện thoại phải gồm 10 chữ số và bắt đầu bằng số 0.";
                 lblMessage.CssClass = "error-message";
                 return;
             }

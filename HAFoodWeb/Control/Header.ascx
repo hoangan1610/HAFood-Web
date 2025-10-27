@@ -100,7 +100,7 @@
         padding: 10px 0;
         display: none;
         flex-direction: column;
-        width: 180px;
+        width: 220px;
         z-index: 11000;
         animation: fadeIn 0.2s ease;
     }
@@ -188,22 +188,25 @@
 
             <i class="bi bi-search" id="openSearch" title="Tìm kiếm"></i>
 
+            <!-- Hidden flag (server-set) để JS biết trạng thái đăng nhập -->
+            <asp:HiddenField ID="hfIsAuth" runat="server" />
+
             <!-- USER ICON -->
             <div class="position-relative">
-                <i class="bi bi-person" id="userIcon" title="Tài khoản"></i>
+                <i class="bi bi-person" id="userIcon" title="Tài khoản" style="cursor:pointer;"></i>
 
-                <!-- GUEST DROPDOWN -->
+                <!-- GUEST DROPDOWN (chỉ show khi chưa login) -->
                 <div class="user-dropdown" id="guestDropdown" runat="server" aria-label="Tài khoản khách">
-                    <asp:HyperLink runat="server" NavigateUrl="~/AuthPage/Login.aspx">
+                    <asp:HyperLink runat="server" NavigateUrl="~/AuthPage/Login.aspx" CssClass="d-flex align-items-center">
                         <i class="bi bi-box-arrow-in-right me-2"></i>Đăng nhập
                     </asp:HyperLink>
-                    <asp:HyperLink runat="server" NavigateUrl="~/AuthPage/Register.aspx">
+                    <asp:HyperLink runat="server" NavigateUrl="~/AuthPage/Register.aspx" CssClass="d-flex align-items-center">
                         <i class="bi bi-pencil-square me-2"></i>Đăng ký
                     </asp:HyperLink>
                 </div>
 
-                <!-- AUTH DROPDOWN -->
-                <div class="user-dropdown" id="authDropdown" runat="server" aria-label="Tài khoản của tôi">
+                <!-- AUTH DROPDOWN (nếu bạn muốn hiển thị info khi login, nhưng mặc định ta keep hidden vì click sẽ redirect) -->
+                <div class="user-dropdown" id="authDropdown" runat="server" aria-label="Tài khoản đã đăng nhập">
                     <asp:HyperLink ID="lnkProfile" runat="server" NavigateUrl="~/UserInfo/UserProfile.aspx" CssClass="d-flex align-items-center">
                         <i class="bi bi-person-circle me-2"></i>Hồ sơ của tôi
                     </asp:HyperLink>
@@ -212,7 +215,7 @@
                         <i class="bi bi-basket2-fill me-2"></i>Đơn hàng của tôi
                     </asp:HyperLink>
 
-                    <asp:LinkButton ID="btnLogout" runat="server" OnClick="btnLogout_Click">
+                    <asp:LinkButton ID="btnLogout" runat="server" OnClick="btnLogout_Click" CssClass="d-flex align-items-center">
                         <i class="bi bi-box-arrow-right me-2"></i>Đăng xuất
                     </asp:LinkButton>
                 </div>
@@ -244,7 +247,6 @@
 
 <!-- SCRIPT -->
 <script>
-    // ✅ Global: luôn sẵn cho các trang gọi sau khi thêm vào giỏ
     // ====== Cart badge helpers ======
     const CART_API = '<%= ResolveUrl("~/Ajax/Cart.ashx") %>';
 
@@ -302,6 +304,10 @@
         const suggestUrl = '<%= ResolveUrl("~/Proxy/Suggest.ashx") %>';
         const searchUrl  = '<%= ResolveUrl("~/HomePage/Search.aspx") %>';
 
+        // read server-set auth flag
+        const hfAuth = document.getElementById('<%= hfIsAuth.ClientID %>');
+        const isAuth = hfAuth && hfAuth.value === '1';
+
         // helpers
         const visible = el => !!el && window.getComputedStyle(el).display !== 'none';
         const hideUser = () => { if (guestDD) guestDD.style.display = 'none'; if (authDD) authDD.style.display = 'none'; };
@@ -310,14 +316,20 @@
         const hideSearch = () => { if (searchDropdown) searchDropdown.style.display = 'none'; box?.classList.add('hf-hide'); setOverlay(); };
         const showSearch = () => { hideUser(); if (searchDropdown) searchDropdown.style.display = 'flex'; overlay.style.display = 'block'; };
 
-        // user icon
+        // user icon behavior:
+        // - nếu đã đăng nhập => click chuyển tới UserDetail (dashboard)
+        // - nếu chưa => mở guest dropdown (Đăng nhập / Đăng ký)
         userIcon?.addEventListener('click', e => {
             e.stopPropagation();
-            const target = guestDD || authDD;
-            const willShow = !visible(target);
+            if (isAuth) {
+                // chuyển tới trang dashboard
+                window.location.href = '<%= ResolveUrl("~/UserInfo/UserDetail.aspx") %>';
+                return;
+            }
+            // chưa đăng nhập: toggle guest dropdown
+            const willShow = !visible(guestDD);
             hideSearch();
-            hideUser();
-            if (willShow && target) target.style.display = 'flex';
+            if (willShow && guestDD) guestDD.style.display = 'flex';
             setOverlay();
         });
 

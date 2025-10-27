@@ -25,7 +25,7 @@ namespace HAFoodWeb
                     return;
                 }
 
-                // ensure utf-8 output
+                // đảm bảo output UTF-8
                 Response.ContentEncoding = Encoding.UTF8;
                 Response.Charset = "utf-8";
 
@@ -48,25 +48,51 @@ namespace HAFoodWeb
                 }
 
                 var h = detail.header;
-
-                // decode entities vì API có thể trả chuỗi đã encode (ví dụ "Trần H&#249;ng")
                 string Decode(string s) => string.IsNullOrEmpty(s) ? "" : HttpUtility.HtmlDecode(s);
 
-                // Header (no total here)
+                // Header
                 litOrderCode.InnerText = Decode(h.order_Code ?? $"#{h.id}");
                 litShipName.InnerText = Decode(h.ship_Name ?? "");
                 litShipPhone.InnerText = Decode(h.ship_Phone ?? "");
                 litShipAddress.InnerText = Decode(h.ship_Full_Address ?? "");
                 litNote.InnerText = Decode(h.note ?? "");
 
-                // Payment: đặt dưới ghi chú, chỉ hiện nếu có giá trị
-                string paymentText = null;
+                // Xử lý hiển thị phương thức & trạng thái thanh toán
+                string paymentText = "";
                 if (!string.IsNullOrWhiteSpace(h.payment_Provider))
-                    paymentText = Decode(h.payment_Provider);
-                else if (!string.IsNullOrWhiteSpace(h.payment_Status))
-                    paymentText = Decode(h.payment_Status);
+                {
+                    string provider = h.payment_Provider.ToUpperInvariant();
+                    string status = (h.payment_Status ?? "").Trim().ToLowerInvariant();
+
+                    if (provider == "VNPAY")
+                    {
+                        if (status == "pending")
+                            paymentText = "VNPAY – Đang chờ thanh toán";
+                        else if (status == "paid")
+                            paymentText = "VNPAY – Đã thanh toán";
+                        else
+                            paymentText = "VNPAY";
+                    }
+                    else
+                    {
+                        paymentText = "" + Decode(h.payment_Provider);
+                    }
+                }
                 else if (h.payment_Method.HasValue)
-                    paymentText = h.payment_Method.Value.ToString();
+                {
+                    switch (h.payment_Method.Value)
+                    {
+                        case 1:
+                            paymentText = "Thanh toán khi nhận hàng";
+                            break;
+                        case 2:
+                            paymentText = "Chuyển khoản ngân hàng";
+                            break;
+                        default:
+                            paymentText = "Phương thức khác";
+                            break;
+                    }
+                }
 
                 if (!string.IsNullOrWhiteSpace(paymentText))
                 {
@@ -92,7 +118,7 @@ namespace HAFoodWeb
                     pnlItems.Visible = false;
                 }
 
-                // Summary (totals) — only place showing totals
+                // Summary
                 litSubtotal.Text = string.Format(new CultureInfo("vi-VN"), "{0:#,0}đ", h.sub_Total);
                 litDiscount.Text = string.Format(new CultureInfo("vi-VN"), "{0:#,0}đ", h.discount_Total);
                 litShipping.Text = string.Format(new CultureInfo("vi-VN"), "{0:#,0}đ", h.shipping_Total);
