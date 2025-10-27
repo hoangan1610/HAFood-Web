@@ -14,10 +14,8 @@ namespace HAFoodWeb
     {
         private readonly IOrderService _orderService = new OrderService();
 
-        // Thay đổi pageSize tuỳ bạn (mặc định 5)
         private const int PageSize = 5;
 
-        // CurrentPage lưu trong ViewState để giữ trạng thái giữa postback
         protected int CurrentPage
         {
             get
@@ -31,11 +29,16 @@ namespace HAFoodWeb
             }
         }
 
+        protected int? CurrentStatus
+        {
+            get => ViewState["CurrentStatus"] as int?;
+            set => ViewState["CurrentStatus"] = value;
+        }
+
         protected async void Page_Load(object sender, EventArgs e)
         {
             if (!IsPostBack)
             {
-                // Kiểm tra đăng nhập
                 if (Session["UserId"] == null)
                 {
                     Response.Redirect("~/AuthPage/Login.aspx", false);
@@ -44,11 +47,13 @@ namespace HAFoodWeb
                 }
 
                 CurrentPage = 1;
+                CurrentStatus = null;
+                ResetActiveFilter(btnAll);
+
                 await BindOrdersAsync();
             }
         }
 
-        // Load orders theo CurrentPage
         private async Task BindOrdersAsync()
         {
             try
@@ -62,22 +67,11 @@ namespace HAFoodWeb
                 }
 
                 int page = CurrentPage;
+                Debug.WriteLine($"📦 Lấy đơn hàng userId={userId}, page={page}, status={(CurrentStatus.HasValue ? CurrentStatus.Value.ToString() : "null")}");
 
-                Debug.WriteLine($"📦 Gọi API lấy đơn hàng cho userId={userId}, page={page}");
+                var result = await _orderService.GetOrdersByUserAsync(userId, CurrentStatus, page, PageSize);
 
-                var result = await _orderService.GetOrdersByUserAsync(userId, null, page, PageSize);
-
-                if (result == null)
-                {
-                    litDebug.Text = "<pre>❌ API trả về null hoặc lỗi.</pre>";
-                    litDebug.Visible = true;
-                    pnlEmpty.Visible = true;
-                    pnlPagination.Visible = false;
-                    return;
-                }
-
-                // Nếu không có items
-                if (result.items == null || !result.items.Any())
+                if (result == null || result.items == null || !result.items.Any())
                 {
                     rpOrders.DataSource = null;
                     rpOrders.DataBind();
@@ -87,13 +81,11 @@ namespace HAFoodWeb
                     return;
                 }
 
-                // Bind danh sách
                 rpOrders.DataSource = result.items;
                 rpOrders.DataBind();
                 pnlEmpty.Visible = false;
                 rpOrders.Visible = true;
 
-                // Tạo phân trang
                 int totalPages = Math.Max(1, (int)Math.Ceiling((double)result.totalCount / PageSize));
                 if (totalPages > 1)
                 {
@@ -106,7 +98,6 @@ namespace HAFoodWeb
                     pnlPagination.Visible = false;
                 }
 
-                // Bật/tắt Prev/Next
                 btnPrev.Enabled = page > 1;
                 btnNext.Enabled = page < totalPages;
             }
@@ -120,23 +111,80 @@ namespace HAFoodWeb
             }
         }
 
-        // Gắn badge trạng thái khi lặp từng item
         protected void rpOrders_ItemDataBound(object sender, RepeaterItemEventArgs e)
         {
-            if (e.Item.ItemType == System.Web.UI.WebControls.ListItemType.Item || e.Item.ItemType == System.Web.UI.WebControls.ListItemType.AlternatingItem)
+            if (e.Item.ItemType == ListItemType.Item || e.Item.ItemType == ListItemType.AlternatingItem)
             {
                 var order = (OrderHeaderDto)e.Item.DataItem;
-                var badge = (HtmlGenericControl)e.Item.FindControl("statusBadge");
 
+                // Badge trạng thái
+                var badge = (HtmlGenericControl)e.Item.FindControl("statusBadge");
                 if (badge != null)
                 {
                     badge.InnerText = GetStatusText(order.status);
                     badge.Attributes["class"] = $"status-badge status-{order.status}";
                 }
+
+                // Hiển thị phương thức thanh toán
+                var litPayment = (Literal)e.Item.FindControl("litPayment");
+                if (litPayment != null)
+                {
+                    litPayment.Text = BuildPaymentText(order);
+                }
             }
         }
 
-        // Handler khi bấm số trang
+        protected string BuildPaymentText(OrderHeaderDto h)
+        {
+            string paymentText = "";
+
+            if (!string.IsNullOrWhiteSpace(h.payment_Provider))
+            {
+                if (!string.IsNullOrWhiteSpace(h.payment_Status))
+                    paymentText = "💳 " + h.payment_Provider + " – " + GetPaymentStatusText(h.payment_Status);
+                else
+                    paymentText = "💳 " + h.payment_Provider;
+            }
+            else if (!string.IsNullOrWhiteSpace(h.payment_Status))
+            {
+                paymentText = "💳 " + GetPaymentStatusText(h.payment_Status);
+            }
+            else if (h.payment_Method.HasValue)
+            {
+                switch (h.payment_Method.Value)
+                {
+                    case 1:
+                        paymentText = "Thanh toán khi nhận hàng (COD)";
+                        break;
+                    case 2:
+                        paymentText = "Thanh toán qua VNPAY";
+                        break;
+                    default:
+                        paymentText = "Phương thức #" + h.payment_Method.Value;
+                        break;
+                }
+            }
+
+            return paymentText;
+        }
+
+        private string GetPaymentStatusText(string status)
+        {
+            switch (status)
+            {
+                case "Pending":
+                    return "Đang chờ thanh toán";
+                case "Paid":
+                    return "Đã thanh toán";
+                case "Failed":
+                    return "Thanh toán thất bại";
+                case "Canceled":
+                    return "Thanh toán bị hủy";
+                default:
+                    return !string.IsNullOrWhiteSpace(status) ? status : "Không rõ";
+            }
+        }
+
         protected async void rpPaging_ItemCommand(object source, RepeaterCommandEventArgs e)
         {
             if (e.CommandName == "ChangePage")
@@ -149,7 +197,6 @@ namespace HAFoodWeb
             }
         }
 
-        // Prev / Next
         protected async void btnPrev_Click(object sender, EventArgs e)
         {
             if (CurrentPage > 1)
@@ -165,24 +212,50 @@ namespace HAFoodWeb
             await BindOrdersAsync();
         }
 
-        // Hàm hiển thị text theo status (dạng switch truyền thống)
-        private string GetStatusText(int status)
+        protected async void btnFilter_Click(object sender, EventArgs e)
         {
-            switch (status)
+            var clickedBtn = sender as Button;
+            if (clickedBtn == null) return;
+
+            string arg = clickedBtn.CommandArgument ?? "all";
+
+            if (arg == "all")
+                CurrentStatus = null;
+            else if (int.TryParse(arg, out int s))
+                CurrentStatus = s;
+            else
+                CurrentStatus = null;
+
+            CurrentPage = 1;
+
+            await BindOrdersAsync();
+            ResetActiveFilter(clickedBtn);
+        }
+
+        private void ResetActiveFilter(Button activeButton)
+        {
+            var allButtons = new[] { btnAll, btnPending, btnConfirmed, btnShipping, btnDelivered, btnCanceled };
+
+            foreach (var btn in allButtons)
             {
-                case 0:
-                    return "Chờ xác nhận";
-                case 1:
-                    return "Đã xác nhận";
-                case 2:
-                    return "Đang giao";
-                case 3:
-                    return "Đã giao";
-                case 4:
-                    return "Đã hủy";
-                default:
-                    return "Không rõ";
+                if (btn == null) continue;
+                btn.CssClass = "btn btn-outline-dark btn-sm";
             }
+
+            if (activeButton != null)
+                activeButton.CssClass = "btn btn-outline-dark btn-sm active";
+        }
+
+        private string GetStatusText(int status) { 
+            switch (status) 
+            { 
+                case 0: return "Chờ xác nhận"; 
+                case 1: return "Đã xác nhận"; 
+                case 2: return "Đang giao"; 
+                case 3: return "Đã giao"; 
+                case 4: return "Đã hủy"; 
+                default: return "Không rõ"; 
+            } 
         }
     }
 }

@@ -289,6 +289,7 @@
     <Content Include="Scripts\WebForms\WebUIValidation.js" />
     <Content Include="Site.Master" />
     <Content Include="UserInfo\ChangePassword.aspx" />
+    <Content Include="UserInfo\UserDetail.aspx" />
     <Content Include="UserInfo\UserProfile.aspx" />
     <Content Include="UserInfo\UserProfileEdit.aspx" />
     <Content Include="ViewSwitcher.ascx" />
@@ -506,6 +507,13 @@
     </Compile>
     <Compile Include="UserInfo\ChangePassword.aspx.designer.cs">
       <DependentUpon>ChangePassword.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="UserInfo\UserDetail.aspx.cs">
+      <DependentUpon>UserDetail.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="UserInfo\UserDetail.aspx.designer.cs">
+      <DependentUpon>UserDetail.aspx</DependentUpon>
     </Compile>
     <Compile Include="UserInfo\UserProfile.aspx.cs">
       <DependentUpon>UserProfile.aspx</DependentUpon>

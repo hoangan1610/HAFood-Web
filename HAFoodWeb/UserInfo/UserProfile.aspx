@@ -1,7 +1,5 @@
 ﻿<%@ Page Language="C#" AutoEventWireup="true" CodeBehind="UserProfile.aspx.cs" Inherits="HAFoodWeb.UserProfile" Async="true" %>
 
-<%@ Register Src="~/Control/Header.ascx" TagPrefix="uc" TagName="Header" %>
-<%@ Register Src="~/Control/Footer.ascx" TagPrefix="uc" TagName="Footer" %>
 
 <!DOCTYPE html>
 <html>
@@ -75,8 +73,6 @@
 
 <body>
     <form id="form1" runat="server">
-        <!-- Header -->
-        <uc:Header ID="HeaderControl" runat="server" />
 
         <!-- Nội dung -->
         <div class="profile-container">
@@ -107,8 +103,6 @@
                         OnClick="btnChangePassword_Click" />
         </div>
 
-        <!-- Footer -->
-        <uc:Footer ID="FooterControl" runat="server" />
     </form>
 </body>
 </html>

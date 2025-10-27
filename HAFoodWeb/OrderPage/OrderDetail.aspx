@@ -1,6 +1,4 @@
 ﻿<%@ Page Language="C#" AutoEventWireup="true" CodeBehind="OrderDetail.aspx.cs" Inherits="HAFoodWeb.OrderDetail" Async="true" %>
-<%@ Register Src="~/Control/Header.ascx" TagPrefix="uc" TagName="Header" %>
-<%@ Register Src="~/Control/Footer.ascx" TagPrefix="uc" TagName="Footer" %>
 
 <!DOCTYPE html>
 <html lang="vi">
@@ -23,14 +21,12 @@
 </head>
 <body>
   <form id="form1" runat="server">
-    <uc:Header ID="Header1" runat="server" />
-
     <div class="container my-4">
       <a runat="server" id="lnkBack" href="OrderPage.aspx" class="btn btn-outline-secondary btn-sm mb-3">&larr; Quay lại</a>
 
       <asp:Literal ID="litDebug" runat="server" Visible="false"></asp:Literal>
 
-      <!-- HEADER: code, ship info, note (no total here) -->
+      <!-- HEADER -->
       <asp:Panel ID="pnlHeader" runat="server" Visible="false" CssClass="card-order mb-3">
         <div class="d-flex justify-content-between">
           <div>
@@ -40,21 +36,21 @@
             <div class="meta-small">Địa chỉ: <span id="litShipAddress" runat="server"></span></div>
             <div class="meta-small">Ghi chú: <span id="litNote" runat="server"></span></div>
 
-            <!-- PAYMENT được đặt ngay dưới Ghi chú -->
+            <!-- PHƯƠNG THỨC THANH TOÁN -->
             <asp:Panel ID="pnlPayment" runat="server" Visible="false" CssClass="mt-2">
-              <div class="meta-small">Phương thức: <span id="litPayment" runat="server"></span></div>
+              <div class="meta-small fw-semibold text-primary">
+                <span id="litPayment" runat="server"></span>
+              </div>
             </asp:Panel>
           </div>
 
-          <!-- RIGHT column: chỉ show trạng thái (không show tổng ở đây nữa) -->
           <div class="text-end">
             <div class="meta-small">Trạng thái: <span id="litStatus" runat="server"></span></div>
-            <!-- tổng tạm bỏ khỏi header -->
           </div>
         </div>
       </asp:Panel>
 
-      <!-- Items -->
+      <!-- ITEMS -->
       <asp:Panel ID="pnlItems" runat="server" Visible="false" CssClass="card-order mb-3">
         <h5 class="mb-3">Sản phẩm</h5>
         <asp:Repeater ID="rpItems" runat="server">
@@ -74,7 +70,7 @@
         </asp:Repeater>
       </asp:Panel>
 
-      <!-- Summary: totals (only place showing totals) -->
+      <!-- SUMMARY -->
       <asp:Panel ID="pnlSummary" runat="server" Visible="false" CssClass="card-order">
         <h5 class="mb-3">Tóm tắt</h5>
         <div class="summary-line"><div class="label">Thành tiền</div><div class="value"><asp:Literal ID="litSubtotal" runat="server" /></div></div>
@@ -82,14 +78,10 @@
         <div class="summary-line"><div class="label">Phí vận chuyển</div><div class="value"><asp:Literal ID="litShipping" runat="server" /></div></div>
         <div class="summary-line"><div class="label">VAT</div><div class="value"><asp:Literal ID="litVat" runat="server" /></div></div>
         <hr />
-        <div class="summary-line"><div class="label">Tổng thanh toán</div><div class="value"><asp:Literal ID="litPayTotal" runat="server" /></div></div>
+        <div class="summary-line"><div class="label">Tổng thanh toán</div><div class="value text-danger"><asp:Literal ID="litPayTotal" runat="server" /></div></div>
       </asp:Panel>
-
     </div>
-
-    <uc:Footer ID="Footer1" runat="server" />
   </form>
-
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

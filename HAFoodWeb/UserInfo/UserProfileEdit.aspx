@@ -1,7 +1,5 @@
 ﻿<%@ Page Language="C#" AutoEventWireup="true" CodeBehind="UserProfileEdit.aspx.cs" Inherits="HAFoodWeb.UserProfileEdit" Async="true" %>
 
-<%@ Register Src="~/Control/Header.ascx" TagPrefix="uc" TagName="Header" %>
-<%@ Register Src="~/Control/Footer.ascx" TagPrefix="uc" TagName="Footer" %>
 
 <!DOCTYPE html>
 <html>
@@ -80,12 +78,56 @@
             display: block;
             margin-left: auto;
             margin-right: auto;
+            text-align: center;
+            text-decoration: none;
+            line-height: normal;
         }
 
         .aspNetButton:hover:not(:disabled) {
             background-color: #d14e00;
             transform: translateY(-2px);
         }
+
+        /* Back button style */
+        .edit-container {
+            position: relative; 
+            max-width: 500px;
+            margin: 30px auto;
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+
+        .backButton {
+            position: absolute;
+            top: 14px;
+            left: 14px;
+
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+
+            padding: 8px 12px;
+            border: 1px solid #ced4da;      
+            background-color: transparent;  
+            color: #6c757d;                 
+            font-size: 14px;
+            border-radius: 10px;            
+            text-decoration: none;
+            cursor: pointer;
+
+            box-shadow: none;
+            transition: background-color .12s ease, color .12s ease, transform .08s;
+            z-index: 10;
+        }
+
+.backButton:hover {
+    background-color: rgba(0,0,0,0.03);
+    color: #495057;
+    transform: translateY(-1px);
+}
+
 
         .success-message {
             color: green;
@@ -146,10 +188,13 @@
 
 <body>
     <form id="form1" runat="server">
-        <uc:Header ID="HeaderControl" runat="server" />
 
         <div class="edit-container">
             <h2>Chỉnh sửa thông tin</h2>
+
+            <a id="btnBack" class="backButton" href="<%= ResolveUrl("~/UserInfo/UserProfile.aspx") %>" aria-label="Quay lại Hồ sơ của tôi">
+                <i class="fa-solid fa-arrow-left me-2"></i>Quay lại
+            </a>
 
             <asp:Image ID="imgAvatar" runat="server" CssClass="avatar-preview" />
 
@@ -171,7 +216,7 @@
 
             <div class="form-field">
                 <label for="txtPhone">Số điện thoại</label>
-                <asp:TextBox ID="txtPhone" runat="server" MaxLength="9" />
+                <asp:TextBox ID="txtPhone" runat="server" MaxLength="10" />
                 <div id="phoneError" class="field-error">Thông báo lỗi số điện thoại</div>
             </div>
 
@@ -183,8 +228,6 @@
                         OnClick="btnSave_Click" OnClientClick="return validateForm();" />
         </div>
 
-        <uc:Footer ID="FooterControl" runat="server" />
-
         <!-- Toast (dùng 1 div, type được set bằng class) -->
         <div id="toast" class="toast">
             <i id="toastIcon" class="fa-solid fa-circle-check"></i>
@@ -194,7 +237,7 @@
         <script>
             // Client-side regexes
             var nameRegex = /^\p{L}[\p{L}\s]*$/u;
-            var phoneRegex = /^0\d{8}$/;
+            var phoneRegex = /^0\d{9}$/;
 
             var fullNameInput = document.getElementById('<%= txtFullName.ClientID %>');
             var phoneInput = document.getElementById('<%= txtPhone.ClientID %>');
@@ -235,7 +278,7 @@
                     return false;
                 }
                 if (val.length !== 9) {
-                    phoneError.innerText = '❌ Số điện thoại phải gồm đúng 9 chữ số.';
+                    phoneError.innerText = '❌ Số điện thoại phải gồm đúng 10 chữ số.';
                     phoneError.style.display = 'block';
                     return false;
                 }
@@ -276,13 +319,11 @@
             });
             phoneInput.addEventListener('blur', validatePhone);
 
-            // showToast(message, type) : type = 'success' | 'error'
             function showToast(message, type) {
                 var toast = document.getElementById("toast");
                 var toastMsg = document.getElementById("toastMessage");
                 var toastIcon = document.getElementById("toastIcon");
 
-                // reset classes
                 toast.classList.remove('success', 'error', 'show');
 
                 if (type === 'success') {
@@ -297,7 +338,6 @@
                 // show
                 toast.classList.add("show");
 
-                // hide after 3 seconds
                 setTimeout(function () {
                     toast.classList.remove("show");
                 }, 3000);
