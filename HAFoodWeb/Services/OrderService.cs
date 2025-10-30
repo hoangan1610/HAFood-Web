@@ -351,50 +351,62 @@ namespace HAFoodWeb.Services
             }
         }
 
-        // ===== DTO / enum (để ngoài class, trong cùng namespace) =====
-        public enum SwitchPaymentOutcome { Switched, AlreadyPaid, NotFound, Unauthorized, Forbidden, Error }
-
-        public sealed class SwitchPaymentResult
-        {
-            public SwitchPaymentOutcome Outcome { get; set; }
-            public HttpStatusCode Status { get; set; }
-            public string RawBody { get; set; }
-            public string Code { get; set; }
-            public string Message { get; set; }
-            public string OrderCode { get; set; }
-            public int? NewMethod { get; set; }
-            public string NewStatus { get; set; }
-        }
-
-        public class OrderCheckoutRequest
-        {
-            public long cart_Id { get; set; }
-            public string ship_Name { get; set; }
-            public string ship_Full_Address { get; set; }
-            public string ship_Phone { get; set; }
-            public int payment_Method { get; set; }
-            public string ip { get; set; }
-            public string note { get; set; }
-            public long address_Id { get; set; }
-            public long device_Id { get; set; }
-            public string promo_Code { get; set; }
-            public long[] selected_Line_Ids { get; set; }
-            public OrderItem[] items { get; set; }
-        }
-
-        public class OrderItem
-        {
-            public long variant_Id { get; set; }
-            public int quantity { get; set; }
-        }
-
-        public class OrderCheckoutResponse
-        {
-            public long order_Id { get; set; }
-            public string order_Code { get; set; }
-            public string payment_Url { get; set; }
-        }
+    // ===== DTO / enum (để ngoài class, trong cùng namespace) =====
+    public enum SwitchPaymentOutcome
+    {
+        Switched,
+        AlreadyPaid,
+        NotFound,
+        Unauthorized,
+        Forbidden,
+        Error
     }
+
+    public sealed class SwitchPaymentResult
+    {
+        public SwitchPaymentOutcome Outcome { get; set; }
+        public HttpStatusCode Status { get; set; }
+        public string RawBody { get; set; }   // bỏ ?
+        public string Code { get; set; }      // bỏ ?
+        public string Message { get; set; }   // bỏ ?
+        public string OrderCode { get; set; } // bỏ ?
+        public int? NewMethod { get; set; }
+        public string NewStatus { get; set; } // bỏ ?
+    }
+
+    // ✅ Cho phép null ở value types: long?, byte?
+    public class OrderCheckoutRequest
+    {
+        public long? cart_Id { get; set; }          // nullable để gửi null
+        public string ship_Name { get; set; } = "";
+        public string ship_Full_Address { get; set; } = "";
+        public string ship_Phone { get; set; } = "";
+        public byte payment_Method { get; set; }   // tinyint -> byte
+
+        public string ip { get; set; }              // bỏ ?
+        public string note { get; set; }            // bỏ ?
+
+        public long? address_Id { get; set; }       // nullable
+        public long? device_Id { get; set; }        // nullable
+
+        public string promo_Code { get; set; }    // bỏ ?
+        public long[] selected_Line_Ids { get; set; }  // bỏ ?
+        public OrderItem[] items { get; set; }      // bỏ ?
+    }
+
+    public class OrderItem
+    {
+        public long variant_Id { get; set; }
+        public int quantity { get; set; }
+    }
+
+    public class OrderCheckoutResponse
+    {
+        public long order_Id { get; set; }
+        public string order_Code { get; set; }   // bỏ ?
+        public string payment_Url { get; set; }  // bỏ ?
+    }
+}
 
 
    

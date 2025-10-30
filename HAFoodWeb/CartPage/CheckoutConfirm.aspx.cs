@@ -29,6 +29,7 @@ namespace HAFoodWeb
 
             if (!IsPostBack)
             {
+                // Yêu cầu đăng nhập
                 if (!(Request.Cookies["AuthToken"] != null && !string.IsNullOrWhiteSpace(Request.Cookies["AuthToken"].Value))
                     && !(Context?.User?.Identity?.IsAuthenticated ?? false))
                 {
@@ -38,12 +39,12 @@ namespace HAFoodWeb
                     return;
                 }
 
+                // Nếu user vừa hủy thanh toán ở gateway
                 var payFail = string.Equals(Request.QueryString["payfail"], "1", StringComparison.OrdinalIgnoreCase)
                            || string.Equals(Request.QueryString["fail"], "1", StringComparison.OrdinalIgnoreCase);
 
                 if (payFail)
                 {
-                    // Xác định cổng thanh toán để hiển thị thông báo đúng
                     var provQ = (Request.QueryString["prov"] ?? "").Trim().ToLowerInvariant();
                     string provName;
                     if (!string.IsNullOrWhiteSpace(provQ))
@@ -54,8 +55,7 @@ namespace HAFoodWeb
                     }
                     else
                     {
-                        var mObj = Session[SK_PENDING_PAYMENT_METHOD];
-                        int? m = mObj is int i ? i : (mObj as int?);
+                        var m = GetPendingMethodFromSession();
                         provName = m == 2 ? "VNPay"
                                   : m == 1 ? "ZaloPay"
                                   : "cổng thanh toán";
@@ -73,7 +73,6 @@ namespace HAFoodWeb
                     Session.Remove(SK_PENDING_PAYMENT_URL);
                     Session.Remove(SK_PENDING_PAYMENT_CREATED);
                     Session.Remove(SK_PENDING_PAYMENT_METHOD);
-                    // GIỮ SK_PENDING_ORDER_CODE để có thể hoàn tất bằng COD nếu muốn
                 }
             }
 
@@ -126,7 +125,7 @@ namespace HAFoodWeb
 
                 displayItems = freshItems.Cast<object>().ToList();
 
-                // snapshot item
+                // Snapshot Items để đảm bảo luôn có dữ liệu gửi API
                 draft.Items = freshItems.Select(fi => (fi.VariantId, fi.Quantity)).ToArray();
                 Session[SK_DRAFT] = draft;
             }
@@ -142,6 +141,10 @@ namespace HAFoodWeb
                         ImageUrl = string.IsNullOrWhiteSpace(it.ImageUrl) ? "/images/product-default.png" : it.ImageUrl,
                         LineTotal = string.Format(viVN, "{0:N0} ₫", it.Price * it.Quantity)
                     }).Cast<object>().ToList();
+
+                    // Gắn Items từ Snapshot
+                    draft.Items = draft.Snapshot.Select(it => (it.VariantId, it.Quantity)).ToArray();
+                    Session[SK_DRAFT] = draft;
 
                     subtotal = draft.SnapshotSubtotal;
                     shipping = draft.SnapshotShipping;
@@ -175,12 +178,22 @@ namespace HAFoodWeb
             Session[SK_TOTALS] = (subtotal, shipping);
         }
 
-        private bool TryRedirectPendingPaymentIfAny(int? selectedMethod = null)
+        // ===== Helpers =====
+        private static byte? GetPendingMethodFromSession()
+        {
+            var obj = System.Web.HttpContext.Current?.Session?[SK_PENDING_PAYMENT_METHOD];
+            if (obj == null) return null;
+            if (obj is byte b) return b;
+            if (obj is int i && i >= byte.MinValue && i <= byte.MaxValue) return (byte)i;
+            if (obj is string s && byte.TryParse(s, out var bs)) return bs;
+            return null;
+        }
+
+        private bool TryRedirectPendingPaymentIfAny(byte? selectedMethod = null)
         {
             var url = Session[SK_PENDING_PAYMENT_URL] as string;
             var createdUtc = Session[SK_PENDING_PAYMENT_CREATED] as DateTime?;
-            var pendingMethodObj = Session[SK_PENDING_PAYMENT_METHOD];
-            int? pendingMethod = pendingMethodObj is int i ? i : (pendingMethodObj as int?);
+            var pendingMethod = GetPendingMethodFromSession();
 
             if (string.IsNullOrWhiteSpace(url)) return false;
 
@@ -205,7 +218,9 @@ namespace HAFoodWeb
         {
             if (!Page.IsValid) return;
 
-            if (!int.TryParse(rblPayment.SelectedValue, out var paymentMethod))
+            // Đọc phương thức thanh toán: byte
+            byte paymentMethod;
+            if (!byte.TryParse(rblPayment.SelectedValue, out paymentMethod))
                 paymentMethod = 0; // 0=COD, 1=ZaloPay, 2=VNPay
 
             var pendingCode = Session[SK_PENDING_ORDER_CODE] as string;
@@ -218,7 +233,6 @@ namespace HAFoodWeb
                     if (paymentMethod == 0)
                     {
                         var sw = await _orderService.SwitchPaymentSafeAsync(pendingCode, 0, "USER_SWITCH_TO_COD");
-                        // Dọn session + ThankYou (kể cả AlreadyPaid cũng cho về trang cảm ơn)
                         Session.Remove(SK_PENDING_PAYMENT_URL);
                         Session.Remove(SK_PENDING_PAYMENT_CREATED);
                         Session.Remove(SK_PENDING_PAYMENT_METHOD);
@@ -229,13 +243,10 @@ namespace HAFoodWeb
                         Context.ApplicationInstance.CompleteRequest();
                         return;
                     }
-
                     else
                     {
-                        // 1) Nếu link cũ cùng cổng còn hạn → reuse
                         if (TryRedirectPendingPaymentIfAny(paymentMethod)) return;
 
-                        // 2) Đổi cổng trên DB (safe)
                         var sw = await _orderService.SwitchPaymentSafeAsync(pendingCode, paymentMethod, "USER_SWITCH_GATEWAY");
 
                         if (sw.Outcome == SwitchPaymentOutcome.AlreadyPaid)
@@ -254,7 +265,7 @@ namespace HAFoodWeb
                             var newPayUrl = await _orderService.CreatePaymentLinkForOrderAsync(pendingCode, paymentMethod);
                             Session[SK_PENDING_PAYMENT_URL] = newPayUrl;
                             Session[SK_PENDING_PAYMENT_CREATED] = DateTime.UtcNow;
-                            Session[SK_PENDING_PAYMENT_METHOD] = paymentMethod;
+                            Session[SK_PENDING_PAYMENT_METHOD] = paymentMethod; // Lưu dạng byte
 
                             Response.Redirect(newPayUrl, false);
                             Context.ApplicationInstance.CompleteRequest();
@@ -272,13 +283,11 @@ namespace HAFoodWeb
                             return;
                         }
 
-                        // lỗi khác
                         ShowNiceError("SWITCH_PAYMENT_FAILED", "Không chuyển phương thức/khởi tạo link thanh toán được",
                             Server.HtmlEncode(sw?.Message ?? sw?.RawBody ?? "Lỗi không xác định"),
                             actionsHtml: $"<button class='btn-soft' onclick=\"location.reload()\">Thử lại</button>");
                         return;
                     }
-
                 }
                 catch (Exception ex)
                 {
@@ -292,7 +301,7 @@ namespace HAFoodWeb
                 }
             }
 
-            // ==== CHƯA CÓ ORDER → tạo đơn mới như cũ ====
+            // ==== CHƯA CÓ ORDER → tạo đơn mới ====
             if (paymentMethod != 0 && TryRedirectPendingPaymentIfAny(paymentMethod)) return;
 
             var draft = Session[SK_DRAFT] as CartPage.CheckoutDraft;
@@ -303,20 +312,45 @@ namespace HAFoodWeb
                 return;
             }
 
+            // Bảo đảm có Items gửi lên API
+            var itemsTuple = draft.Items ?? Array.Empty<(long variant_Id, int quantity)>();
+            if ((itemsTuple.Length == 0) && (draft.Snapshot != null && draft.Snapshot.Length > 0))
+            {
+                itemsTuple = draft.Snapshot.Select(s => (s.VariantId, s.Quantity)).ToArray();
+                draft.Items = itemsTuple;
+                Session[SK_DRAFT] = draft;
+            }
+
+            if ((itemsTuple.Length == 0) && !(draft.SelectedLineIds?.Any() ?? false))
+            {
+                ShowNiceError("CART_EMPTY", "Giỏ hàng trống",
+                    "Vui lòng quay lại giỏ hoặc chọn lại sản phẩm.",
+                    actionsHtml: $"<button class='btn-soft' onclick=\"location.href='{ResolveUrl("~/CartPage/CartPage.aspx")}'\">Về giỏ hàng</button>");
+                return;
+            }
+
+            // Chuẩn hoá IP (tuỳ chọn)
+            var ip = Request.UserHostAddress;
+            if (!string.IsNullOrWhiteSpace(ip) && ip.Contains(":")) ip = "127.0.0.1";
+
             var req = new OrderCheckoutRequest
             {
-                cart_Id = 0,
+                cart_Id = null,                       // không gửi 0
                 ship_Name = draft.ShipName,
                 ship_Full_Address = draft.ShipAddress,
                 ship_Phone = draft.ShipPhone,
-                payment_Method = paymentMethod,
-                ip = Request.UserHostAddress,
+                payment_Method = paymentMethod,       // byte → khớp DTO
+                ip = ip,
                 note = draft.Note,
-                address_Id = 0,
-                device_Id = 0,
+                address_Id = null,                    // không gửi 0
+                device_Id = null,                     // không gửi 0
                 promo_Code = draft.PromoCode,
-                selected_Line_Ids = draft.SelectedLineIds ?? new long[0],
-                items = (draft.Items ?? Array.Empty<(long variant_Id, int quantity)>())
+
+                selected_Line_Ids = (draft.SelectedLineIds != null && draft.SelectedLineIds.Length > 0)
+                    ? draft.SelectedLineIds
+                    : (long[])null,
+
+                items = itemsTuple
                     .Select(i => new OrderItem { variant_Id = i.variant_Id, quantity = i.quantity })
                     .ToArray()
             };
@@ -325,14 +359,14 @@ namespace HAFoodWeb
             {
                 var resp = await _orderService.CheckoutAsync(req);
 
-                if (!string.IsNullOrWhiteSpace(resp.payment_Url))
+                if (!string.IsNullOrWhiteSpace(resp?.payment_Url))
                 {
                     if (!string.IsNullOrWhiteSpace(resp.order_Code))
                         Session[SK_PENDING_ORDER_CODE] = resp.order_Code;
 
                     Session[SK_PENDING_PAYMENT_URL] = resp.payment_Url;
                     Session[SK_PENDING_PAYMENT_CREATED] = DateTime.UtcNow;
-                    Session[SK_PENDING_PAYMENT_METHOD] = paymentMethod;
+                    Session[SK_PENDING_PAYMENT_METHOD] = paymentMethod; // lưu byte
 
                     Response.Redirect(resp.payment_Url, false);
                     Context.ApplicationInstance.CompleteRequest();
@@ -397,7 +431,6 @@ namespace HAFoodWeb
             }
         }
 
-        // RENDER alert đẹp mắt
         private void ShowNiceError(string code, string title, string message, string actionsHtml = null)
         {
             var html =
