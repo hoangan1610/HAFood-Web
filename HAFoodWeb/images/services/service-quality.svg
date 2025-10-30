@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <defs>
+    <filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#000" flood-opacity="0.08"/>
+    </filter>
+  </defs>
+  <!-- rough ring -->
+  <circle cx="100" cy="100" r="86" fill="none" stroke="#F6A0B0" stroke-width="12"
+          stroke-dasharray="18 10 6 14 22 8 14 12 7 16 10 20" stroke-linecap="round" filter="url(#softShadow)" />
+  <!-- solid inner disc -->
+  <circle cx="100" cy="100" r="72" fill="#FFD5DE" />
+  
+  <!-- outer fruit -->
+  <circle cx="100" cy="110" r="38" fill="none" stroke="#fff" stroke-width="6"/>
+  <circle cx="100" cy="110" r="28" fill="none" stroke="#fff" stroke-width="6"/>
+  <!-- segments -->
+  <g stroke="#fff" stroke-width="6" stroke-linecap="round">
+    <line x1="100" y1="110" x2="100" y2="82"/>
+    <line x1="100" y1="110" x2="121" y2="90"/>
+    <line x1="100" y1="110" x2="128" y2="110"/>
+    <line x1="100" y1="110" x2="121" y2="130"/>
+    <line x1="100" y1="110" x2="100" y2="138"/>
+    <line x1="100" y1="110" x2="79" y2="130"/>
+    <line x1="100" y1="110" x2="72" y2="110"/>
+    <line x1="100" y1="110" x2="79" y2="90"/>
+  </g>
+
+</svg>
