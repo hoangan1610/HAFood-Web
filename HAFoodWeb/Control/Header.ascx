@@ -62,7 +62,7 @@
         box-shadow: 0 4px 15px rgba(0,0,0,0.1);
         border: 2px solid #28a745;
         animation: slideDown 0.3s ease forwards;
-        position: relative; /* giữ hộp suggest bám theo */
+        position: relative;
     }
     .search-box input {
         flex: 1;
@@ -153,7 +153,7 @@
         border-radius: 50%;
         width: 20px;
         height: 20px;
-        display: flex;
+        display: none;           /* ẩn mặc định, JS sẽ bật khi >0 */
         align-items: center;
         justify-content: center;
         line-height: 1;
@@ -188,14 +188,14 @@
 
             <i class="bi bi-search" id="openSearch" title="Tìm kiếm"></i>
 
-            <!-- Hidden flag (server-set) để JS biết trạng thái đăng nhập -->
+            <!-- Hidden flag để JS biết trạng thái đăng nhập -->
             <asp:HiddenField ID="hfIsAuth" runat="server" />
 
             <!-- USER ICON -->
             <div class="position-relative">
                 <i class="bi bi-person" id="userIcon" title="Tài khoản" style="cursor:pointer;"></i>
 
-                <!-- GUEST DROPDOWN (chỉ show khi chưa login) -->
+                <!-- GUEST DROPDOWN -->
                 <div class="user-dropdown" id="guestDropdown" runat="server" aria-label="Tài khoản khách">
                     <asp:HyperLink runat="server" NavigateUrl="~/AuthPage/Login.aspx" CssClass="d-flex align-items-center">
                         <i class="bi bi-box-arrow-in-right me-2"></i>Đăng nhập
@@ -205,7 +205,7 @@
                     </asp:HyperLink>
                 </div>
 
-                <!-- AUTH DROPDOWN (nếu bạn muốn hiển thị info khi login, nhưng mặc định ta keep hidden vì click sẽ redirect) -->
+                <!-- AUTH DROPDOWN -->
                 <div class="user-dropdown" id="authDropdown" runat="server" aria-label="Tài khoản đã đăng nhập">
                     <asp:HyperLink ID="lnkProfile" runat="server" NavigateUrl="~/UserInfo/UserProfile.aspx" CssClass="d-flex align-items-center">
                         <i class="bi bi-person-circle me-2"></i>Hồ sơ của tôi
@@ -225,7 +225,7 @@
             <div class="position-relative">
                 <asp:HyperLink ID="lnkCart" runat="server" NavigateUrl="~/CartPage/CartPage.aspx" CssClass="cart-link" title="Giỏ hàng">
                     <i id="cartIcon" class="bi bi-basket" aria-label="Giỏ hàng"></i>
-                    <span id="cartCountBadge" runat="server" class="cart-badge" data-cart-badge="true">0</span>
+                    <span id="cartCountBadge" runat="server" class="cart-badge" data-cart-badge="true" aria-live="polite" aria-atomic="true">0</span>
                 </asp:HyperLink>
             </div>
 
@@ -250,6 +250,7 @@
     // ====== Cart badge helpers ======
     const CART_API = '<%= ResolveUrl("~/Ajax/Cart.ashx") %>';
 
+    // hiển thị badge
     window.setCartBadge = function (n) {
         const b = document.querySelector('[data-cart-badge="true"]');
         if (!b) return;
@@ -258,32 +259,53 @@
         b.style.display = v > 0 ? 'flex' : 'none';
     };
 
-    window.refreshCartCount = async function (force) {
+    // gọi count từ server
+    window.refreshCartCount = async function () {
         try {
-            const url = `${CART_API}?action=count${force ? `&t=${Date.now()}` : ''}`;
+            const url = `${CART_API}?action=count&t=${Date.now()}`; // cache-buster
             const r = await fetch(url, { method: 'GET', credentials: 'include', cache: 'no-store' });
             if (!r.ok) throw new Error('HTTP ' + r.status);
             const j = await r.json();
-            const c = Number(j?.count);
-            if (Number.isFinite(c)) window.setCartBadge(c);
-        } catch (e) { console.error('Lỗi làm mới số lượng giỏ hàng', e); }
+            const c = Number(j && (j.count ?? j.item_Count));
+            window.setCartBadge(Number.isFinite(c) ? c : 0);
+        } catch (e) {
+            console.error('Lỗi làm mới số lượng giỏ hàng', e);
+        }
     };
 
-    // sự kiện để trang con "cộng trước/trừ trước"
+    // tiện ích cho trang con sau khi add/update/remove xong
+    window.cartSyncNow = () => window.refreshCartCount();
+
+    // optimistic update (tuỳ trang con dispatch)
     window.addEventListener('cart:add', e => {
         const b = document.querySelector('[data-cart-badge="true"]');
         const cur = b ? (parseInt(b.textContent || '0', 10) || 0) : 0;
         window.setCartBadge(cur + (e.detail?.delta || 1));
+        // sync lại để khớp server
+        window.refreshCartCount();
     });
     window.addEventListener('cart:revert', e => {
         const b = document.querySelector('[data-cart-badge="true"]');
         const cur = b ? (parseInt(b.textContent || '0', 10) || 0) : 0;
         window.setCartBadge(Math.max(0, cur - (e.detail?.delta || 1)));
+        window.refreshCartCount();
     });
 
-    // load xong -> sync 1 lần
-    document.addEventListener('DOMContentLoaded', () => { try { window.refreshCartCount(); } catch { } });
+    // refresh khi page load xong & khi quay lại tab
+    document.addEventListener('DOMContentLoaded', () => { try { window.refreshCartCount(); } catch {} });
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') { window.refreshCartCount(); }
+    });
 
+    // Nếu có UpdatePanel (WebForms), refresh sau partial postback
+    if (window.Sys && Sys.WebForms && Sys.WebForms.PageRequestManager) {
+        try {
+            var prm = Sys.WebForms.PageRequestManager.getInstance();
+            prm.add_endRequest(function () { window.refreshCartCount(); });
+        } catch {}
+    }
+
+    // ====== Header UI behaviors (search/user) ======
     document.addEventListener('DOMContentLoaded', function () {
         const headerRoot = document.getElementById('headerRoot');
         const guestId = headerRoot?.dataset.guestid;
@@ -304,11 +326,9 @@
         const suggestUrl = '<%= ResolveUrl("~/Proxy/Suggest.ashx") %>';
         const searchUrl  = '<%= ResolveUrl("~/HomePage/Search.aspx") %>';
 
-        // read server-set auth flag
         const hfAuth = document.getElementById('<%= hfIsAuth.ClientID %>');
         const isAuth = hfAuth && hfAuth.value === '1';
 
-        // helpers
         const visible = el => !!el && window.getComputedStyle(el).display !== 'none';
         const hideUser = () => { if (guestDD) guestDD.style.display = 'none'; if (authDD) authDD.style.display = 'none'; };
         const setOverlay = () => { overlay.style.display = (visible(searchDropdown) || visible(guestDD) || visible(authDD)) ? 'block' : 'none'; };
@@ -316,24 +336,18 @@
         const hideSearch = () => { if (searchDropdown) searchDropdown.style.display = 'none'; box?.classList.add('hf-hide'); setOverlay(); };
         const showSearch = () => { hideUser(); if (searchDropdown) searchDropdown.style.display = 'flex'; overlay.style.display = 'block'; };
 
-        // user icon behavior:
-        // - nếu đã đăng nhập => click chuyển tới UserDetail (dashboard)
-        // - nếu chưa => mở guest dropdown (Đăng nhập / Đăng ký)
         userIcon?.addEventListener('click', e => {
             e.stopPropagation();
             if (isAuth) {
-                // chuyển tới trang dashboard
                 window.location.href = '<%= ResolveUrl("~/UserInfo/UserDetail.aspx") %>';
                 return;
             }
-            // chưa đăng nhập: toggle guest dropdown
             const willShow = !visible(guestDD);
             hideSearch();
             if (willShow && guestDD) guestDD.style.display = 'flex';
             setOverlay();
         });
 
-        // open search
         openBtn?.addEventListener('click', e => {
             e.stopPropagation();
             const willShow = !visible(searchDropdown);
@@ -341,7 +355,6 @@
             if (willShow) showSearch(); else hideSearch();
         });
 
-        // click outside
         document.addEventListener('click', e => {
             if (searchDropdown?.contains(e.target) || openBtn?.contains(e.target)) return;
             if (!userIcon?.contains(e.target) && !guestDD?.contains(e.target) && !authDD?.contains(e.target)) hideUser();
@@ -349,13 +362,11 @@
         });
         overlay?.addEventListener('click', () => { hideUser(); hideSearch(); });
 
-        // stop propagation
         searchDropdown?.addEventListener('click', e => e.stopPropagation());
         input?.addEventListener('click', e => e.stopPropagation());
         input?.addEventListener('focus', e => e.stopPropagation());
         box?.addEventListener('click', e => e.stopPropagation());
 
-        // suggest
         const debounce = (fn, ms) => { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; };
         let ctrl = null;
 
@@ -398,11 +409,11 @@
             if (!items.length) return;
             let idx = items.findIndex(x => x.classList.contains('active'));
             if (e.key === 'ArrowDown') {
-                e.preventDefault(); idx = (idx + 1) % items.length;
+                e.preventDefault(); idx = (idx + 1) <= items.length - 1 ? (idx + 1) : 0;
                 items.forEach(x => x.classList.remove('active')); items[idx].classList.add('active');
                 input.value = items[idx].dataset.v;
             } else if (e.key === 'ArrowUp') {
-                e.preventDefault(); idx = (idx - 1 + items.length) % items.length;
+                e.preventDefault(); idx = (idx - 1) >= 0 ? (idx - 1) : (items.length - 1);
                 items.forEach(x => x.classList.remove('active')); items[idx].classList.add('active');
                 input.value = items[idx].dataset.v;
             } else if (e.key === 'Enter') {

@@ -322,6 +322,16 @@ namespace HAFoodWeb
                 SnapshotGrand = grand
             };
 
+            try
+            {
+                Session.Remove("pending_order_code");
+                Session.Remove("pending_payment_url");
+                Session.Remove("pending_payment_created_utc");
+                Session.Remove("pending_payment_method");
+                // tuỳ chọn: dọn luôn totals cũ nếu muốn “sạch hoàn toàn”
+                // Session.Remove("checkout_totals");
+            }
+            catch { /* ignore */ }
             // LƯU draft vào session
             Session["checkout_draft"] = draft;
 

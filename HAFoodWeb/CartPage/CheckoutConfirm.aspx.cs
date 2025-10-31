@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Web.UI;
 using HAFoodWeb.Services;
+using System.Web;
 
 namespace HAFoodWeb
 {
@@ -237,6 +238,7 @@ namespace HAFoodWeb
                         Session.Remove(SK_PENDING_PAYMENT_CREATED);
                         Session.Remove(SK_PENDING_PAYMENT_METHOD);
                         Session.Remove(SK_DRAFT);
+                        Session.Remove(SK_PENDING_ORDER_CODE);
 
                         var suffix = (sw.Outcome == SwitchPaymentOutcome.AlreadyPaid) ? "&paid=1" : "&cod=1";
                         Response.Redirect("~/CartPage/ThankYou.aspx?code=" + Uri.EscapeDataString(pendingCode) + suffix, false);
@@ -254,6 +256,7 @@ namespace HAFoodWeb
                             Session.Remove(SK_PENDING_PAYMENT_URL);
                             Session.Remove(SK_PENDING_PAYMENT_CREATED);
                             Session.Remove(SK_PENDING_PAYMENT_METHOD);
+                            Session.Remove(SK_PENDING_ORDER_CODE);
                             Session.Remove(SK_DRAFT);
 
                             Response.Redirect("~/CartPage/ThankYou.aspx?code=" + Uri.EscapeDataString(pendingCode) + "&paid=1", false);
