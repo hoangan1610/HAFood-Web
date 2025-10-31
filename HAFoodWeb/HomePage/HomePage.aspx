@@ -18,9 +18,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <!-- Great Vibes + Playfair Display (giống layout cũ) -->
-  <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Playfair+Display:wght@600;700&display=swap&subset=latin,vietnamese" rel="stylesheet">
   <!-- Noto Serif: fallback có hỗ trợ tiếng Việt, dùng cùng với Georgia -->
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif:ital,wght@0,400;0,700;1,400;1,700&display=swap&subset=latin,vietnamese" rel="stylesheet">
 
   <style>
     /* ==== Featured category cards ==== */
@@ -107,6 +107,31 @@
     .product-price{
       font-family:"Georgia","Times New Roman",Times,serif;
     }
+
+    /* ====== FONT THEO NGÔN NGỮ (Cách 1) ======
+       Đặt KHỐI NÀY Ở CUỐI để override các font-family phía trên */
+    :lang(vi) {
+      /* Toàn bộ nội dung tiếng Việt sẽ dùng serif hỗ trợ VN để không lỗi dấu */
+      font-family: "Noto Serif", "Times New Roman", Times, serif;
+    }
+    :lang(en), .en-georgia {
+      /* Những đoạn tiếng Anh (được đánh dấu lang="en") giữ đúng Georgia */
+      font-family: Georgia, "Times New Roman", Times, serif;
+    }
+
+    /* Ép các khu vực có selector mạnh (như .headline) dùng Noto Serif khi là tiếng Việt */
+    .services-wrap .headline:lang(vi),
+    .sec-title:lang(vi),
+    .service-title:lang(vi),
+    .service-desc:lang(vi),
+    .product-name:lang(vi),
+    .cat-name:lang(vi) {
+      font-family: "Noto Serif", "Times New Roman", Times, serif !important;
+    }
+
+    /* Tránh cắt dấu khi đậm/italic */
+    body { line-height: 1.55; }
+    .sec-title, .service-title, .product-name { line-height: 1.35; }
   </style>
 </head>
 
@@ -124,7 +149,9 @@
   <section class="services-wrap py-5">
     <div class="container">
       <div class="text-center mb-4">
-        <div class="eyebrow">Services</div>
+        <!-- Tiếng Anh: dùng Georgia -->
+        <div class="eyebrow" lang="en">Services</div>
+        <!-- Tiếng Việt: được ép dùng Noto Serif, không lỗi dấu -->
         <div class="headline">Chào mừng đến với HAFood</div>
       </div>
 
@@ -133,7 +160,7 @@
         <div class="col-6 col-md-3">
           <div class="service-item fresh">
             <div class="service-icon">
-              <img src="/images/services/service-fresh.svg" alt="Always Fresh" loading="lazy" />
+              <img src="/images/services/service-fresh.svg" alt="Always Fresh" loading="lazy" lang="en" />
             </div>
             <h5 class="service-title">Thực phẩm luôn sạch</h5>
             <p class="service-desc">Chúng tôi luôn quan đảm bảo về an toàn vệ sinh thực phẩm</p>
@@ -144,7 +171,7 @@
         <div class="col-6 col-md-3">
           <div class="service-item natural">
             <div class="service-icon">
-              <img src="/images/services/service-natural.svg" alt="100% Natural" loading="lazy" />
+              <img src="/images/services/service-natural.svg" alt="100% Natural" loading="lazy" lang="en" />
             </div>
             <h5 class="service-title">100% Tự nhiên</h5>
             <p class="service-desc">Nguyên liệu luôn sạch sẽ tự nhiên không chất bảo quản</p>
@@ -155,7 +182,7 @@
         <div class="col-6 col-md-3">
           <div class="service-item quality">
             <div class="service-icon">
-              <img src="/images/services/service-quality.svg" alt="Best Quality" loading="lazy" />
+              <img src="/images/services/service-quality.svg" alt="Best Quality" loading="lazy" lang="en" />
             </div>
             <h5 class="service-title">Chất lượng tốt nhất</h5>
             <p class="service-desc">Chúng tôi luôn đặt chất lượng sản phẩm lên hàng đầu</p>
@@ -166,7 +193,7 @@
         <div class="col-6 col-md-3">
           <div class="service-item safe">
             <div class="service-icon">
-              <img src="/images/services/service-safety.svg" alt="Food Safety" loading="lazy" />
+              <img src="/images/services/service-safety.svg" alt="Food Safety" loading="lazy" lang="en" />
             </div>
             <h5 class="service-title">Thức ăn an toàn</h5>
             <p class="service-desc">Nguyên liệu và quá trình chế biến luôn đảm bảo an toàn vệ sinh</p>
@@ -178,7 +205,7 @@
 
   <!-- FEATURED CATEGORIES -->
   <div class="container my-5">
-    <h3 class="sec-title mb-4">Danh Mục Nổi Bật</h3>
+    <h3 class="sec-title mb-4">Danh mục nổi bật</h3>
     <asp:Repeater ID="rpCategories" runat="server">
       <HeaderTemplate><div class="row gx-3"></HeaderTemplate>
       <ItemTemplate>
@@ -199,7 +226,7 @@
   <!-- NEW ARRIVALS: Horizontal shelf -->
   <div class="container my-5">
     <div class="text-center mb-3">
-      <h3 class="sec-title">Mới Về</h3>
+      <h3 class="sec-title">Sản phẩm mới về</h3>
       <a href="/category.aspx?sort=created_at:desc" class="text-decoration-none">Xem tất cả ›</a>
     </div>
 
@@ -246,7 +273,7 @@
 
   <!-- RECOMMENDED GRID -->
   <div class="container my-5">
-    <h3 class="sec-title mb-4">Gợi Ý Cho Bạn</h3>
+    <h3 class="sec-title mb-4">Gợi ý cho bạn</h3>
 
     <asp:Repeater ID="rpProducts" runat="server">
       <HeaderTemplate><div class="row gx-3 gy-4"></HeaderTemplate>

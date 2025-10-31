@@ -9,58 +9,14 @@
     <title>Tài khoản của tôi - HAFood</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
     <style>
-        .dashboard-container {
-            display: flex;
-            min-height: 80vh;
-            width: 90%;
-            margin: 40px auto;
-        }
-        .sidebar {
-            width: 250px;
-            background: #fff;
-            border-right: 1px solid #e5e5e5;
-            padding: 20px;
-        }
-        .sidebar h3 {
-            font-size: 22px;
-            font-weight: 700;
-            margin-bottom: 30px;
-        }
-        .menu-item {
-            padding: 12px 15px;
-            border-radius: 8px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.2s;
-            display: block;
-            margin-bottom: 8px;
-            color: inherit;
-            text-decoration: none;
-        }
-        .menu-item:hover { text-decoration: none; }
-        .menu-item.active,
-        .menu-item:hover {
-            background-color: #28a745;
-            color: white !important;
-        }
-        .content-area {
-            flex: 1;
-            padding: 30px;
-            background: #fafafa;
-        }
-        .content-frame {
-            width: 100%;
-            height: 80vh;
-            border: none;
-            border-radius: 12px;
-            background: #fff;
-        }
-
-        @media (max-width: 900px) {
-            .dashboard-container { flex-direction: column; }
-            .sidebar { width: 100%; margin-bottom: 18px; }
-            .content-frame { height: 60vh; }
-        }
+        .dashboard-container { display:flex; min-height:80vh; width:90%; margin:40px auto; }
+        .sidebar { width:250px; background:#fff; border-right:1px solid #e5e5e5; padding:20px; }
+        .sidebar h3 { font-size:22px; font-weight:700; margin-bottom:30px; }
+        .menu-item { padding:12px 15px; border-radius:8px; font-weight:500; cursor:pointer; transition:.2s; display:block; margin-bottom:8px; color:inherit; text-decoration:none; }
+        .menu-item.active, .menu-item:hover { background:#28a745; color:#fff !important; }
+        .content-area { flex:1; padding:30px; background:#fafafa; }
+        .content-frame { width:100%; height:80vh; border:none; border-radius:12px; background:#fff; }
+        @media (max-width:900px) { .dashboard-container{flex-direction:column;} .sidebar{width:100%; margin-bottom:18px;} .content-frame{height:60vh;} }
     </style>
 </head>
 <body>
@@ -71,17 +27,14 @@
             <div class="sidebar">
                 <h3>Tài Khoản</h3>
 
-                <!-- Hồ sơ -->
                 <a id="mProfile" class="menu-item active" data-url="../UserInfo/UserProfile.aspx" href="javascript:void(0);">
                     <i class="bi bi-person-circle me-2"></i> Hồ sơ của tôi
                 </a>
 
-                <!-- Đơn hàng -->
                 <a id="mOrders" class="menu-item" data-url="../OrderPage/OrderPage.aspx" href="javascript:void(0);">
                     <i class="bi bi-basket2-fill me-2"></i> Đơn hàng của tôi
                 </a>
 
-                <!-- Đăng xuất: server-side LinkButton -->
                 <asp:LinkButton ID="lnkLogout" runat="server" CssClass="menu-item" OnClick="lnkLogout_Click" CausesValidation="false">
                     <i class="bi bi-box-arrow-right me-2"></i> Đăng xuất
                 </asp:LinkButton>
@@ -99,25 +52,45 @@
         (function () {
             const menuItems = document.querySelectorAll(".menu-item");
             const frame = document.getElementById("contentFrame");
+            const mProfile = document.getElementById("mProfile");
+            const mOrders = document.getElementById("mOrders");
 
+            // Click mặc định
             menuItems.forEach(item => {
-                // Nếu là LinkButton (postback) nó vẫn có class menu-item và id; clicking sẽ postback
                 item.addEventListener('click', function (e) {
-                    // Nếu element là link với data-url -> tải vào iframe
                     const url = this.dataset?.url;
                     if (url) {
-                        // prevent default only for anchors (we use href="javascript:void(0);")
                         e.preventDefault && e.preventDefault();
                         menuItems.forEach(i => i.classList.remove('active'));
                         this.classList.add('active');
                         frame.src = url;
                         return;
                     }
-
                     menuItems.forEach(i => i.classList.remove('active'));
                     this.classList.add('active');
                 }, false);
             });
+
+            // 👉 Nhận query tab=orders&orderId=xxx để tự mở Đơn hàng/Chi tiết đơn
+            try {
+                const params = new URLSearchParams(window.location.search);
+                const tab = (params.get('tab') || '').toLowerCase();
+                const orderId = params.get('orderId') || params.get('id');
+
+                if (tab === 'orders') {
+                    // active menu "Đơn hàng"
+                    mProfile && mProfile.classList.remove('active');
+                    mOrders && mOrders.classList.add('active');
+
+                    if (orderId) {
+                        // Mở thẳng trang chi tiết đơn
+                        frame.src = "../OrderPage/OrderDetail.aspx?id=" + encodeURIComponent(orderId);
+                    } else {
+                        // Mở danh sách đơn hàng
+                        frame.src = mOrders.dataset.url || "../OrderPage/OrderPage.aspx";
+                    }
+                }
+            } catch (e) { /* ignore */ }
         })();
     </script>
 </body>

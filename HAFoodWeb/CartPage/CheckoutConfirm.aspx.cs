@@ -20,6 +20,10 @@ namespace HAFoodWeb
         private const string SK_PENDING_PAYMENT_URL = "pending_payment_url";
         private const string SK_PENDING_PAYMENT_CREATED = "pending_payment_created_utc";
         private const string SK_PENDING_PAYMENT_METHOD = "pending_payment_method";
+        private const string SK_PENDING_ORDER_ID = "pending_order_id"; // ⭐ NEW
+
+        // Đổi lại nếu ThankYou nằm ở thư mục khác
+        private const string THANKYOU_PATH = "~/CartPage/ThankYou.aspx";
 
         protected async void Page_Load(object sender, EventArgs e)
         {
@@ -30,7 +34,6 @@ namespace HAFoodWeb
 
             if (!IsPostBack)
             {
-                // Yêu cầu đăng nhập
                 if (!(Request.Cookies["AuthToken"] != null && !string.IsNullOrWhiteSpace(Request.Cookies["AuthToken"].Value))
                     && !(Context?.User?.Identity?.IsAuthenticated ?? false))
                 {
@@ -40,7 +43,6 @@ namespace HAFoodWeb
                     return;
                 }
 
-                // Nếu user vừa hủy thanh toán ở gateway
                 var payFail = string.Equals(Request.QueryString["payfail"], "1", StringComparison.OrdinalIgnoreCase)
                            || string.Equals(Request.QueryString["fail"], "1", StringComparison.OrdinalIgnoreCase);
 
@@ -126,7 +128,6 @@ namespace HAFoodWeb
 
                 displayItems = freshItems.Cast<object>().ToList();
 
-                // Snapshot Items để đảm bảo luôn có dữ liệu gửi API
                 draft.Items = freshItems.Select(fi => (fi.VariantId, fi.Quantity)).ToArray();
                 Session[SK_DRAFT] = draft;
             }
@@ -143,7 +144,6 @@ namespace HAFoodWeb
                         LineTotal = string.Format(viVN, "{0:N0} ₫", it.Price * it.Quantity)
                     }).Cast<object>().ToList();
 
-                    // Gắn Items từ Snapshot
                     draft.Items = draft.Snapshot.Select(it => (it.VariantId, it.Quantity)).ToArray();
                     Session[SK_DRAFT] = draft;
 
@@ -187,6 +187,16 @@ namespace HAFoodWeb
             if (obj is byte b) return b;
             if (obj is int i && i >= byte.MinValue && i <= byte.MaxValue) return (byte)i;
             if (obj is string s && byte.TryParse(s, out var bs)) return bs;
+            return null;
+        }
+
+        private long? TryGetPendingOrderId()
+        {
+            var obj = Session[SK_PENDING_ORDER_ID];
+            if (obj == null) return null;
+            if (obj is long l) return l;
+            if (obj is int i) return i;
+            if (obj is string s && long.TryParse(s, out var ls)) return ls;
             return null;
         }
 
@@ -234,14 +244,21 @@ namespace HAFoodWeb
                     if (paymentMethod == 0)
                     {
                         var sw = await _orderService.SwitchPaymentSafeAsync(pendingCode, 0, "USER_SWITCH_TO_COD");
+
+                        // lấy sẵn pending id nếu có, rồi dọn session
+                        var pid = TryGetPendingOrderId();
+
                         Session.Remove(SK_PENDING_PAYMENT_URL);
                         Session.Remove(SK_PENDING_PAYMENT_CREATED);
                         Session.Remove(SK_PENDING_PAYMENT_METHOD);
                         Session.Remove(SK_DRAFT);
                         Session.Remove(SK_PENDING_ORDER_CODE);
 
-                        var suffix = (sw.Outcome == SwitchPaymentOutcome.AlreadyPaid) ? "&paid=1" : "&cod=1";
-                        Response.Redirect("~/CartPage/ThankYou.aspx?code=" + Uri.EscapeDataString(pendingCode) + suffix, false);
+                        // Redirect ThankYou kèm id nếu có
+                        var url = ResolveUrl(THANKYOU_PATH) +
+                                  "?code=" + Uri.EscapeDataString(pendingCode) +
+                                  (pid.HasValue ? "&id=" + pid.Value : "");
+                        Response.Redirect(url, false);
                         Context.ApplicationInstance.CompleteRequest();
                         return;
                     }
@@ -253,13 +270,19 @@ namespace HAFoodWeb
 
                         if (sw.Outcome == SwitchPaymentOutcome.AlreadyPaid)
                         {
+                            var pid = TryGetPendingOrderId();
+
                             Session.Remove(SK_PENDING_PAYMENT_URL);
                             Session.Remove(SK_PENDING_PAYMENT_CREATED);
                             Session.Remove(SK_PENDING_PAYMENT_METHOD);
                             Session.Remove(SK_PENDING_ORDER_CODE);
                             Session.Remove(SK_DRAFT);
 
-                            Response.Redirect("~/CartPage/ThankYou.aspx?code=" + Uri.EscapeDataString(pendingCode) + "&paid=1", false);
+                            var url = ResolveUrl(THANKYOU_PATH) +
+                                      "?code=" + Uri.EscapeDataString(pendingCode) +
+                                      (pid.HasValue ? "&id=" + pid.Value : "") +
+                                      "&paid=1";
+                            Response.Redirect(url, false);
                             Context.ApplicationInstance.CompleteRequest();
                             return;
                         }
@@ -268,7 +291,7 @@ namespace HAFoodWeb
                             var newPayUrl = await _orderService.CreatePaymentLinkForOrderAsync(pendingCode, paymentMethod);
                             Session[SK_PENDING_PAYMENT_URL] = newPayUrl;
                             Session[SK_PENDING_PAYMENT_CREATED] = DateTime.UtcNow;
-                            Session[SK_PENDING_PAYMENT_METHOD] = paymentMethod; // Lưu dạng byte
+                            Session[SK_PENDING_PAYMENT_METHOD] = paymentMethod;
 
                             Response.Redirect(newPayUrl, false);
                             Context.ApplicationInstance.CompleteRequest();
@@ -338,15 +361,15 @@ namespace HAFoodWeb
 
             var req = new OrderCheckoutRequest
             {
-                cart_Id = null,                       // không gửi 0
+                cart_Id = null,
                 ship_Name = draft.ShipName,
                 ship_Full_Address = draft.ShipAddress,
                 ship_Phone = draft.ShipPhone,
-                payment_Method = paymentMethod,       // byte → khớp DTO
+                payment_Method = paymentMethod,
                 ip = ip,
                 note = draft.Note,
-                address_Id = null,                    // không gửi 0
-                device_Id = null,                     // không gửi 0
+                address_Id = null,
+                device_Id = null,
                 promo_Code = draft.PromoCode,
 
                 selected_Line_Ids = (draft.SelectedLineIds != null && draft.SelectedLineIds.Length > 0)
@@ -362,14 +385,18 @@ namespace HAFoodWeb
             {
                 var resp = await _orderService.CheckoutAsync(req);
 
+                // Có cổng thanh toán
                 if (!string.IsNullOrWhiteSpace(resp?.payment_Url))
                 {
                     if (!string.IsNullOrWhiteSpace(resp.order_Code))
                         Session[SK_PENDING_ORDER_CODE] = resp.order_Code;
 
+                    // ⭐ LƯU orderId để ThankYou dùng sau khi quay về
+                    if (resp.order_Id > 0) Session[SK_PENDING_ORDER_ID] = resp.order_Id;
+
                     Session[SK_PENDING_PAYMENT_URL] = resp.payment_Url;
                     Session[SK_PENDING_PAYMENT_CREATED] = DateTime.UtcNow;
-                    Session[SK_PENDING_PAYMENT_METHOD] = paymentMethod; // lưu byte
+                    Session[SK_PENDING_PAYMENT_METHOD] = paymentMethod;
 
                     Response.Redirect(resp.payment_Url, false);
                     Context.ApplicationInstance.CompleteRequest();
@@ -382,15 +409,20 @@ namespace HAFoodWeb
                     return;
                 }
 
-                // COD ok → dọn session, redirect
+                // COD ok → dọn session, redirect ThankYou kèm id (và code nếu muốn)
+                var code = !string.IsNullOrWhiteSpace(resp.order_Code) ? resp.order_Code : resp.order_Id.ToString();
+
                 Session.Remove(SK_DRAFT);
                 Session.Remove(SK_PENDING_ORDER_CODE);
                 Session.Remove(SK_PENDING_PAYMENT_URL);
                 Session.Remove(SK_PENDING_PAYMENT_CREATED);
                 Session.Remove(SK_PENDING_PAYMENT_METHOD);
+                // (không cần giữ pending_order_id vì đã có id trên URL)
 
-                var code = !string.IsNullOrWhiteSpace(resp.order_Code) ? resp.order_Code : resp.order_Id.ToString();
-                Response.Redirect("~/CartPage/ThankYou.aspx?code=" + Uri.EscapeDataString(code), false);
+                var url = ResolveUrl(THANKYOU_PATH) +
+                          "?id=" + resp.order_Id +
+                          "&code=" + Uri.EscapeDataString(code);
+                Response.Redirect(url, false);
                 Context.ApplicationInstance.CompleteRequest();
             }
             catch (Exception ex)
@@ -416,9 +448,15 @@ namespace HAFoodWeb
                         return;
                     }
                     var code = Session[SK_PENDING_ORDER_CODE] as string;
+                    var pid = TryGetPendingOrderId();
+
                     if (!string.IsNullOrWhiteSpace(code))
                     {
-                        Response.Redirect("~/CartPage/ThankYou.aspx?code=" + Uri.EscapeDataString(code) + "&restored=1", false);
+                        var url = ResolveUrl(THANKYOU_PATH) +
+                                  "?code=" + Uri.EscapeDataString(code) +
+                                  (pid.HasValue ? "&id=" + pid.Value : "") +
+                                  "&restored=1";
+                        Response.Redirect(url, false);
                         Context.ApplicationInstance.CompleteRequest();
                         return;
                     }
