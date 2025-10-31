@@ -188,6 +188,7 @@
     <Content Include="Global.asax" />
     <Content Include="HomePage\HomePage.aspx" />
     <Content Include="HomePage\Search.aspx" />
+    <Content Include="images\header.png" />
     <Content Include="images\product-default.png" />
     <Content Include="images\slide1.jpg" />
     <Content Include="images\slide2.jpg" />

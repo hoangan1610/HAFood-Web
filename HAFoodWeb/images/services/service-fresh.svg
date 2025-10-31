@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <defs>
+    <filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#000" flood-opacity="0.08"/>
+    </filter>
+  </defs>
+  <!-- rough ring -->
+  <circle cx="100" cy="100" r="86" fill="none" stroke="#F6C273" stroke-width="12"
+          stroke-dasharray="18 10 6 14 22 8 14 12 7 16 10 20" stroke-linecap="round" filter="url(#softShadow)" />
+  <!-- solid inner disc -->
+  <circle cx="100" cy="100" r="72" fill="#FFE2B3" />
+  
+  <!-- bag -->
+  <path d="M70 120 L70 155 Q70 160 75 160 L125 160 Q130 160 130 155 L130 120 L70 120 Z"
+        fill="none" stroke="#fff" stroke-width="6" stroke-linejoin="round"/>
+  <!-- bag top flap -->
+  <path d="M70 120 L80 100 L120 100 L130 120" fill="none" stroke="#fff" stroke-width="6" stroke-linejoin="round"/>
+  <!-- baguettes -->
+  <path d="M88 98 C88 88, 92 78, 100 76 C108 74, 112 84, 110 94 L105 112"
+        fill="none" stroke="#fff" stroke-width="6" stroke-linecap="round"/>
+  <path d="M102 96 C102 86, 110 78, 118 80 C126 82, 128 92, 124 102 L118 118"
+        fill="none" stroke="#fff" stroke-width="6" stroke-linecap="round"/>
+  <!-- bag handle lines -->
+  <line x1="86" y1="140" x2="114" y2="140" stroke="#fff" stroke-width="6" stroke-linecap="round"/>
+
+</svg>

@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <defs>
+    <filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#000" flood-opacity="0.08"/>
+    </filter>
+  </defs>
+  <!-- rough ring -->
+  <circle cx="100" cy="100" r="86" fill="none" stroke="#8FD39A" stroke-width="12"
+          stroke-dasharray="18 10 6 14 22 8 14 12 7 16 10 20" stroke-linecap="round" filter="url(#softShadow)" />
+  <!-- solid inner disc -->
+  <circle cx="100" cy="100" r="72" fill="#D6F1DB" />
+  
+  <!-- broccoli head (cloud) -->
+  <path d="M68 102 C60 90, 68 76, 84 76 C90 60, 112 60, 120 76 C136 74, 144 88, 136 100
+           C148 108, 140 124, 124 122 C118 134, 98 134, 90 122 C74 128, 62 118, 68 102 Z"
+        fill="none" stroke="#fff" stroke-width="6" stroke-linejoin="round"/>
+  <!-- stem -->
+  <path d="M96 122 L96 150 M110 122 L110 150 M103 122 L103 160"
+        fill="none" stroke="#fff" stroke-width="6" stroke-linecap="round"/>
+
+</svg>
