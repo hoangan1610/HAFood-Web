@@ -64,7 +64,7 @@
                 SĐT: <%# Eval("ship_Phone") %><br />
                 Địa chỉ: <%# Eval("ship_Full_Address") %><br />
                 Ngày đặt: <%# Eval("placed_At", "{0:HH:mm dd/MM/yyyy}") %><br />
-                <strong><%# BuildPaymentText((HAFoodWeb.Models.OrderHeaderDto)Container.DataItem) %></strong>
+                Phương thức thanh toán: <strong><%# BuildPaymentText((HAFoodWeb.Models.OrderHeaderDto)Container.DataItem) %></strong>
               </div>
 
               <div class="order-total fw-bold">

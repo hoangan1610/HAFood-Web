@@ -30,18 +30,19 @@
       <asp:Panel ID="pnlHeader" runat="server" Visible="false" CssClass="card-order mb-3">
         <div class="d-flex justify-content-between">
           <div>
-            <h4 id="litOrderCode" runat="server"></h4>
+            <h4>Mã đơn: <span id="litOrderCode" runat="server"></span></h4>
             <div class="meta-small">Người nhận: <span id="litShipName" runat="server"></span></div>
             <div class="meta-small">SĐT: <span id="litShipPhone" runat="server"></span></div>
             <div class="meta-small">Địa chỉ: <span id="litShipAddress" runat="server"></span></div>
             <div class="meta-small">Ghi chú: <span id="litNote" runat="server"></span></div>
 
-            <!-- PHƯƠNG THỨC THANH TOÁN -->
+           <!-- PHƯƠNG THỨC THANH TOÁN -->
             <asp:Panel ID="pnlPayment" runat="server" Visible="false" CssClass="mt-2">
               <div class="meta-small fw-semibold text-primary">
-                <span id="litPayment" runat="server"></span>
+                Phương thức thanh toán: <span id="litPayment" runat="server"></span>
               </div>
             </asp:Panel>
+
           </div>
 
           <div class="text-end">

@@ -4,6 +4,7 @@ using System;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Web;
 using System.Web.UI;
 using System.Web.UI.HtmlControls;
 using System.Web.UI.WebControls;
@@ -125,64 +126,45 @@ namespace HAFoodWeb
                     badge.Attributes["class"] = $"status-badge status-{order.status}";
                 }
 
-                // Hiển thị phương thức thanh toán
-                var litPayment = (Literal)e.Item.FindControl("litPayment");
-                if (litPayment != null)
-                {
-                    litPayment.Text = BuildPaymentText(order);
-                }
+                // Không cần gán litPayment vì markup render BuildPaymentText(...) trực tiếp
             }
         }
 
+        // === Mapping phương thức thanh toán (gộp tại chỗ) ===
+        private static string GetPaymentMethodLabel(string paymentProvider, int? paymentMethod, string paymentStatus)
+        {
+            if (!string.IsNullOrWhiteSpace(paymentStatus) &&
+                paymentStatus.Trim().Equals("unpaid", StringComparison.OrdinalIgnoreCase))
+            {
+                return "COD";
+            }
+
+            if (paymentMethod.HasValue)
+            {
+                switch (paymentMethod.Value)
+                {
+                    case 0: return "COD";
+                    case 1: return "ZaloPay";
+                    case 2: return "VNPay";
+                }
+            }
+
+            if (!string.IsNullOrWhiteSpace(paymentProvider))
+            {
+                var p = paymentProvider.Trim().ToUpperInvariant();
+                if (p == "VNPAY") return "VNPay";
+                if (p == "ZALOPAY") return "ZaloPay";
+                return HttpUtility.HtmlDecode(paymentProvider);
+            }
+
+            return string.Empty;
+        }
+
+        // Dùng trong markup
         protected string BuildPaymentText(OrderHeaderDto h)
         {
-            string paymentText = "";
-
-            if (!string.IsNullOrWhiteSpace(h.payment_Provider))
-            {
-                if (!string.IsNullOrWhiteSpace(h.payment_Status))
-                    paymentText = "💳 " + h.payment_Provider + " – " + GetPaymentStatusText(h.payment_Status);
-                else
-                    paymentText = "💳 " + h.payment_Provider;
-            }
-            else if (!string.IsNullOrWhiteSpace(h.payment_Status))
-            {
-                paymentText = "💳 " + GetPaymentStatusText(h.payment_Status);
-            }
-            else if (h.payment_Method.HasValue)
-            {
-                switch (h.payment_Method.Value)
-                {
-                    case 1:
-                        paymentText = "Thanh toán khi nhận hàng (COD)";
-                        break;
-                    case 2:
-                        paymentText = "Thanh toán qua VNPAY";
-                        break;
-                    default:
-                        paymentText = "Phương thức #" + h.payment_Method.Value;
-                        break;
-                }
-            }
-
-            return paymentText;
-        }
-
-        private string GetPaymentStatusText(string status)
-        {
-            switch (status)
-            {
-                case "Pending":
-                    return "Đang chờ thanh toán";
-                case "Paid":
-                    return "Đã thanh toán";
-                case "Failed":
-                    return "Thanh toán thất bại";
-                case "Canceled":
-                    return "Thanh toán bị hủy";
-                default:
-                    return !string.IsNullOrWhiteSpace(status) ? status : "Không rõ";
-            }
+            var label = GetPaymentMethodLabel(h.payment_Provider, h.payment_Method, h.payment_Status);
+            return string.IsNullOrWhiteSpace(label) ? "" : (label);
         }
 
         protected async void rpPaging_ItemCommand(object source, RepeaterCommandEventArgs e)
@@ -246,16 +228,17 @@ namespace HAFoodWeb
                 activeButton.CssClass = "btn btn-outline-dark btn-sm active";
         }
 
-        private string GetStatusText(int status) { 
-            switch (status) 
-            { 
-                case 0: return "Chờ xác nhận"; 
-                case 1: return "Đã xác nhận"; 
-                case 2: return "Đang giao"; 
-                case 3: return "Đã giao"; 
-                case 4: return "Đã hủy"; 
-                default: return "Không rõ"; 
-            } 
+        private string GetStatusText(int status)
+        {
+            switch (status)
+            {
+                case 0: return "Chờ xác nhận";
+                case 1: return "Đã xác nhận";
+                case 2: return "Đang giao";
+                case 3: return "Đã giao";
+                case 4: return "Đã hủy";
+                default: return "Không rõ";
+            }
         }
     }
 }
