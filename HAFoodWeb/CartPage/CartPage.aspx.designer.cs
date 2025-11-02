@@ -177,6 +177,51 @@ namespace HAFoodWeb
         protected global::System.Web.UI.WebControls.ValidationSummary valSummary;
 
         /// <summary>
+        /// pnlAddrSession control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Panel pnlAddrSession;
+
+        /// <summary>
+        /// lblAddrName control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Label lblAddrName;
+
+        /// <summary>
+        /// lblAddrPhone control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Label lblAddrPhone;
+
+        /// <summary>
+        /// lblAddrDetail control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Label lblAddrDetail;
+
+        /// <summary>
+        /// pnlNoAddr control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Panel pnlNoAddr;
+
+        /// <summary>
         /// cvCity control.
         /// </summary>
         /// <remarks>

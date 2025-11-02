@@ -12,8 +12,6 @@ namespace HAFoodWeb.UserPage
                 Response.Redirect("~/AuthPage/Login.aspx");
                 return;
             }
-
-        
         }
 
         protected async void lnkLogout_Click(object sender, EventArgs e)
@@ -34,7 +32,7 @@ namespace HAFoodWeb.UserPage
                     }
                 }
 
-                // Xóa cookie AuthToken (đặt expiry trong quá khứ)
+                // Xóa cookie AuthToken
                 if (Request?.Cookies["AuthToken"] != null)
                 {
                     var cookie = new System.Web.HttpCookie("AuthToken", "")
