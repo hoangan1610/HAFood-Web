@@ -21,22 +21,25 @@
             background:rgba(255,122,69,.08); border-color:var(--accent); color:var(--accent);
             box-shadow:0 0 0 2px rgba(255,122,69,.15) inset;
         }
-        /* combo */
-        .combo{ position:relative; }
-        .combo .combo-input{ width:100%; height:38px; border:1px solid var(--border); border-radius:.375rem; padding:.375rem 2rem .375rem .75rem; background:#fff; }
-        .combo .combo-input[disabled]{ background:#f5f5f5; cursor:not-allowed; }
-        .combo .combo-caret{ position:absolute; right:.35rem; top:50%; transform:translateY(-50%); width:28px; height:28px; border:1px solid transparent; background:transparent; border-radius:6px; cursor:pointer; }
-        .combo .combo-caret:after{ content:"▾"; font-size:14px; color:#6b7280; }
-        .combo .combo-menu{ position:absolute; left:0; right:0; top:calc(100% + 4px); background:#fff; border:1px solid var(--border); border-radius:.5rem; box-shadow:var(--shadow); z-index:1000; display:none; max-height:330px; overflow:auto; }
-        .combo.open .combo-menu{ display:block; }
-        .combo .combo-item{ padding:.45rem .75rem; cursor:pointer; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-        .combo .combo-item:hover, .combo .combo-item.active{ background:#f1f5f9; }
+
+        /* Combo searchable (builder sẽ render vào container) */
+        .combo{position:relative}
+        .combo-input{display:flex;align-items:center;height:38px;border:1px solid var(--border);border-radius:.375rem;background:#fff;padding:0 .75rem;cursor:text}
+        .combo-text{flex:1 1 auto;border:none;outline:none;height:100%;font:inherit}
+        .combo-caret{margin-left:8px}
+        .combo-menu{position:absolute;left:0;right:0;top:calc(100% + 4px);background:#fff;border:1px solid var(--border);
+                    border-radius:.5rem;box-shadow:var(--shadow);max-height:330px;overflow:auto;display:none;z-index:1000}
+        .combo.open .combo-menu{display:block}
+        .combo-item{padding:.45rem .75rem;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+        .combo-item:hover{background:#f1f5f9}
     </style>
 </head>
 <body>
 <form id="form1" runat="server">
     <div class="container py-4" style="max-width:720px;">
-        <a href="UserAddressList.aspx" class="btn btn-outline-secondary mb-2 text-decoration-none d-inline-flex align-items-center justify-content-center" style="height:40px;border-radius:10px;">&larr; Quay lại danh sách</a>
+        <a href="UserAddressList.aspx"
+           class="btn btn-outline-secondary mb-2 text-decoration-none d-inline-flex align-items-center justify-content-center"
+           style="height:40px;border-radius:10px;">&larr; Quay lại danh sách</a>
         <h4 class="mb-3">Sửa địa chỉ</h4>
 
         <asp:HiddenField ID="hfId" runat="server" />
@@ -64,25 +67,20 @@
                 <div class="row g-3">
                     <div class="col-md-6">
                         <label class="form-label">Tỉnh/Thành <span class="text-danger">*</span></label>
-                        <div class="combo" id="comboCityU">
-                            <input id="inpCityU" type="text" class="combo-input" placeholder="Gõ để tìm Tỉnh/Thành" autocomplete="off"/>
-                            <button type="button" class="combo-caret" tabindex="-1"></button>
-                            <div class="combo-menu" id="menuCityU"></div>
-                        </div>
+                        <!-- Container để builder render combo -->
+                        <div id="comboCityU" class="combo"></div>
                     </div>
                     <div class="col-md-6">
                         <label class="form-label">Xã/Phường <span class="text-danger">*</span></label>
-                        <div class="combo" id="comboWardU">
-                            <input id="inpWardU" type="text" class="combo-input" placeholder="Chọn sau khi chọn Tỉnh/Thành" autocomplete="off" disabled/>
-                            <button type="button" class="combo-caret" tabindex="-1"></button>
-                            <div class="combo-menu" id="menuWardU"></div>
-                        </div>
+                        <!-- Container để builder render combo -->
+                        <div id="comboWardU" class="combo"></div>
                     </div>
                 </div>
 
                 <div class="mb-1 mt-3">
                     <label class="form-label">Địa chỉ nhận hàng <span class="text-danger">*</span></label>
-                    <asp:TextBox ID="txtAddress" runat="server" CssClass="form-control" placeholder="VD: 12 Quang Trung, hẻm 5, tầng 2" ClientIDMode="Static" />
+                    <asp:TextBox ID="txtAddress" runat="server" CssClass="form-control"
+                                 placeholder="VD: 12 Quang Trung, hẻm 5, tầng 2" ClientIDMode="Static" />
                 </div>
             </div>
         </div>
@@ -160,127 +158,219 @@
     }
 </script>
 
-<!-- Searchable dropdown logic (prefill từ server) -->
+<!-- Combo Searchable + fuzzy-restore City/Ward -->
 <script>
     (function () {
         const DATA_BASE = '<%= ResolveClientUrl("~/assets/vn-admin") %>';
 
-    const cityInput = document.getElementById('inpCityU');
-    const cityMenu  = document.getElementById('menuCityU');
-    const cityCombo = document.getElementById('comboCityU');
+    // Containers (UpdateUser: comboCityU/comboWardU)
+    const cityBox = document.getElementById('comboCityU');
+    const wardBox = document.getElementById('comboWardU');
 
-    const wardInput = document.getElementById('inpWardU');
-    const wardMenu  = document.getElementById('menuWardU');
-    const wardCombo = document.getElementById('comboWardU');
-
+    // Hidden mirrors
     const hidCityName = document.getElementById('<%= txtCitySel.ClientID %>');
     const hidWardName = document.getElementById('<%= txtWardSel.ClientID %>');
     const hidCityCode = document.getElementById('<%= txtCityCode.ClientID %>');
     const hidWardCode = document.getElementById('<%= txtWardCode.ClientID %>');
 
-        let PROVINCES = [];
-        let WARDS = [];
-        let activeIndexCity = -1, activeIndexWard = -1;
+        const rm = (s) => (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+            .replace(/đ/g, 'd').replace(/Đ/g, 'D')
+            .replace(/\s+/g, ' ').trim().toLowerCase();
 
-        const rm = s => (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').replace(/\s+/g, ' ').trim().toLowerCase();
-        // Loại tiền tố thông dụng: Phường/Xã/Thị trấn/P./X./TT.
-        const baseName = s => rm(String(s || '').replace(/^(phường|xã|thị trấn|p\.|x\.|tt\.)\s*/i, ''));
+        const baseCity = s => rm(String(s || '').replace(/^(tinh|thanh pho|tp\.?|tp)\s*/i, ''));
+        const baseWard = s => rm(String(s || '')
+            .replace(/^(phường|xã|thị\s*trấn|p\.|x\.|tt\.)\s*/i, '')
+            .replace(/\s*(?:-|,|–)\s*(quận|huyện|thị\s*xã|thành\s*phố|q\.|h\.|tx\.|tp\.).*$/i, '')
+            .replace(/\(.*?\)/g, '')
+            .replace(/\b0+(\d)\b/g, '$1')
+        );
 
-        function openC(c) { c.classList.add('open'); }
-        function closeC(c) { c.classList.remove('open'); }
-        function setCityHidden(n, c) { hidCityName.value = n || ''; hidCityCode.value = c || ''; }
-        function setWardHidden(n, c) { hidWardName.value = n || ''; hidWardCode.value = c || ''; }
-        function render(menu, arr, q, idx) {
-            const f = rm(q); menu.innerHTML = '';
-            arr.forEach((x, i) => {
-                if (!f || rm(x.name).includes(f)) {
-                    const d = document.createElement('div');
-                    d.className = 'combo-item' + (i === idx ? ' active' : '');
-                    d.textContent = x.name;
-                    d.dataset.code = String(x.code);
-                    menu.appendChild(d);
+        // ---- Combo builder ----
+        function createCombo(el, placeholder) {
+            if (!el) return null;
+            el.classList.add('combo');
+            el.innerHTML = '<div class="combo-input" role="combobox" aria-expanded="false">'
+                + '  <input type="text" class="combo-text" placeholder="' + placeholder + '"/>'
+                + '  <i class="bi bi-chevron-down combo-caret"></i>'
+                + '</div>'
+                + '<div class="combo-menu"></div>';
+
+            const input = el.querySelector('.combo-text');
+            const menu = el.querySelector('.combo-menu');
+            let all = []; let open = false;
+
+            function render(list) {
+                menu.innerHTML = '';
+                for (const opt of list) {
+                    const div = document.createElement('div');
+                    div.className = 'combo-item';
+                    div.textContent = opt.label;
+                    div.dataset.value = opt.value;
+                    div.addEventListener('mousedown', function () { pick(opt); });
+                    menu.appendChild(div);
+                }
+            }
+            function openMenu() { if (open) return; el.classList.add('open'); open = true; }
+            function closeMenu() { if (!open) return; el.classList.remove('open'); open = false; }
+            function filter() {
+                const q = rm(input.value);
+                const filtered = !q ? all : all.filter(o => rm(o.label).includes(q));
+                render(filtered); openMenu();
+            }
+            function pick(opt) {
+                input.value = opt.label;
+                el.dataset.value = opt.value;
+                closeMenu();
+                el.dispatchEvent(new CustomEvent('combochange', { detail: opt }));
+            }
+
+            input.addEventListener('input', () => { el.dataset.value = ''; filter(); });
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'ArrowDown') { openMenu(); e.preventDefault(); }
+                if (e.key === 'Escape') { closeMenu(); }
+                if (e.key === 'Enter') {
+                    const first = menu.querySelector('.combo-item');
+                    if (first) { first.dispatchEvent(new MouseEvent('mousedown')); e.preventDefault(); }
                 }
             });
+            el.addEventListener('click', () => { filter(); input.focus(); });
+            document.addEventListener('click', (e) => { if (!el.contains(e.target)) closeMenu(); });
+
+            return {
+                setData(arr) { all = arr || []; render(all); },
+                setSelected(val, label) { el.dataset.value = val || ''; input.value = label || ''; },
+                get value() { return el.dataset.value || ''; },
+                get label() { return input.value || ''; },
+                clear() { this.setSelected('', ''); }
+            };
         }
 
-        async function loadProvinces() {
-            const resp = await fetch(`${DATA_BASE}/provinces.json`, { cache: 'force-cache' });
-            PROVINCES = await resp.json();
-            render(cityMenu, PROVINCES, cityInput.value, -1);
+        const cityCombo = createCombo(cityBox, '— Chọn Tỉnh/Thành —');
+        const wardCombo = createCombo(wardBox, '— Chọn Xã/Phường —');
 
-            // map tên city -> chọn sẵn
-            const cityName = hidCityName.value.trim();
-            if (cityName) {
-                const hit = PROVINCES.find(p => rm(p.name) === rm(cityName));
-                if (hit) {
-                    cityInput.value = hit.name; setCityHidden(hit.name, String(hit.code));
-                    await loadWards(String(hit.code));
+        // ----- fuzzy match ward -----
+        function extractWardNumber(base) {
+            const m = (base || '').match(/\b(\d{1,3})\b/);
+            return m ? m[1] : null;
+        }
+        function findWardMatch(name, wards) {
+            if (!name || !wards || !wards.length) return null;
+            const tgt = baseWard(name);
+            if (!tgt) return null;
 
-                    // map ward theo tên (nếu chưa có code)
-                    const wardName = hidWardName.value.trim();
-                    if (wardName) {
-                        const w = WARDS.find(x => baseName(x.name) === baseName(wardName));
-                        if (w) { wardInput.value = w.name; setWardHidden(w.name, String(w.code)); }
-                    }
-                }
-            } else {
-                wardInput.disabled = true;
+            let w = wards.find(x => baseWard(x.name) === tgt);
+            if (w) return w;
+
+            w = wards.find(x => {
+                const bx = baseWard(x.name);
+                return bx.includes(tgt) || tgt.includes(bx);
+            });
+            if (w) return w;
+
+            const num = extractWardNumber(tgt);
+            if (num) {
+                const re = new RegExp(`\\b${num}\\b`);
+                w = wards.find(x => re.test(baseWard(x.name)));
+                if (w) return w;
             }
+
+            w = wards.find(x => {
+                const bx = baseWard(x.name);
+                return bx.startsWith(tgt) || tgt.startsWith(bx) || bx.endsWith(tgt) || tgt.endsWith(bx);
+            });
+            if (w) return w;
+
+            return null;
         }
 
-        async function loadWards(cityCode) {
-            WARDS = []; wardMenu.innerHTML = ''; wardInput.value = ''; setWardHidden('', '');
-            wardInput.disabled = !cityCode; if (!cityCode) return;
-            const resp = await fetch(`${DATA_BASE}/wards/${encodeURIComponent(cityCode)}.json`, { cache: 'force-cache' });
-            if (!resp.ok) return;
-            WARDS = await resp.json();
-            render(wardMenu, WARDS, wardInput.value, -1);
+        // ----- data & restore -----
+        let provinces = [];
+        fetch(DATA_BASE + '/provinces.json', { cache: 'force-cache' })
+            .then(r => r.json())
+            .then(list => {
+                provinces = list || [];
+                cityCombo && cityCombo.setData(provinces.map(p => ({ value: String(p.code), label: p.name, raw: p })));
+
+                // preselect theo code hoặc tên
+                let p = null;
+                if (hidCityCode.value) {
+                    p = provinces.find(x => String(x.code) === hidCityCode.value);
+                }
+                if (!p && hidCityName.value) {
+                    p = provinces.find(x => baseCity(x.name) === baseCity(hidCityName.value));
+                }
+                if (p) setCity(p);
+                else {
+                    // chưa map được -> hiển thị text cho user
+                    cityCombo && cityCombo.setSelected('', hidCityName.value || '');
+                    prefillWardText();
+                }
+            });
+
+        function prefillWardText() {
+            wardCombo && wardCombo.setSelected('', hidWardName.value || '');
         }
 
-        // City events
-        cityInput.addEventListener('focus', () => { render(cityMenu, PROVINCES, cityInput.value, activeIndexCity = -1); openC(cityCombo); });
-        cityInput.addEventListener('input', () => { setCityHidden('', ''); render(cityMenu, PROVINCES, cityInput.value, activeIndexCity = -1); openC(cityCombo); });
-        cityCombo.querySelector('.combo-caret').addEventListener('click', () => { cityCombo.classList.contains('open') ? closeC(cityCombo) : (render(cityMenu, PROVINCES, cityInput.value, activeIndexCity = -1), openC(cityCombo)); });
-        cityMenu.addEventListener('click', async (e) => {
-            const it = e.target.closest('.combo-item'); if (!it) return;
-            cityInput.value = it.textContent.trim(); setCityHidden(it.textContent.trim(), it.dataset.code);
-            closeC(cityCombo); await loadWards(it.dataset.code);
+        async function loadWards(provCode) {
+            wardCombo && wardCombo.clear();
+            hidWardCode.value = '';
+            if (!provCode) { prefillWardText(); return; }
+
+            try {
+                const resp = await fetch(DATA_BASE + '/wards/' + encodeURIComponent(provCode) + '.json', { cache: 'force-cache' });
+                if (!resp.ok) { prefillWardText(); return; }
+                const wards = await resp.json();
+                wardCombo && wardCombo.setData((wards || []).map(w => ({ value: String(w.code), label: w.name, raw: w })));
+
+                if (hidWardCode.value) {
+                    const w = wards.find(x => String(x.code) === hidWardCode.value);
+                    if (w) return pickWard(w);
+                }
+                if (hidWardName.value) {
+                    const w = findWardMatch(hidWardName.value, wards);
+                    if (w) return pickWard(w);
+                }
+                // fallback: chỉ hiển thị text để user thấy, code rỗng -> validator bắt chọn lại khi lưu
+                prefillWardText();
+            } catch (e) { console.error(e); prefillWardText(); }
+        }
+
+        function setCity(p) {
+            if (!cityCombo) return;
+            cityCombo.setSelected(String(p.code), p.name);
+            hidCityName.value = p.name;
+            hidCityCode.value = String(p.code);
+            loadWards(String(p.code));
+        }
+
+        function pickWard(w) {
+            if (!wardCombo) return;
+            wardCombo.setSelected(String(w.code), w.name);
+            hidWardName.value = w.name;
+            hidWardCode.value = String(w.code);
+        }
+
+        cityBox && cityBox.addEventListener('combochange', (e) => setCity(e.detail.raw));
+        wardBox && wardBox.addEventListener('combochange', (e) => pickWard(e.detail.raw));
+
+        // Nếu gõ tay -> xoá code để bắt chọn lại
+        if (cityBox) cityBox.querySelector('.combo-text').addEventListener('blur', () => {
+            if (rm(cityCombo.label) !== rm(hidCityName.value)) {
+                hidCityName.value = cityCombo.label;
+                hidCityCode.value = '';
+                wardCombo && wardCombo.clear();
+                hidWardName.value = ''; hidWardCode.value = '';
+            }
         });
-        cityInput.addEventListener('keydown', async (e) => {
-            const items = Array.from(cityMenu.querySelectorAll('.combo-item')); if (!items.length) return;
-            if (e.key === 'ArrowDown') { e.preventDefault(); activeIndexCity = Math.min(activeIndexCity + 1, items.length - 1); items.forEach(x => x.classList.remove('active')); items[activeIndexCity].classList.add('active'); items[activeIndexCity].scrollIntoView({ block: 'nearest' }); }
-            else if (e.key === 'ArrowUp') { e.preventDefault(); activeIndexCity = Math.max(activeIndexCity - 1, 0); items.forEach(x => x.classList.remove('active')); items[activeIndexCity].classList.add('active'); items[activeIndexCity].scrollIntoView({ block: 'nearest' }); }
-            else if (e.key === 'Enter') { e.preventDefault(); items[activeIndexCity >= 0 ? activeIndexCity : 0].click(); }
-            else if (e.key === 'Escape') { closeC(cityCombo); }
-        });
-        cityInput.addEventListener('blur', () => {
-            const text = cityInput.value.trim(); const hit = PROVINCES.find(p => rm(p.name) === rm(text));
-            if (hit) { setCityHidden(hit.name, String(hit.code)); } else { setCityHidden('', ''); wardInput.disabled = true; }
-            setTimeout(() => closeC(cityCombo), 150);
+        if (wardBox) wardBox.querySelector('.combo-text').addEventListener('blur', () => {
+            if (rm(wardCombo.label) !== rm(hidWardName.value)) {
+                hidWardName.value = wardCombo.label;
+                hidWardCode.value = '';
+            }
         });
 
-        // Ward events
-        wardInput.addEventListener('focus', () => { if (!wardInput.disabled) { render(wardMenu, WARDS, wardInput.value, activeIndexWard = -1); openC(wardCombo); } });
-        wardInput.addEventListener('input', () => { setWardHidden('', ''); if (!wardInput.disabled) { render(wardMenu, WARDS, wardInput.value, activeIndexWard = -1); openC(wardCombo); } });
-        wardCombo.querySelector('.combo-caret').addEventListener('click', () => { if (wardInput.disabled) return; wardCombo.classList.contains('open') ? closeC(wardCombo) : (render(wardMenu, WARDS, wardInput.value, activeIndexWard = -1), openC(wardCombo)); });
-        wardMenu.addEventListener('click', (e) => { const it = e.target.closest('.combo-item'); if (!it) return; wardInput.value = it.textContent.trim(); setWardHidden(it.textContent.trim(), it.dataset.code); closeC(wardCombo); });
-        wardInput.addEventListener('keydown', (e) => {
-            const items = Array.from(wardMenu.querySelectorAll('.combo-item')); if (!items.length) return;
-            if (e.key === 'ArrowDown') { e.preventDefault(); activeIndexWard = Math.min(activeIndexWard + 1, items.length - 1); items.forEach(x => x.classList.remove('active')); items[activeIndexWard].classList.add('active'); items[activeIndexWard].scrollIntoView({ block: 'nearest' }); }
-            else if (e.key === 'ArrowUp') { e.preventDefault(); activeIndexWard = Math.max(activeIndexWard - 1, 0); items.forEach(x => x.classList.remove('active')); items[activeIndexWard].classList.add('active'); items[activeIndexWard].scrollIntoView({ block: 'nearest' }); }
-            else if (e.key === 'Enter') { e.preventDefault(); items[activeIndexWard >= 0 ? activeIndexWard : 0].click(); }
-            else if (e.key === 'Escape') { closeC(wardCombo); }
-        });
-        wardInput.addEventListener('blur', () => {
-            const text = wardInput.value.trim();
-            const hit = WARDS.find(w => baseName(w.name) === baseName(text));
-            if (hit) { setWardHidden(hit.name, String(hit.code)); } else { setWardHidden('', ''); }
-            setTimeout(() => closeC(wardCombo), 150);
-        });
-
-        document.addEventListener('mousedown', (e) => { if (!cityCombo.contains(e.target)) closeC(cityCombo); if (!wardCombo.contains(e.target)) closeC(wardCombo); });
-
-        document.addEventListener('DOMContentLoaded', loadProvinces);
+        // Prefill text ward ngay khi load
+        prefillWardText();
     })();
 </script>
 </body>

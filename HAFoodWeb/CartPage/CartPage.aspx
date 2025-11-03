@@ -54,7 +54,7 @@
         .combo-item{padding:8px 10px;cursor:pointer}
         .combo-item:hover{background:#f5f5f5}
 
-        /* Address session (nằm trong panel phải) */
+        /* Address session (panel phải) */
         .addr-session{margin-bottom:12px}
         .addr-link{display:block;text-decoration:none;color:inherit}
         .addr-card{display:flex;gap:12px;align-items:center;background:#fff;border:1px solid var(--border);
@@ -123,7 +123,7 @@
                     <div class="panel-title"><span class="pill">i</span> Thông tin địa chỉ nhận hàng</div>
                     <div class="panel-body">
 
-                        <!-- Session địa chỉ: trong panel phải -->
+                        <!-- Session địa chỉ hiển thị -->
                         <asp:Panel ID="pnlAddrSession" runat="server" CssClass="addr-session" Visible="false">
                           <a class="addr-link"
                              href="<%= ResolveUrl("~/CartPage/AddressSelect.aspx?returnUrl=" + HttpUtility.UrlEncode(Request.RawUrl)) %>">
@@ -246,7 +246,7 @@
         function validatePhone(sender, args) { const s = normalizePhone(args.Value); args.IsValid = /^(0\d{9}|\+84\d{9})$/.test(s); }
     </script>
 
-    <!-- Combobox searchable: provinces/wards -->
+    <!-- Combobox searchable + fuzzy restore City/Ward -->
     <script>
         (function () {
             const DATA_BASE = '<%= ResolveClientUrl("~/assets/vn-admin") %>';
@@ -259,11 +259,20 @@
         const hidCityCode = document.getElementById('<%= txtCityCode.ClientID %>');
         const hidWardCode = document.getElementById('<%= txtWardCode.ClientID %>');
 
-            const rmDiacritics = (s) => (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+            const rm = (s) => (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
                 .replace(/đ/g, 'd').replace(/Đ/g, 'D')
                 .replace(/\s+/g, ' ').trim().toLowerCase();
 
+            const baseCity = s => rm(String(s || '').replace(/^(tinh|thanh pho|tp\.?|tp)\s*/i, ''));
+            const baseWard = s => rm(String(s || '')
+                .replace(/^(phường|xã|thị\s*trấn|p\.|x\.|tt\.)\s*/i, '')
+                .replace(/\s*(?:-|,|–)\s*(quận|huyện|thị\s*xã|thành\s*phố|q\.|h\.|tx\.|tp\.).*$/i, '')
+                .replace(/\(.*?\)/g, '')
+                .replace(/\b0+(\d)\b/g, '$1')
+            );
+
             function createCombo(el, placeholder) {
+                if (!el) return null;
                 el.classList.add('combo');
                 el.innerHTML = '<div class="combo-input" role="combobox" aria-expanded="false">'
                     + '  <input type="text" class="combo-text" placeholder="' + placeholder + '"/>'
@@ -282,17 +291,15 @@
                         div.className = 'combo-item';
                         div.textContent = opt.label;
                         div.dataset.value = opt.value;
-                        div.addEventListener('mousedown', function (e) { // mousedown để chạy trước blur
-                            pick(opt);
-                        });
+                        div.addEventListener('mousedown', function () { pick(opt); });
                         menu.appendChild(div);
                     }
                 }
                 function openMenu() { if (open) return; el.classList.add('open'); open = true; }
                 function closeMenu() { if (!open) return; el.classList.remove('open'); open = false; }
                 function filter() {
-                    const q = rmDiacritics(input.value);
-                    const filtered = !q ? all : all.filter(o => rmDiacritics(o.label).includes(q));
+                    const q = rm(input.value);
+                    const filtered = !q ? all : all.filter(o => rm(o.label).includes(q));
                     render(filtered); openMenu();
                 }
                 function pick(opt) {
@@ -326,70 +333,124 @@
             const cityCombo = createCombo(cityBox, '— Chọn Tỉnh/Thành —');
             const wardCombo = createCombo(wardBox, '— Chọn Xã/Phường —');
 
-            let provinces = [];
-            fetch(DATA_BASE + '/provinces.json', { cache: 'force-cache' }).then(r => r.json()).then(list => {
-                provinces = list || [];
-                cityCombo.setData(provinces.map(p => ({ value: String(p.code), label: p.name, raw: p })));
-                // restore
-                if (hidCityCode.value) {
-                    const p = provinces.find(x => String(x.code) === hidCityCode.value)
-                        || provinces.find(x => rmDiacritics(x.name) === rmDiacritics(hidCityName.value));
-                    if (p) setCity(p);
-                } else if (hidCityName.value) {
-                    const p = provinces.find(x => rmDiacritics(x.name) === rmDiacritics(hidCityName.value));
-                    if (p) setCity(p);
+            function extractWardNumber(base) {
+                const m = (base || '').match(/\b(\d{1,3})\b/);
+                return m ? m[1] : null;
+            }
+            function findWardMatch(name, wards) {
+                if (!name || !wards || !wards.length) return null;
+                const tgt = baseWard(name);
+                if (!tgt) return null;
+
+                let w = wards.find(x => baseWard(x.name) === tgt);
+                if (w) return w;
+
+                w = wards.find(x => {
+                    const bx = baseWard(x.name);
+                    return bx.includes(tgt) || tgt.includes(bx);
+                });
+                if (w) return w;
+
+                const num = extractWardNumber(tgt);
+                if (num) {
+                    const re = new RegExp(`\\b${num}\\b`);
+                    w = wards.find(x => re.test(baseWard(x.name)));
+                    if (w) return w;
                 }
-            });
+
+                w = wards.find(x => {
+                    const bx = baseWard(x.name);
+                    return bx.startsWith(tgt) || tgt.startsWith(bx) || bx.endsWith(tgt) || tgt.endsWith(bx);
+                });
+                if (w) return w;
+
+                return null;
+            }
+
+            let provinces = [];
+            fetch(DATA_BASE + '/provinces.json', { cache: 'force-cache' })
+                .then(r => r.json())
+                .then(list => {
+                    provinces = list || [];
+                    cityCombo && cityCombo.setData(provinces.map(p => ({ value: String(p.code), label: p.name, raw: p })));
+
+                    let p = null;
+                    if (hidCityCode.value) {
+                        p = provinces.find(x => String(x.code) === hidCityCode.value);
+                    }
+                    if (!p && hidCityName.value) {
+                        p = provinces.find(x => baseCity(x.name) === baseCity(hidCityName.value));
+                    }
+                    if (p) setCity(p);
+                    else {
+                        cityCombo && cityCombo.setSelected('', hidCityName.value || '');
+                        prefillWardText();
+                    }
+                });
+
+            function prefillWardText() {
+                wardCombo && wardCombo.setSelected('', hidWardName.value || '');
+            }
 
             async function loadWards(provCode) {
-                wardCombo.clear(); wardCombo.setData([]);
-                hidWardName.value = ''; hidWardCode.value = '';
-                if (!provCode) return;
+                wardCombo && wardCombo.clear();
+                hidWardCode.value = '';
+                if (!provCode) { prefillWardText(); return; }
+
                 try {
                     const resp = await fetch(DATA_BASE + '/wards/' + encodeURIComponent(provCode) + '.json', { cache: 'force-cache' });
-                    if (!resp.ok) return;
+                    if (!resp.ok) { prefillWardText(); return; }
                     const wards = await resp.json();
-                    wardCombo.setData(wards.map(w => ({ value: String(w.code), label: w.name, raw: w })));
-                    // restore
+                    wardCombo && wardCombo.setData((wards || []).map(w => ({ value: String(w.code), label: w.name, raw: w })));
+
                     if (hidWardCode.value) {
                         const w = wards.find(x => String(x.code) === hidWardCode.value);
-                        if (w) pickWard(w);
-                    } else if (hidWardName.value) {
-                        const w = wards.find(x => rmDiacritics(x.name) === rmDiacritics(hidWardName.value));
-                        if (w) pickWard(w);
+                        if (w) return pickWard(w);
                     }
-                } catch (e) { console.error('Load wards failed:', e); }
+                    if (hidWardName.value) {
+                        const w = findWardMatch(hidWardName.value, wards);
+                        if (w) return pickWard(w);
+                    }
+                    prefillWardText();
+                } catch (e) { console.error(e); prefillWardText(); }
             }
 
             function setCity(p) {
+                if (!cityCombo) return;
                 cityCombo.setSelected(String(p.code), p.name);
                 hidCityName.value = p.name;
                 hidCityCode.value = String(p.code);
                 loadWards(String(p.code));
             }
+
             function pickWard(w) {
+                if (!wardCombo) return;
                 wardCombo.setSelected(String(w.code), w.name);
                 hidWardName.value = w.name;
                 hidWardCode.value = String(w.code);
             }
 
-            cityBox.addEventListener('combochange', (e) => setCity(e.detail.raw));
-            wardBox.addEventListener('combochange', (e) => pickWard(e.detail.raw));
+            cityBox && cityBox.addEventListener('combochange', (e) => setCity(e.detail.raw));
+            wardBox && wardBox.addEventListener('combochange', (e) => pickWard(e.detail.raw));
 
-            // Nếu gõ tay rồi blur -> coi như text tự do, xoá code (để validators bắt lỗi)
-            cityBox.querySelector('.combo-text').addEventListener('blur', () => {
-                if (rmDiacritics(cityCombo.label) !== rmDiacritics(hidCityName.value)) {
+            // Nếu gõ tay -> để text, xoá code -> validator bắt chọn lại
+            if (cityBox) cityBox.querySelector('.combo-text').addEventListener('blur', () => {
+                if (rm(cityCombo.label) !== rm(hidCityName.value)) {
                     hidCityName.value = cityCombo.label;
                     hidCityCode.value = '';
-                    wardCombo.clear(); hidWardName.value = ''; hidWardCode.value = '';
+                    wardCombo && wardCombo.clear();
+                    hidWardName.value = ''; hidWardCode.value = '';
                 }
             });
-            wardBox.querySelector('.combo-text').addEventListener('blur', () => {
-                if (rmDiacritics(wardCombo.label) !== rmDiacritics(hidWardName.value)) {
+            if (wardBox) wardBox.querySelector('.combo-text').addEventListener('blur', () => {
+                if (rm(wardCombo.label) !== rm(hidWardName.value)) {
                     hidWardName.value = wardCombo.label;
                     hidWardCode.value = '';
                 }
             });
+
+            // Prefill text ward ngay khi load
+            prefillWardText();
 
             // Client validators + submit guard
             window.validateCityCode = function (sender, args) { args.IsValid = !!hidCityCode.value; }
@@ -405,231 +466,232 @@
         })();
     </script>
 
-    <!-- Cart JS (giữ nguyên như trước) -->
+    <!-- Cart JS -->
     <script>
         (function () {
             const API = document.getElementById('<%= hidApiBase.ClientID %>').value || '';
-        const UUID = document.getElementById('<%= hidDeviceUuid.ClientID %>').value || '';
-        const JWT = (document.getElementById('<%= hidJwt.ClientID %>')?.value || '').trim();
+            const UUID = document.getElementById('<%= hidDeviceUuid.ClientID %>').value || '';
+            const JWT = (document.getElementById('<%= hidJwt.ClientID %>')?.value || '').trim();
 
-        let sameOrigin = false; try { sameOrigin = new URL(API).host === location.host; } catch { }
-        const HAS_JWT = !!JWT;
-        const USE_USER = HAS_JWT || sameOrigin;
-        const USE_GUEST = !USE_USER;
+            let sameOrigin = false; try { sameOrigin = new URL(API).host === location.host; } catch { }
+            const HAS_JWT = !!JWT;
+            const USE_USER = HAS_JWT || sameOrigin;
+            const USE_GUEST = !USE_USER;
 
-        const fmt = n => (n || 0).toLocaleString('vi-VN') + ' ₫';
+            const fmt = n => (n || 0).toLocaleString('vi-VN') + ' ₫';
 
-        const selectAll = document.getElementById('<%= chkSelectAll.ClientID %>');
-        const hidSelected = document.getElementById('<%= hidSelectedLines.ClientID %>');
-        const pnlEmptyEl = document.getElementById('<%= pnlEmpty.ClientID %>');
+            const selectAll = document.getElementById('<%= chkSelectAll.ClientID %>');
+            const hidSelected = document.getElementById('<%= hidSelectedLines.ClientID %>');
+            const pnlEmptyEl = document.getElementById('<%= pnlEmpty.ClientID %>');
 
-        function badgeEl() { return document.querySelector('[data-cart-badge="true"]'); }
-        function readBadge() { const el = badgeEl(); if (!el) return 0; const n = parseInt((el.textContent || '0').trim(), 10); return Number.isFinite(n) ? n : 0; }
-        function writeBadge(n) { const el = badgeEl(); if (!el) return; const v = Math.max(0, parseInt(n || 0, 10)); el.textContent = v; el.style.display = v > 0 ? 'flex' : 'none'; }
-        function bumpBadge(delta) { writeBadge(readBadge() + (parseInt(delta || 0, 10))); }
-        if (typeof window.setCartBadge !== 'function') { window.setCartBadge = writeBadge; }
-        if (typeof window.refreshCartCount !== 'function') {
-            window.refreshCartCount = function () {
-                let sum = 0;
-                document.querySelectorAll('.cart-item .qty-num').forEach(el => {
-                    sum += parseInt((el.textContent || '0').trim(), 10) || 0;
-                });
-                writeBadge(sum);
-            };
-        }
-
-        function withAuthQuery(url) {
-            if (USE_GUEST && UUID) return url + (url.includes('?') ? '&' : '?') + 'device_uuid=' + encodeURIComponent(UUID);
-            return url;
-        }
-        function ensure(opts) {
-            const headers = { 'Content-Type': 'application/json' };
-            if (HAS_JWT) headers['Authorization'] = 'Bearer ' + JWT;
-            return Object.assign({ credentials: 'include', headers }, opts || {});
-        }
-        async function safeJson(resp) { try { return await resp.json(); } catch { return {}; } }
-
-        function syncSelectedHidden() {
-            const selected = [];
-            document.querySelectorAll('.cart-item').forEach(row => {
-                const cb = row.querySelector('input[type="checkbox"]');
-                if (cb && cb.checked) {
-                    const id = row.getAttribute('data-line-id');
-                    if (id) selected.push(id);
-                }
-            });
-            hidSelected.value = selected.join(',');
-        }
-
-        function updateSelectAllUI() {
-            const cbs = Array.from(document.querySelectorAll('.cart-item input[type="checkbox"]'));
-            if (!selectAll) return;
-            if (cbs.length === 0) { selectAll.checked = false; selectAll.indeterminate = false; return; }
-            const checkedCount = cbs.filter(x => x.checked).length;
-            selectAll.checked = (checkedCount === cbs.length);
-            selectAll.indeterminate = (checkedCount > 0 && checkedCount < cbs.length);
-        }
-
-        function patchTotals(payload) {
-            if (payload && payload.totals) {
-                const t = payload.totals;
-                document.getElementById('<%= lblSubtotal.ClientID %>').textContent = fmt(t.subtotal);
-                document.getElementById('<%= lblVat.ClientID %>').textContent = fmt(t.vat);
-                document.getElementById('<%= lblShipping.ClientID %>').textContent = fmt(t.shipping);
-                document.getElementById('<%= lblGrandTotal.ClientID %>').textContent  = fmt(t.grand);
-                document.getElementById('<%= lblTotal.ClientID %>').textContent       = fmt(t.subtotal);
+            function badgeEl() { return document.querySelector('[data-cart-badge="true"]'); }
+            function readBadge() { const el = badgeEl(); if (!el) return 0; const n = parseInt((el.textContent || '0').trim(), 10); return Number.isFinite(n) ? n : 0; }
+            function writeBadge(n) { const el = badgeEl(); if (!el) return; const v = Math.max(0, parseInt(n || 0, 10)); el.textContent = v; el.style.display = v > 0 ? 'flex' : 'none'; }
+            function bumpBadge(delta) { writeBadge(readBadge() + (parseInt(delta || 0, 10))); }
+            if (typeof window.setCartBadge !== 'function') { window.setCartBadge = writeBadge; }
+            if (typeof window.refreshCartCount !== 'function') {
+                window.refreshCartCount = function () {
+                    let sum = 0;
+                    document.querySelectorAll('.cart-item .qty-num').forEach(el => {
+                        sum += parseInt((el.textContent || '0').trim(), 10) || 0;
+                    });
+                    writeBadge(sum);
+                };
             }
-            if (payload?.header?.item_Count != null){
-                window.setCartBadge(payload.header.item_Count);
+
+            function withAuthQuery(url) {
+                if (USE_GUEST && UUID) return url + (url.includes('?') ? '&' : '?') + 'device_uuid=' + encodeURIComponent(UUID);
+                return url;
             }
-        }
+            function ensure(opts) {
+                const headers = { 'Content-Type': 'application/json' };
+                if (HAS_JWT) headers['Authorization'] = 'Bearer ' + JWT;
+                return Object.assign({ credentials: 'include', headers }, opts || {});
+            }
+            async function safeJson(resp) { try { return await resp.json(); } catch { return {}; } }
 
-        function recalcTotals(){
-            let subtotal=0, sumItems=0;
-            document.querySelectorAll('.cart-item').forEach(row=>{
-              const cb = row.querySelector('input[type="checkbox"]');
-              if (!cb || !cb.checked) return;
-              const price = Number(row.getAttribute('data-price')) || 0;
-              const qtyEl = row.querySelector('.qty-num');
-              const qty   = Number(qtyEl?.textContent.trim() || '1') || 1;
-              subtotal += price * qty; sumItems += qty;
-            });
-            const vat = Math.round(subtotal * 0.08), ship=0, grand=subtotal+vat+ship;
-            document.getElementById('<%= lblSubtotal.ClientID %>').textContent    = fmt(subtotal);
-            document.getElementById('<%= lblVat.ClientID %>').textContent         = fmt(vat);
-            document.getElementById('<%= lblShipping.ClientID %>').textContent    = fmt(ship);
-            document.getElementById('<%= lblGrandTotal.ClientID %>').textContent = fmt(grand);
-            document.getElementById('<%= lblTotal.ClientID %>').textContent = fmt(subtotal);
-            document.getElementById('<%= lblSumItems.ClientID %>').textContent = String(sumItems);
-        }
-        window.__cartAfterMutate = () => { recalcTotals(); updateSelectAllUI(); syncSelectedHidden(); };
-
-        async function deleteLine(row, lineId) {
-            try {
-                const qtyBefore = Number(row.querySelector('.qty-num')?.textContent.trim() || '1') || 1;
-
-                let url = withAuthQuery(`${API}/api/cart/lines/${lineId}`);
-                let resp = await fetch(url, ensure({ method: 'DELETE' }));
-                let json = await safeJson(resp);
-
-                if (!resp.ok && json?.code === 'MISSING_USER_OR_DEVICE' && UUID) {
-                    url = `${API}/api/cart/lines/${lineId}?device_uuid=${encodeURIComponent(UUID)}`;
-                    resp = await fetch(url, ensure({ method: 'DELETE' }));
-                    json = await safeJson(resp);
-                }
-                if (!resp.ok) {
-                    if (json?.code === 'CART_LINE_NOT_FOUND') location.reload();
-                    console.error('Delete failed', json); return;
-                }
-
-                row.remove();
-
-                const remaining = document.querySelectorAll('.cart-item').length;
-                if (remaining === 0 && pnlEmptyEl) {
-                    pnlEmptyEl.style.display = 'block';
-                    if (!(json?.header?.item_Count != null)) {
-                        window.setCartBadge(0);
+            function syncSelectedHidden() {
+                const selected = [];
+                document.querySelectorAll('.cart-item').forEach(row => {
+                    const cb = row.querySelector('input[type="checkbox"]');
+                    if (cb && cb.checked) {
+                        const id = row.getAttribute('data-line-id');
+                        if (id) selected.push(id);
                     }
-                }
-
-                if (json?.totals || json?.header) patchTotals(json);
-
-                if (json?.header?.item_Count != null) {
-                    window.setCartBadge(json.header.item_Count);
-                } else {
-                    bumpBadge(-qtyBefore);
-                }
-
-                recalcTotals(); updateSelectAllUI(); syncSelectedHidden();
-            } catch (err) { console.error(err); }
-        }
-
-        document.addEventListener('change', (e) => {
-            if (e.target.matches('.cart-item input[type="checkbox"]')) {
-                recalcTotals(); updateSelectAllUI(); syncSelectedHidden();
+                });
+                hidSelected.value = selected.join(',');
             }
-            if (selectAll && e.target.id === '<%= chkSelectAll.ClientID %>') {
-                const checked = e.target.checked;
-                document.querySelectorAll('.cart-item input[type="checkbox"]').forEach(cb => cb.checked = checked);
-                selectAll.indeterminate = false;
-                recalcTotals(); syncSelectedHidden();
+
+            function updateSelectAllUI() {
+                const cbs = Array.from(document.querySelectorAll('.cart-item input[type="checkbox"]'));
+                if (!selectAll) return;
+                if (cbs.length === 0) { selectAll.checked = false; selectAll.indeterminate = false; return; }
+                const checkedCount = cbs.filter(x => x.checked).length;
+                selectAll.checked = (checkedCount === cbs.length);
+                selectAll.indeterminate = (checkedCount > 0 && checkedCount < cbs.length);
             }
-        });
 
-        document.addEventListener('click', async (e) => {
-            const inc = e.target.closest('.qty-btn[data-inc]');
-            const dec = e.target.closest('.qty-btn[data-dec]');
-            const rm = e.target.closest('[data-remove]');
-            if (!inc && !dec && !rm) return;
-
-            const row = (inc || dec || rm).closest('.cart-item');
-            if (!row) return;
-
-            const lineId = Number(row.getAttribute('data-line-id'));
-            const price = Number(row.getAttribute('data-price')) || 0;
-
-            if (rm) { await deleteLine(row, lineId); return; }
-
-            const qtyEl = row.querySelector('.qty-num');
-            const qOld = Number(qtyEl.textContent.trim()) || 1;
-
-            if (dec && qOld <= 1) { await deleteLine(row, lineId); return; }
-
-            const q = inc ? qOld + 1 : Math.max(1, qOld - 1);
-            const delta = q - qOld;
-
-            qtyEl.textContent = q;
-            const totalEl = row.querySelector('.cart-item-total');
-            if (totalEl) totalEl.textContent = fmt(price * q);
-
-            try {
-                const url = withAuthQuery(`${API}/api/cart/lines/batch?compact=1`);
-                let body = USE_USER ? { changes: [{ line_id: lineId, quantity: q }] }
-                                    : { device_uuid: UUID || null, changes: [{ line_id: lineId, quantity: q }] };
-
-                let resp = await fetch(url, ensure({ method: 'PUT', body: JSON.stringify(body) }));
-                let json = await safeJson(resp);
-
-                if (!resp.ok && json?.code === 'MISSING_USER_OR_DEVICE' && UUID) {
-                    body = { device_uuid: UUID, changes: [{ line_id: lineId, quantity: q }] };
-                    resp = await fetch(`${API}/api/cart/lines/batch?compact=1`, ensure({ method: 'PUT', body: JSON.stringify(body) }));
-                    json = await safeJson(resp);
+            function patchTotals(payload) {
+                if (payload && payload.totals) {
+                    const t = payload.totals;
+                    document.getElementById('<%= lblSubtotal.ClientID %>').textContent = fmt(t.subtotal);
+                    document.getElementById('<%= lblVat.ClientID %>').textContent = fmt(t.vat);
+                    document.getElementById('<%= lblShipping.ClientID %>').textContent = fmt(t.shipping);
+                    document.getElementById('<%= lblGrandTotal.ClientID %>').textContent  = fmt(t.grand);
+                    document.getElementById('<%= lblTotal.ClientID %>').textContent       = fmt(t.subtotal);
                 }
-                if (!resp.ok) {
-                    if (json?.code === 'CART_LINE_NOT_FOUND') location.reload();
-                    console.error('Update qty failed', json); return;
+                if (payload?.header?.item_Count != null){
+                    window.setCartBadge(payload.header.item_Count);
                 }
+            }
 
-                if (json?.totals || json?.header) patchTotals(json);
+            function recalcTotals(){
+                let subtotal=0, sumItems=0;
+                document.querySelectorAll('.cart-item').forEach(row=>{
+                  const cb = row.querySelector('input[type="checkbox"]');
+                  if (!cb || !cb.checked) return;
+                  const price = Number(row.getAttribute('data-price')) || 0;
+                  const qtyEl = row.querySelector('.qty-num');
+                  const qty   = Number(qtyEl?.textContent.trim() || '1') || 1;
+                  subtotal += price * qty; sumItems += qty;
+                });
+                const vat = Math.round(subtotal * 0.08), ship=0, grand=subtotal+vat+ship;
+                document.getElementById('<%= lblSubtotal.ClientID %>').textContent    = fmt(subtotal);
+                document.getElementById('<%= lblVat.ClientID %>').textContent         = fmt(vat);
+                document.getElementById('<%= lblShipping.ClientID %>').textContent    = fmt(ship);
+                document.getElementById('<%= lblGrandTotal.ClientID %>').textContent = fmt(grand);
+                document.getElementById('<%= lblTotal.ClientID %>').textContent = fmt(subtotal);
+                document.getElementById('<%= lblSumItems.ClientID %>').textContent = String(sumItems);
+            }
+            window.__cartAfterMutate = () => { recalcTotals(); updateSelectAllUI(); syncSelectedHidden(); };
 
-                if (json?.header?.item_Count != null) {
-                    window.setCartBadge(json.header.item_Count);
-                } else if (delta !== 0) {
-                    bumpBadge(delta);
+            async function deleteLine(row, lineId) {
+                try {
+                    const qtyBefore = Number(row.querySelector('.qty-num')?.textContent.trim() || '1') || 1;
+
+                    let url = withAuthQuery(`${API}/api/cart/lines/${lineId}`);
+                    let resp = await fetch(url, ensure({ method: 'DELETE' }));
+                    let json = await safeJson(resp);
+
+                    if (!resp.ok && json?.code === 'MISSING_USER_OR_DEVICE' && UUID) {
+                        url = `${API}/api/cart/lines/${lineId}?device_uuid=${encodeURIComponent(UUID)}`;
+                        resp = await fetch(url, ensure({ method: 'DELETE' }));
+                        json = await safeJson(resp);
+                    }
+                    if (!resp.ok) {
+                        if (json?.code === 'CART_LINE_NOT_FOUND') location.reload();
+                        console.error('Delete failed', json); return;
+                    }
+
+                    row.remove();
+
+                    const remaining = document.querySelectorAll('.cart-item').length;
+                    if (remaining === 0 && pnlEmptyEl) {
+                        pnlEmptyEl.style.display = 'block';
+                        if (!(json?.header?.item_Count != null)) {
+                            window.setCartBadge(0);
+                        }
+                    }
+
+                    if (json?.totals || json?.header) patchTotals(json);
+
+                    if (json?.header?.item_Count != null) {
+                        window.setCartBadge(json.header.item_Count);
+                    } else {
+                        bumpBadge(-qtyBefore);
+                    }
+
+                    recalcTotals(); updateSelectAllUI(); syncSelectedHidden();
+                } catch (err) { console.error(err); }
+            }
+
+            document.addEventListener('change', (e) => {
+                if (e.target.matches('.cart-item input[type="checkbox"]')) {
+                    recalcTotals(); updateSelectAllUI(); syncSelectedHidden();
                 }
+                if (selectAll && e.target.id === '<%= chkSelectAll.ClientID %>') {
+                    const checked = e.target.checked;
+                    document.querySelectorAll('.cart-item input[type="checkbox"]').forEach(cb => cb.checked = checked);
+                    selectAll.indeterminate = false;
+                    recalcTotals(); syncSelectedHidden();
+                }
+            });
 
+            document.addEventListener('click', async (e) => {
+                const inc = e.target.closest('.qty-btn[data-inc]');
+                const dec = e.target.closest('.qty-btn[data-dec]');
+                const rm = e.target.closest('[data-remove]');
+                if (!inc && !dec && !rm) return;
+
+                const row = (inc || dec || rm).closest('.cart-item');
+                if (!row) return;
+
+                const lineId = Number(row.getAttribute('data-line-id'));
+                const price = Number(row.getAttribute('data-price')) || 0;
+
+                if (rm) { await deleteLine(row, lineId); return; }
+
+                const qtyEl = row.querySelector('.qty-num');
+                const qOld = Number(qtyEl.textContent.trim()) || 1;
+
+                if (dec && qOld <= 1) { await deleteLine(row, lineId); return; }
+
+                const q = inc ? qOld + 1 : Math.max(1, qOld - 1);
+                const delta = q - qOld;
+
+                qtyEl.textContent = q;
+                const totalEl = row.querySelector('.cart-item-total');
+                if (totalEl) totalEl.textContent = fmt(price * q);
+
+                try {
+                    const url = withAuthQuery(`${API}/api/cart/lines/batch?compact=1`);
+                    let body = USE_USER ? { changes: [{ line_id: lineId, quantity: q }] }
+                                        : { device_uuid: UUID || null, changes: [{ line_id: lineId, quantity: q }] };
+
+                    let resp = await fetch(url, ensure({ method: 'PUT', body: JSON.stringify(body) }));
+                    let json = await safeJson(resp);
+
+                    if (!resp.ok && json?.code === 'MISSING_USER_OR_DEVICE' && UUID) {
+                        body = { device_uuid: UUID, changes: [{ line_id: lineId, quantity: q }] };
+                        resp = await fetch(`${API}/api/cart/lines/batch?compact=1`, ensure({ method: 'PUT', body: JSON.stringify(body) }));
+                        json = await safeJson(resp);
+                    }
+                    if (!resp.ok) {
+                        if (json?.code === 'CART_LINE_NOT_FOUND') location.reload();
+                        console.error('Update qty failed', json); return;
+                    }
+
+                    if (json?.totals || json?.header) patchTotals(json);
+
+                    if (json?.header?.item_Count != null) {
+                        window.setCartBadge(json.header.item_Count);
+                    } else if (delta !== 0) {
+                        bumpBadge(delta);
+                    }
+
+                    recalcTotals(); updateSelectAllUI(); syncSelectedHidden();
+                } catch (err) { console.error(err); }
+            });
+
+            window.addEventListener('DOMContentLoaded', () => {
+                const hasItems = document.querySelectorAll('.cart-item').length > 0;
+                if (pnlEmptyEl) pnlEmptyEl.style.display = hasItems ? 'none' : 'block';
+
+                var phone = document.getElementById('<%= txtPhone.ClientID %>');
+                if (phone) { phone.setAttribute('type', 'tel'); phone.setAttribute('inputmode', 'tel'); phone.setAttribute('autocomplete', 'tel'); }
+
+                if (selectAll) {
+                    selectAll.checked = true;
+                    document.querySelectorAll('.cart-item input[type="checkbox"]').forEach(cb => cb.checked = true);
+                }
                 recalcTotals(); updateSelectAllUI(); syncSelectedHidden();
-            } catch (err) { console.error(err); }
-        });
 
-        window.addEventListener('DOMContentLoaded', () => {
-            const hasItems = document.querySelectorAll('.cart-item').length > 0;
-            if (pnlEmptyEl) pnlEmptyEl.style.display = hasItems ? 'none' : 'block';
-
-            var phone = document.getElementById('<%= txtPhone.ClientID %>');
-            if (phone) { phone.setAttribute('type', 'tel'); phone.setAttribute('inputmode', 'tel'); phone.setAttribute('autocomplete', 'tel'); }
-
-            if (selectAll) {
-                selectAll.checked = true;
-                document.querySelectorAll('.cart-item input[type="checkbox"]').forEach(cb => cb.checked = true);
-            }
-            recalcTotals(); updateSelectAllUI(); syncSelectedHidden();
-
-            try { window.refreshCartCount(); } catch { }
-        });
+                try { window.refreshCartCount(); } catch { }
+            });
         })();
     </script>
 
 </form>
 </body>
 </html>
+/html>

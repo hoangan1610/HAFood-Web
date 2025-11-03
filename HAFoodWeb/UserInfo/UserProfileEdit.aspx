@@ -1,6 +1,5 @@
 ﻿<%@ Page Language="C#" AutoEventWireup="true" CodeBehind="UserProfileEdit.aspx.cs" Inherits="HAFoodWeb.UserProfileEdit" Async="true" %>
 
-
 <!DOCTYPE html>
 <html>
 <head runat="server">
@@ -17,6 +16,7 @@
         }
 
         .edit-container {
+            position: relative;
             max-width: 500px;
             margin: 30px auto;
             background: white;
@@ -88,46 +88,31 @@
             transform: translateY(-2px);
         }
 
-        /* Back button style */
-        .edit-container {
-            position: relative; 
-            max-width: 500px;
-            margin: 30px auto;
-            background: white;
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-        }
-
         .backButton {
             position: absolute;
             top: 14px;
             left: 14px;
-
             display: inline-flex;
             align-items: center;
             gap: 8px;
-
             padding: 8px 12px;
-            border: 1px solid #ced4da;      
-            background-color: transparent;  
-            color: #6c757d;                 
+            border: 1px solid #ced4da;
+            background-color: transparent;
+            color: #6c757d;
             font-size: 14px;
-            border-radius: 10px;            
+            border-radius: 10px;
             text-decoration: none;
             cursor: pointer;
-
             box-shadow: none;
             transition: background-color .12s ease, color .12s ease, transform .08s;
             z-index: 10;
         }
 
-.backButton:hover {
-    background-color: rgba(0,0,0,0.03);
-    color: #495057;
-    transform: translateY(-1px);
-}
-
+        .backButton:hover {
+            background-color: rgba(0,0,0,0.03);
+            color: #495057;
+            transform: translateY(-1px);
+        }
 
         .success-message {
             color: green;
@@ -153,13 +138,13 @@
         /* Toast nhỏ gọn, nổi trên cùng header */
         .toast {
             position: fixed;
-            top: 20px;             
-            right: 15px;           
+            top: 20px;
+            right: 15px;
             background-color: #28a745;
             color: #fff;
-            padding: 8px 14px;      
+            padding: 8px 14px;
             border-radius: 6px;
-            font-size: 14px;        
+            font-size: 14px;
             font-weight: 600;
             display: flex;
             align-items: center;
@@ -168,7 +153,7 @@
             opacity: 0;
             transform: translateY(-15px);
             transition: all 0.35s ease;
-            z-index: 99999; 
+            z-index: 99999;
         }
 
         .toast.show {
@@ -182,7 +167,6 @@
         .toast i {
             font-size: 16px;
         }
-
     </style>
 </head>
 
@@ -235,8 +219,10 @@
         </div>
 
         <script>
-            // Client-side regexes
+            // Regex tên unicode
             var nameRegex = /^\p{L}[\p{L}\s]*$/u;
+
+            // ✅ Regex chuẩn: Bắt đầu bằng 0 + đủ 10 chữ số
             var phoneRegex = /^0\d{9}$/;
 
             var fullNameInput = document.getElementById('<%= txtFullName.ClientID %>');
@@ -277,18 +263,9 @@
                     phoneError.style.display = 'block';
                     return false;
                 }
-                if (val.length !== 9) {
-                    phoneError.innerText = '❌ Số điện thoại phải gồm đúng 10 chữ số.';
-                    phoneError.style.display = 'block';
-                    return false;
-                }
-                if (!val.startsWith('0')) {
-                    phoneError.innerText = '❌ Số điện thoại phải bắt đầu bằng số 0.';
-                    phoneError.style.display = 'block';
-                    return false;
-                }
+                // ✅ kiểm tra 1 lần bằng regex
                 if (!phoneRegex.test(val)) {
-                    phoneError.innerText = '❌ Số điện thoại chỉ được chứa ký tự số.';
+                    phoneError.innerText = '❌ Số điện thoại phải gồm 10 chữ số và bắt đầu bằng số 0.';
                     phoneError.style.display = 'block';
                     return false;
                 }
@@ -335,7 +312,6 @@
                 }
 
                 toastMsg.innerText = message;
-                // show
                 toast.classList.add("show");
 
                 setTimeout(function () {

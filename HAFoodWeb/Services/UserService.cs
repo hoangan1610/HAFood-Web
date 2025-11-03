@@ -2,7 +2,6 @@
 using HAFoodWeb.Models;
 using Newtonsoft.Json;
 using System;
-using System.Collections.Generic;
 using System.Configuration;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -15,6 +14,35 @@ namespace HAFoodWeb.Services
     {
         private readonly string _apiBase = ConfigurationManager.AppSettings["ApiBaseUrl"]?.TrimEnd('/');
 
+        // ProblemDetails theo RFC7807 (API của bạn đang trả dạng này)
+        private class ProblemDetailsEnvelope
+        {
+            public string type { get; set; }
+            public string title { get; set; }
+            public int? status { get; set; }
+            public string detail { get; set; }
+            public string instance { get; set; }
+            public string traceId { get; set; }
+            public string code { get; set; }
+        }
+
+        private static T SafeDeserialize<T>(string json) where T : class
+        {
+            if (string.IsNullOrWhiteSpace(json)) return null;
+            try { return JsonConvert.DeserializeObject<T>(json); }
+            catch { return null; }
+        }
+
+        private static void TrySetOptional(object obj, string propName, object value)
+        {
+            if (obj == null || propName == null) return;
+            var prop = obj.GetType().GetProperty(propName);
+            if (prop != null && prop.CanWrite)
+            {
+                try { prop.SetValue(obj, value); } catch { /* ignore */ }
+            }
+        }
+
         public async Task<AuthMeResponse> GetProfileAsync(string token)
         {
             var url = $"{_apiBase}/api/Auth/me";
@@ -22,16 +50,15 @@ namespace HAFoodWeb.Services
             using (var client = new HttpClient())
             {
                 client.DefaultRequestHeaders.Authorization =
-                    new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+                    new AuthenticationHeaderValue("Bearer", token);
 
                 var response = await client.GetAsync(url);
-                response.EnsureSuccessStatusCode();
+                response.EnsureSuccessStatusCode(); // có thể giữ vì trang load profile cần thành công
 
                 var json = await response.Content.ReadAsStringAsync();
-                return Newtonsoft.Json.JsonConvert.DeserializeObject<AuthMeResponse>(json);
+                return JsonConvert.DeserializeObject<AuthMeResponse>(json);
             }
         }
-
 
         public async Task<bool> LogoutAsync(string token)
         {
@@ -40,12 +67,18 @@ namespace HAFoodWeb.Services
 
             try
             {
-                using (var client = new System.Net.Http.HttpClient())
+                using (var client = new HttpClient())
                 {
-                    var json = Newtonsoft.Json.JsonConvert.SerializeObject(body);
-                    var content = new System.Net.Http.StringContent(json, System.Text.Encoding.UTF8, "application/json");
+                    var json = JsonConvert.SerializeObject(body);
+                    var content = new StringContent(json, Encoding.UTF8, "application/json");
                     var resp = await client.PostAsync(url, content);
-                    resp.EnsureSuccessStatusCode();
+                    // có thể đọc body để log
+                    var respBody = await resp.Content.ReadAsStringAsync();
+                    if (!resp.IsSuccessStatusCode)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[Logout] {resp.StatusCode}: {respBody}");
+                        return false;
+                    }
                     return true;
                 }
             }
@@ -55,32 +88,70 @@ namespace HAFoodWeb.Services
                 return false;
             }
         }
+
         public async Task<ApiBaseResponse> UpdateProfileAsync(string token, UserUpdateRequest request)
         {
             var url = $"{_apiBase}/api/users/me/profile";
 
             try
             {
-                // Gán header Authorization tạm thời
+                // Đảm bảo header Authorization cho HttpJson.Client
                 HttpJson.Client.DefaultRequestHeaders.Authorization =
-                    new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+                    new AuthenticationHeaderValue("Bearer", token);
 
+                // KHÔNG EnsureSuccessStatusCode – để còn đọc body lỗi (409, 500…)
                 var response = await HttpJson.PutJsonAsync(url, request);
-                response.EnsureSuccessStatusCode();
-
                 var responseJson = await response.Content.ReadAsStringAsync();
-                return JsonConvert.DeserializeObject<ApiBaseResponse>(responseJson);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var ok = SafeDeserialize<ApiBaseResponse>(responseJson) ?? new ApiBaseResponse
+                    {
+                        Success = true,
+                        Message = "OK"
+                    };
+                    TrySetOptional(ok, "StatusCode", (int)response.StatusCode);
+                    TrySetOptional(ok, "RawBody", responseJson);
+                    return ok;
+                }
+                else
+                {
+                    var problem = SafeDeserialize<ProblemDetailsEnvelope>(responseJson);
+                    var fail = new ApiBaseResponse
+                    {
+                        Success = false,
+                        Message = "Không thể cập nhật profile"
+                    };
+
+                    TrySetOptional(fail, "StatusCode", (int)response.StatusCode);
+                    TrySetOptional(fail, "RawBody", responseJson);
+
+                    if (problem != null)
+                    {
+                        TrySetOptional(fail, "Code", problem.code);
+                        TrySetOptional(fail, "Title", problem.title);
+                        TrySetOptional(fail, "Detail", problem.detail);
+
+                        if (!string.IsNullOrWhiteSpace(problem.detail))
+                            fail.Message = problem.detail;
+                    }
+
+                    return fail;
+                }
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine("UpdateProfile failed: " + ex.Message);
-                return new ApiBaseResponse
+                System.Diagnostics.Debug.WriteLine("UpdateProfile failed: " + ex);
+                var err = new ApiBaseResponse
                 {
                     Success = false,
                     Message = "Không thể cập nhật profile"
                 };
+                TrySetOptional(err, "Detail", ex.Message);
+                return err;
             }
         }
+
         public async Task<ApiBaseResponse> UpdateAvatarAsync(string token, System.Web.UI.WebControls.FileUpload fileUpload)
         {
             var url = $"{_apiBase}/api/users/me/avatar";
@@ -94,7 +165,9 @@ namespace HAFoodWeb.Services
                     using (var form = new MultipartFormDataContent())
                     {
                         var fileContent = new StreamContent(fileUpload.FileContent);
-                        fileContent.Headers.ContentType = new MediaTypeHeaderValue(fileUpload.PostedFile.ContentType);
+                        var contentType = fileUpload.PostedFile?.ContentType;
+                        if (!string.IsNullOrWhiteSpace(contentType))
+                            fileContent.Headers.ContentType = new MediaTypeHeaderValue(contentType);
 
                         form.Add(fileContent, "file", fileUpload.FileName);
 
@@ -104,17 +177,43 @@ namespace HAFoodWeb.Services
                         if (!response.IsSuccessStatusCode)
                         {
                             System.Diagnostics.Debug.WriteLine($"[Avatar Upload] {response.StatusCode} - {responseJson}");
-                            return new ApiBaseResponse { Success = false, Message = "Upload avatar thất bại" };
+
+                            var problem = SafeDeserialize<ProblemDetailsEnvelope>(responseJson);
+                            var fail = new ApiBaseResponse
+                            {
+                                Success = false,
+                                Message = problem?.detail ?? "Upload avatar thất bại"
+                            };
+                            TrySetOptional(fail, "StatusCode", (int)response.StatusCode);
+                            TrySetOptional(fail, "Code", problem?.code);
+                            TrySetOptional(fail, "Title", problem?.title);
+                            TrySetOptional(fail, "Detail", problem?.detail);
+                            TrySetOptional(fail, "RawBody", responseJson);
+
+                            return fail;
                         }
 
-                        return JsonConvert.DeserializeObject<ApiBaseResponse>(responseJson);
+                        var ok = SafeDeserialize<ApiBaseResponse>(responseJson) ?? new ApiBaseResponse
+                        {
+                            Success = true,
+                            Message = "OK"
+                        };
+                        TrySetOptional(ok, "StatusCode", (int)response.StatusCode);
+                        TrySetOptional(ok, "RawBody", responseJson);
+                        return ok;
                     }
                 }
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine("UpdateAvatar failed: " + ex);
-                return new ApiBaseResponse { Success = false, Message = "Không thể upload avatar" };
+                var err = new ApiBaseResponse
+                {
+                    Success = false,
+                    Message = "Không thể upload avatar"
+                };
+                TrySetOptional(err, "Detail", ex.Message);
+                return err;
             }
         }
 
@@ -144,26 +243,55 @@ namespace HAFoodWeb.Services
                     if (!response.IsSuccessStatusCode)
                     {
                         System.Diagnostics.Debug.WriteLine($"[ChangePassword] {response.StatusCode}: {responseJson}");
-                        // Thử parse để lấy message chi tiết từ server
-                        var errorResponse = JsonConvert.DeserializeObject<ApiBaseResponse>(responseJson);
-                        return errorResponse ?? new ApiBaseResponse
+
+                        // Ưu tiên parse ProblemDetails
+                        var problem = SafeDeserialize<ProblemDetailsEnvelope>(responseJson);
+                        if (problem != null)
+                        {
+                            var fail = new ApiBaseResponse
+                            {
+                                Success = false,
+                                Message = problem.detail ?? "Đổi mật khẩu thất bại"
+                            };
+                            TrySetOptional(fail, "StatusCode", (int)response.StatusCode);
+                            TrySetOptional(fail, "Code", problem.code);
+                            TrySetOptional(fail, "Title", problem.title);
+                            TrySetOptional(fail, "Detail", problem.detail);
+                            TrySetOptional(fail, "RawBody", responseJson);
+                            return fail;
+                        }
+
+                        // Nếu server trả ApiBaseResponse
+                        var errorResponse = SafeDeserialize<ApiBaseResponse>(responseJson) ?? new ApiBaseResponse
                         {
                             Success = false,
                             Message = "Đổi mật khẩu thất bại"
                         };
+                        TrySetOptional(errorResponse, "StatusCode", (int)response.StatusCode);
+                        TrySetOptional(errorResponse, "RawBody", responseJson);
+                        return errorResponse;
                     }
 
-                    return JsonConvert.DeserializeObject<ApiBaseResponse>(responseJson);
+                    var ok = SafeDeserialize<ApiBaseResponse>(responseJson) ?? new ApiBaseResponse
+                    {
+                        Success = true,
+                        Message = "OK"
+                    };
+                    TrySetOptional(ok, "StatusCode", (int)response.StatusCode);
+                    TrySetOptional(ok, "RawBody", responseJson);
+                    return ok;
                 }
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine("[ChangePassword] Lỗi: " + ex.Message);
-                return new ApiBaseResponse
+                var err = new ApiBaseResponse
                 {
                     Success = false,
                     Message = "Không thể kết nối máy chủ"
                 };
+                TrySetOptional(err, "Detail", ex.Message);
+                return err;
             }
         }
     }

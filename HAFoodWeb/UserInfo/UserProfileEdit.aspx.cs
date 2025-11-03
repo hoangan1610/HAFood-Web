@@ -2,6 +2,7 @@
 using HAFoodWeb.Services;
 using Newtonsoft.Json;
 using System;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Web.UI;
 
@@ -48,106 +49,189 @@ namespace HAFoodWeb
             var token = Request.Cookies["AuthToken"]?.Value;
             if (string.IsNullOrEmpty(token)) return;
 
-            // --- Kiểm tra tên: không rỗng, không chứa ký tự đặc biệt hoặc số ---
-            string fullName = txtFullName.Text?.Trim() ?? string.Empty;
+            // --- Kiểm tra tên ---
+            string fullName = (txtFullName.Text ?? string.Empty).Trim();
             if (string.IsNullOrEmpty(fullName))
             {
-                lblMessage.Text = "❌ Vui lòng nhập họ và tên.";
-                lblMessage.CssClass = "error-message";
+                ShowFormError("❌ Vui lòng nhập họ và tên.");
                 return;
             }
-
-            if (!System.Text.RegularExpressions.Regex.IsMatch(fullName, @"^[\p{L}\s]+$"))
+            if (!Regex.IsMatch(fullName, @"^[\p{L}\s]+$"))
             {
-                lblMessage.Text = "❌ Tên không được chứa ký tự đặc biệt hoặc số.";
-                lblMessage.CssClass = "error-message";
+                ShowFormError("❌ Tên không được chứa ký tự đặc biệt hoặc số.");
                 return;
             }
 
             // --- Kiểm tra số điện thoại ---
-            string phone = txtPhone.Text?.Trim() ?? string.Empty;
+            string phone = (txtPhone.Text ?? string.Empty).Trim();
             if (string.IsNullOrEmpty(phone))
             {
-                lblMessage.Text = "❌ Vui lòng nhập số điện thoại.";
-                lblMessage.CssClass = "error-message";
+                ShowFormError("❌ Vui lòng nhập số điện thoại.");
                 return;
             }
-
-            if (phone.Length != 10)
+            if (!Regex.IsMatch(phone, @"^0\d{9}$"))
             {
-                lblMessage.Text = "❌ Số điện thoại phải gồm đúng 9 chữ số.";
-                lblMessage.CssClass = "error-message";
+                ShowFormError("❌ Số điện thoại phải gồm 10 chữ số và bắt đầu bằng số 0.");
                 return;
             }
 
-            if (!phone.StartsWith("0"))
-            {
-                lblMessage.Text = "❌ Số điện thoại phải bắt đầu bằng số 0.";
-                lblMessage.CssClass = "error-message";
-                return;
-            }
-
-            if (!System.Text.RegularExpressions.Regex.IsMatch(phone, @"^0\d{9}$"))
-            {
-                lblMessage.Text = "❌ Số điện thoại phải gồm 10 chữ số và bắt đầu bằng số 0.";
-                lblMessage.CssClass = "error-message";
-                return;
-            }
-
-            // 1️⃣ Upload ảnh nếu có chọn
+            // 1) Upload ảnh nếu có
             if (fileAvatar.HasFile)
             {
                 var avatarResult = await _userService.UpdateAvatarAsync(token, fileAvatar);
-                if (!avatarResult.Success)
+                if (!(avatarResult?.Success ?? false))
                 {
-                    // giữ lỗi input hiển thị bên dưới form (không phải toast)
-                    lblMessage.Text = "❌ Cập nhật ảnh thất bại.";
-                    lblMessage.CssClass = "error-message";
+                    ShowFormError("❌ Cập nhật ảnh thất bại.");
                     return;
                 }
 
-                // 👉 Gọi lại API profile để lấy đường dẫn avatar mới
+                // Refresh avatar
                 var updatedProfile = await _userService.GetProfileAsync(token);
-                if (updatedProfile != null && updatedProfile.user != null && !string.IsNullOrEmpty(updatedProfile.user.avatar))
+                if (updatedProfile?.user != null && !string.IsNullOrEmpty(updatedProfile.user.avatar))
                 {
-                    string avatarUrl = updatedProfile.user.avatar;
-
+                    var avatarUrl = updatedProfile.user.avatar;
                     if (!avatarUrl.StartsWith("http", StringComparison.OrdinalIgnoreCase))
-                    {
                         avatarUrl = "https://api.hafood.id.vn" + avatarUrl;
-                    }
 
                     imgAvatar.ImageUrl = avatarUrl + "?t=" + DateTime.Now.Ticks;
                 }
             }
 
-            // 2️⃣ Cập nhật thông tin
+            // 2) Cập nhật thông tin
             var updateRequest = new UserUpdateRequest
             {
                 fullName = fullName,
-                phone = phone,
+                phone = phone
             };
 
             var profileResult = await _userService.UpdateProfileAsync(token, updateRequest);
 
+            // Thành công
             if (profileResult != null && profileResult.Success)
             {
-                // ẩn server label lỗi nếu còn
                 lblMessage.Text = string.Empty;
 
-                // Hiển thị toast success (3s) và redirect nhẹ
                 ScriptManager.RegisterStartupScript(this, GetType(), "showSuccess",
                     "showToast('Cập nhật thông tin thành công!', 'success');", true);
 
                 ScriptManager.RegisterStartupScript(this, GetType(), "redirectProfile",
                     "setTimeout(function(){ window.location.href = '../UserInfo/UserProfile.aspx?t=' + new Date().getTime(); }, 1000);", true);
+                return;
             }
-            else
+
+            // === THẤT BẠI: CHỈ BẮT 2 TRƯỜNG HỢP 409 & 500 ===
+
+            int? statusCode = GetStatusCode(profileResult);
+
+            if (statusCode == 409)
             {
-                // Hiển thị toast error (3s)
-                ScriptManager.RegisterStartupScript(this, GetType(), "showError",
-                    "showToast('Cập nhật thông tin thất bại, vui lòng thử lại.', 'error');", true);
+                var msg = "Số điện thoại đã được sử dụng, vui lòng đổi số điện thoại khác.";
+                ShowFormError("❌ " + msg);
+                ShowFieldError("phoneError", "❌ " + msg);
+                ShowToast(msg, "error");
+                return;
             }
+
+            if (statusCode == 500)
+            {
+                var msg = "Đã xảy ra lỗi hệ thống, vui lòng thử lại sau.";
+                ShowFormError("❌ " + msg);
+                ShowToast(msg, "error");
+                return;
+            }
+
+            // Các lỗi khác: thông điệp mặc định ngắn gọn
+            ShowFormError("❌ Cập nhật thông tin thất bại, vui lòng thử lại.");
+            ShowToast("Cập nhật thông tin thất bại, vui lòng thử lại.", "error");
+        }
+
+        // ---- Helpers ----
+        private void ShowFormError(string message)
+        {
+            lblMessage.Text = message;
+            lblMessage.CssClass = "error-message";
+        }
+
+        private void ShowFieldError(string elementId, string message)
+        {
+            var safe = (message ?? string.Empty).Replace("'", "\\'");
+            ScriptManager.RegisterStartupScript(this, GetType(), "fieldErr_" + elementId,
+                $"(function(){{var el=document.getElementById('{elementId}'); if(el){{ el.innerText='{safe}'; el.style.display='block'; }} }})();",
+                true);
+        }
+
+        private void ShowToast(string message, string type /* success|error */)
+        {
+            var safe = (message ?? string.Empty).Replace("'", "\\'");
+            var t = (type == "success") ? "success" : "error";
+            ScriptManager.RegisterStartupScript(this, GetType(), "toast_" + Guid.NewGuid().ToString("N"),
+                $"showToast('{safe}', '{t}');", true);
+        }
+
+        // Lấy status code "dẻo": int? → int → string → parse từ RawBody
+        private int? GetStatusCode(object result)
+        {
+            // 1) Thử lấy int?
+            var scNullable = TryGet<int?>(result, "StatusCode");
+            if (scNullable.HasValue) return scNullable.Value;
+
+            // 2) Thử lấy int (không nullable)
+            var scInt = TryGet<int>(result, "StatusCode");
+            if (scInt > 0) return scInt;
+
+            // 3) Thử lấy string rồi parse
+            var scStr = TryGet<string>(result, "StatusCode");
+            if (!string.IsNullOrWhiteSpace(scStr) && int.TryParse(scStr, out var scParsed))
+                return scParsed;
+
+            // 4) Fallback: parse từ RawBody (Problem Details)
+            var rawBody = TryGet<string>(result, "RawBody");
+            if (!string.IsNullOrWhiteSpace(rawBody))
+            {
+                try
+                {
+                    dynamic p = JsonConvert.DeserializeObject(rawBody);
+                    int? st = (int?)p?.status;
+                    if (st.HasValue) return st.Value;
+                }
+                catch { /* ignore */ }
+            }
+
+            return null;
+        }
+
+        // Đọc property bằng reflection (chấp nhận cả nullable & non-nullable)
+        private T TryGet<T>(object obj, string propName)
+        {
+            try
+            {
+                if (obj == null || string.IsNullOrEmpty(propName)) return default(T);
+                var p = obj.GetType().GetProperty(propName);
+                if (p != null && p.CanRead)
+                {
+                    var val = p.GetValue(obj);
+                    if (val == null) return default(T);
+
+                    // Nếu cùng kiểu, cast thẳng
+                    if (val is T tval) return tval;
+
+                    // Trường hợp cần convert (vd: int -> int?)
+                    var targetType = typeof(T);
+                    var underlying = Nullable.GetUnderlyingType(targetType) ?? targetType;
+
+                    try
+                    {
+                        var converted = Convert.ChangeType(val, underlying);
+                        // nếu T là nullable, cần box qua object trước khi cast
+                        if (Nullable.GetUnderlyingType(targetType) != null)
+                            return (T)(object)converted;
+                        return (T)converted;
+                    }
+                    catch { /* ignore convert fail */ }
+                }
+            }
+            catch { }
+            return default(T);
         }
     }
 }
