@@ -3,6 +3,8 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Web;
+using System.Linq;
+using System.Text.RegularExpressions;
 using Newtonsoft.Json;
 using HAFoodWeb.Models;
 using HAFoodWeb.Services;
@@ -25,28 +27,59 @@ namespace HAFoodWeb.UserAddress
                 await LoadAddressAsync();
         }
 
-        // BACKWARD-COMPAT: hỗ trợ format cũ có Quận/Huyện
+        /* ===== Chuẩn hoá City/Ward và tách fullAddress (phục hồi ward chính xác hơn) ===== */
+
+        // Bỏ tiền tố Tỉnh/Thành phố/TP.
+        private static string NormalizeCity(string s)
+        {
+            if (string.IsNullOrWhiteSpace(s)) return "";
+            s = s.Trim();
+            s = Regex.Replace(s, @"^(tỉnh|thành\s*phố|tp\.?)\s*", "", RegexOptions.IgnoreCase);
+            s = Regex.Replace(s, @"\s{2,}", " ");
+            return s;
+        }
+
+        // Bỏ phần đuôi "- Quận …", ", Quận …", ngoặc, và số 0 thừa (P.09 -> P.9)
+        private static string NormalizeWard(string s)
+        {
+            if (string.IsNullOrWhiteSpace(s)) return "";
+            s = s.Trim();
+            s = Regex.Replace(s, @"\s*[-,–]\s*(quận|huyện|thị\s*xã|thành\s*phố|q\.|h\.|tx\.|tp\.).*$",
+                              "", RegexOptions.IgnoreCase);
+            s = Regex.Replace(s, @"\s*\(.*?\)\s*", "", RegexOptions.IgnoreCase);
+            s = Regex.Replace(s, @"\b0+(\d)", "$1");
+            s = Regex.Replace(s, @"\s{2,}", " ");
+            return s;
+        }
+
         private static void SplitFullAddress(string full, out string address, out string ward, out string city)
         {
             address = ward = city = "";
-            var parts = (full ?? "").Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
-            for (int i = 0; i < parts.Length; i++) parts[i] = parts[i].Trim();
+            var parts = (full ?? "").Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
+                                    .Select(p => p.Trim())
+                                    .ToArray();
 
-            if (parts.Length == 1) { address = parts[0]; return; }
-            if (parts.Length == 2) { address = parts[0]; ward = parts[1]; return; }
+            if (parts.Length == 0) return;
 
-            city = parts[parts.Length - 1];
+            if (parts.Length == 1)
+            {
+                address = parts[0];
+                return;
+            }
+
+            // city luôn là phần cuối
+            city = NormalizeCity(parts[parts.Length - 1]);
 
             if (parts.Length >= 4)
             {
                 // Dữ liệu cũ: address, ward, district, city
-                ward = parts[parts.Length - 3];
-                address = string.Join(", ", parts, 0, parts.Length - 3);
+                ward = NormalizeWard(parts[parts.Length - 3]);
+                address = string.Join(", ", parts.Take(parts.Length - 3));
             }
             else
             {
-                // Dữ liệu mới: address, ward, city
-                ward = parts[1];
+                // Dữ liệu mới: address, ward (có thể kèm "- Quận …"), city
+                ward = NormalizeWard(parts[1]);
                 address = parts[0];
             }
         }
@@ -76,7 +109,7 @@ namespace HAFoodWeb.UserAddress
 
                 SplitFullAddress(dto.fullAddress, out var address, out var ward, out var city);
 
-                // Đổ text, JS sẽ map name->code & set combobox
+                // Prefill TEXT để người dùng luôn nhìn thấy city/ward, JS sẽ map code sau
                 txtCitySel.Text = city ?? "";
                 txtWardSel.Text = ward ?? "";
                 txtCityCode.Text = "";

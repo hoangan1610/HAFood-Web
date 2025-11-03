@@ -107,27 +107,51 @@ namespace HAFoodWeb
 
         /* ===== Helpers cho địa chỉ ===== */
 
+        private static string NormalizeCity(string s)
+        {
+            if (string.IsNullOrWhiteSpace(s)) return "";
+            s = s.Trim();
+            s = Regex.Replace(s, @"^(tỉnh|thành\s*phố|tp\.?)\s*", "", RegexOptions.IgnoreCase);
+            s = Regex.Replace(s, @"\s{2,}", " ");
+            return s;
+        }
+
+        private static string NormalizeWard(string s)
+        {
+            if (string.IsNullOrWhiteSpace(s)) return "";
+            s = s.Trim();
+            s = Regex.Replace(s, @"\s*[-,–]\s*(quận|huyện|thị\s*xã|thành\s*phố|q\.|h\.|tx\.|tp\.).*$",
+                              "", RegexOptions.IgnoreCase);
+            s = Regex.Replace(s, @"\s*\(.*?\)\s*", "", RegexOptions.IgnoreCase);
+            s = Regex.Replace(s, @"\b0+(\d)", "$1");
+            s = Regex.Replace(s, @"\s{2,}", " ");
+            return s;
+        }
+
         private static void SplitFullAddress(string full, out string street, out string ward, out string city)
         {
             street = ward = city = "";
-            var parts = (full ?? "").Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
-            for (int i = 0; i < parts.Length; i++) parts[i] = parts[i].Trim();
+            var parts = (full ?? "").Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
+                                    .Select(p => p.Trim())
+                                    .ToArray();
+
+            if (parts.Length == 0) return;
 
             if (parts.Length == 1) { street = parts[0]; return; }
-            if (parts.Length == 2) { street = parts[0]; ward = parts[1]; return; }
 
-            city = parts[parts.Length - 1];
+            // city = phần cuối
+            city = NormalizeCity(parts[parts.Length - 1]);
 
             if (parts.Length >= 4)
             {
-                // Dữ liệu cũ: street, ward, district, city
-                ward = parts[parts.Length - 3];
-                street = string.Join(", ", parts, 0, parts.Length - 3);
+                // cũ: street, ward, district, city
+                ward = NormalizeWard(parts[parts.Length - 3]);
+                street = string.Join(", ", parts.Take(parts.Length - 3));
             }
             else
             {
-                // Dữ liệu mới: street, ward, city
-                ward = parts[1];
+                // mới: street, ward (có thể kèm "- Quận …"), city
+                ward = NormalizeWard(parts[1]);
                 street = parts[0];
             }
         }
@@ -141,7 +165,7 @@ namespace HAFoodWeb
             txtReceiver.Text = a.fullName ?? "";
             txtPhone.Text = a.phone ?? "";
 
-            // Mirror cho validators/combos (JS sẽ gán code lại sau)
+            // Prefill TEXT (để client luôn nhìn thấy) — JS sẽ map code sau
             txtCitySel.Text = city ?? "";
             txtWardSel.Text = ward ?? "";
             txtCityCode.Text = "";
@@ -301,6 +325,7 @@ namespace HAFoodWeb
         {
             args.IsValid = !string.IsNullOrWhiteSpace(txtCityCode.Text);
         }
+
         protected void cvWard_ServerValidate(object source, ServerValidateEventArgs args)
         {
             args.IsValid = !string.IsNullOrWhiteSpace(txtWardCode.Text);
