@@ -24,6 +24,7 @@
         .cart-header > div:nth-child(7){ text-align:center; }
         .cart-list{padding:0 8px 8px}
         .total-row{padding:16px;border-top:2px solid var(--border);display:flex;gap:8px;justify-content:flex-end;font-weight:700}
+
         .panel{background:#fff;border-radius:var(--radius);box-shadow:0 4px 10px rgba(0,0,0,.05)}
         .panel-title{padding:14px 16px;border-bottom:2px solid var(--border);font-weight:700;display:flex;align-items:center;gap:8px}
         .panel-body{padding:16px}
@@ -32,6 +33,7 @@
         .form-row .req::before{content:'* ';color:#e53935}
         .form-control{width:100%;height:40px;border:1px solid var(--border);border-radius:8px;padding:0 12px;font-family:inherit}
         .fv{margin-top:4px;color:#dc3545;font-size:13px}
+
         .summary{background:#fff;border-radius:var(--radius);margin-top:16px;box-shadow:0 4px 10px rgba(0,0,0,.05)}
         .summary-row{display:flex;justify-content:space-between;padding:10px 16px;border-bottom:1px dashed var(--border)}
         .summary-row:last-child{border-bottom:none}
@@ -40,6 +42,29 @@
         .pill{background:var(--pill);color:#fff;border-radius:999px;padding:4px 10px;font-size:12px}
         .alert{margin:12px 0 0 0;padding:10px 12px;border-radius:10px;background:#ffe6e9;color:#9f2a37;border:1px solid #f5c2c7}
         .invisible-input{position:absolute;left:-9999px;top:auto;width:1px;height:1px;opacity:0;pointer-events:none}
+
+        /* ==== Combo searchable ==== */
+        .combo{position:relative}
+        .combo-input{display:flex;align-items:center;height:40px;border:1px solid var(--border);border-radius:8px;background:#fff;padding:0 10px;cursor:text}
+        .combo-text{flex:1 1 auto;border:none;outline:none;height:100%;font:inherit}
+        .combo-caret{margin-left:8px}
+        .combo-menu{position:absolute;left:0;right:0;top:calc(100% + 4px);background:#fff;border:1px solid var(--border);
+                    border-radius:8px;box-shadow:0 6px 16px rgba(0,0,0,.08);max-height:320px;overflow:auto;display:none;z-index:1000}
+        .combo.open .combo-menu{display:block}
+        .combo-item{padding:8px 10px;cursor:pointer}
+        .combo-item:hover{background:#f5f5f5}
+
+        /* Address session (nằm trong panel phải) */
+        .addr-session{margin-bottom:12px}
+        .addr-link{display:block;text-decoration:none;color:inherit}
+        .addr-card{display:flex;gap:12px;align-items:center;background:#fff;border:1px solid var(--border);
+                   border-radius:12px;padding:12px}
+        .addr-icon{color:#ff7a45;font-size:20px;line-height:1}
+        .addr-main{flex:1 1 auto}
+        .addr-name{font-weight:700}
+        .addr-phone{color:#6b7280;margin-left:8px}
+        .addr-detail{color:#374151;margin-top:2px}
+        .addr-chevron{color:#9ca3af}
     </style>
 </head>
 
@@ -54,13 +79,11 @@
     <asp:HiddenField ID="hidIsAuth" runat="server" />
     <asp:HiddenField ID="hidJwt" runat="server" />
 
-    <!-- Hidden mirror cho validator (Tên hiển thị) -->
+    <!-- Hidden mirror cho validators/submit -->
     <asp:TextBox ID="txtCitySel" runat="server" CssClass="invisible-input" />
     <asp:TextBox ID="txtWardSel" runat="server" CssClass="invisible-input" />
-    <!-- Hidden giữ CODE để restore lựa chọn sau postback -->
     <asp:TextBox ID="txtCityCode" runat="server" CssClass="invisible-input" />
     <asp:TextBox ID="txtWardCode" runat="server" CssClass="invisible-input" />
-    <!-- NEW: mirror line_id đã chọn -->
     <asp:HiddenField ID="hidSelectedLines" runat="server" />
 
     <div class="page">
@@ -74,7 +97,6 @@
                             <div></div><div>SẢN PHẨM</div><div>GIÁ</div><div>SL</div><div>SỐ TIỀN</div><div></div>
                         </div>
 
-                        <%-- Luôn render panel trống, mặc định ẩn bằng CSS --%>
                         <asp:Panel ID="pnlEmpty" runat="server" CssClass="panel-body" style="display:none">
                             <p>Giỏ hàng bạn đang trống</p>
                         </asp:Panel>
@@ -100,32 +122,66 @@
                 <div class="panel">
                     <div class="panel-title"><span class="pill">i</span> Thông tin địa chỉ nhận hàng</div>
                     <div class="panel-body">
+
+                        <!-- Session địa chỉ: trong panel phải -->
+                        <asp:Panel ID="pnlAddrSession" runat="server" CssClass="addr-session" Visible="false">
+                          <a class="addr-link"
+                             href="<%= ResolveUrl("~/CartPage/AddressSelect.aspx?returnUrl=" + HttpUtility.UrlEncode(Request.RawUrl)) %>">
+                            <div class="addr-card">
+                              <div class="addr-icon"><i class="bi bi-geo-alt-fill"></i></div>
+                              <div class="addr-main">
+                                <div>
+                                  <span class="addr-name"><asp:Label ID="lblAddrName" runat="server" /></span>
+                                  <span class="addr-phone">(<asp:Label ID="lblAddrPhone" runat="server" />)</span>
+                                </div>
+                                <div class="addr-detail"><asp:Label ID="lblAddrDetail" runat="server" /></div>
+                              </div>
+                              <div class="addr-chevron"><i class="bi bi-chevron-right"></i></div>
+                            </div>
+                          </a>
+                        </asp:Panel>
+
+                        <asp:Panel ID="pnlNoAddr" runat="server" CssClass="addr-session" Visible="false">
+                          <a class="addr-link"
+                             href="<%= ResolveUrl("~/CartPage/AddressSelect.aspx?returnUrl=" + HttpUtility.UrlEncode(Request.RawUrl)) %>">
+                            <div class="addr-card">
+                              <div class="addr-icon"><i class="bi bi-geo-alt"></i></div>
+                              <div class="addr-main">
+                                <div class="text-muted">Hiện tại bạn chưa có địa chỉ</div>
+                              </div>
+                              <div class="addr-chevron"><i class="bi bi-chevron-right"></i></div>
+                            </div>
+                          </a>
+                        </asp:Panel>
+
+                        <!-- ====== Combobox searchable ====== -->
                         <div class="form-row">
                             <label class="req">Tỉnh/Thành</label>
-                            <select id="ddlCityV2" class="form-control"></select>
+                            <div id="cmbCity" class="combo"></div>
                             <asp:RequiredFieldValidator runat="server" ControlToValidate="txtCitySel"
-                                ErrorMessage="Vui lòng chọn Tỉnh/Thành."
-                                Display="Dynamic" CssClass="fv" ValidationGroup="Checkout" />
+                                ErrorMessage="Vui lòng chọn Tỉnh/Thành." Display="Dynamic" CssClass="fv" ValidationGroup="Checkout" />
                             <asp:CustomValidator ID="cvCity" runat="server" ControlToValidate="txtCitySel"
-                                ClientValidationFunction="validateCity"
+                                ClientValidationFunction="validateCityCode"
                                 OnServerValidate="cvCity_ServerValidate"
                                 ValidateEmptyText="true"
-                                ErrorMessage="Vui lòng chọn Tỉnh/Thành."
+                                ErrorMessage="Vui lòng chọn Tỉnh/Thành từ danh sách."
                                 Display="Dynamic" CssClass="fv" ValidationGroup="Checkout" />
                         </div>
+
                         <div class="form-row">
                             <label class="req">Xã/Phường</label>
-                            <select id="ddlWardV2" class="form-control"></select>
+                            <div id="cmbWard" class="combo"></div>
                             <asp:RequiredFieldValidator runat="server" ControlToValidate="txtWardSel"
-                                ErrorMessage="Vui lòng chọn Xã/Phường."
-                                Display="Dynamic" CssClass="fv" ValidationGroup="Checkout" />
+                                ErrorMessage="Vui lòng chọn Xã/Phường." Display="Dynamic" CssClass="fv" ValidationGroup="Checkout" />
                             <asp:CustomValidator ID="cvWard" runat="server" ControlToValidate="txtWardSel"
-                                ClientValidationFunction="validateWard"
+                                ClientValidationFunction="validateWardCode"
                                 OnServerValidate="cvWard_ServerValidate"
                                 ValidateEmptyText="true"
-                                ErrorMessage="Vui lòng chọn Xã/Phường."
+                                ErrorMessage="Vui lòng chọn Xã/Phường từ danh sách."
                                 Display="Dynamic" CssClass="fv" ValidationGroup="Checkout" />
                         </div>
+                        <!-- ================================= -->
+
                         <div class="form-row">
                             <label class="req">Địa chỉ nhận hàng</label>
                             <asp:TextBox ID="txtAddress" runat="server" CssClass="form-control" />
@@ -133,6 +189,7 @@
                                 ErrorMessage="Vui lòng nhập địa chỉ nhận hàng."
                                 Display="Dynamic" CssClass="fv" ValidationGroup="Checkout" />
                         </div>
+
                         <div class="form-row">
                             <label class="req">Số điện thoại liên lạc</label>
                             <asp:TextBox ID="txtPhone" runat="server" CssClass="form-control" TextMode="SingleLine" MaxLength="20" />
@@ -145,6 +202,7 @@
                                 ErrorMessage="Số điện thoại không hợp lệ."
                                 Display="Dynamic" CssClass="fv" ValidationGroup="Checkout" SetFocusOnError="true" />
                         </div>
+
                         <div class="form-row">
                             <label class="req">Tên người nhận hàng</label>
                             <asp:TextBox ID="txtReceiver" runat="server" CssClass="form-control" />
@@ -152,6 +210,7 @@
                                 ErrorMessage="Vui lòng nhập tên người nhận."
                                 Display="Dynamic" CssClass="fv" ValidationGroup="Checkout" />
                         </div>
+
                         <div class="form-row"><label>Ghi chú cho đơn hàng</label><asp:TextBox ID="txtNote" runat="server" CssClass="form-control" /></div>
                         <div class="form-row"><label>Mã khuyến mãi</label><asp:TextBox ID="txtPromo" runat="server" CssClass="form-control" /></div>
                     </div>
@@ -181,391 +240,395 @@
 
     <uc:Footer ID="Footer1" runat="server" />
 
-    <!-- Provinces script -->
+    <!-- Phone validator -->
+    <script>
+        function normalizePhone(s) { if (!s) return ''; s = String(s).replace(/[\s\.\-]/g, '').trim(); s = s.replace(/^\+840/, '+84'); return s; }
+        function validatePhone(sender, args) { const s = normalizePhone(args.Value); args.IsValid = /^(0\d{9}|\+84\d{9})$/.test(s); }
+    </script>
+
+    <!-- Combobox searchable: provinces/wards -->
     <script>
         (function () {
-            const citySel = document.getElementById('ddlCityV2');
-            const wardSel = document.getElementById('ddlWardV2');
-
-            const hidCityName = document.getElementById('<%= txtCitySel.ClientID %>');
-            const hidWardName = document.getElementById('<%= txtWardSel.ClientID %>');
-            const hidCityCode = document.getElementById('<%= txtCityCode.ClientID %>');
-            const hidWardCode = document.getElementById('<%= txtWardCode.ClientID %>');
-
             const DATA_BASE = '<%= ResolveClientUrl("~/assets/vn-admin") %>';
 
-            function clearOptions(sel, placeholder) {
-                sel.innerHTML = '';
-                const opt0 = document.createElement('option');
-                opt0.value = '';
-                opt0.textContent = placeholder;
-                sel.appendChild(opt0);
-            }
-            function selectedText(sel) {
-                return sel.options[sel.selectedIndex]?.text?.trim() || '';
-            }
-            function mirrorHidden() {
-                hidCityName.value = selectedText(citySel);
-                hidWardName.value = selectedText(wardSel);
-                hidCityCode.value = citySel.value || '';
-                hidWardCode.value = wardSel.value || '';
-            }
-            const rmDiacritics = (s) => (s || '')
-                .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+        const cityBox = document.getElementById('cmbCity');
+        const wardBox = document.getElementById('cmbWard');
+
+        const hidCityName = document.getElementById('<%= txtCitySel.ClientID %>');
+        const hidWardName = document.getElementById('<%= txtWardSel.ClientID %>');
+        const hidCityCode = document.getElementById('<%= txtCityCode.ClientID %>');
+        const hidWardCode = document.getElementById('<%= txtWardCode.ClientID %>');
+
+            const rmDiacritics = (s) => (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
                 .replace(/đ/g, 'd').replace(/Đ/g, 'D')
                 .replace(/\s+/g, ' ').trim().toLowerCase();
 
-            async function loadProvinces() {
-                clearOptions(citySel, '— Chọn Tỉnh/Thành —');
-                try {
-                    const resp = await fetch(`${DATA_BASE}/provinces.json`, { cache: 'force-cache' });
-                    const list = await resp.json();
-                    for (const p of list) {
-                        const opt = document.createElement('option');
-                        opt.value = p.code;
-                        opt.textContent = p.name;
-                        citySel.appendChild(opt);
+            function createCombo(el, placeholder) {
+                el.classList.add('combo');
+                el.innerHTML = '<div class="combo-input" role="combobox" aria-expanded="false">'
+                    + '  <input type="text" class="combo-text" placeholder="' + placeholder + '"/>'
+                    + '  <i class="bi bi-chevron-down combo-caret"></i>'
+                    + '</div>'
+                    + '<div class="combo-menu"></div>';
+
+                const input = el.querySelector('.combo-text');
+                const menu = el.querySelector('.combo-menu');
+                let all = []; let open = false;
+
+                function render(list) {
+                    menu.innerHTML = '';
+                    for (const opt of list) {
+                        const div = document.createElement('div');
+                        div.className = 'combo-item';
+                        div.textContent = opt.label;
+                        div.dataset.value = opt.value;
+                        div.addEventListener('mousedown', function (e) { // mousedown để chạy trước blur
+                            pick(opt);
+                        });
+                        menu.appendChild(div);
                     }
-                    if (hidCityCode.value) {
-                        citySel.value = hidCityCode.value;
-                        if (citySel.value !== hidCityCode.value && hidCityName.value) {
-                            const target = rmDiacritics(hidCityName.value);
-                            for (const o of citySel.options) {
-                                if (rmDiacritics(o.text) === target) { citySel.value = o.value; break; }
-                            }
-                        }
+                }
+                function openMenu() { if (open) return; el.classList.add('open'); open = true; }
+                function closeMenu() { if (!open) return; el.classList.remove('open'); open = false; }
+                function filter() {
+                    const q = rmDiacritics(input.value);
+                    const filtered = !q ? all : all.filter(o => rmDiacritics(o.label).includes(q));
+                    render(filtered); openMenu();
+                }
+                function pick(opt) {
+                    input.value = opt.label;
+                    el.dataset.value = opt.value;
+                    closeMenu();
+                    el.dispatchEvent(new CustomEvent('combochange', { detail: opt }));
+                }
+
+                input.addEventListener('input', () => { el.dataset.value = ''; filter(); });
+                input.addEventListener('keydown', (e) => {
+                    if (e.key === 'ArrowDown') { openMenu(); e.preventDefault(); }
+                    if (e.key === 'Escape') { closeMenu(); }
+                    if (e.key === 'Enter') {
+                        const first = menu.querySelector('.combo-item');
+                        if (first) { first.dispatchEvent(new MouseEvent('mousedown')); e.preventDefault(); }
                     }
-                } catch (e) { console.error('Load provinces.json failed:', e); }
-                mirrorHidden();
+                });
+                el.addEventListener('click', () => { filter(); input.focus(); });
+                document.addEventListener('click', (e) => { if (!el.contains(e.target)) closeMenu(); });
+
+                return {
+                    setData(arr) { all = arr || []; render(all); },
+                    setSelected(val, label) { el.dataset.value = val || ''; input.value = label || ''; },
+                    get value() { return el.dataset.value || ''; },
+                    get label() { return input.value || ''; },
+                    clear() { this.setSelected('', ''); }
+                };
             }
 
-            async function loadWards(provSlug) {
-                clearOptions(wardSel, '— Chọn Xã/Phường —');
-                if (!provSlug) { mirrorHidden(); return; }
+            const cityCombo = createCombo(cityBox, '— Chọn Tỉnh/Thành —');
+            const wardCombo = createCombo(wardBox, '— Chọn Xã/Phường —');
+
+            let provinces = [];
+            fetch(DATA_BASE + '/provinces.json', { cache: 'force-cache' }).then(r => r.json()).then(list => {
+                provinces = list || [];
+                cityCombo.setData(provinces.map(p => ({ value: String(p.code), label: p.name, raw: p })));
+                // restore
+                if (hidCityCode.value) {
+                    const p = provinces.find(x => String(x.code) === hidCityCode.value)
+                        || provinces.find(x => rmDiacritics(x.name) === rmDiacritics(hidCityName.value));
+                    if (p) setCity(p);
+                } else if (hidCityName.value) {
+                    const p = provinces.find(x => rmDiacritics(x.name) === rmDiacritics(hidCityName.value));
+                    if (p) setCity(p);
+                }
+            });
+
+            async function loadWards(provCode) {
+                wardCombo.clear(); wardCombo.setData([]);
+                hidWardName.value = ''; hidWardCode.value = '';
+                if (!provCode) return;
                 try {
-                    const resp = await fetch(`${DATA_BASE}/wards/${encodeURIComponent(provSlug)}.json`, { cache: 'force-cache' });
-                    if (!resp.ok) { console.warn('Không có wards cho', provSlug); mirrorHidden(); return; }
+                    const resp = await fetch(DATA_BASE + '/wards/' + encodeURIComponent(provCode) + '.json', { cache: 'force-cache' });
+                    if (!resp.ok) return;
                     const wards = await resp.json();
-                    for (const w of wards) {
-                        const opt = document.createElement('option');
-                        opt.value = String(w.code);
-                        opt.textContent = w.name;
-                        wardSel.appendChild(opt);
-                    }
-                    if (hidWardCode.value) wardSel.value = hidWardCode.value;
-                    if (!wardSel.value && hidWardName.value) {
-                        const target = rmDiacritics(hidWardName.value);
-                        for (const o of wardSel.options) {
-                            if (rmDiacritics(o.text) === target) { wardSel.value = o.value; break; }
-                        }
+                    wardCombo.setData(wards.map(w => ({ value: String(w.code), label: w.name, raw: w })));
+                    // restore
+                    if (hidWardCode.value) {
+                        const w = wards.find(x => String(x.code) === hidWardCode.value);
+                        if (w) pickWard(w);
+                    } else if (hidWardName.value) {
+                        const w = wards.find(x => rmDiacritics(x.name) === rmDiacritics(hidWardName.value));
+                        if (w) pickWard(w);
                     }
                 } catch (e) { console.error('Load wards failed:', e); }
-                mirrorHidden();
             }
 
-            citySel.addEventListener('change', async () => {
-                await loadWards(citySel.value);
-                mirrorHidden();
-            });
-            wardSel.addEventListener('change', mirrorHidden);
+            function setCity(p) {
+                cityCombo.setSelected(String(p.code), p.name);
+                hidCityName.value = p.name;
+                hidCityCode.value = String(p.code);
+                loadWards(String(p.code));
+            }
+            function pickWard(w) {
+                wardCombo.setSelected(String(w.code), w.name);
+                hidWardName.value = w.name;
+                hidWardCode.value = String(w.code);
+            }
 
-            document.addEventListener('DOMContentLoaded', async () => {
-                await loadProvinces();
-                await loadWards(citySel.value);
+            cityBox.addEventListener('combochange', (e) => setCity(e.detail.raw));
+            wardBox.addEventListener('combochange', (e) => pickWard(e.detail.raw));
+
+            // Nếu gõ tay rồi blur -> coi như text tự do, xoá code (để validators bắt lỗi)
+            cityBox.querySelector('.combo-text').addEventListener('blur', () => {
+                if (rmDiacritics(cityCombo.label) !== rmDiacritics(hidCityName.value)) {
+                    hidCityName.value = cityCombo.label;
+                    hidCityCode.value = '';
+                    wardCombo.clear(); hidWardName.value = ''; hidWardCode.value = '';
+                }
+            });
+            wardBox.querySelector('.combo-text').addEventListener('blur', () => {
+                if (rmDiacritics(wardCombo.label) !== rmDiacritics(hidWardName.value)) {
+                    hidWardName.value = wardCombo.label;
+                    hidWardCode.value = '';
+                }
             });
 
-            window.__mirrorLocationHidden = mirrorHidden;
+            // Client validators + submit guard
+            window.validateCityCode = function (sender, args) { args.IsValid = !!hidCityCode.value; }
+            window.validateWardCode = function (sender, args) { args.IsValid = !!hidWardCode.value; }
+            window.beforeCheckoutSubmit = function () {
+                if (typeof (Page_ClientValidate) === 'function' && !Page_ClientValidate('Checkout')) return false;
+                if (!hidCityCode.value || !hidWardCode.value) {
+                    alert('Vui lòng chọn Tỉnh/Thành và Xã/Phường từ danh sách.');
+                    return false;
+                }
+                return true;
+            };
         })();
     </script>
 
-    <!-- Phone + City/Ward validators (client) -->
+    <!-- Cart JS (giữ nguyên như trước) -->
     <script>
-        function normalizePhone(s) {
-            if (!s) return '';
-            s = String(s).replace(/[\s\.\-]/g, '').trim();
-            s = s.replace(/^\+840/, '+84');
-            return s;
+        (function () {
+            const API = document.getElementById('<%= hidApiBase.ClientID %>').value || '';
+        const UUID = document.getElementById('<%= hidDeviceUuid.ClientID %>').value || '';
+        const JWT = (document.getElementById('<%= hidJwt.ClientID %>')?.value || '').trim();
+
+        let sameOrigin = false; try { sameOrigin = new URL(API).host === location.host; } catch { }
+        const HAS_JWT = !!JWT;
+        const USE_USER = HAS_JWT || sameOrigin;
+        const USE_GUEST = !USE_USER;
+
+        const fmt = n => (n || 0).toLocaleString('vi-VN') + ' ₫';
+
+        const selectAll = document.getElementById('<%= chkSelectAll.ClientID %>');
+        const hidSelected = document.getElementById('<%= hidSelectedLines.ClientID %>');
+        const pnlEmptyEl = document.getElementById('<%= pnlEmpty.ClientID %>');
+
+        function badgeEl() { return document.querySelector('[data-cart-badge="true"]'); }
+        function readBadge() { const el = badgeEl(); if (!el) return 0; const n = parseInt((el.textContent || '0').trim(), 10); return Number.isFinite(n) ? n : 0; }
+        function writeBadge(n) { const el = badgeEl(); if (!el) return; const v = Math.max(0, parseInt(n || 0, 10)); el.textContent = v; el.style.display = v > 0 ? 'flex' : 'none'; }
+        function bumpBadge(delta) { writeBadge(readBadge() + (parseInt(delta || 0, 10))); }
+        if (typeof window.setCartBadge !== 'function') { window.setCartBadge = writeBadge; }
+        if (typeof window.refreshCartCount !== 'function') {
+            window.refreshCartCount = function () {
+                let sum = 0;
+                document.querySelectorAll('.cart-item .qty-num').forEach(el => {
+                    sum += parseInt((el.textContent || '0').trim(), 10) || 0;
+                });
+                writeBadge(sum);
+            };
         }
-        function validatePhone(sender, args) {
-            const s = normalizePhone(args.Value);
-            args.IsValid = /^(0\d{9}|\+84\d{9})$/.test(s);
+
+        function withAuthQuery(url) {
+            if (USE_GUEST && UUID) return url + (url.includes('?') ? '&' : '?') + 'device_uuid=' + encodeURIComponent(UUID);
+            return url;
         }
-        function validateCity(sender, args) {
-            if (window.__mirrorLocationHidden) window.__mirrorLocationHidden();
-            var citySel = document.getElementById('ddlCityV2');
-            args.IsValid = !!(citySel && citySel.value);
+        function ensure(opts) {
+            const headers = { 'Content-Type': 'application/json' };
+            if (HAS_JWT) headers['Authorization'] = 'Bearer ' + JWT;
+            return Object.assign({ credentials: 'include', headers }, opts || {});
         }
-        function validateWard(sender, args) {
-            if (window.__mirrorLocationHidden) window.__mirrorLocationHidden();
-            var wardSel = document.getElementById('ddlWardV2');
-            args.IsValid = !!(wardSel && wardSel.value);
-        }
-    </script>
+        async function safeJson(resp) { try { return await resp.json(); } catch { return {}; } }
 
-    <!-- Submit guard -->
-    <script>
-        function beforeCheckoutSubmit() {
-            if (window.__mirrorLocationHidden) window.__mirrorLocationHidden();
-
-            if (typeof (Page_ClientValidate) === 'function') {
-                if (!Page_ClientValidate('Checkout')) return false;
-            }
-            var citySel = document.getElementById('ddlCityV2');
-            var wardSel = document.getElementById('ddlWardV2');
-            if (!citySel.value || !wardSel.value) {
-                alert('Vui lòng chọn Tỉnh/Thành và Xã/Phường.');
-                return false;
-            }
-            return true;
-        }
-    </script>
-
-    <!-- Cart JS -->
-<script>
-    (function () {
-        const API = document.getElementById('<%= hidApiBase.ClientID %>').value || '';
-    const UUID = document.getElementById('<%= hidDeviceUuid.ClientID %>').value || '';
-    const JWT = (document.getElementById('<%= hidJwt.ClientID %>')?.value || '').trim();
-
-    let sameOrigin = false; try { sameOrigin = new URL(API).host === location.host; } catch { }
-    const HAS_JWT = !!JWT;
-    const USE_USER = HAS_JWT || sameOrigin;
-    const USE_GUEST = !USE_USER;
-
-    const fmt = n => (n || 0).toLocaleString('vi-VN') + ' ₫';
-
-    const selectAll = document.getElementById('<%= chkSelectAll.ClientID %>');
-    const hidSelected = document.getElementById('<%= hidSelectedLines.ClientID %>');
-    const pnlEmptyEl = document.getElementById('<%= pnlEmpty.ClientID %>');
-
-    function badgeEl() { return document.querySelector('[data-cart-badge="true"]'); }
-    function readBadge() {
-        const el = badgeEl(); if (!el) return 0;
-        const n = parseInt((el.textContent || '0').trim(), 10);
-        return Number.isFinite(n) ? n : 0;
-    }
-    function writeBadge(n) {
-        const el = badgeEl(); if (!el) return;
-        const v = Math.max(0, parseInt(n || 0, 10));
-        el.textContent = v;
-        el.style.display = v > 0 ? 'flex' : 'none';
-    }
-    function bumpBadge(delta) { writeBadge(readBadge() + (parseInt(delta || 0, 10))); }
-    if (typeof window.setCartBadge !== 'function') { window.setCartBadge = writeBadge; }
-    if (typeof window.refreshCartCount !== 'function') {
-        window.refreshCartCount = function () {
-            let sum = 0;
-            document.querySelectorAll('.cart-item .qty-num').forEach(el => {
-                sum += parseInt((el.textContent || '0').trim(), 10) || 0;
-            });
-            writeBadge(sum);
-        };
-    }
-
-    function withAuthQuery(url) {
-        if (USE_GUEST && UUID) return url + (url.includes('?') ? '&' : '?') + 'device_uuid=' + encodeURIComponent(UUID);
-        return url;
-    }
-    function ensure(opts) {
-        const headers = { 'Content-Type': 'application/json' };
-        if (HAS_JWT) headers['Authorization'] = 'Bearer ' + JWT;
-        return Object.assign({ credentials: 'include', headers }, opts || {});
-    }
-    async function safeJson(resp) { try { return await resp.json(); } catch { return {}; } }
-
-    function syncSelectedHidden() {
-        const selected = [];
-        document.querySelectorAll('.cart-item').forEach(row => {
-            const cb = row.querySelector('input[type="checkbox"]');
-            if (cb && cb.checked) {
-                const id = row.getAttribute('data-line-id');
-                if (id) selected.push(id);
-            }
-        });
-        hidSelected.value = selected.join(',');
-    }
-
-    function updateSelectAllUI() {
-        const cbs = Array.from(document.querySelectorAll('.cart-item input[type="checkbox"]'));
-        if (!selectAll) return;
-        if (cbs.length === 0) { selectAll.checked = false; selectAll.indeterminate = false; return; }
-        const checkedCount = cbs.filter(x => x.checked).length;
-        selectAll.checked = (checkedCount === cbs.length);
-        selectAll.indeterminate = (checkedCount > 0 && checkedCount < cbs.length);
-    }
-
-    function patchTotals(payload) {
-        if (payload && payload.totals) {
-            const t = payload.totals;
-            document.getElementById('<%= lblSubtotal.ClientID %>').textContent = fmt(t.subtotal);
-            document.getElementById('<%= lblVat.ClientID %>').textContent = fmt(t.vat);
-            document.getElementById('<%= lblShipping.ClientID %>').textContent = fmt(t.shipping);
-            document.getElementById('<%= lblGrandTotal.ClientID %>').textContent  = fmt(t.grand);
-            document.getElementById('<%= lblTotal.ClientID %>').textContent       = fmt(t.subtotal);
-        }
-        if (payload?.header?.item_Count != null){
-            window.setCartBadge(payload.header.item_Count);
-        }
-    }
-
-    function recalcTotals(){
-        let subtotal=0, sumItems=0;
-        document.querySelectorAll('.cart-item').forEach(row=>{
-          const cb = row.querySelector('input[type="checkbox"]');
-          if (!cb || !cb.checked) return;
-          const price = Number(row.getAttribute('data-price')) || 0;
-          const qtyEl = row.querySelector('.qty-num');
-          const qty   = Number(qtyEl?.textContent.trim() || '1') || 1;
-          subtotal += price * qty; sumItems += qty;
-        });
-        const vat = Math.round(subtotal * 0.08), ship=0, grand=subtotal+vat+ship;
-        document.getElementById('<%= lblSubtotal.ClientID %>').textContent    = fmt(subtotal);
-        document.getElementById('<%= lblVat.ClientID %>').textContent         = fmt(vat);
-        document.getElementById('<%= lblShipping.ClientID %>').textContent    = fmt(ship);
-        document.getElementById('<%= lblGrandTotal.ClientID %>').textContent  = fmt(grand);
-        document.getElementById('<%= lblTotal.ClientID %>').textContent       = fmt(subtotal);
-        document.getElementById('<%= lblSumItems.ClientID %>').textContent    = String(sumItems);
-    }
-    window.__cartAfterMutate = () => { recalcTotals(); updateSelectAllUI(); syncSelectedHidden(); };
-
-    /* Xoá dòng: tái dùng cho nút Giảm từ 1 và nút Xoá */
-    async function deleteLine(row, lineId) {
-        try{
-            const qtyBefore = Number(row.querySelector('.qty-num')?.textContent.trim() || '1') || 1;
-
-            let url  = withAuthQuery(`${API}/api/cart/lines/${lineId}`);
-            let resp = await fetch(url, ensure({ method:'DELETE' }));
-            let json = await safeJson(resp);
-
-            if (!resp.ok && json?.code === 'MISSING_USER_OR_DEVICE' && UUID){
-                url  = `${API}/api/cart/lines/${lineId}?device_uuid=${encodeURIComponent(UUID)}`;
-                resp = await fetch(url, ensure({ method:'DELETE' }));
-                json = await safeJson(resp);
-            }
-            if (!resp.ok){
-                if (json?.code === 'CART_LINE_NOT_FOUND') location.reload();
-                console.error('Delete failed', json); return;
-            }
-
-            row.remove();
-
-            // Nếu không còn item nào: bật panel "trống" (đang ẩn bằng CSS)
-            const remaining = document.querySelectorAll('.cart-item').length;
-            if (remaining === 0 && pnlEmptyEl) {
-                pnlEmptyEl.style.display = 'block';
-                if (!(json?.header?.item_Count != null)) {
-                    window.setCartBadge(0);
+        function syncSelectedHidden() {
+            const selected = [];
+            document.querySelectorAll('.cart-item').forEach(row => {
+                const cb = row.querySelector('input[type="checkbox"]');
+                if (cb && cb.checked) {
+                    const id = row.getAttribute('data-line-id');
+                    if (id) selected.push(id);
                 }
+            });
+            hidSelected.value = selected.join(',');
+        }
+
+        function updateSelectAllUI() {
+            const cbs = Array.from(document.querySelectorAll('.cart-item input[type="checkbox"]'));
+            if (!selectAll) return;
+            if (cbs.length === 0) { selectAll.checked = false; selectAll.indeterminate = false; return; }
+            const checkedCount = cbs.filter(x => x.checked).length;
+            selectAll.checked = (checkedCount === cbs.length);
+            selectAll.indeterminate = (checkedCount > 0 && checkedCount < cbs.length);
+        }
+
+        function patchTotals(payload) {
+            if (payload && payload.totals) {
+                const t = payload.totals;
+                document.getElementById('<%= lblSubtotal.ClientID %>').textContent = fmt(t.subtotal);
+                document.getElementById('<%= lblVat.ClientID %>').textContent = fmt(t.vat);
+                document.getElementById('<%= lblShipping.ClientID %>').textContent = fmt(t.shipping);
+                document.getElementById('<%= lblGrandTotal.ClientID %>').textContent  = fmt(t.grand);
+                document.getElementById('<%= lblTotal.ClientID %>').textContent       = fmt(t.subtotal);
             }
-
-            if (json?.totals || json?.header) patchTotals(json);
-
-            if (json?.header?.item_Count != null){
-                window.setCartBadge(json.header.item_Count);
-            } else {
-                bumpBadge(-qtyBefore);
+            if (payload?.header?.item_Count != null){
+                window.setCartBadge(payload.header.item_Count);
             }
+        }
 
+        function recalcTotals(){
+            let subtotal=0, sumItems=0;
+            document.querySelectorAll('.cart-item').forEach(row=>{
+              const cb = row.querySelector('input[type="checkbox"]');
+              if (!cb || !cb.checked) return;
+              const price = Number(row.getAttribute('data-price')) || 0;
+              const qtyEl = row.querySelector('.qty-num');
+              const qty   = Number(qtyEl?.textContent.trim() || '1') || 1;
+              subtotal += price * qty; sumItems += qty;
+            });
+            const vat = Math.round(subtotal * 0.08), ship=0, grand=subtotal+vat+ship;
+            document.getElementById('<%= lblSubtotal.ClientID %>').textContent    = fmt(subtotal);
+            document.getElementById('<%= lblVat.ClientID %>').textContent         = fmt(vat);
+            document.getElementById('<%= lblShipping.ClientID %>').textContent    = fmt(ship);
+            document.getElementById('<%= lblGrandTotal.ClientID %>').textContent = fmt(grand);
+            document.getElementById('<%= lblTotal.ClientID %>').textContent = fmt(subtotal);
+            document.getElementById('<%= lblSumItems.ClientID %>').textContent = String(sumItems);
+        }
+        window.__cartAfterMutate = () => { recalcTotals(); updateSelectAllUI(); syncSelectedHidden(); };
+
+        async function deleteLine(row, lineId) {
+            try {
+                const qtyBefore = Number(row.querySelector('.qty-num')?.textContent.trim() || '1') || 1;
+
+                let url = withAuthQuery(`${API}/api/cart/lines/${lineId}`);
+                let resp = await fetch(url, ensure({ method: 'DELETE' }));
+                let json = await safeJson(resp);
+
+                if (!resp.ok && json?.code === 'MISSING_USER_OR_DEVICE' && UUID) {
+                    url = `${API}/api/cart/lines/${lineId}?device_uuid=${encodeURIComponent(UUID)}`;
+                    resp = await fetch(url, ensure({ method: 'DELETE' }));
+                    json = await safeJson(resp);
+                }
+                if (!resp.ok) {
+                    if (json?.code === 'CART_LINE_NOT_FOUND') location.reload();
+                    console.error('Delete failed', json); return;
+                }
+
+                row.remove();
+
+                const remaining = document.querySelectorAll('.cart-item').length;
+                if (remaining === 0 && pnlEmptyEl) {
+                    pnlEmptyEl.style.display = 'block';
+                    if (!(json?.header?.item_Count != null)) {
+                        window.setCartBadge(0);
+                    }
+                }
+
+                if (json?.totals || json?.header) patchTotals(json);
+
+                if (json?.header?.item_Count != null) {
+                    window.setCartBadge(json.header.item_Count);
+                } else {
+                    bumpBadge(-qtyBefore);
+                }
+
+                recalcTotals(); updateSelectAllUI(); syncSelectedHidden();
+            } catch (err) { console.error(err); }
+        }
+
+        document.addEventListener('change', (e) => {
+            if (e.target.matches('.cart-item input[type="checkbox"]')) {
+                recalcTotals(); updateSelectAllUI(); syncSelectedHidden();
+            }
+            if (selectAll && e.target.id === '<%= chkSelectAll.ClientID %>') {
+                const checked = e.target.checked;
+                document.querySelectorAll('.cart-item input[type="checkbox"]').forEach(cb => cb.checked = checked);
+                selectAll.indeterminate = false;
+                recalcTotals(); syncSelectedHidden();
+            }
+        });
+
+        document.addEventListener('click', async (e) => {
+            const inc = e.target.closest('.qty-btn[data-inc]');
+            const dec = e.target.closest('.qty-btn[data-dec]');
+            const rm = e.target.closest('[data-remove]');
+            if (!inc && !dec && !rm) return;
+
+            const row = (inc || dec || rm).closest('.cart-item');
+            if (!row) return;
+
+            const lineId = Number(row.getAttribute('data-line-id'));
+            const price = Number(row.getAttribute('data-price')) || 0;
+
+            if (rm) { await deleteLine(row, lineId); return; }
+
+            const qtyEl = row.querySelector('.qty-num');
+            const qOld = Number(qtyEl.textContent.trim()) || 1;
+
+            if (dec && qOld <= 1) { await deleteLine(row, lineId); return; }
+
+            const q = inc ? qOld + 1 : Math.max(1, qOld - 1);
+            const delta = q - qOld;
+
+            qtyEl.textContent = q;
+            const totalEl = row.querySelector('.cart-item-total');
+            if (totalEl) totalEl.textContent = fmt(price * q);
+
+            try {
+                const url = withAuthQuery(`${API}/api/cart/lines/batch?compact=1`);
+                let body = USE_USER ? { changes: [{ line_id: lineId, quantity: q }] }
+                                    : { device_uuid: UUID || null, changes: [{ line_id: lineId, quantity: q }] };
+
+                let resp = await fetch(url, ensure({ method: 'PUT', body: JSON.stringify(body) }));
+                let json = await safeJson(resp);
+
+                if (!resp.ok && json?.code === 'MISSING_USER_OR_DEVICE' && UUID) {
+                    body = { device_uuid: UUID, changes: [{ line_id: lineId, quantity: q }] };
+                    resp = await fetch(`${API}/api/cart/lines/batch?compact=1`, ensure({ method: 'PUT', body: JSON.stringify(body) }));
+                    json = await safeJson(resp);
+                }
+                if (!resp.ok) {
+                    if (json?.code === 'CART_LINE_NOT_FOUND') location.reload();
+                    console.error('Update qty failed', json); return;
+                }
+
+                if (json?.totals || json?.header) patchTotals(json);
+
+                if (json?.header?.item_Count != null) {
+                    window.setCartBadge(json.header.item_Count);
+                } else if (delta !== 0) {
+                    bumpBadge(delta);
+                }
+
+                recalcTotals(); updateSelectAllUI(); syncSelectedHidden();
+            } catch (err) { console.error(err); }
+        });
+
+        window.addEventListener('DOMContentLoaded', () => {
+            const hasItems = document.querySelectorAll('.cart-item').length > 0;
+            if (pnlEmptyEl) pnlEmptyEl.style.display = hasItems ? 'none' : 'block';
+
+            var phone = document.getElementById('<%= txtPhone.ClientID %>');
+            if (phone) { phone.setAttribute('type', 'tel'); phone.setAttribute('inputmode', 'tel'); phone.setAttribute('autocomplete', 'tel'); }
+
+            if (selectAll) {
+                selectAll.checked = true;
+                document.querySelectorAll('.cart-item input[type="checkbox"]').forEach(cb => cb.checked = true);
+            }
             recalcTotals(); updateSelectAllUI(); syncSelectedHidden();
-        } catch(err){ console.error(err); }
-    }
 
-    /* Events */
-    document.addEventListener('change', (e)=>{
-        if (e.target.matches('.cart-item input[type="checkbox"]')){
-          recalcTotals(); updateSelectAllUI(); syncSelectedHidden();
-        }
-        if (selectAll && e.target.id === '<%= chkSelectAll.ClientID %>'){
-          const checked = e.target.checked;
-          document.querySelectorAll('.cart-item input[type="checkbox"]').forEach(cb=>cb.checked=checked);
-          selectAll.indeterminate = false;
-          recalcTotals(); syncSelectedHidden();
-        }
-    });
-
-    document.addEventListener('click', async (e)=>{
-        const inc = e.target.closest('.qty-btn[data-inc]');
-        const dec = e.target.closest('.qty-btn[data-dec]');
-        const rm  = e.target.closest('[data-remove]');
-        if (!inc && !dec && !rm) return;
-
-        const row = (inc || dec || rm).closest('.cart-item');
-        if (!row) return;
-
-        const lineId = Number(row.getAttribute('data-line-id'));
-        const price  = Number(row.getAttribute('data-price')) || 0;
-
-        if (rm){
-            await deleteLine(row, lineId);
-            return;
-        }
-
-        const qtyEl = row.querySelector('.qty-num');
-        const qOld  = Number(qtyEl.textContent.trim()) || 1;
-
-        // Nếu đang 1 và bấm Giảm -> XOÁ
-        if (dec && qOld <= 1) {
-            await deleteLine(row, lineId);
-            return;
-        }
-
-        const q     = inc ? qOld + 1 : Math.max(1, qOld - 1);
-        const delta = q - qOld;
-
-        // Optimistic UI
-        qtyEl.textContent = q;
-        const totalEl = row.querySelector('.cart-item-total');
-        if (totalEl) totalEl.textContent = fmt(price * q);
-
-        try{
-          const url  = withAuthQuery(`${API}/api/cart/lines/batch?compact=1`);
-          let body   = USE_USER ? { changes:[{ line_id: lineId, quantity: q }] }
-                                : { device_uuid: UUID || null, changes:[{ line_id: lineId, quantity: q }] };
-
-          let resp = await fetch(url, ensure({ method:'PUT', body: JSON.stringify(body) }));
-          let json = await safeJson(resp);
-
-          if (!resp.ok && json?.code === 'MISSING_USER_OR_DEVICE' && UUID){
-            body = { device_uuid: UUID, changes:[{ line_id: lineId, quantity: q }] };
-            resp = await fetch(`${API}/api/cart/lines/batch?compact=1`, ensure({ method:'PUT', body: JSON.stringify(body) }));
-            json = await safeJson(resp);
-          }
-          if (!resp.ok){
-            if (json?.code === 'CART_LINE_NOT_FOUND') location.reload();
-            console.error('Update qty failed', json); return;
-          }
-
-          if (json?.totals || json?.header) patchTotals(json);
-
-          if (json?.header?.item_Count != null){
-            window.setCartBadge(json.header.item_Count);
-          } else if (delta !== 0){
-            bumpBadge(delta);
-          }
-
-          recalcTotals(); updateSelectAllUI(); syncSelectedHidden();
-        } catch(err){ console.error(err); }
-    });
-
-    window.addEventListener('DOMContentLoaded', ()=>{
-        // Nếu server đã render panel "trống" (style=block) thì thôi;
-        // ngược lại, khi có item thì đảm bảo panel đang ẩn.
-        const hasItems = document.querySelectorAll('.cart-item').length > 0;
-        if (pnlEmptyEl) pnlEmptyEl.style.display = hasItems ? 'none' : 'block';
-
-        var phone = document.getElementById('<%= txtPhone.ClientID %>');
-        if (phone) { phone.setAttribute('type', 'tel'); phone.setAttribute('inputmode', 'tel'); phone.setAttribute('autocomplete', 'tel'); }
-
-        if (selectAll) {
-            selectAll.checked = true;
-            document.querySelectorAll('.cart-item input[type="checkbox"]').forEach(cb => cb.checked = true);
-        }
-        recalcTotals(); updateSelectAllUI(); syncSelectedHidden();
-
-        try { window.refreshCartCount(); } catch { }
-    });
-    })();
-</script>
+            try { window.refreshCartCount(); } catch { }
+        });
+        })();
+    </script>
 
 </form>
 </body>

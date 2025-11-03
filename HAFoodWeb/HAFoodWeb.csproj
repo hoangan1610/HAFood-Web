@@ -158,6 +158,7 @@
     <Content Include="AuthPage\OTPForgotPassword.aspx" />
     <Content Include="AuthPage\Register.aspx" />
     <Content Include="AuthPage\ResetPassword.aspx" />
+    <Content Include="CartPage\AddressSelect.aspx" />
     <Content Include="CartPage\CartPage.aspx" />
     <Content Include="CartPage\CartItem.ascx" />
     <Content Include="CartPage\CheckoutConfirm.aspx" />
@@ -289,6 +290,9 @@
     <Content Include="Scripts\WebForms\WebParts.js" />
     <Content Include="Scripts\WebForms\WebUIValidation.js" />
     <Content Include="Site.Master" />
+    <Content Include="UserAddress\CreateUserAddress.aspx" />
+    <Content Include="UserAddress\UpdateUserAddress.aspx" />
+    <Content Include="UserAddress\UserAddressList.aspx" />
     <Content Include="UserInfo\ChangePassword.aspx" />
     <Content Include="UserInfo\UserDetail.aspx" />
     <Content Include="UserInfo\UserProfile.aspx" />
@@ -354,6 +358,13 @@
       <DependentUpon>ResetPassword.aspx</DependentUpon>
     </Compile>
     <Compile Include="BLL\UserBLL.cs" />
+    <Compile Include="CartPage\AddressSelect.aspx.cs">
+      <DependentUpon>AddressSelect.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="CartPage\AddressSelect.aspx.designer.cs">
+      <DependentUpon>AddressSelect.aspx</DependentUpon>
+    </Compile>
     <Compile Include="CartPage\CartPage.aspx.cs">
       <DependentUpon>CartPage.aspx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>
@@ -436,6 +447,7 @@
     </Compile>
     <Compile Include="Infrastructure\AppCache.cs" />
     <Compile Include="Infrastructure\HttpJson.cs" />
+    <Compile Include="Models\AddressDto.cs" />
     <Compile Include="Models\CartHeaderDto.cs" />
     <Compile Include="Models\CartItemDto.cs" />
     <Compile Include="Models\CartRequest.cs" />
@@ -473,8 +485,10 @@
     <Compile Include="Proxy\Suggest.ashx.cs">
       <DependentUpon>Suggest.ashx</DependentUpon>
     </Compile>
+    <Compile Include="Services\AddressService.cs" />
     <Compile Include="Services\CartService.cs" />
     <Compile Include="Services\CategoryService.cs" />
+    <Compile Include="Services\IAddressService.cs" />
     <Compile Include="Services\ICartService.cs" />
     <Compile Include="Services\IOrderService.cs" />
     <Compile Include="Services\IProductDetailService.cs" />
@@ -501,6 +515,27 @@
     </Compile>
     <Compile Include="Site.Mobile.Master.designer.cs">
       <DependentUpon>Site.Mobile.Master</DependentUpon>
+    </Compile>
+    <Compile Include="UserAddress\CreateUserAddress.aspx.cs">
+      <DependentUpon>CreateUserAddress.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="UserAddress\CreateUserAddress.aspx.designer.cs">
+      <DependentUpon>CreateUserAddress.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="UserAddress\UpdateUserAddress.aspx.cs">
+      <DependentUpon>UpdateUserAddress.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="UserAddress\UpdateUserAddress.aspx.designer.cs">
+      <DependentUpon>UpdateUserAddress.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="UserAddress\UserAddressList.aspx.cs">
+      <DependentUpon>UserAddressList.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="UserAddress\UserAddressList.aspx.designer.cs">
+      <DependentUpon>UserAddressList.aspx</DependentUpon>
     </Compile>
     <Compile Include="UserInfo\ChangePassword.aspx.cs">
       <DependentUpon>ChangePassword.aspx</DependentUpon>

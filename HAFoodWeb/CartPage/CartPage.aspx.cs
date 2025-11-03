@@ -18,6 +18,9 @@ namespace HAFoodWeb
         private readonly ICartService _cartService = new CartService();
         private const decimal VAT_RATE = 0.08m;
 
+        // Giữ địa chỉ hiện tại để render session
+        protected AddressDto CurrentAddress;
+
         public class CheckoutDraftItem
         {
             public long VariantId { get; set; }
@@ -60,7 +63,6 @@ namespace HAFoodWeb
             var tracker = new DeviceTracker(Request, Response);
             var deviceUuid = tracker.GetOrCreateDeviceUuid();
             hidDeviceUuid.Value = deviceUuid;
-
             await tracker.SendAsync(null);
 
             hidIsAuth.Value = IsLoggedIn() ? "1" : "0";
@@ -74,24 +76,108 @@ namespace HAFoodWeb
             }
 
             if (!IsPostBack)
+            {
+                // Ưu tiên địa chỉ chọn ở AddressSelect
+                var chosen = Session["selected_address_obj"] as AddressDto;
+                if (chosen != null)
+                {
+                    CurrentAddress = chosen;
+                    ApplyAddressToForm(chosen);
+                }
+                else if (IsLoggedIn())
+                {
+                    try
+                    {
+                        var token = Request.Cookies["AuthToken"]?.Value;
+                        var list = await new AddressService().GetMyAddressesAsync(token, onlyActive: true);
+                        var def = list?.FirstOrDefault(x => x.isDefault) ?? list?.FirstOrDefault();
+                        if (def != null)
+                        {
+                            CurrentAddress = def;
+                            ApplyAddressToForm(def);
+                        }
+                    }
+                    catch { /* ignore */ }
+                }
+
+                SetupAddressSessionUI();
                 await BindCart();
+            }
         }
+
+        /* ===== Helpers cho địa chỉ ===== */
+
+        private static void SplitFullAddress(string full, out string street, out string ward, out string city)
+        {
+            street = ward = city = "";
+            var parts = (full ?? "").Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+            for (int i = 0; i < parts.Length; i++) parts[i] = parts[i].Trim();
+
+            if (parts.Length == 1) { street = parts[0]; return; }
+            if (parts.Length == 2) { street = parts[0]; ward = parts[1]; return; }
+
+            city = parts[parts.Length - 1];
+
+            if (parts.Length >= 4)
+            {
+                // Dữ liệu cũ: street, ward, district, city
+                ward = parts[parts.Length - 3];
+                street = string.Join(", ", parts, 0, parts.Length - 3);
+            }
+            else
+            {
+                // Dữ liệu mới: street, ward, city
+                ward = parts[1];
+                street = parts[0];
+            }
+        }
+
+        private void ApplyAddressToForm(AddressDto a)
+        {
+            if (a == null) return;
+            SplitFullAddress(a.fullAddress, out var street, out var ward, out var city);
+
+            txtAddress.Text = street ?? "";
+            txtReceiver.Text = a.fullName ?? "";
+            txtPhone.Text = a.phone ?? "";
+
+            // Mirror cho validators/combos (JS sẽ gán code lại sau)
+            txtCitySel.Text = city ?? "";
+            txtWardSel.Text = ward ?? "";
+            txtCityCode.Text = "";
+            txtWardCode.Text = "";
+        }
+
+        private void SetupAddressSessionUI()
+        {
+            if (CurrentAddress != null)
+            {
+                pnlAddrSession.Visible = true;
+                pnlNoAddr.Visible = false;
+                lblAddrName.Text = CurrentAddress.fullName ?? "";
+                lblAddrPhone.Text = CurrentAddress.phone ?? "";
+                lblAddrDetail.Text = CurrentAddress.fullAddress ?? "";
+            }
+            else
+            {
+                pnlAddrSession.Visible = false;
+                pnlNoAddr.Visible = true;
+            }
+        }
+
+        /* ===== Cart binding / logic ===== */
 
         private async Task BindCart()
         {
             var tracker = new DeviceTracker(Request, Response);
             string deviceUuid = tracker.GetOrCreateDeviceUuid();
-
             var cart = await _cartService.GetCartAsync(deviceUuid);
 
-            // Luôn render pnlEmpty; chỉ điều khiển display qua CSS
             if (cart?.items == null || !cart.items.Any())
             {
-                // Ẩn danh sách (không có item nào để bind); panel trống sẽ mở ở client onload
                 rptCart.DataSource = Enumerable.Empty<CartItemDto>();
                 rptCart.DataBind();
 
-                // Bật panel trống ngay từ server (để FOUC ít hơn)
                 pnlEmpty.Style["display"] = "block";
 
                 lblTotal.Text = "0 ₫";
@@ -105,11 +191,9 @@ namespace HAFoodWeb
             else
             {
                 pnlEmpty.Style["display"] = "none";
-
                 rptCart.DataSource = cart.items;
                 rptCart.DataBind();
 
-                // set tổng lần đầu (client sẽ tự recalc sau)
                 SelectAllCartItems(true);
                 UpdateTotalsPanel();
             }
@@ -209,26 +293,24 @@ namespace HAFoodWeb
             s = Regex.Replace(s, @"[\s\.\-]", "");
             s = Regex.Replace(s, @"^\+840", "+84");
             args.IsValid = Regex.IsMatch(s, @"^(0\d{9}|\+84\d{9})$");
-            if (args.IsValid)
-            {
-                txtPhone.Text = s;
-            }
+            if (args.IsValid) txtPhone.Text = s;
         }
 
+        // RÀNG BUỘC: phải có CityCode/WardCode
         protected void cvCity_ServerValidate(object source, ServerValidateEventArgs args)
         {
-            args.IsValid = !string.IsNullOrWhiteSpace(txtCitySel.Text);
+            args.IsValid = !string.IsNullOrWhiteSpace(txtCityCode.Text);
         }
         protected void cvWard_ServerValidate(object source, ServerValidateEventArgs args)
         {
-            args.IsValid = !string.IsNullOrWhiteSpace(txtWardSel.Text);
+            args.IsValid = !string.IsNullOrWhiteSpace(txtWardCode.Text);
         }
 
         protected async void btnCheckout_Click(object sender, EventArgs e)
         {
-            if (string.IsNullOrWhiteSpace(txtCitySel.Text) || string.IsNullOrWhiteSpace(txtWardSel.Text))
+            if (string.IsNullOrWhiteSpace(txtCityCode.Text) || string.IsNullOrWhiteSpace(txtWardCode.Text))
             {
-                AddPageError("Vui lòng chọn Tỉnh/Thành và Xã/Phường.");
+                AddPageError("Vui lòng chọn Tỉnh/Thành và Xã/Phường từ danh sách.");
                 return;
             }
             if (!Page.IsValid) return;
