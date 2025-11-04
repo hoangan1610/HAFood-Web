@@ -4,44 +4,29 @@
 
 <style>
     /* ===== Footer gốc ===== */
-    .footer-container {
-        background-color: #1a1a1a;
-        color: #ffffff;
-        padding: 60px 0 20px;
-        margin-top: 80px;
-    }
+    .footer-container { background-color: #1a1a1a; color: #ffffff; padding: 60px 0 20px; margin-top: 80px; }
     .footer-logo { max-width: 120px; margin: 0 auto 30px; display: block; border-radius: 40%; }
     .footer-section h5 { font-size: 18px; font-weight: 600; margin-bottom: 25px; color: #ffffff; }
     .footer-links { list-style: none; padding: 0; margin: 0; }
     .footer-links li { margin-bottom: 12px; }
     .footer-links a { color: #b0b0b0; text-decoration: none; font-size: 14px; transition: color 0.3s ease; }
     .footer-links a:hover { color: #8bc34a; }
-    .footer-contact-info p {
-        color: #b0b0b0; font-size: 14px; margin-bottom: 15px;
-        display: flex; align-items: flex-start; gap: 10px; justify-content: center;
-    }
+    .footer-contact-info p { color: #b0b0b0; font-size: 14px; margin-bottom: 15px; display: flex; align-items: flex-start; gap: 10px; justify-content: center; }
     .footer-contact-info i { color: #8bc34a; margin-top: 3px; font-size: 16px; }
     .social-links { display: flex; gap: 15px; margin-top: 20px; }
-    .social-links a {
-        width: 40px; height: 40px; background-color: #2a2a2a; border-radius: 50%;
-        display: flex; align-items: center; justify-content: center; color: #ffffff; font-size: 18px;
-        transition: all 0.3s ease;
-    }
+    .social-links a { width: 40px; height: 40px; background-color: #2a2a2a; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #ffffff; font-size: 18px; transition: all 0.3s ease; }
     .social-links a:hover { background-color: #8bc34a; transform: translateY(-3px); color: #ffffff; }
     .footer-bottom { border-top: 1px solid #333; margin-top: 40px; padding-top: 25px; text-align: center; color: #888; font-size: 14px; }
 
-    /* ===== Nút về đầu trang (đẩy lên để Chat nằm phía dưới) ===== */
-    .back-to-top {
-        position: fixed; bottom: 95px; right: 30px; width: 50px; height: 50px; background-color: #8bc34a;
+    /* ===== Nút về đầu trang ===== */
+    .back-to-top { position: fixed; bottom: 95px; right: 30px; width: 50px; height: 50px; background-color: #8bc34a;
         border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #ffffff;
         font-size: 24px; cursor: pointer; transition: all 0.3s ease; opacity: 0; visibility: hidden; z-index: 1000;
-        box-shadow: 0 4px 12px rgba(139, 195, 74, 0.4);
-    }
+        box-shadow: 0 4px 12px rgba(139, 195, 74, 0.4); }
     .back-to-top.show { opacity: 1; visibility: visible; }
     .back-to-top:hover { background-color: #7cb342; transform: translateY(-5px); box-shadow: 0 6px 16px rgba(139, 195, 74, 0.5); }
 
-    /* ===== CHAT WIDGET (UI ONLY) ===== */
-    /* Nút mở Chat */
+    /* ===== CHAT WIDGET ===== */
     .haf-chat-launcher{
         position: fixed; right: 30px; bottom: 30px;
         display: inline-flex; align-items: center; gap: 10px;
@@ -54,68 +39,102 @@
     .haf-chat-launcher:hover{ transform: translateY(-2px); box-shadow: 0 14px 32px rgba(0,0,0,.3); background:#111827; }
     .haf-chat-badge{ display:inline-block; min-width: 8px; height: 8px; background:#10b981; border-radius:999px; }
 
-    /* Panel chat */
+    /* Panel CHẶT KÍCH THƯỚC NHẤT QUÁN: dùng flex + height cố định */
     .haf-chat-panel{
-        position: fixed; right: 30px; bottom: 90px; /* nằm phía trên nút Chat */
-        width: 360px; max-width: calc(100vw - 40px);
+        position: fixed; right: 30px; bottom: 100px;
+        width: 430px; max-width: calc(100vw - 40px);      /* rộng cố định */
+        height: 70vh; min-height: 420px;                   /* cao cố định */
+        display: flex; flex-direction: column;             /* flex layout */
         background: #0f172a; border-radius: 16px; overflow: hidden;
         box-shadow: 0 30px 70px rgba(0,0,0,.45); z-index: 1002;
-
         opacity: 0; visibility: hidden; transform: translateY(12px);
         transition: opacity .18s ease, transform .18s ease, visibility .18s ease;
+        box-sizing: border-box;
     }
     .haf-chat-panel.is-open{ opacity:1; visibility:visible; transform: translateY(0); }
 
     .haf-chat-header{
+        flex: 0 0 auto;
         padding: 14px 16px; background:#0b1220; color:#fff;
         display:flex; align-items:center; justify-content:space-between; gap:8px;
         border-bottom: 1px solid rgba(255,255,255,.06);
     }
     .haf-chat-header .title{ display:flex; align-items:center; gap:8px; font-weight:700; }
-    .haf-chat-close{
-        background: transparent; border:0; color:#cbd5e1; cursor:pointer; padding:6px;
-    }
+    .haf-chat-close{ background: transparent; border:0; color:#cbd5e1; cursor:pointer; padding:6px; }
     .haf-chat-close:hover{ color:#fff; }
 
     .haf-chat-body{
-        background:#111827; color:#e5e7eb; padding: 16px; max-height: 55vh; overflow:auto;
+        flex: 1 1 auto; min-height: 0;                    /* phần nội dung co giãn trong panel */
+        background:#111827; color:#e5e7eb; padding: 16px;
+        overflow-y: auto;
+        scrollbar-gutter: stable both-edges;              /* tránh co giãn khi xuất hiện scrollbar */
+        /* Scrollbar (Firefox) */
+        scrollbar-width: thin;
+        scrollbar-color: #263244 #0b1220;
     }
+    /* Scrollbar (WebKit) */
+    .haf-chat-body::-webkit-scrollbar{ width: 10px; }
+    .haf-chat-body::-webkit-scrollbar-track{ background: #0b1220; border-radius: 10px; }
+    .haf-chat-body::-webkit-scrollbar-thumb{ background:#263244; border-radius: 10px; border: 2px solid #0b1220; }
+    .haf-chat-body::-webkit-scrollbar-thumb:hover{ background:#2f4058; }
+    .haf-chat-body::-webkit-scrollbar-thumb:active{ background:#16a34a; }
+
+    .haf-msg { margin-bottom: 10px; display:flex; gap:8px; }
+    .haf-msg.user { justify-content: flex-end; }
+    .haf-msg .bubble{
+        max-width: 85%;
+        padding: 10px 12px; border-radius: 12px; line-height: 1.5;
+        border: 1px solid #263244; word-break: break-word;
+    }
+    .haf-msg.user .bubble { background:#22c55e; color:#0b1220; border-color:#16a34a; }
+    .haf-msg.bot  .bubble { background:#1f2937; color:#e5e7eb; }
+
     .haf-chat-card{
         background:#1f2937; border:1px solid #263244; color:#e5e7eb;
         border-radius: 14px; padding: 14px; line-height: 1.5;
     }
-    .haf-quick{ margin-top: 16px; font-size: 13px; color:#94a3b8; }
-    .haf-quick-btn{
-        margin-top: 8px; display:inline-flex; align-items:center; gap:8px;
-        background:#0b1220; color:#fff; border:1px solid #223049; border-radius: 10px;
-        padding: 10px 12px; cursor:pointer;
-    }
-    .haf-quick-btn:hover{ background:#0f172a; }
 
     .haf-chat-input{
-        display:flex; align-items:center; gap:8px; padding:12px; background:#0b1220; border-top:1px solid rgba(255,255,255,.06);
+        flex: 0 0 auto;
+        display:flex; align-items:center; gap:8px; padding:12px; background:#0b1220;
+        border-top:1px solid rgba(255,255,255,.06);
     }
-    .haf-chat-input input{
-        flex:1; height:42px; border-radius: 10px; border:1px solid #223049;
+    .haf-chat-input input[type="text"]{
+        flex:1; height:46px; border-radius: 10px; border:1px solid #223049;
         background:#111827; color:#e5e7eb; padding: 0 12px; outline: none;
     }
     .haf-chat-input input::placeholder{ color:#94a3b8; }
     .haf-chat-send{
-        width:42px; height:42px; border-radius: 10px; border:0; cursor:pointer;
+        width:46px; height:46px; border-radius: 10px; border:0; cursor:pointer;
         background:#22c55e; color:#0b1220; display:flex; align-items:center; justify-content:center; font-size:18px;
     }
     .haf-chat-send:hover{ filter: brightness(.95); }
 
-    /* Mobile */
-    @media (max-width: 768px) {
-        .footer-container { padding: 40px 0 20px; }
-        .footer-section { margin-bottom: 30px; }
-        .back-to-top { width: 45px; height: 45px; bottom: 80px; right: 20px; } /* đẩy lên để nhường chỗ cho Chat */
+    .haf-hint{ font-size:12px; color:#94a3b8; margin-top:6px; }
+    .haf-spinner{ display:inline-block; width:16px; height:16px; border:2px solid #93c5fd; border-top-color:transparent; border-radius:50%; animation:spin 1s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* --- Typing indicator: dấu ba chấm lượn sóng --- */
+    .typing { display:inline-flex; align-items:center; gap:6px; height: 16px; }
+    .typing .dot{ width:6px; height:6px; border-radius:50%; background:#cbd5e1; opacity:.6; animation: wave 1.2s infinite ease-in-out; }
+    .typing .dot:nth-child(2){ animation-delay:.15s; }
+    .typing .dot:nth-child(3){ animation-delay:.3s; }
+    @keyframes wave{
+        0%, 100%{ transform: translateY(0); opacity:.6; }
+        50%{ transform: translateY(-5px); opacity:1; }
     }
+
+    /* Mobile */
     @media (max-width: 480px){
-        .haf-chat-panel{ right: 10px; left: 10px; width: auto; bottom: 80px; }
+        .haf-chat-panel{
+            right: 10px; left: 10px; bottom: 80px;
+            width: auto; height: 70vh; min-height: 420px;
+        }
         .haf-chat-launcher{ right: 10px; bottom: 20px; }
         .back-to-top{ right: 10px; bottom: 80px; }
+    }
+    @media (min-width: 481px) and (max-width: 768px){
+        .haf-chat-panel{ width: 430px; height: 70vh; min-height: 420px; }
     }
 </style>
 
@@ -139,26 +158,13 @@
             <div class="col-lg-6 col-md-6 footer-section">
                 <img src="<%= ResolveUrl("~/images/HAFood_logo.png") %>" alt="Logo HAFood" class="footer-logo">
                 <div class="footer-contact-info" style="text-align: center;">
-                    <p>
-                        <i class="bi bi-geo-alt-fill" aria-hidden="true"></i>
-                        <span>Trường của tôi, 1 Võ Văn Ngân, Thủ Đức, TP. Hồ Chí Minh</span>
-                    </p>
-                    <p>
-                        <i class="bi bi-envelope-fill" aria-hidden="true"></i>
-                        <span>hafood123@gmail.com</span>
-                    </p>
-                    <p>
-                        <i class="bi bi-telephone-fill" aria-hidden="true"></i>
-                        <span>(+84) 123-456-789</span>
-                    </p>
+                    <p><i class="bi bi-geo-alt-fill" aria-hidden="true"></i><span>Trường của tôi, 1 Võ Văn Ngân, Thủ Đức, TP. Hồ Chí Minh</span></p>
+                    <p><i class="bi bi-envelope-fill" aria-hidden="true"></i><span>hafood123@gmail.com</span></p>
+                    <p><i class="bi bi-telephone-fill" aria-hidden="true"></i><span>(+84) 123-456-789</span></p>
                 </div>
                 <div class="social-links justify-content-center">
                     <a href="#" aria-label="X (Twitter)"><i class="bi bi-twitter-x"></i></a>
-                    <a href="https://www.facebook.com/vinhhung.tran.37454961"
-                       aria-label="Facebook của Trần Vĩnh Hùng"
-                       target="_blank" rel="noopener noreferrer">
-                        <i class="bi bi-facebook"></i>
-                    </a>
+                    <a href="https://www.facebook.com/vinhhung.tran.37454961" aria-label="Facebook của Trần Vĩnh Hùng" target="_blank" rel="noopener noreferrer"><i class="bi bi-facebook"></i></a>
                     <a href="#" aria-label="Pinterest"><i class="bi bi-pinterest"></i></a>
                     <a href="#" aria-label="Instagram"><i class="bi bi-instagram"></i></a>
                 </div>
@@ -181,38 +187,24 @@
         <div class="row">
             <div class="col-12">
                 <div class="footer-bottom">
-                    <p class="mb-0">
-                        Bản quyền © 2025 • Chủ đề: Veggie (Mật khẩu: 1) • Vận hành bởi Shopify
-                    </p>
+                    <p class="mb-0">Bản quyền © 2025 • Vận hành bởi HAFood</p>
                 </div>
             </div>
         </div>
     </div>
 </footer>
 
-<!-- Nút về đầu trang -->
 <div class="back-to-top" id="backToTop" onclick="scrollToTop()" title="Lên đầu trang" aria-label="Lên đầu trang">
     <i class="bi bi-chevron-up"></i>
 </div>
 
-<!-- Nút mở Chat -->
-<button id="hafChatLauncher"
-        class="haf-chat-launcher"
-        type="button"
-        aria-label="Mở cửa sổ chat"
-        aria-controls="hafChatPanel"
-        aria-expanded="false">
+<button id="hafChatLauncher" class="haf-chat-launcher" type="button" aria-label="Mở cửa sổ chat" aria-controls="hafChatPanel" aria-expanded="false">
     <i class="bi bi-chat-dots-fill" aria-hidden="true"></i>
     <span>Chat</span>
     <span class="haf-chat-badge" aria-hidden="true"></span>
 </button>
 
-<!-- Cửa sổ Chat (UI) -->
-<section id="hafChatPanel"
-         class="haf-chat-panel"
-         role="dialog"
-         aria-label="Hộp thoại Chat"
-         aria-modal="false">
+<section id="hafChatPanel" class="haf-chat-panel" role="dialog" aria-label="Hộp thoại Chat" aria-modal="false">
     <div class="haf-chat-header">
         <div class="title">
             <i class="bi bi-chat-dots-fill"></i>
@@ -222,55 +214,134 @@
             <i class="bi bi-x-lg" aria-hidden="true"></i>
         </button>
     </div>
-    <div class="haf-chat-body">
-        <div class="haf-chat-card">
+    <div class="haf-chat-body" id="hafChatBody">
+        <div class="haf-chat-card" id="hafWelcome">
             <div style="font-size:22px; margin-bottom:8px; font-weight:600">👋 Xin chào!</div>
-            <div>Hãy cho mình biết câu hỏi của bạn, hoặc mô tả bạn đang tìm gì để mình gợi ý.</div>
+            <div>Chào bạn, tôi là trợ lý CSKH cho HAFood. Tôi hỗ trợ tra cứu đơn, tìm sản phẩm và giải đáp thắc mắc. Bạn cần gì hôm nay?</div>
+            <div class="haf-hint">Bạn có thể đặt câu hỏi bất kỳ về sản phẩm hoặc đơn hàng.</div>
         </div>
-
-        <div class="haf-quick">Câu trả lời nhanh</div>
-        <button class="haf-quick-btn" type="button">
-            <i class="bi bi-truck" aria-hidden="true"></i> Theo dõi đơn hàng
-        </button>
     </div>
     <div class="haf-chat-input">
-        <input type="text" placeholder="Viết tin nhắn" aria-label="Ô nhập tin nhắn">
-        <button class="haf-chat-send" type="button" aria-label="Gửi">
+        <input type="text" id="hafInput" placeholder="Viết tin nhắn" aria-label="Ô nhập tin nhắn">
+        <button class="haf-chat-send" id="hafSendBtn" type="button" aria-label="Gửi">
             <i class="bi bi-send-fill" aria-hidden="true"></i>
         </button>
     </div>
 </section>
 
 <script>
-    // Hiện/ẩn nút Lên đầu trang
+    const CHAT_PROXY = '<%= ResolveUrl("~/Proxy/ChatProxy.ashx") %>';
+
+    // Back to top
     window.addEventListener('scroll', function () {
         var backToTop = document.getElementById('backToTop');
-        if (window.pageYOffset > 300) backToTop.classList.add('show');
-        else backToTop.classList.remove('show');
+        if (window.pageYOffset > 300) backToTop.classList.add('show'); else backToTop.classList.remove('show');
     });
+    function scrollToTop() { window.scrollTo({ top: 0, behavior: 'smooth' }); }
 
-    // Cuộn mượt lên đầu trang
-    function scrollToTop() {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+    // Helpers
+    function escapeHtml(str) {
+        return (str || '').replace(/[&<>"'`=\/]/g, function (s) {
+            return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;', '/': '&#x2F;', '`': '&#x60;', '=': '&#x3D;' })[s];
+        });
+    }
+    function appendMsg(role, html) {
+        const body = document.getElementById('hafChatBody');
+        const wrap = document.createElement('div');
+        wrap.className = 'haf-msg ' + role;
+        const bubble = document.createElement('div');
+        bubble.className = 'bubble';
+        bubble.innerHTML = html;
+        wrap.appendChild(bubble);
+        body.appendChild(wrap);
+        body.scrollTop = body.scrollHeight;
+        return wrap;
+    }
+    function spinnerHtml() { return '<span class="haf-spinner" aria-hidden="true"></span>'; }
+
+    // Typing indicator
+    let typingNode = null;
+    function showTyping() {
+        if (typingNode) return;
+        typingNode = appendMsg('bot', '<span class="typing" aria-label="Đang soạn..."><span class="dot"></span><span class="dot"></span><span class="dot"></span></span>');
+    }
+    function hideTyping() {
+        if (typingNode && typingNode.parentNode) typingNode.parentNode.removeChild(typingNode);
+        typingNode = null;
     }
 
-    // Toggle mở/đóng panel Chat
+    // fetch with timeout
+    function fetchWithTimeout(resource, options = {}) {
+        const { timeout = 20000 } = options;
+        const controller = new AbortController();
+        const id = setTimeout(() => controller.abort(), timeout);
+        return fetch(resource, { ...options, signal: controller.signal })
+            .finally(() => clearTimeout(id));
+    }
+
+    async function askChat(message) {
+        const resp = await fetchWithTimeout(CHAT_PROXY + '?action=ask', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify({ message: message || '' }),
+            cache: 'no-store',
+            timeout: 20000
+        });
+        const data = await resp.json();
+        if (!resp.ok || !data.Success) throw new Error(data.Message || ('HTTP ' + resp.status));
+        return data.Reply || data.Message || '';
+    }
+
     (function () {
         const launcher = document.getElementById('hafChatLauncher');
         const panel = document.getElementById('hafChatPanel');
         const closeBtn = document.getElementById('hafChatClose');
+        const input = document.getElementById('hafInput');
+        const sendBtn = document.getElementById('hafSendBtn');
 
         function setOpen(isOpen) {
             panel.classList.toggle('is-open', isOpen);
             launcher.setAttribute('aria-expanded', String(isOpen));
+            if (isOpen) {
+                input.focus();
+                // đảm bảo luôn cuộn tới đáy khi mở
+                const body = document.getElementById('hafChatBody');
+                body.scrollTop = body.scrollHeight;
+            }
         }
 
         launcher.addEventListener('click', () => setOpen(!panel.classList.contains('is-open')));
         closeBtn.addEventListener('click', () => setOpen(false));
+        document.addEventListener('keydown', (e) => { if (e.key === 'Escape') setOpen(false); });
 
-        // Đóng bằng phím ESC
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') setOpen(false);
+        // Gửi text—KHÔNG xoá thẻ chào
+        sendBtn.addEventListener('click', async () => {
+            const text = input.value.trim();
+            if (!text) return;
+
+            appendMsg('user', escapeHtml(text));
+            input.value = '';
+            sendBtn.disabled = true; sendBtn.innerHTML = spinnerHtml();
+
+            try {
+                showTyping();
+                const reply = await askChat(text);
+                hideTyping();
+                appendMsg('bot', escapeHtml(reply));
+            } catch (err) {
+                hideTyping();
+                appendMsg('bot', '❌ ' + escapeHtml(err.message || 'Gửi chat thất bại'));
+            } finally {
+                sendBtn.disabled = false; sendBtn.innerHTML = '<i class="bi bi-send-fill" aria-hidden="true"></i>';
+            }
+        });
+
+        // Enter để gửi
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendBtn.click();
+            }
         });
     })();
 </script>
