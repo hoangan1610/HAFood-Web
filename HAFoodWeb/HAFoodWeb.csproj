@@ -261,6 +261,7 @@
     <Content Include="assets\vn-admin\wards\tp-ho-chi-minh.json" />
     <Content Include="assets\vn-admin\wards\tuyen-quang.json" />
     <Content Include="assets\vn-admin\wards\vinh-long.json" />
+    <Content Include="Proxy\ChatProxy.ashx" />
     <None Include="Scripts\jquery-3.7.0.intellisense.js" />
     <Content Include="Scripts\jquery-3.7.0.js" />
     <Content Include="Scripts\jquery-3.7.0.min.js" />
@@ -453,6 +454,7 @@
     <Compile Include="Models\CartRequest.cs" />
     <Compile Include="Models\CartResponseDto.cs" />
     <Compile Include="Models\CategoryTreeDto.cs" />
+    <Compile Include="Models\ChatDto.cs" />
     <Compile Include="Models\OrderDetailDto.cs" />
     <Compile Include="Models\OrderHeaderDto.cs" />
     <Compile Include="Models\OrderItemDto.cs" />
@@ -482,14 +484,19 @@
       <DependentUpon>Product.aspx</DependentUpon>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Proxy\ChatProxy.ashx.cs">
+      <DependentUpon>ChatProxy.ashx</DependentUpon>
+    </Compile>
     <Compile Include="Proxy\Suggest.ashx.cs">
       <DependentUpon>Suggest.ashx</DependentUpon>
     </Compile>
     <Compile Include="Services\AddressService.cs" />
     <Compile Include="Services\CartService.cs" />
     <Compile Include="Services\CategoryService.cs" />
+    <Compile Include="Services\ChatService.cs" />
     <Compile Include="Services\IAddressService.cs" />
     <Compile Include="Services\ICartService.cs" />
+    <Compile Include="Services\IChatService.cs" />
     <Compile Include="Services\IOrderService.cs" />
     <Compile Include="Services\IProductDetailService.cs" />
     <Compile Include="Services\ISearchService.cs" />
