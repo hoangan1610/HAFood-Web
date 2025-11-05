@@ -67,21 +67,39 @@
         .addr-chevron{color:#9ca3af}
 
         /* ===== Modal popup ===== */
-        .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;z-index:2000}
-        .modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:2001}
-        .modal.open, .modal-backdrop.open{display:flex}
-        .modal-card{width:min(1000px,96vw);height:min(680px,92vh);background:#fff;border-radius:16px;box-shadow:0 20px 50px rgba(0,0,0,.25);display:flex;flex-direction:column;overflow:hidden}
+        .modal-backdrop{
+          position:fixed; inset:0;
+          background: rgba(0,0,0,.38) !important; 
+          -webkit-backdrop-filter: none !important;
+          backdrop-filter: none !important;        
+          display:none; z-index:2000;
+        }
+        .modal{
+          position:fixed; inset:0;
+          display:none; align-items:center; justify-content:center;
+          z-index:2001;
+        }
+        .modal.open, .modal-backdrop.open{ display:flex; }
+
+        .modal-card{
+          width:min(1000px,96vw);
+          height:min(680px,92vh);
+          background:#fff; border-radius:16px;
+          box-shadow:0 20px 50px rgba(0,0,0,.25);
+          display:flex; flex-direction:column; overflow:hidden;
+        }
         .modal-head{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--border)}
         .modal-title{font-weight:700}
         .modal-close{background:transparent;border:0;font-size:22px;cursor:pointer;line-height:1}
         .modal-body{flex:1 1 auto}
         .modal-body iframe{width:100%;height:100%;border:0}
+
     </style>
 </head>
 
 <body>
 <form id="form1" runat="server">
-    <asp:ScriptManager ID="sm" runat="server" EnablePartialRendering="true" EnablePageMethods="true" /> <!-- bật PageMethods -->
+    <asp:ScriptManager ID="sm" runat="server" EnablePartialRendering="true" EnablePageMethods="true" />
     <uc:Header ID="Header1" runat="server" />
 
     <!-- Flags/params cho JS -->
@@ -269,7 +287,7 @@
         function validatePhone(sender, args) { const s = normalizePhone(args.Value); args.IsValid = /^(0\d{9}|\+84\d{9})$/.test(s); }
     </script>
 
-    <!-- Combobox searchable + expose cityWardAPI -->
+    <!-- Combobox searchable + expose cityWardAPI (CÓ PROMISE) -->
     <script>
         (function () {
             const DATA_BASE = '<%= ResolveClientUrl("~/assets/vn-admin") %>';
@@ -282,10 +300,7 @@
             const hidCityCode = document.getElementById('<%= txtCityCode.ClientID %>');
             const hidWardCode = document.getElementById('<%= txtWardCode.ClientID %>');
 
-            const rm = (s) => (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-                .replace(/đ/g, 'd').replace(/Đ/g, 'D')
-                .replace(/\s+/g, ' ').trim().toLowerCase();
-
+            const rm = (s) => (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').replace(/\s+/g, ' ').trim().toLowerCase();
             const baseCity = s => rm(String(s || '').replace(/^(tinh|thanh pho|tp\.?|tp)\s*/i, ''));
             const baseWard = s => rm(String(s || '')
                 .replace(/^(phường|xã|thị\s*trấn|p\.|x\.|tt\.)\s*/i, '')
@@ -300,225 +315,141 @@
                 el.innerHTML = '<div class="combo-input" role="combobox" aria-expanded="false">'
                     + '  <input type="text" class="combo-text" placeholder="' + placeholder + '"/>'
                     + '  <i class="bi bi-chevron-down combo-caret"></i>'
-                    + '</div>'
-                    + '<div class="combo-menu"></div>';
-
-                const input = el.querySelector('.combo-text');
-                const menu = el.querySelector('.combo-menu');
+                    + '</div><div class="combo-menu"></div>';
+                const input = el.querySelector('.combo-text'); const menu = el.querySelector('.combo-menu');
                 let all = []; let open = false;
-
-                function render(list) {
-                    menu.innerHTML = '';
-                    for (const opt of list) {
-                        const div = document.createElement('div');
-                        div.className = 'combo-item';
-                        div.textContent = opt.label;
-                        div.dataset.value = opt.value;
-                        div.addEventListener('mousedown', function () { pick(opt); });
-                        menu.appendChild(div);
-                    }
-                }
+                function render(list) { menu.innerHTML = ''; for (const opt of list) { const div = document.createElement('div'); div.className = 'combo-item'; div.textContent = opt.label; div.dataset.value = opt.value; div.addEventListener('mousedown', () => pick(opt)); menu.appendChild(div); } }
                 function openMenu() { if (open) return; el.classList.add('open'); open = true; }
                 function closeMenu() { if (!open) return; el.classList.remove('open'); open = false; }
-                function filter() {
-                    const q = rm(input.value);
-                    const filtered = !q ? all : all.filter(o => rm(o.label).includes(q));
-                    render(filtered); openMenu();
-                }
-                function pick(opt) {
-                    input.value = opt.label;
-                    el.dataset.value = opt.value;
-                    closeMenu();
-                    el.dispatchEvent(new CustomEvent('combochange', { detail: opt }));
-                }
-
+                function filter() { const q = rm(input.value); render(!q ? all : all.filter(o => rm(o.label).includes(q))); openMenu(); }
+                function pick(opt) { input.value = opt.label; el.dataset.value = opt.value; closeMenu(); el.dispatchEvent(new CustomEvent('combochange', { detail: opt })); }
                 input.addEventListener('input', () => { el.dataset.value = ''; filter(); });
-                input.addEventListener('keydown', (e) => {
-                    if (e.key === 'ArrowDown') { openMenu(); e.preventDefault(); }
-                    if (e.key === 'Escape') { closeMenu(); }
-                    if (e.key === 'Enter') {
-                        const first = menu.querySelector('.combo-item');
-                        if (first) { first.dispatchEvent(new MouseEvent('mousedown')); e.preventDefault(); }
-                    }
-                });
-                el.addEventListener('click', () => { filter(); input.focus(); });
-                document.addEventListener('click', (e) => { if (!el.contains(e.target)) closeMenu(); });
-
-                return {
-                    setData(arr) { all = arr || []; render(all); },
-                    setSelected(val, label) { el.dataset.value = val || ''; input.value = label || ''; },
-                    get value() { return el.dataset.value || ''; },
-                    get label() { return input.value || ''; },
-                    clear() { this.setSelected('', ''); }
-                };
+                input.addEventListener('keydown', (e) => { if (e.key === 'ArrowDown') { openMenu(); e.preventDefault(); } if (e.key === 'Escape') { closeMenu(); } if (e.key === 'Enter') { const first = menu.querySelector('.combo-item'); if (first) { first.dispatchEvent(new MouseEvent('mousedown')); e.preventDefault(); } } });
+                el.addEventListener('click', () => { filter(); input.focus(); }); document.addEventListener('click', (e) => { if (!el.contains(e.target)) closeMenu(); });
+                return { setData(arr) { all = arr || []; render(all); }, setSelected(val, label) { el.dataset.value = val || ''; input.value = label || ''; }, get value() { return el.dataset.value || ''; }, get label() { return input.value || ''; }, clear() { this.setSelected('', ''); } };
             }
 
             const cityCombo = createCombo(cityBox, '— Chọn Tỉnh/Thành —');
             const wardCombo = createCombo(wardBox, '— Chọn Xã/Phường —');
 
-            function extractWardNumber(base) {
-                const m = (base || '').match(/\b(\d{1,3})\b/);
-                return m ? m[1] : null;
-            }
+            function extractWardNumber(base) { const m = (base || '').match(/\b(\d{1,3})\b/); return m ? m[1] : null; }
             function findWardMatch(name, wards) {
                 if (!name || !wards || !wards.length) return null;
-                const tgt = baseWard(name);
-                if (!tgt) return null;
-
-                let w = wards.find(x => baseWard(x.name) === tgt);
-                if (w) return w;
-
-                w = wards.find(x => {
-                    const bx = baseWard(x.name);
-                    return bx.includes(tgt) || tgt.includes(bx);
-                });
-                if (w) return w;
-
-                const num = extractWardNumber(tgt);
-                if (num) {
-                    const re = new RegExp(`\\b${num}\\b`);
-                    w = wards.find(x => re.test(baseWard(x.name)));
-                    if (w) return w;
-                }
-
-                w = wards.find(x => {
-                    const bx = baseWard(x.name);
-                    return bx.startsWith(tgt) || tgt.startsWith(bx) || bx.endsWith(tgt) || tgt.endsWith(bx);
-                });
-                if (w) return w;
-
-                return null;
+                const tgt = baseWard(name); if (!tgt) return null;
+                let w = wards.find(x => baseWard(x.name) === tgt); if (w) return w;
+                w = wards.find(x => { const bx = baseWard(x.name); return bx.includes(tgt) || tgt.includes(bx); }); if (w) return w;
+                const num = extractWardNumber(tgt); if (num) { const re = new RegExp(`\\b${num}\\b`); w = wards.find(x => re.test(baseWard(x.name))); if (w) return w; }
+                w = wards.find(x => { const bx = baseWard(x.name); return bx.startsWith(tgt) || tgt.startsWith(bx) || bx.endsWith(tgt) || tgt.endsWith(bx); });
+                return w || null;
             }
 
-            let provinces = [];
-            let wardsOfCurrent = [];
+            let provinces = []; let wardsOfCurrent = [];
 
-            fetch(DATA_BASE + '/provinces.json', { cache: 'force-cache' })
-                .then(r => r.json())
-                .then(list => {
-                    provinces = list || [];
-                    cityCombo && cityCombo.setData(provinces.map(p => ({ value: String(p.code), label: p.name, raw: p })));
+            /* === Ready promises === */
+            let provincesReadyResolve; const provincesReady = new Promise(r => provincesReadyResolve = r);
+            let wardsReadyResolve; let wardsReady = Promise.resolve();
 
-                    let p = null;
-                    if (hidCityCode.value) {
-                        p = provinces.find(x => String(x.code) === hidCityCode.value);
-                    }
-                    if (!p && hidCityName.value) {
-                        p = provinces.find(x => baseCity(x.name) === baseCity(hidCityName.value));
-                    }
-                    if (p) setCity(p);
-                    else {
-                        cityCombo && cityCombo.setSelected('', hidCityName.value || '');
-                        prefillWardText();
-                    }
-                });
-
-            function prefillWardText() {
-                wardCombo && wardCombo.setSelected('', hidWardName.value || '');
-            }
+            function prefillWardText() { wardCombo && wardCombo.setSelected('', hidWardName.value || ''); }
 
             async function loadWards(provCode) {
-                wardCombo && wardCombo.clear();
-                hidWardCode.value = '';
-                wardsOfCurrent = [];
-                if (!provCode) { prefillWardText(); return; }
-
+                wardCombo && wardCombo.clear(); hidWardCode.value = ''; wardsOfCurrent = [];
+                wardsReady = new Promise(r => wardsReadyResolve = r);
+                if (!provCode) { prefillWardText(); wardsReadyResolve && wardsReadyResolve(); return; }
                 try {
                     const resp = await fetch(DATA_BASE + '/wards/' + encodeURIComponent(provCode) + '.json', { cache: 'force-cache' });
-                    if (!resp.ok) { prefillWardText(); return; }
-                    const wards = await resp.json();
+                    const wards = resp.ok ? await resp.json() : [];
                     wardsOfCurrent = wards || [];
-                    wardCombo && wardCombo.setData((wardsOfCurrent).map(w => ({ value: String(w.code), label: w.name, raw: w })));
+                    wardCombo && wardCombo.setData(wardsOfCurrent.map(w => ({ value: String(w.code), label: w.name, raw: w })));
 
                     if (hidWardCode.value) {
-                        const w = wardsOfCurrent.find(x => String(x.code) === hidWardCode.value);
-                        if (w) return pickWard(w);
+                        const w = wardsOfCurrent.find(x => String(x.code) === hidWardCode.value); if (w) { pickWard(w); wardsReadyResolve && wardsReadyResolve(); return; }
                     }
                     if (hidWardName.value) {
-                        const w = findWardMatch(hidWardName.value, wardsOfCurrent);
-                        if (w) return pickWard(w);
+                        const w = findWardMatch(hidWardName.value, wardsOfCurrent); if (w) { pickWard(w); wardsReadyResolve && wardsReadyResolve(); return; }
                     }
                     prefillWardText();
                 } catch (e) { console.error(e); prefillWardText(); }
+                wardsReadyResolve && wardsReadyResolve();
             }
 
             function setCity(p) {
                 if (!cityCombo) return;
                 cityCombo.setSelected(String(p.code), p.name);
-                hidCityName.value = p.name;
-                hidCityCode.value = String(p.code);
+                hidCityName.value = p.name; hidCityCode.value = String(p.code);
                 loadWards(String(p.code));
             }
-
             function pickWard(w) {
                 if (!wardCombo) return;
                 wardCombo.setSelected(String(w.code), w.name);
-                hidWardName.value = w.name;
-                hidWardCode.value = String(w.code);
+                hidWardName.value = w.name; hidWardCode.value = String(w.code);
             }
+
+            // fetch provinces
+            fetch(DATA_BASE + '/provinces.json', { cache: 'force-cache' })
+                .then(r => r.json())
+                .then(list => {
+                    provinces = list || [];
+                    cityCombo && cityCombo.setData(provinces.map(p => ({ value: String(p.code), label: p.name, raw: p })));
+                    let p = null;
+                    if (hidCityCode.value) { p = provinces.find(x => String(x.code) === hidCityCode.value); }
+                    if (!p && hidCityName.value) { p = provinces.find(x => baseCity(x.name) === baseCity(hidCityName.value)); }
+                    if (p) setCity(p); else { cityCombo && cityCombo.setSelected('', hidCityName.value || ''); prefillWardText(); }
+                    provincesReadyResolve && provincesReadyResolve();
+                });
 
             cityBox && cityBox.addEventListener('combochange', (e) => setCity(e.detail.raw));
             wardBox && wardBox.addEventListener('combochange', (e) => pickWard(e.detail.raw));
 
-            // Nếu gõ tay -> để text, xoá code -> validator bắt chọn lại
             if (cityBox) cityBox.querySelector('.combo-text').addEventListener('blur', () => {
-                const cityComboLabel = cityCombo?.label || '';
-                if (rm(cityComboLabel) !== rm(hidCityName.value)) {
-                    hidCityName.value = cityComboLabel;
-                    hidCityCode.value = '';
-                    wardCombo && wardCombo.clear();
-                    hidWardName.value = ''; hidWardCode.value = '';
-                }
+                const lb = cityCombo?.label || '';
+                if (rm(lb) !== rm(hidCityName.value)) { hidCityName.value = lb; hidCityCode.value = ''; wardCombo && wardCombo.clear(); hidWardName.value = ''; hidWardCode.value = ''; }
             });
             if (wardBox) wardBox.querySelector('.combo-text').addEventListener('blur', () => {
-                const wardComboLabel = wardCombo?.label || '';
-                if (rm(wardComboLabel) !== rm(hidWardName.value)) {
-                    hidWardName.value = wardComboLabel;
-                    hidWardCode.value = '';
-                }
+                const lb = wardCombo?.label || '';
+                if (rm(lb) !== rm(hidWardName.value)) { hidWardName.value = lb; hidWardCode.value = ''; }
             });
-
-            // Prefill text ward ngay khi load
-            prefillWardText();
 
             // Validators + submit guard
             window.validateCityCode = function (sender, args) { args.IsValid = !!hidCityCode.value; }
             window.validateWardCode = function (sender, args) { args.IsValid = !!hidWardCode.value; }
-            window.beforeCheckoutSubmit = function () {
-                if (typeof (Page_ClientValidate) === 'function' && !Page_ClientValidate('Checkout')) return false;
-                if (!hidCityCode.value || !hidWardCode.value) {
-                    alert('Vui lòng chọn Tỉnh/Thành và Xã/Phường từ danh sách.');
-                    return false;
-                }
-                return true;
-            };
 
-            // Expose API để điền theo code/text
+            // === Public API: trả Promise để có thể chờ map xong ===
             window.cityWardAPI = {
-                async setByCodes(cityCode, cityName, wardCode, wardName) {
-                    if (cityCode && provinces.length) {
-                        const p = provinces.find(x => String(x.code) === String(cityCode));
+                async setByNames(cityName, wardName) {
+                    await provincesReady;
+                    if (cityName) {
+                        const p = provinces.find(x => baseCity(x.name) === baseCity(cityName));
                         if (p) setCity(p);
-                        else if (cityName) {
-                            const p2 = provinces.find(x => baseCity(x.name) === baseCity(cityName));
-                            if (p2) setCity(p2);
-                        }
-                    } else if (cityName) {
-                        const p3 = provinces.find(x => baseCity(x.name) === baseCity(cityName));
-                        if (p3) setCity(p3);
                     }
-                    if (wardCode && wardsOfCurrent && wardsOfCurrent.length) {
-                        const w = wardsOfCurrent.find(x => String(x.code) === String(wardCode));
+                    await wardsReady;
+                    if (wardName) {
+                        const w = findWardMatch(wardName, wardsOfCurrent);
                         if (w) pickWard(w);
-                        else if (wardName) {
-                            const w2 = findWardMatch(wardName, wardsOfCurrent);
-                            if (w2) pickWard(w2);
-                        }
-                    } else if (wardName && wardsOfCurrent && wardsOfCurrent.length) {
-                        const w3 = findWardMatch(wardName, wardsOfCurrent);
-                        if (w3) pickWard(w3);
                     }
-                }
+                    return true;
+                },
+                async setByCodes(cityCode, cityName, wardCode, wardName) {
+                    await provincesReady;
+                    if (cityCode) {
+                        let p = provinces.find(x => String(x.code) === String(cityCode));
+                        if (!p && cityName) p = provinces.find(x => baseCity(x.name) === baseCity(cityName));
+                        if (p) setCity(p);
+                    } else if (cityName) {
+                        const p = provinces.find(x => baseCity(x.name) === baseCity(cityName));
+                        if (p) setCity(p);
+                    }
+                    await wardsReady;
+                    if (wardCode) {
+                        let w = wardsOfCurrent.find(x => String(x.code) === String(wardCode));
+                        if (!w && wardName) w = findWardMatch(wardName, wardsOfCurrent);
+                        if (w) pickWard(w);
+                    } else if (wardName) {
+                        const w = findWardMatch(wardName, wardsOfCurrent);
+                        if (w) pickWard(w);
+                    }
+                    return true;
+                },
+                whenReady() { return provincesReady.then(() => wardsReady); }
             };
         })();
     </script>
@@ -631,17 +562,14 @@
                     const data = ev.data || {};
                     if (data.type === 'HAFood.AddressPicked') {
                         if (data.address) {
-                            // dùng ngay payload
-                            applyAddressToUI(data.address);
-                            closeModal();
+                            // CHỜ map xong rồi mới đóng
+                            applyAddressToUI(data.address).finally(closeModal);
                             return;
                         }
-                        // fallback: gọi PageMethods lấy từ Session
                         if (typeof PageMethods !== 'undefined' && PageMethods.GetSelectedAddress) {
                             PageMethods.GetSelectedAddress(function (dto) {
                                 if (!dto) { closeModal(); return; }
-                                applyAddressToUI(dto);
-                                closeModal();
+                                applyAddressToUI(dto).finally(closeModal);
                             }, function () { closeModal(); });
                         } else {
                             closeModal();
@@ -653,7 +581,6 @@
             });
 
             function applyAddressToUI(dto) {
-                // Cập nhật panel
                 const pnlHas  = document.getElementById('<%= pnlAddrSession.ClientID %>');
                 const pnlNone = document.getElementById('<%= pnlNoAddr.ClientID %>');
                 if (pnlHas) pnlHas.style.display = 'block';
@@ -667,18 +594,19 @@
                 if (phoneEl) phoneEl.textContent = dto.phone || '';
                 if (detailEl) detailEl.textContent = dto.fullAddress || '';
 
-                // Fill form (street, phone, name)
                 const street = parseStreet(dto.fullAddress || '');
                 document.getElementById('<%= txtAddress.ClientID %>').value  = street;
                 document.getElementById('<%= txtReceiver.ClientID %>').value = dto.fullName || '';
                 document.getElementById('<%= txtPhone.ClientID %>').value    = dto.phone || '';
 
-                // Điền City/Ward theo TEXT -> JS sẽ map ra code
                 const cityName = extractCity(dto.fullAddress || '');
                 const wardName = extractWard(dto.fullAddress || '');
-                if (window.cityWardAPI && window.cityWardAPI.setByCodes) {
-                    window.cityWardAPI.setByCodes(null, cityName, null, wardName);
+
+                // TRẢ PROMISE để caller .finally(closeModal)
+                if (window.cityWardAPI && window.cityWardAPI.setByNames) {
+                    return window.cityWardAPI.setByNames(cityName, wardName);
                 }
+                return Promise.resolve();
             }
 
             function parseStreet(full) {
