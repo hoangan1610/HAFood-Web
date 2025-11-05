@@ -56,21 +56,32 @@
 
         /* Address session (panel phải) */
         .addr-session{margin-bottom:12px}
-        .addr-link{display:block;text-decoration:none;color:inherit}
+        .addr-link{display:block;width:100%;text-decoration:none;color:inherit;background:transparent;border:0;padding:0;cursor:pointer}
         .addr-card{display:flex;gap:12px;align-items:center;background:#fff;border:1px solid var(--border);
-                   border-radius:12px;padding:12px}
+                   border-radius:12px;padding:12px;text-align:left}
         .addr-icon{color:#ff7a45;font-size:20px;line-height:1}
         .addr-main{flex:1 1 auto}
         .addr-name{font-weight:700}
         .addr-phone{color:#6b7280;margin-left:8px}
         .addr-detail{color:#374151;margin-top:2px}
         .addr-chevron{color:#9ca3af}
+
+        /* ===== Modal popup ===== */
+        .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;z-index:2000}
+        .modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:2001}
+        .modal.open, .modal-backdrop.open{display:flex}
+        .modal-card{width:min(1000px,96vw);height:min(680px,92vh);background:#fff;border-radius:16px;box-shadow:0 20px 50px rgba(0,0,0,.25);display:flex;flex-direction:column;overflow:hidden}
+        .modal-head{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--border)}
+        .modal-title{font-weight:700}
+        .modal-close{background:transparent;border:0;font-size:22px;cursor:pointer;line-height:1}
+        .modal-body{flex:1 1 auto}
+        .modal-body iframe{width:100%;height:100%;border:0}
     </style>
 </head>
 
 <body>
 <form id="form1" runat="server">
-    <asp:ScriptManager ID="sm" runat="server" EnablePartialRendering="true" />
+    <asp:ScriptManager ID="sm" runat="server" EnablePartialRendering="true" EnablePageMethods="true" /> <!-- bật PageMethods -->
     <uc:Header ID="Header1" runat="server" />
 
     <!-- Flags/params cho JS -->
@@ -124,9 +135,8 @@
                     <div class="panel-body">
 
                         <!-- Session địa chỉ hiển thị -->
-                        <asp:Panel ID="pnlAddrSession" runat="server" CssClass="addr-session" Visible="false">
-                          <a class="addr-link"
-                             href="<%= ResolveUrl("~/CartPage/AddressSelect.aspx?returnUrl=" + HttpUtility.UrlEncode(Request.RawUrl)) %>">
+                        <asp:Panel ID="pnlAddrSession" runat="server" CssClass="addr-session" style="display:none">
+                          <button type="button" class="addr-link" id="btnChooseAddr1">
                             <div class="addr-card">
                               <div class="addr-icon"><i class="bi bi-geo-alt-fill"></i></div>
                               <div class="addr-main">
@@ -138,20 +148,19 @@
                               </div>
                               <div class="addr-chevron"><i class="bi bi-chevron-right"></i></div>
                             </div>
-                          </a>
+                          </button>
                         </asp:Panel>
 
-                        <asp:Panel ID="pnlNoAddr" runat="server" CssClass="addr-session" Visible="false">
-                          <a class="addr-link"
-                             href="<%= ResolveUrl("~/CartPage/AddressSelect.aspx?returnUrl=" + HttpUtility.UrlEncode(Request.RawUrl)) %>">
+                        <asp:Panel ID="pnlNoAddr" runat="server" CssClass="addr-session" style="display:none">
+                          <button type="button" class="addr-link" id="btnChooseAddr2">
                             <div class="addr-card">
                               <div class="addr-icon"><i class="bi bi-geo-alt"></i></div>
                               <div class="addr-main">
-                                <div class="text-muted">Hiện tại bạn chưa có địa chỉ</div>
+                                <div class="text-muted">Chưa có địa chỉ — bấm để chọn</div>
                               </div>
                               <div class="addr-chevron"><i class="bi bi-chevron-right"></i></div>
                             </div>
-                          </a>
+                          </button>
                         </asp:Panel>
 
                         <!-- ====== Combobox searchable ====== -->
@@ -240,24 +249,38 @@
 
     <uc:Footer ID="Footer1" runat="server" />
 
+    <!-- ===== MODAL POPUP chọn địa chỉ ===== -->
+    <div class="modal-backdrop" id="addrModalBk"></div>
+    <div class="modal" id="addrModal" aria-hidden="true" role="dialog" aria-label="Chọn địa chỉ">
+        <div class="modal-card">
+            <div class="modal-head">
+                <div class="modal-title">Chọn địa chỉ</div>
+                <button type="button" class="modal-close" id="addrCloseBtn" aria-label="Close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <iframe id="addrFrame" src="about:blank" title="Address Select"></iframe>
+            </div>
+        </div>
+    </div>
+
     <!-- Phone validator -->
     <script>
         function normalizePhone(s) { if (!s) return ''; s = String(s).replace(/[\s\.\-]/g, '').trim(); s = s.replace(/^\+840/, '+84'); return s; }
         function validatePhone(sender, args) { const s = normalizePhone(args.Value); args.IsValid = /^(0\d{9}|\+84\d{9})$/.test(s); }
     </script>
 
-    <!-- Combobox searchable + fuzzy restore City/Ward -->
+    <!-- Combobox searchable + expose cityWardAPI -->
     <script>
         (function () {
             const DATA_BASE = '<%= ResolveClientUrl("~/assets/vn-admin") %>';
 
-        const cityBox = document.getElementById('cmbCity');
-        const wardBox = document.getElementById('cmbWard');
+            const cityBox = document.getElementById('cmbCity');
+            const wardBox = document.getElementById('cmbWard');
 
-        const hidCityName = document.getElementById('<%= txtCitySel.ClientID %>');
-        const hidWardName = document.getElementById('<%= txtWardSel.ClientID %>');
-        const hidCityCode = document.getElementById('<%= txtCityCode.ClientID %>');
-        const hidWardCode = document.getElementById('<%= txtWardCode.ClientID %>');
+            const hidCityName = document.getElementById('<%= txtCitySel.ClientID %>');
+            const hidWardName = document.getElementById('<%= txtWardSel.ClientID %>');
+            const hidCityCode = document.getElementById('<%= txtCityCode.ClientID %>');
+            const hidWardCode = document.getElementById('<%= txtWardCode.ClientID %>');
 
             const rm = (s) => (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
                 .replace(/đ/g, 'd').replace(/Đ/g, 'D')
@@ -368,6 +391,8 @@
             }
 
             let provinces = [];
+            let wardsOfCurrent = [];
+
             fetch(DATA_BASE + '/provinces.json', { cache: 'force-cache' })
                 .then(r => r.json())
                 .then(list => {
@@ -395,20 +420,22 @@
             async function loadWards(provCode) {
                 wardCombo && wardCombo.clear();
                 hidWardCode.value = '';
+                wardsOfCurrent = [];
                 if (!provCode) { prefillWardText(); return; }
 
                 try {
                     const resp = await fetch(DATA_BASE + '/wards/' + encodeURIComponent(provCode) + '.json', { cache: 'force-cache' });
                     if (!resp.ok) { prefillWardText(); return; }
                     const wards = await resp.json();
-                    wardCombo && wardCombo.setData((wards || []).map(w => ({ value: String(w.code), label: w.name, raw: w })));
+                    wardsOfCurrent = wards || [];
+                    wardCombo && wardCombo.setData((wardsOfCurrent).map(w => ({ value: String(w.code), label: w.name, raw: w })));
 
                     if (hidWardCode.value) {
-                        const w = wards.find(x => String(x.code) === hidWardCode.value);
+                        const w = wardsOfCurrent.find(x => String(x.code) === hidWardCode.value);
                         if (w) return pickWard(w);
                     }
                     if (hidWardName.value) {
-                        const w = findWardMatch(hidWardName.value, wards);
+                        const w = findWardMatch(hidWardName.value, wardsOfCurrent);
                         if (w) return pickWard(w);
                     }
                     prefillWardText();
@@ -435,16 +462,18 @@
 
             // Nếu gõ tay -> để text, xoá code -> validator bắt chọn lại
             if (cityBox) cityBox.querySelector('.combo-text').addEventListener('blur', () => {
-                if (rm(cityCombo.label) !== rm(hidCityName.value)) {
-                    hidCityName.value = cityCombo.label;
+                const cityComboLabel = cityCombo?.label || '';
+                if (rm(cityComboLabel) !== rm(hidCityName.value)) {
+                    hidCityName.value = cityComboLabel;
                     hidCityCode.value = '';
                     wardCombo && wardCombo.clear();
                     hidWardName.value = ''; hidWardCode.value = '';
                 }
             });
             if (wardBox) wardBox.querySelector('.combo-text').addEventListener('blur', () => {
-                if (rm(wardCombo.label) !== rm(hidWardName.value)) {
-                    hidWardName.value = wardCombo.label;
+                const wardComboLabel = wardCombo?.label || '';
+                if (rm(wardComboLabel) !== rm(hidWardName.value)) {
+                    hidWardName.value = wardComboLabel;
                     hidWardCode.value = '';
                 }
             });
@@ -452,7 +481,7 @@
             // Prefill text ward ngay khi load
             prefillWardText();
 
-            // Client validators + submit guard
+            // Validators + submit guard
             window.validateCityCode = function (sender, args) { args.IsValid = !!hidCityCode.value; }
             window.validateWardCode = function (sender, args) { args.IsValid = !!hidWardCode.value; }
             window.beforeCheckoutSubmit = function () {
@@ -463,10 +492,38 @@
                 }
                 return true;
             };
+
+            // Expose API để điền theo code/text
+            window.cityWardAPI = {
+                async setByCodes(cityCode, cityName, wardCode, wardName) {
+                    if (cityCode && provinces.length) {
+                        const p = provinces.find(x => String(x.code) === String(cityCode));
+                        if (p) setCity(p);
+                        else if (cityName) {
+                            const p2 = provinces.find(x => baseCity(x.name) === baseCity(cityName));
+                            if (p2) setCity(p2);
+                        }
+                    } else if (cityName) {
+                        const p3 = provinces.find(x => baseCity(x.name) === baseCity(cityName));
+                        if (p3) setCity(p3);
+                    }
+                    if (wardCode && wardsOfCurrent && wardsOfCurrent.length) {
+                        const w = wardsOfCurrent.find(x => String(x.code) === String(wardCode));
+                        if (w) pickWard(w);
+                        else if (wardName) {
+                            const w2 = findWardMatch(wardName, wardsOfCurrent);
+                            if (w2) pickWard(w2);
+                        }
+                    } else if (wardName && wardsOfCurrent && wardsOfCurrent.length) {
+                        const w3 = findWardMatch(wardName, wardsOfCurrent);
+                        if (w3) pickWard(w3);
+                    }
+                }
+            };
         })();
     </script>
 
-    <!-- Cart JS -->
+    <!-- Cart JS + Popup Address -->
     <script>
         (function () {
             const API = document.getElementById('<%= hidApiBase.ClientID %>').value || '';
@@ -476,7 +533,6 @@
             let sameOrigin = false; try { sameOrigin = new URL(API).host === location.host; } catch { }
             const HAS_JWT = !!JWT;
             const USE_USER = HAS_JWT || sameOrigin;
-            const USE_GUEST = !USE_USER;
 
             const fmt = n => (n || 0).toLocaleString('vi-VN') + ' ₫';
 
@@ -484,31 +540,12 @@
             const hidSelected = document.getElementById('<%= hidSelectedLines.ClientID %>');
             const pnlEmptyEl = document.getElementById('<%= pnlEmpty.ClientID %>');
 
-            function badgeEl() { return document.querySelector('[data-cart-badge="true"]'); }
-            function readBadge() { const el = badgeEl(); if (!el) return 0; const n = parseInt((el.textContent || '0').trim(), 10); return Number.isFinite(n) ? n : 0; }
-            function writeBadge(n) { const el = badgeEl(); if (!el) return; const v = Math.max(0, parseInt(n || 0, 10)); el.textContent = v; el.style.display = v > 0 ? 'flex' : 'none'; }
-            function bumpBadge(delta) { writeBadge(readBadge() + (parseInt(delta || 0, 10))); }
-            if (typeof window.setCartBadge !== 'function') { window.setCartBadge = writeBadge; }
-            if (typeof window.refreshCartCount !== 'function') {
-                window.refreshCartCount = function () {
-                    let sum = 0;
-                    document.querySelectorAll('.cart-item .qty-num').forEach(el => {
-                        sum += parseInt((el.textContent || '0').trim(), 10) || 0;
-                    });
-                    writeBadge(sum);
-                };
+            function writeBadge(n) {
+                const el = document.querySelector('[data-cart-badge="true"]');
+                if (!el) return;
+                const v = Math.max(0, parseInt(n || 0, 10));
+                el.textContent = v; el.style.display = v > 0 ? 'flex' : 'none';
             }
-
-            function withAuthQuery(url) {
-                if (USE_GUEST && UUID) return url + (url.includes('?') ? '&' : '?') + 'device_uuid=' + encodeURIComponent(UUID);
-                return url;
-            }
-            function ensure(opts) {
-                const headers = { 'Content-Type': 'application/json' };
-                if (HAS_JWT) headers['Authorization'] = 'Bearer ' + JWT;
-                return Object.assign({ credentials: 'include', headers }, opts || {});
-            }
-            async function safeJson(resp) { try { return await resp.json(); } catch { return {}; } }
 
             function syncSelectedHidden() {
                 const selected = [];
@@ -531,148 +568,137 @@
                 selectAll.indeterminate = (checkedCount > 0 && checkedCount < cbs.length);
             }
 
-            function patchTotals(payload) {
-                if (payload && payload.totals) {
-                    const t = payload.totals;
-                    document.getElementById('<%= lblSubtotal.ClientID %>').textContent = fmt(t.subtotal);
-                    document.getElementById('<%= lblVat.ClientID %>').textContent = fmt(t.vat);
-                    document.getElementById('<%= lblShipping.ClientID %>').textContent = fmt(t.shipping);
-                    document.getElementById('<%= lblGrandTotal.ClientID %>').textContent  = fmt(t.grand);
-                    document.getElementById('<%= lblTotal.ClientID %>').textContent       = fmt(t.subtotal);
-                }
-                if (payload?.header?.item_Count != null){
-                    window.setCartBadge(payload.header.item_Count);
-                }
-            }
-
-            function recalcTotals(){
-                let subtotal=0, sumItems=0;
-                document.querySelectorAll('.cart-item').forEach(row=>{
-                  const cb = row.querySelector('input[type="checkbox"]');
-                  if (!cb || !cb.checked) return;
-                  const price = Number(row.getAttribute('data-price')) || 0;
-                  const qtyEl = row.querySelector('.qty-num');
-                  const qty   = Number(qtyEl?.textContent.trim() || '1') || 1;
-                  subtotal += price * qty; sumItems += qty;
+            function recalcTotals() {
+                let subtotal = 0, sumItems = 0;
+                document.querySelectorAll('.cart-item').forEach(row => {
+                    const cb = row.querySelector('input[type="checkbox"]');
+                    if (!cb || !cb.checked) return;
+                    const price = Number(row.getAttribute('data-price')) || 0;
+                    const qtyEl = row.querySelector('.qty-num');
+                    const qty = Number(qtyEl?.textContent.trim() || '1') || 1;
+                    subtotal += price * qty; sumItems += qty;
                 });
-                const vat = Math.round(subtotal * 0.08), ship=0, grand=subtotal+vat+ship;
-                document.getElementById('<%= lblSubtotal.ClientID %>').textContent    = fmt(subtotal);
-                document.getElementById('<%= lblVat.ClientID %>').textContent         = fmt(vat);
-                document.getElementById('<%= lblShipping.ClientID %>').textContent    = fmt(ship);
-                document.getElementById('<%= lblGrandTotal.ClientID %>').textContent = fmt(grand);
-                document.getElementById('<%= lblTotal.ClientID %>').textContent = fmt(subtotal);
-                document.getElementById('<%= lblSumItems.ClientID %>').textContent = String(sumItems);
+                const vat = Math.round(subtotal * 0.08), ship = 0, grand = subtotal + vat + ship;
+                document.getElementById('<%= lblSubtotal.ClientID %>').textContent = fmt(subtotal);
+                document.getElementById('<%= lblVat.ClientID %>').textContent = fmt(vat);
+                document.getElementById('<%= lblShipping.ClientID %>').textContent = fmt(ship);
+                document.getElementById('<%= lblGrandTotal.ClientID %>').textContent  = fmt(grand);
+                document.getElementById('<%= lblTotal.ClientID %>').textContent       = fmt(subtotal);
+                document.getElementById('<%= lblSumItems.ClientID %>').textContent    = String(sumItems);
             }
             window.__cartAfterMutate = () => { recalcTotals(); updateSelectAllUI(); syncSelectedHidden(); };
 
-            async function deleteLine(row, lineId) {
-                try {
-                    const qtyBefore = Number(row.querySelector('.qty-num')?.textContent.trim() || '1') || 1;
+            // ====== POPUP chọn địa chỉ ======
+            const modal = document.getElementById('addrModal');
+            const backdrop = document.getElementById('addrModalBk');
+            const iframe = document.getElementById('addrFrame');
+            const openBtns = [document.getElementById('btnChooseAddr1'), document.getElementById('btnChooseAddr2')].filter(Boolean);
+            const closeBtn = document.getElementById('addrCloseBtn');
 
-                    let url = withAuthQuery(`${API}/api/cart/lines/${lineId}`);
-                    let resp = await fetch(url, ensure({ method: 'DELETE' }));
-                    let json = await safeJson(resp);
+            const IS_AUTH   = (document.getElementById('<%= hidIsAuth.ClientID %>').value === '1');
+            const LOGIN_URL = '<%= ResolveUrl("~/AuthPage/Login.aspx") %>';
+            const addressSelectUrl = '<%= ResolveUrl("~/CartPage/AddressSelect.aspx") %>'; // popup-only
 
-                    if (!resp.ok && json?.code === 'MISSING_USER_OR_DEVICE' && UUID) {
-                        url = `${API}/api/cart/lines/${lineId}?device_uuid=${encodeURIComponent(UUID)}`;
-                        resp = await fetch(url, ensure({ method: 'DELETE' }));
-                        json = await safeJson(resp);
-                    }
-                    if (!resp.ok) {
-                        if (json?.code === 'CART_LINE_NOT_FOUND') location.reload();
-                        console.error('Delete failed', json); return;
-                    }
-
-                    row.remove();
-
-                    const remaining = document.querySelectorAll('.cart-item').length;
-                    if (remaining === 0 && pnlEmptyEl) {
-                        pnlEmptyEl.style.display = 'block';
-                        if (!(json?.header?.item_Count != null)) {
-                            window.setCartBadge(0);
-                        }
-                    }
-
-                    if (json?.totals || json?.header) patchTotals(json);
-
-                    if (json?.header?.item_Count != null) {
-                        window.setCartBadge(json.header.item_Count);
-                    } else {
-                        bumpBadge(-qtyBefore);
-                    }
-
-                    recalcTotals(); updateSelectAllUI(); syncSelectedHidden();
-                } catch (err) { console.error(err); }
+            function openModal() {
+                iframe.src = addressSelectUrl;
+                modal.classList.add('open');
+                backdrop.classList.add('open');
+                modal.setAttribute('aria-hidden', 'false');
+            }
+            function closeModal() {
+                iframe.src = 'about:blank';
+                modal.classList.remove('open');
+                backdrop.classList.remove('open');
+                modal.setAttribute('aria-hidden', 'true');
             }
 
-            document.addEventListener('change', (e) => {
-                if (e.target.matches('.cart-item input[type="checkbox"]')) {
-                    recalcTotals(); updateSelectAllUI(); syncSelectedHidden();
+            openBtns.forEach(b => b.addEventListener('click', (e) => {
+                e.preventDefault();
+                if (!IS_AUTH) {
+                    const ret = encodeURIComponent(window.location.pathname + window.location.search);
+                    window.location.href = `${LOGIN_URL}?returnUrl=${ret}`;
+                    return;
                 }
-                if (selectAll && e.target.id === '<%= chkSelectAll.ClientID %>') {
-                    const checked = e.target.checked;
-                    document.querySelectorAll('.cart-item input[type="checkbox"]').forEach(cb => cb.checked = checked);
-                    selectAll.indeterminate = false;
-                    recalcTotals(); syncSelectedHidden();
-                }
-            });
+                openModal();
+            }));
+            closeBtn.addEventListener('click', closeModal);
+            backdrop.addEventListener('click', closeModal);
 
-            document.addEventListener('click', async (e) => {
-                const inc = e.target.closest('.qty-btn[data-inc]');
-                const dec = e.target.closest('.qty-btn[data-dec]');
-                const rm = e.target.closest('[data-remove]');
-                if (!inc && !dec && !rm) return;
-
-                const row = (inc || dec || rm).closest('.cart-item');
-                if (!row) return;
-
-                const lineId = Number(row.getAttribute('data-line-id'));
-                const price = Number(row.getAttribute('data-price')) || 0;
-
-                if (rm) { await deleteLine(row, lineId); return; }
-
-                const qtyEl = row.querySelector('.qty-num');
-                const qOld = Number(qtyEl.textContent.trim()) || 1;
-
-                if (dec && qOld <= 1) { await deleteLine(row, lineId); return; }
-
-                const q = inc ? qOld + 1 : Math.max(1, qOld - 1);
-                const delta = q - qOld;
-
-                qtyEl.textContent = q;
-                const totalEl = row.querySelector('.cart-item-total');
-                if (totalEl) totalEl.textContent = fmt(price * q);
-
+            // Nhận tín hiệu từ AddressSelect (trong iframe)
+            window.addEventListener('message', function (ev) {
                 try {
-                    const url = withAuthQuery(`${API}/api/cart/lines/batch?compact=1`);
-                    let body = USE_USER ? { changes: [{ line_id: lineId, quantity: q }] }
-                                        : { device_uuid: UUID || null, changes: [{ line_id: lineId, quantity: q }] };
-
-                    let resp = await fetch(url, ensure({ method: 'PUT', body: JSON.stringify(body) }));
-                    let json = await safeJson(resp);
-
-                    if (!resp.ok && json?.code === 'MISSING_USER_OR_DEVICE' && UUID) {
-                        body = { device_uuid: UUID, changes: [{ line_id: lineId, quantity: q }] };
-                        resp = await fetch(`${API}/api/cart/lines/batch?compact=1`, ensure({ method: 'PUT', body: JSON.stringify(body) }));
-                        json = await safeJson(resp);
+                    if (ev.source !== iframe.contentWindow) return; // chỉ nhận từ popup này
+                    const data = ev.data || {};
+                    if (data.type === 'HAFood.AddressPicked') {
+                        if (data.address) {
+                            // dùng ngay payload
+                            applyAddressToUI(data.address);
+                            closeModal();
+                            return;
+                        }
+                        // fallback: gọi PageMethods lấy từ Session
+                        if (typeof PageMethods !== 'undefined' && PageMethods.GetSelectedAddress) {
+                            PageMethods.GetSelectedAddress(function (dto) {
+                                if (!dto) { closeModal(); return; }
+                                applyAddressToUI(dto);
+                                closeModal();
+                            }, function () { closeModal(); });
+                        } else {
+                            closeModal();
+                        }
+                    } else if (data.type === 'HAFood.AddressCancel') {
+                        closeModal();
                     }
-                    if (!resp.ok) {
-                        if (json?.code === 'CART_LINE_NOT_FOUND') location.reload();
-                        console.error('Update qty failed', json); return;
-                    }
-
-                    if (json?.totals || json?.header) patchTotals(json);
-
-                    if (json?.header?.item_Count != null) {
-                        window.setCartBadge(json.header.item_Count);
-                    } else if (delta !== 0) {
-                        bumpBadge(delta);
-                    }
-
-                    recalcTotals(); updateSelectAllUI(); syncSelectedHidden();
-                } catch (err) { console.error(err); }
+                } catch (e) { console.error(e); }
             });
 
+            function applyAddressToUI(dto) {
+                // Cập nhật panel
+                const pnlHas  = document.getElementById('<%= pnlAddrSession.ClientID %>');
+                const pnlNone = document.getElementById('<%= pnlNoAddr.ClientID %>');
+                if (pnlHas) pnlHas.style.display = 'block';
+                if (pnlNone) pnlNone.style.display = 'none';
+
+                const nameEl   = document.getElementById('<%= lblAddrName.ClientID %>');
+                const phoneEl  = document.getElementById('<%= lblAddrPhone.ClientID %>');
+                const detailEl = document.getElementById('<%= lblAddrDetail.ClientID %>');
+
+                if (nameEl) nameEl.textContent   = dto.fullName || '';
+                if (phoneEl) phoneEl.textContent = dto.phone || '';
+                if (detailEl) detailEl.textContent = dto.fullAddress || '';
+
+                // Fill form (street, phone, name)
+                const street = parseStreet(dto.fullAddress || '');
+                document.getElementById('<%= txtAddress.ClientID %>').value  = street;
+                document.getElementById('<%= txtReceiver.ClientID %>').value = dto.fullName || '';
+                document.getElementById('<%= txtPhone.ClientID %>').value    = dto.phone || '';
+
+                // Điền City/Ward theo TEXT -> JS sẽ map ra code
+                const cityName = extractCity(dto.fullAddress || '');
+                const wardName = extractWard(dto.fullAddress || '');
+                if (window.cityWardAPI && window.cityWardAPI.setByCodes) {
+                    window.cityWardAPI.setByCodes(null, cityName, null, wardName);
+                }
+            }
+
+            function parseStreet(full) {
+                const parts = (full || '').split(',').map(s => s.trim()).filter(Boolean);
+                if (parts.length <= 1) return full || '';
+                if (parts.length >= 4) return parts.slice(0, parts.length - 3).join(', ');
+                return parts[0] || '';
+            }
+            function extractCity(full) {
+                const parts = (full || '').split(',').map(s => s.trim()).filter(Boolean);
+                return parts.length ? parts[parts.length - 1] : '';
+            }
+            function extractWard(full) {
+                const parts = (full || '').split(',').map(s => s.trim()).filter(Boolean);
+                if (parts.length >= 3) return parts[parts.length - 2];
+                if (parts.length === 2) return parts[1];
+                return '';
+            }
+
+            // ======== init
             window.addEventListener('DOMContentLoaded', () => {
                 const hasItems = document.querySelectorAll('.cart-item').length > 0;
                 if (pnlEmptyEl) pnlEmptyEl.style.display = hasItems ? 'none' : 'block';
@@ -686,7 +712,10 @@
                 }
                 recalcTotals(); updateSelectAllUI(); syncSelectedHidden();
 
-                try { window.refreshCartCount(); } catch { }
+                try {
+                    const sum = Array.from(document.querySelectorAll('.cart-item .qty-num')).reduce((s, el) => s + (parseInt(el.textContent.trim(), 10) || 0), 0);
+                    writeBadge(sum);
+                } catch { }
             });
         })();
     </script>
@@ -694,4 +723,3 @@
 </form>
 </body>
 </html>
-/html>

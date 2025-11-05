@@ -8,6 +8,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Web;
+using System.Web.Services; // cho PageMethods
 using System.Web.UI;
 using System.Web.UI.WebControls;
 
@@ -53,6 +54,7 @@ namespace HAFoodWeb
 
         protected async void Page_Load(object sender, EventArgs e)
         {
+            // Cache bust
             Response.Cache.SetCacheability(System.Web.HttpCacheability.NoCache);
             Response.Cache.SetNoStore();
             Response.Cache.SetRevalidation(HttpCacheRevalidation.AllCaches);
@@ -65,6 +67,7 @@ namespace HAFoodWeb
             hidDeviceUuid.Value = deviceUuid;
             await tracker.SendAsync(null);
 
+            // đặt cờ auth cho JS
             hidIsAuth.Value = IsLoggedIn() ? "1" : "0";
 
             var host = Request.Url.Host?.ToLowerInvariant();
@@ -77,7 +80,7 @@ namespace HAFoodWeb
 
             if (!IsPostBack)
             {
-                // Ưu tiên địa chỉ chọn ở AddressSelect
+                // Ưu tiên địa chỉ đã chọn ở AddressSelect (session)
                 var chosen = Session["selected_address_obj"] as AddressDto;
                 if (chosen != null)
                 {
@@ -174,18 +177,19 @@ namespace HAFoodWeb
 
         private void SetupAddressSessionUI()
         {
+            // Show/hide bằng CSS để JS có thể cập nhật ngay sau khi chọn popup
             if (CurrentAddress != null)
             {
-                pnlAddrSession.Visible = true;
-                pnlNoAddr.Visible = false;
+                pnlAddrSession.Style["display"] = "block";
+                pnlNoAddr.Style["display"] = "none";
                 lblAddrName.Text = CurrentAddress.fullName ?? "";
                 lblAddrPhone.Text = CurrentAddress.phone ?? "";
                 lblAddrDetail.Text = CurrentAddress.fullAddress ?? "";
             }
             else
             {
-                pnlAddrSession.Visible = false;
-                pnlNoAddr.Visible = true;
+                pnlAddrSession.Style["display"] = "none";
+                pnlNoAddr.Style["display"] = "block";
             }
         }
 
@@ -439,6 +443,13 @@ namespace HAFoodWeb
             var url = ResolveUrl("~/CartPage/CheckoutConfirm.aspx");
             Response.Redirect(url, false);
             Context.ApplicationInstance.CompleteRequest();
+        }
+
+        /* ====== PageMethods cho popup ====== */
+        [WebMethod(EnableSession = true)]
+        public static AddressDto GetSelectedAddress()
+        {
+            return HttpContext.Current.Session["selected_address_obj"] as AddressDto;
         }
     }
 }

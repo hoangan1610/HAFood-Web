@@ -12,7 +12,7 @@
         body{font-family:'Poppins',system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;margin:0;background:#fafafa}
         .wrap{max-width:900px;margin:0 auto;padding:12px 16px 80px}
         .topbar{display:flex;align-items:center;gap:10px;padding:10px 4px}
-        .back{color:#111;text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+        /* KHÔNG có nút quay lại */
         .title{font-weight:700;font-size:20px}
 
         .card{background:#fff;border-radius:12px;box-shadow:0 4px 10px rgba(0,0,0,.05);padding:12px}
@@ -27,7 +27,6 @@
                        border-radius:999px;padding:2px 8px;font-size:12px}
         .empty{padding:20px;text-align:center;color:#6b7280}
 
-        /* Footer buttons: không gạch dưới + căn giữa */
         .sticky-actions{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid #eee;padding:12px}
         .actions{max-width:900px;margin:0 auto;display:flex;gap:12px;justify-content:center}
         .btn{height:44px;min-width:140px;border:1px solid var(--border);border-radius:10px;padding:0 18px;
@@ -39,12 +38,10 @@
 </head>
 <body>
 <form id="form1" runat="server">
-    <asp:HiddenField ID="hfReturnUrl" runat="server" />
     <asp:HiddenField ID="hfSelectedId" runat="server" />
 
     <div class="wrap">
         <div class="topbar">
-            <a id="lnkBack" runat="server" class="back"><i class="bi bi-arrow-left"></i><span>Quay lại</span></a>
             <div class="title">Chọn địa chỉ nhận hàng</div>
         </div>
 
@@ -76,7 +73,7 @@
 
     <div class="sticky-actions">
         <div class="actions">
-            <a id="lnkCancel" runat="server" class="btn btn-secondary">Hủy</a>
+            <button type="button" id="btnCancel" class="btn btn-secondary">Hủy</button>
             <asp:Button ID="btnConfirm" runat="server" CssClass="btn btn-primary" Text="Xác nhận"
                         OnClick="btnConfirm_Click" UseSubmitBehavior="false" />
         </div>
@@ -91,6 +88,11 @@
         const radio = row.querySelector('input[type=radio]');
         if (!radio) return;
         radio.checked = true;
+    });
+
+    // Hủy -> báo parent đóng popup
+    document.getElementById('btnCancel').addEventListener('click', function () {
+        try { window.parent && window.parent.postMessage({ type: 'HAFood.AddressCancel' }, '*'); } catch (_) { }
     });
 </script>
 </body>
