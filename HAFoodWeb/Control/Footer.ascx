@@ -204,7 +204,7 @@
 
 <button id="hafChatLauncher" class="haf-chat-launcher" type="button" aria-label="Mở cửa sổ chat" aria-controls="hafChatPanel" aria-expanded="false">
     <i class="bi bi-chat-dots-fill" aria-hidden="true"></i>
-    <span>Chat</span>
+    <span>Nhắn tin</span>
     <span class="haf-chat-badge" aria-hidden="true"></span>
 </button>
 
@@ -212,7 +212,7 @@
     <div class="haf-chat-header">
         <div class="title">
             <i class="bi bi-chat-dots-fill"></i>
-            <span>Chat with us</span>
+            <span>Nhắn tin với chúng tôi</span>
         </div>
         <button class="haf-chat-close" id="hafChatClose" type="button" aria-label="Đóng chat">
             <i class="bi bi-x-lg" aria-hidden="true"></i>
@@ -288,7 +288,7 @@
     }
     function spinnerHtml() { return '<span class="haf-spinner" aria-hidden="true"></span>'; }
 
-    // ---- formatter: **bold** và *"italic"* (chỉ italic khi có asterisk bọc ngoài cặp ngoặc kép)
+    // ---- formatter: **bold** và *"italic"* (nghiêng khi có asterisk bọc ngoài cặp ngoặc kép)
     function formatBotHtml(text) {
         let html = escapeHtml(text || '');
 
@@ -371,6 +371,11 @@
         }
     }
 
+    // NEW: kiểm tra đã có hội thoại chưa
+    function hasConversation() {
+        return document.querySelector('.haf-msg.user, .haf-msg.bot') !== null;
+    }
+
     (function () {
         const launcher = document.getElementById('hafChatLauncher');
         const panel = document.getElementById('hafChatPanel');
@@ -379,12 +384,17 @@
         const sendBtn = document.getElementById('hafSendBtn');
         const chatBody = document.getElementById('hafChatBody');
 
+        // UPDATED: lần đầu mở -> scrollTop = 0 (thấy phần chào), đã có chat -> xuống cuối
         function setOpen(isOpen) {
             panel.classList.toggle('is-open', isOpen);
             launcher.setAttribute('aria-expanded', String(isOpen));
             if (isOpen) {
                 input.focus();
-                chatBody.scrollTop = chatBody.scrollHeight;
+                if (hasConversation()) {
+                    chatBody.scrollTop = chatBody.scrollHeight;
+                } else {
+                    chatBody.scrollTop = 0;
+                }
             }
         }
 
