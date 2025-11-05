@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.Web;
 using System.Web.UI;
 using System.Web.UI.WebControls;
+using System.Web.Script.Serialization; // <-- thêm để serialize payload
 
 namespace HAFoodWeb
 {
@@ -15,13 +16,11 @@ namespace HAFoodWeb
 
         protected async void Page_Load(object sender, EventArgs e)
         {
-            // Bắt buộc đăng nhập (dựa trên cookie token)
+            // Bắt buộc đăng nhập — nếu thiếu token thì redirect TOÀN TRANG (không hiển thị login trong popup)
             if (Request.Cookies["AuthToken"] == null || string.IsNullOrWhiteSpace(Request.Cookies["AuthToken"].Value))
             {
-                var ret = Server.UrlEncode(Request.RawUrl);
+                var ret = Server.UrlEncode(ResolveUrl("~/CartPage/CartPage.aspx"));
                 var url = "~/AuthPage/Login.aspx?returnUrl=" + ret;
-
-                // Tránh ThreadAbortException
                 Response.Redirect(url, false);
                 Context.ApplicationInstance.CompleteRequest();
                 return;
@@ -29,15 +28,6 @@ namespace HAFoodWeb
 
             if (!IsPostBack)
             {
-                // resolve returnUrl
-                var retUrl = Request.QueryString["returnUrl"];
-                if (string.IsNullOrWhiteSpace(retUrl))
-                    retUrl = ResolveUrl("~/CartPage/CartPage.aspx");
-                hfReturnUrl.Value = retUrl;
-
-                lnkBack.HRef = retUrl;
-                lnkCancel.HRef = retUrl;
-
                 await BindAddresses();
             }
         }
@@ -74,7 +64,7 @@ namespace HAFoodWeb
                             long.TryParse(hfSelectedId.Value, out var sid) && sid == dto.id);
             var chk = selected ? " checked" : "";
 
-            // Radio được render bằng Literal để set checked server-side
+            // Radio render bằng Literal để set checked server-side
             lit.Text = $"<input class='addr-radio' type='radio' name='addrSel' value='{dto.id}'{chk} />";
         }
 
@@ -82,26 +72,48 @@ namespace HAFoodWeb
         {
             // Giá trị radio theo name=addrSel
             var selected = Request.Form["addrSel"];
-            if (string.IsNullOrWhiteSpace(selected))
+            if (string.IsNullOrWhiteSpace(selected) || !long.TryParse(selected, out var id))
             {
-                Response.Redirect(hfReturnUrl.Value, false);
-                Context.ApplicationInstance.CompleteRequest();
+                await BindAddresses();
                 return;
             }
-
-            if (!long.TryParse(selected, out var id)) return;
 
             var token = Request.Cookies["AuthToken"]?.Value;
             var list = await _addrService.GetMyAddressesAsync(token, onlyActive: true);
             var pick = list?.FirstOrDefault(a => a.id == id);
             if (pick != null)
             {
-                // Lưu vào session để CartPage tiêu thụ
+                // Lưu vào session để CartPage tiêu thụ khi fallback
                 Session["selected_address_obj"] = pick;
             }
 
-            Response.Redirect(hfReturnUrl.Value, false);
-            Context.ApplicationInstance.CompleteRequest();
+            // ==> GỬI KÈM PAYLOAD trực tiếp qua postMessage
+            var payload = new
+            {
+                id = pick?.id,
+                fullName = pick?.fullName,
+                phone = pick?.phone,
+                fullAddress = pick?.fullAddress
+            };
+            var json = new JavaScriptSerializer().Serialize(payload);
+
+            // Bridge page: bắn message và để parent tự đóng popup
+            Response.Clear();
+            Response.ContentType = "text/html; charset=utf-8";
+            Response.Write($@"<!DOCTYPE html><html><head><meta charset='utf-8'><title>Đang đóng…</title></head>
+<body style='font:14px system-ui'>
+<script>
+  (function(){{
+    var dto = {json};
+    try {{
+      window.parent && window.parent.postMessage({{ type: 'HAFood.AddressPicked', address: dto }}, '*');
+    }} catch(_){{
+    }}
+  }})();
+</script>
+Đã chọn địa chỉ. Bạn có thể đóng cửa sổ này.
+</body></html>");
+            Response.End();
         }
     }
 }

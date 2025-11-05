@@ -36,15 +36,13 @@
         transition: transform .2s ease, box-shadow .2s ease, background-color .2s ease;
     }
     .haf-chat-launcher i{ font-size: 20px; line-height: 1; }
-    .haf-chat-launcher:hover{ transform: translateY(-2px); box-shadow: 0 14px 32px rgba(0,0,0,.3); background:#111827; }
-    .haf-chat-badge{ display:inline-block; min-width: 8px; height: 8px; background:#10b981; border-radius:999px; }
 
-    /* Panel CHẶT KÍCH THƯỚC NHẤT QUÁN: dùng flex + height cố định */
+    /* Panel—kích thước nhất quán */
     .haf-chat-panel{
         position: fixed; right: 30px; bottom: 100px;
-        width: 430px; max-width: calc(100vw - 40px);      /* rộng cố định */
-        height: 70vh; min-height: 420px;                   /* cao cố định */
-        display: flex; flex-direction: column;             /* flex layout */
+        width: 430px; max-width: calc(100vw - 40px);
+        height: 70vh; min-height: 420px;
+        display: flex; flex-direction: column;
         background: #0f172a; border-radius: 16px; overflow: hidden;
         box-shadow: 0 30px 70px rgba(0,0,0,.45); z-index: 1002;
         opacity: 0; visibility: hidden; transform: translateY(12px);
@@ -64,15 +62,13 @@
     .haf-chat-close:hover{ color:#fff; }
 
     .haf-chat-body{
-        flex: 1 1 auto; min-height: 0;                    /* phần nội dung co giãn trong panel */
+        flex: 1 1 auto; min-height: 0;
         background:#111827; color:#e5e7eb; padding: 16px;
         overflow-y: auto;
-        scrollbar-gutter: stable both-edges;              /* tránh co giãn khi xuất hiện scrollbar */
-        /* Scrollbar (Firefox) */
+        scrollbar-gutter: stable both-edges;
         scrollbar-width: thin;
         scrollbar-color: #263244 #0b1220;
     }
-    /* Scrollbar (WebKit) */
     .haf-chat-body::-webkit-scrollbar{ width: 10px; }
     .haf-chat-body::-webkit-scrollbar-track{ background: #0b1220; border-radius: 10px; }
     .haf-chat-body::-webkit-scrollbar-thumb{ background:#263244; border-radius: 10px; border: 2px solid #0b1220; }
@@ -114,22 +110,30 @@
     .haf-spinner{ display:inline-block; width:16px; height:16px; border:2px solid #93c5fd; border-top-color:transparent; border-radius:50%; animation:spin 1s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* --- Typing indicator: dấu ba chấm lượn sóng --- */
+    /* --- Dấu ba chấm lượn sóng --- */
     .typing { display:inline-flex; align-items:center; gap:6px; height: 16px; }
     .typing .dot{ width:6px; height:6px; border-radius:50%; background:#cbd5e1; opacity:.6; animation: wave 1.2s infinite ease-in-out; }
     .typing .dot:nth-child(2){ animation-delay:.15s; }
     .typing .dot:nth-child(3){ animation-delay:.3s; }
-    @keyframes wave{
-        0%, 100%{ transform: translateY(0); opacity:.6; }
-        50%{ transform: translateY(-5px); opacity:1; }
+    @keyframes wave{ 0%,100%{ transform: translateY(0); opacity:.6; } 50%{ transform: translateY(-5px); opacity:1; } }
+
+    /* --- Gợi ý nhanh --- */
+    .haf-quick-wrap{ margin-top: 14px; }
+    .haf-quick-title{ font-size:13px; color:#94a3b8; margin-bottom: 8px; }
+    .haf-quick-grid{ display: grid; grid-template-columns: 1fr; gap: 8px; }
+    .haf-quick-btn{
+        display: inline-flex; width: 100%; text-align: left;
+        align-items: center; gap: 8px; padding: 10px 12px;
+        background:#0b1220; color:#e5e7eb; border:1px solid #223049;
+        border-radius: 10px; cursor: pointer; font-size: 14px;
+        transition: background .15s ease, transform .1s ease;
     }
+    .haf-quick-btn:hover{ background:#111827; }
+    .haf-quick-btn:active{ transform: translateY(1px); }
 
     /* Mobile */
     @media (max-width: 480px){
-        .haf-chat-panel{
-            right: 10px; left: 10px; bottom: 80px;
-            width: auto; height: 70vh; min-height: 420px;
-        }
+        .haf-chat-panel{ right: 10px; left: 10px; bottom: 80px; width: auto; height: 70vh; min-height: 420px; }
         .haf-chat-launcher{ right: 10px; bottom: 20px; }
         .back-to-top{ right: 10px; bottom: 80px; }
     }
@@ -214,13 +218,38 @@
             <i class="bi bi-x-lg" aria-hidden="true"></i>
         </button>
     </div>
+
     <div class="haf-chat-body" id="hafChatBody">
         <div class="haf-chat-card" id="hafWelcome">
             <div style="font-size:22px; margin-bottom:8px; font-weight:600">👋 Xin chào!</div>
             <div>Chào bạn, tôi là trợ lý CSKH cho HAFood. Tôi hỗ trợ tra cứu đơn, tìm sản phẩm và giải đáp thắc mắc. Bạn cần gì hôm nay?</div>
             <div class="haf-hint">Bạn có thể đặt câu hỏi bất kỳ về sản phẩm hoặc đơn hàng.</div>
+
+            <!-- Gợi ý nhanh -->
+            <div class="haf-quick-wrap" aria-label="Gợi ý nhanh">
+                <div class="haf-quick-title">Gợi ý câu hỏi</div>
+                <div class="haf-quick-grid" id="hafQuickGrid">
+                    <button type="button" class="haf-quick-btn" data-text="Bạn muốn tìm kiếm sản phẩm có giá trị bao nhiêu?">
+                        <i class="bi bi-cash-coin" aria-hidden="true"></i>
+                        <span>Bạn muốn tìm kiếm sản phẩm có giá trị bao nhiêu?</span>
+                    </button>
+                    <button type="button" class="haf-quick-btn" data-text="Bạn có muốn mình gợi ý các sản phẩm bán chạy không?">
+                        <i class="bi bi-stars" aria-hidden="true"></i>
+                        <span>Bạn có muốn mình gợi ý các sản phẩm bán chạy không?</span>
+                    </button>
+                    <button type="button" class="haf-quick-btn" data-text="Bạn có muốn kiểm tra đơn hàng không? Nếu có hãy nhập mã đơn để mình kiểm tra nhé.">
+                        <i class="bi bi-truck" aria-hidden="true"></i>
+                        <span>Bạn có muốn kiểm tra đơn hàng không? Nếu có hãy nhập mã đơn để mình kiểm tra nhé.</span>
+                    </button>
+                    <button type="button" class="haf-quick-btn" data-text="Bạn muốn tìm kiếm sản phẩm nào? Hãy nhập tên giúp mình nhé.">
+                        <i class="bi bi-search" aria-hidden="true"></i>
+                        <span>Bạn muốn tìm kiếm sản phẩm nào? Hãy nhập tên giúp mình nhé.</span>
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
+
     <div class="haf-chat-input">
         <input type="text" id="hafInput" placeholder="Viết tin nhắn" aria-label="Ô nhập tin nhắn">
         <button class="haf-chat-send" id="hafSendBtn" type="button" aria-label="Gửi">
@@ -259,6 +288,29 @@
     }
     function spinnerHtml() { return '<span class="haf-spinner" aria-hidden="true"></span>'; }
 
+    // ---- formatter: **bold** và *"italic"* (chỉ italic khi có asterisk bọc ngoài cặp ngoặc kép)
+    function formatBotHtml(text) {
+        let html = escapeHtml(text || '');
+
+        // **đậm**
+        html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+
+        // *"..."* với ngoặc kép thẳng (escape -> &quot;)
+        html = html.replace(/\*&quot;([\s\S]*?)&quot;\*/g, '&quot;<em>$1</em>&quot;');
+
+        // *“...”* với ngoặc cong unicode
+        html = html.replace(/\*“([\s\S]*?)”\*/g, '“<em>$1</em>”');
+
+        // *&ldquo;...&rdquo;* và *&#8220;...&#8221;*
+        html = html.replace(/\*&ldquo;([\s\S]*?)&rdquo;\*/g, '&ldquo;<em>$1</em>&rdquo;');
+        html = html.replace(/\*&#8220;([\s\S]*?)&#8221;\*/g, '&#8220;<em>$1</em>&#8221;');
+
+        // xuống dòng
+        html = html.replace(/\n/g, '<br>');
+
+        return html;
+    }
+
     // Typing indicator
     let typingNode = null;
     function showTyping() {
@@ -292,21 +344,47 @@
         return data.Reply || data.Message || '';
     }
 
+    // Gửi text (từ nút hoặc ô input)
+    async function sendText(text) {
+        const bodyText = (text || '').trim();
+        if (!bodyText) return;
+
+        appendMsg('user', escapeHtml(bodyText));
+        const sendBtn = document.getElementById('hafSendBtn');
+        const input = document.getElementById('hafInput');
+
+        input.value = '';
+        sendBtn.disabled = true; sendBtn.innerHTML = spinnerHtml();
+
+        try {
+            showTyping();
+            const reply = await askChat(bodyText);
+            hideTyping();
+            appendMsg('bot', formatBotHtml(reply));
+        } catch (err) {
+            hideTyping();
+            appendMsg('bot', '❌ ' + escapeHtml(err.message || 'Gửi chat thất bại'));
+        } finally {
+            sendBtn.disabled = false; sendBtn.innerHTML = '<i class="bi bi-send-fill" aria-hidden="true"></i>';
+            const body = document.getElementById('hafChatBody');
+            body.scrollTop = body.scrollHeight;
+        }
+    }
+
     (function () {
         const launcher = document.getElementById('hafChatLauncher');
         const panel = document.getElementById('hafChatPanel');
         const closeBtn = document.getElementById('hafChatClose');
         const input = document.getElementById('hafInput');
         const sendBtn = document.getElementById('hafSendBtn');
+        const chatBody = document.getElementById('hafChatBody');
 
         function setOpen(isOpen) {
             panel.classList.toggle('is-open', isOpen);
             launcher.setAttribute('aria-expanded', String(isOpen));
             if (isOpen) {
                 input.focus();
-                // đảm bảo luôn cuộn tới đáy khi mở
-                const body = document.getElementById('hafChatBody');
-                body.scrollTop = body.scrollHeight;
+                chatBody.scrollTop = chatBody.scrollHeight;
             }
         }
 
@@ -314,34 +392,25 @@
         closeBtn.addEventListener('click', () => setOpen(false));
         document.addEventListener('keydown', (e) => { if (e.key === 'Escape') setOpen(false); });
 
-        // Gửi text—KHÔNG xoá thẻ chào
-        sendBtn.addEventListener('click', async () => {
-            const text = input.value.trim();
-            if (!text) return;
-
-            appendMsg('user', escapeHtml(text));
-            input.value = '';
-            sendBtn.disabled = true; sendBtn.innerHTML = spinnerHtml();
-
-            try {
-                showTyping();
-                const reply = await askChat(text);
-                hideTyping();
-                appendMsg('bot', escapeHtml(reply));
-            } catch (err) {
-                hideTyping();
-                appendMsg('bot', '❌ ' + escapeHtml(err.message || 'Gửi chat thất bại'));
-            } finally {
-                sendBtn.disabled = false; sendBtn.innerHTML = '<i class="bi bi-send-fill" aria-hidden="true"></i>';
-            }
-        });
-
         // Enter để gửi
         input.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
                 sendBtn.click();
             }
+        });
+
+        // Nút gửi
+        sendBtn.addEventListener('click', () => {
+            sendText(input.value);
+        });
+
+        // Click gợi ý nhanh -> gửi ngay
+        chatBody.addEventListener('click', (e) => {
+            const btn = e.target.closest('.haf-quick-btn');
+            if (!btn) return;
+            const text = btn.getAttribute('data-text') || btn.textContent.trim();
+            sendText(text);
         });
     })();
 </script>
