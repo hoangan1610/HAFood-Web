@@ -56,13 +56,13 @@ namespace HAFoodWeb.UserAddress
                     catch (Exception ex) { Debug.WriteLine($"[CreateUserAddress] SetDefault failed: {ex.Message}"); }
                 }
 
-                Toast("Tạo địa chỉ thành công!", "success");
-                Response.Redirect("UserAddressList.aspx", false);
-                Context.ApplicationInstance.CompleteRequest();
+                // ✅ KHÔNG gọi Toast trước Redirect (sẽ không hiển thị)
+                RedirectWithToast("~/UserAddress/UserAddressList.aspx", "created");
             }
             catch (Exception ex)
             {
                 Debug.WriteLine($"[CreateUserAddress] ERROR: {ex}");
+                // ❗Lỗi: hiển thị ngay ở trang hiện tại bằng Bootstrap toast đỏ
                 Toast("Không thể lưu địa chỉ. Vui lòng thử lại.", "danger");
             }
         }
@@ -90,6 +90,14 @@ namespace HAFoodWeb.UserAddress
         {
             var js = $"showToast({HttpUtility.JavaScriptStringEncode(message, true)}, '{variant}');";
             ClientScript.RegisterStartupScript(this.GetType(), Guid.NewGuid().ToString(), js, true);
+        }
+
+        private void RedirectWithToast(string relativeUrl, string toastKey)
+        {
+            var url = VirtualPathUtility.ToAbsolute(relativeUrl);
+            url += (url.Contains("?") ? "&" : "?") + "toast=" + HttpUtility.UrlEncode(toastKey);
+            Response.Redirect(url, false);
+            Context.ApplicationInstance.CompleteRequest();
         }
 
         private string BuildFullAddress()

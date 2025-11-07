@@ -7,7 +7,9 @@
 <head runat="server">
     <meta charset="utf-8" />
     <title>Sửa địa chỉ</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
     <style>
         :root{ --accent:#ff7a45; --border:#e5e7eb; --menu:#fff; --shadow:0 10px 25px rgba(0,0,0,.08); }
         .section-card{ border-radius:12px; }
@@ -32,6 +34,56 @@
         .combo.open .combo-menu{display:block}
         .combo-item{padding:.45rem .75rem;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
         .combo-item:hover{background:#f1f5f9}
+
+        /* ===== Toast (xanh lá) ===== */
+        .toast-stack{
+          position:fixed; right:16px; top:16px; z-index:2300;
+          display:flex; flex-direction:column; gap:10px;
+          align-items:flex-end;              
+        }
+
+        .toast{
+          min-width:unset;                   
+          width:fit-content;                 
+          max-width:min(92vw, 560px);        
+
+          display:inline-flex;               
+          align-items:flex-start; gap:10px;
+
+          border-radius:14px;
+          padding:12px 14px;
+          box-shadow:0 8px 20px rgba(0,0,0,.12);
+          border:1px solid var(--border);
+          background:#fff; color:#111; font-weight:600;
+          font-size:15.5px; line-height:1.35;
+
+          opacity:0; transform:translateY(-8px);
+          transition:opacity .18s ease, transform .18s ease;
+        }
+
+        .toast.show{ opacity:1; transform:translateY(0); }
+
+        .toast-icon{ flex:0 0 auto; }
+        .toast-text{
+          display:inline-block;
+          white-space:normal;                
+          overflow-wrap:anywhere;            
+        }
+
+        .toast-success{
+          background:#22c55e !important;
+          border-color:#16a34a !important;
+          color:#fff !important;
+        }
+        .toast-success .toast-icon{ color:#fff !important; }
+
+        .toast-error{
+          background:#ef4444 !important;
+          border-color:#dc2626 !important;
+          color:#fff !important;
+        }
+        .toast-error .toast-icon{ color:#fff !important; }
+
     </style>
 </head>
 <body>
@@ -67,12 +119,10 @@
                 <div class="row g-3">
                     <div class="col-md-6">
                         <label class="form-label">Tỉnh/Thành <span class="text-danger">*</span></label>
-                        <!-- Container để builder render combo -->
                         <div id="comboCityU" class="combo"></div>
                     </div>
                     <div class="col-md-6">
                         <label class="form-label">Xã/Phường <span class="text-danger">*</span></label>
-                        <!-- Container để builder render combo -->
                         <div id="comboWardU" class="combo"></div>
                     </div>
                 </div>
@@ -122,27 +172,29 @@
       </div></div>
     </div>
 
-    <!-- Toast -->
-    <div class="position-fixed top-0 end-0 p-3" style="z-index:1080">
-        <div id="appToast" class="toast align-items-center text-white bg-danger border-0" role="alert" aria-live="assertive" aria-atomic="true">
-            <div class="d-flex">
-                <div id="toastBody" class="toast-body">...</div>
-                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Đóng"></button>
-            </div>
-        </div>
-    </div>
+    <!-- Toast Stack -->
+    <div class="toast-stack" id="toastStack" aria-live="polite"></div>
 </form>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     function showToast(message, variant) {
-        var toastEl = document.getElementById('appToast');
-        var bodyEl = document.getElementById('toastBody');
-        bodyEl.textContent = message;
-        toastEl.classList.remove('bg-danger', 'bg-success', 'bg-warning', 'bg-info');
-        toastEl.classList.add('bg-' + (variant || 'danger'));
-        new bootstrap.Toast(toastEl).show();
+        var stack = document.getElementById('toastStack'); if (!stack) return;
+        var div = document.createElement('div');
+        div.className = 'toast ' + (variant === 'success' ? 'toast-success' : (variant === 'danger' ? 'toast-error' : ''));
+        div.setAttribute('role', 'alert');
+        var icon = document.createElement('i');
+        icon.className = 'bi ' + (variant === 'success' ? 'bi-check-circle-fill' : 'bi-exclamation-triangle-fill') + ' toast-icon';
+        var text = document.createElement('span');
+        text.className = 'toast-text';
+        text.textContent = message || '';
+        div.appendChild(icon); div.appendChild(text); stack.appendChild(div);
+        div.offsetHeight; div.classList.add('show');
+        var close = function () { div.classList.remove('show'); setTimeout(function () { div.remove(); }, 180); };
+        var timer = setTimeout(close, 3000);
+        div.addEventListener('click', function () { clearTimeout(timer); close(); });
     }
+
     function validateUpdate() {
         var missing = [];
         if (!document.getElementById('txtFullName').value.trim()) missing.push('Họ và tên');
@@ -163,15 +215,13 @@
     (function () {
         const DATA_BASE = '<%= ResolveClientUrl("~/assets/vn-admin") %>';
 
-    // Containers (UpdateUser: comboCityU/comboWardU)
-    const cityBox = document.getElementById('comboCityU');
-    const wardBox = document.getElementById('comboWardU');
+        const cityBox = document.getElementById('comboCityU');
+        const wardBox = document.getElementById('comboWardU');
 
-    // Hidden mirrors
-    const hidCityName = document.getElementById('<%= txtCitySel.ClientID %>');
-    const hidWardName = document.getElementById('<%= txtWardSel.ClientID %>');
-    const hidCityCode = document.getElementById('<%= txtCityCode.ClientID %>');
-    const hidWardCode = document.getElementById('<%= txtWardCode.ClientID %>');
+        const hidCityName = document.getElementById('<%= txtCitySel.ClientID %>');
+        const hidWardName = document.getElementById('<%= txtWardSel.ClientID %>');
+        const hidCityCode = document.getElementById('<%= txtCityCode.ClientID %>');
+        const hidWardCode = document.getElementById('<%= txtWardCode.ClientID %>');
 
         const rm = (s) => (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
             .replace(/đ/g, 'd').replace(/Đ/g, 'D')
@@ -185,7 +235,6 @@
             .replace(/\b0+(\d)\b/g, '$1')
         );
 
-        // ---- Combo builder ----
         function createCombo(el, placeholder) {
             if (!el) return null;
             el.classList.add('combo');
@@ -248,7 +297,6 @@
         const cityCombo = createCombo(cityBox, '— Chọn Tỉnh/Thành —');
         const wardCombo = createCombo(wardBox, '— Chọn Xã/Phường —');
 
-        // ----- fuzzy match ward -----
         function extractWardNumber(base) {
             const m = (base || '').match(/\b(\d{1,3})\b/);
             return m ? m[1] : null;
@@ -283,7 +331,6 @@
             return null;
         }
 
-        // ----- data & restore -----
         let provinces = [];
         fetch(DATA_BASE + '/provinces.json', { cache: 'force-cache' })
             .then(r => r.json())
@@ -291,7 +338,6 @@
                 provinces = list || [];
                 cityCombo && cityCombo.setData(provinces.map(p => ({ value: String(p.code), label: p.name, raw: p })));
 
-                // preselect theo code hoặc tên
                 let p = null;
                 if (hidCityCode.value) {
                     p = provinces.find(x => String(x.code) === hidCityCode.value);
@@ -301,7 +347,6 @@
                 }
                 if (p) setCity(p);
                 else {
-                    // chưa map được -> hiển thị text cho user
                     cityCombo && cityCombo.setSelected('', hidCityName.value || '');
                     prefillWardText();
                 }
@@ -330,7 +375,6 @@
                     const w = findWardMatch(hidWardName.value, wards);
                     if (w) return pickWard(w);
                 }
-                // fallback: chỉ hiển thị text để user thấy, code rỗng -> validator bắt chọn lại khi lưu
                 prefillWardText();
             } catch (e) { console.error(e); prefillWardText(); }
         }
@@ -353,7 +397,6 @@
         cityBox && cityBox.addEventListener('combochange', (e) => setCity(e.detail.raw));
         wardBox && wardBox.addEventListener('combochange', (e) => pickWard(e.detail.raw));
 
-        // Nếu gõ tay -> xoá code để bắt chọn lại
         if (cityBox) cityBox.querySelector('.combo-text').addEventListener('blur', () => {
             if (rm(cityCombo.label) !== rm(hidCityName.value)) {
                 hidCityName.value = cityCombo.label;
@@ -369,7 +412,6 @@
             }
         });
 
-        // Prefill text ward ngay khi load
         prefillWardText();
     })();
 </script>

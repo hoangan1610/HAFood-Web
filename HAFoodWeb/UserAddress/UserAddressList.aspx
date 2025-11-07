@@ -26,7 +26,6 @@
         .badge-default{display:inline-block;margin-top:8px;background:rgba(255,122,69,.08);color:var(--accent);border:1px solid var(--accent);
                        border-radius:999px;padding:2px 8px;font-size:12px}
 
-        /* Buttons: không gạch dưới + text căn giữa */
         .btn{height:36px;min-width:120px;border:1px solid var(--border);border-radius:10px;padding:0 14px;
              font-weight:700;cursor:pointer;background:#f2f3f5;color:#111;text-decoration:none;
              display:inline-flex;align-items:center;justify-content:center;text-align:center}
@@ -38,6 +37,56 @@
         .empty{padding:20px;text-align:center;color:#6b7280;margin-top:12px}
         .add-new{margin-left:auto;text-decoration:none}
         .add-new .btn{min-width:180px}
+
+        /* ===== Toast ===== */
+        .toast-stack{
+          position:fixed; right:16px; top:16px; z-index:2300;
+          display:flex; flex-direction:column; gap:10px;
+          align-items:flex-end;              
+        }
+
+        .toast{
+          min-width:unset;                   
+          width:fit-content;                 
+          max-width:min(92vw, 560px);        
+
+          display:inline-flex;               
+          align-items:flex-start; gap:10px;
+
+          border-radius:14px;
+          padding:12px 14px;
+          box-shadow:0 8px 20px rgba(0,0,0,.12);
+          border:1px solid var(--border);
+          background:#fff; color:#111; font-weight:600;
+          font-size:15.5px; line-height:1.35;
+
+          opacity:0; transform:translateY(-8px);
+          transition:opacity .18s ease, transform .18s ease;
+        }
+
+        .toast.show{ opacity:1; transform:translateY(0); }
+
+        .toast-icon{ flex:0 0 auto; }
+        .toast-text{
+          display:inline-block;
+          white-space:normal;                
+          overflow-wrap:anywhere;            
+        }
+
+        .toast-success{
+          background:#22c55e !important;
+          border-color:#16a34a !important;
+          color:#fff !important;
+        }
+        .toast-success .toast-icon{ color:#fff !important; }
+
+        .toast-error{
+          background:#ef4444 !important;
+          border-color:#dc2626 !important;
+          color:#fff !important;
+        }
+        .toast-error .toast-icon{ color:#fff !important; }
+
     </style>
 </head>
 <body>
@@ -90,6 +139,44 @@
             </asp:Repeater>
         </div>
     </div>
+
+    <!-- Toast Stack -->
+    <div class="toast-stack" id="toastStack" aria-live="polite"></div>
 </form>
+
+<script>
+  // Toast dùng chung (cùng style với Create/Update)
+  function showToast(message, variant) {
+      var stack = document.getElementById('toastStack'); if (!stack) return;
+      var div = document.createElement('div');
+      div.className = 'toast ' + (variant === 'success' ? 'toast-success' : (variant === 'danger' ? 'toast-error' : ''));
+      div.setAttribute('role','alert');
+      var icon = document.createElement('i');
+      icon.className = 'bi ' + (variant === 'success' ? 'bi-check-circle-fill' : 'bi-exclamation-triangle-fill') + ' toast-icon';
+      var text = document.createElement('span'); text.className = 'toast-text'; text.textContent = message || '';
+      div.appendChild(icon); div.appendChild(text); stack.appendChild(div);
+      div.offsetHeight; div.classList.add('show');
+      var close = function(){ div.classList.remove('show'); setTimeout(function(){ div.remove(); }, 180); };
+      var timer = setTimeout(close, 3000);
+      div.addEventListener('click', function(){ clearTimeout(timer); close(); });
+  }
+
+  // Đọc ?toast=created|updated|deleted (và dọn URL)
+  (function(){
+    var params = new URLSearchParams(location.search);
+    var t = (params.get('toast') || '').toLowerCase();
+    if (t) {
+      var msg = t === 'created' ? 'Tạo địa chỉ thành công!'
+              : t === 'updated' ? 'Cập nhật địa chỉ thành công!'
+              : t === 'deleted' ? 'Đã xóa địa chỉ.'
+              : null;
+      if (msg) showToast(msg, 'success');
+      // Xoá các tham số điều khiển để F5 không hiện lại
+      params.delete('toast'); params.delete('ts');
+      var clean = location.pathname + (params.toString() ? '?' + params.toString() : '');
+      history.replaceState({}, '', clean);
+    }
+  })();
+</script>
 </body>
 </html>

@@ -7,7 +7,9 @@
 <head runat="server">
     <meta charset="utf-8" />
     <title>Địa chỉ mới</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
     <style>
         :root{ --accent:#ff7a45; --border:#e5e7eb; --menu:#fff; --shadow:0 10px 25px rgba(0,0,0,.08); }
         body{font-family:'Poppins',system-ui,Arial,sans-serif}
@@ -29,13 +31,14 @@
         .combo .combo-menu{
             position:absolute; left:0; right:0; top:calc(100% + 4px);
             background:var(--menu); border:1px solid var(--border); border-radius:.5rem; box-shadow:var(--shadow);
-            z-index:1000; display:none; max-height:330px; overflow:auto;  /* ~10 dòng, có cuộn */
+            z-index:1000; display:none; max-height:330px; overflow:auto;
         }
         .combo.open .combo-menu{ display:block; }
         .combo .combo-item{
             padding:.45rem .75rem; cursor:pointer; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
         }
         .combo .combo-item:hover, .combo .combo-item.active{ background:#f1f5f9; }
+
         .rbl-chips input[type="radio"]{ position:absolute; opacity:0; width:0; height:0; }
         .rbl-chips label{
             display:inline-block; cursor:pointer; padding:.5rem .9rem; margin-right:.5rem; margin-bottom:.5rem;
@@ -45,6 +48,56 @@
             background:rgba(255,122,69,.08); border-color:var(--accent); color:var(--accent);
             box-shadow:0 0 0 2px rgba(255,122,69,.15) inset;
         }
+
+        /* ===== Toast (xanh lá) ===== */
+        .toast-stack{
+          position:fixed; right:16px; top:16px; z-index:2300;
+          display:flex; flex-direction:column; gap:10px;
+          align-items:flex-end;              
+        }
+
+        .toast{
+          min-width:unset;                   
+          width:fit-content;                 
+          max-width:min(92vw, 560px);        
+
+          display:inline-flex;               
+          align-items:flex-start; gap:10px;
+
+          border-radius:14px;
+          padding:12px 14px;
+          box-shadow:0 8px 20px rgba(0,0,0,.12);
+          border:1px solid var(--border);
+          background:#fff; color:#111; font-weight:600;
+          font-size:15.5px; line-height:1.35;
+
+          opacity:0; transform:translateY(-8px);
+          transition:opacity .18s ease, transform .18s ease;
+        }
+
+        .toast.show{ opacity:1; transform:translateY(0); }
+
+        .toast-icon{ flex:0 0 auto; }
+        .toast-text{
+          display:inline-block;
+          white-space:normal;                
+          overflow-wrap:anywhere;            
+        }
+
+        .toast-success{
+          background:#22c55e !important;
+          border-color:#16a34a !important;
+          color:#fff !important;
+        }
+        .toast-success .toast-icon{ color:#fff !important; }
+
+        .toast-error{
+          background:#ef4444 !important;
+          border-color:#dc2626 !important;
+          color:#fff !important;
+        }
+        .toast-error .toast-icon{ color:#fff !important; }
+
     </style>
 </head>
 <body>
@@ -122,33 +175,37 @@
         </div>
     </div>
 
-    <!-- Toast -->
-    <div class="position-fixed top-0 end-0 p-3" style="z-index:1080">
-        <div id="appToast" class="toast align-items-center text-white bg-danger border-0" role="alert" aria-live="assertive" aria-atomic="true">
-            <div class="d-flex">
-                <div id="toastBody" class="toast-body">...</div>
-                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Đóng"></button>
-            </div>
-        </div>
-    </div>
+    <!-- Toast Stack -->
+    <div class="toast-stack" id="toastStack" aria-live="polite"></div>
 </form>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
 <script>
+    // Toast API phù hợp code-behind: showToast(message, variant)
     function showToast(message, variant) {
-        var toastEl = document.getElementById('appToast');
-        var bodyEl = document.getElementById('toastBody');
-        bodyEl.textContent = message;
-        toastEl.classList.remove('bg-danger', 'bg-success', 'bg-warning', 'bg-info');
-        toastEl.classList.add('bg-' + (variant || 'danger'));
-        new bootstrap.Toast(toastEl).show();
+        var stack = document.getElementById('toastStack'); if (!stack) return;
+        var div = document.createElement('div');
+        div.className = 'toast ' + (variant === 'success' ? 'toast-success' : (variant === 'danger' ? 'toast-error' : ''));
+        div.setAttribute('role', 'alert');
+        var icon = document.createElement('i');
+        icon.className = 'bi ' + (variant === 'success' ? 'bi-check-circle-fill' : 'bi-exclamation-triangle-fill') + ' toast-icon';
+        var text = document.createElement('span');
+        text.className = 'toast-text';
+        text.textContent = message || '';
+        div.appendChild(icon); div.appendChild(text); stack.appendChild(div);
+        div.offsetHeight; div.classList.add('show');
+        var close = function () { div.classList.remove('show'); setTimeout(function () { div.remove(); }, 180); };
+        var timer = setTimeout(close, 3000);
+        div.addEventListener('click', function () { clearTimeout(timer); close(); });
     }
+
     function validateCreate() {
         var missing = [];
         if (!document.getElementById('txtFullName').value.trim()) missing.push('Họ và tên');
         if (!document.getElementById('txtPhone').value.trim()) missing.push('Số điện thoại');
         var cityCode = document.getElementById('<%= txtCityCode.ClientID %>').value.trim();
-      var wardCode = document.getElementById('<%= txtWardCode.ClientID %>').value.trim();
+        var wardCode = document.getElementById('<%= txtWardCode.ClientID %>').value.trim();
         if (!cityCode) missing.push('Tỉnh/Thành (chọn từ danh sách)');
         if (!wardCode) missing.push('Phường/Xã (chọn từ danh sách)');
         if (!document.getElementById('txtAddress').value.trim()) missing.push('Địa chỉ nhận hàng');
@@ -163,18 +220,18 @@
     (function () {
         const DATA_BASE = '<%= ResolveClientUrl("~/assets/vn-admin") %>';
 
-    const cityInput = document.getElementById('inpCityV3');
-    const cityMenu = document.getElementById('menuCity');
-    const cityCombo = document.getElementById('comboCity');
+        const cityInput = document.getElementById('inpCityV3');
+        const cityMenu = document.getElementById('menuCity');
+        const cityCombo = document.getElementById('comboCity');
 
-    const wardInput = document.getElementById('inpWardV3');
-    const wardMenu = document.getElementById('menuWard');
-    const wardCombo = document.getElementById('comboWard');
+        const wardInput = document.getElementById('inpWardV3');
+        const wardMenu = document.getElementById('menuWard');
+        const wardCombo = document.getElementById('comboWard');
 
-    const hidCityName = document.getElementById('<%= txtCitySel.ClientID %>');
-  const hidWardName = document.getElementById('<%= txtWardSel.ClientID %>');
-  const hidCityCode = document.getElementById('<%= txtCityCode.ClientID %>');
-  const hidWardCode = document.getElementById('<%= txtWardCode.ClientID %>');
+        const hidCityName = document.getElementById('<%= txtCitySel.ClientID %>');
+        const hidWardName = document.getElementById('<%= txtWardSel.ClientID %>');
+        const hidCityCode = document.getElementById('<%= txtCityCode.ClientID %>');
+        const hidWardCode = document.getElementById('<%= txtWardCode.ClientID %>');
 
         let PROVINCES = [];
         let WARDS = [];
@@ -245,7 +302,6 @@
             else if (e.key === 'Escape') { closeCombo(cityCombo); }
         });
         cityInput.addEventListener('blur', () => {
-            // nếu text không khớp lựa chọn => xoá code
             const text = cityInput.value.trim();
             const hit = PROVINCES.find(p => rm(p.name) === rm(text));
             if (hit) { setCityHidden(hit.name, String(hit.code)); } else { setCityHidden('', ''); wardInput.disabled = true; }
