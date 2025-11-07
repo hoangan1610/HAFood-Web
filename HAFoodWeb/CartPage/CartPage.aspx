@@ -39,6 +39,7 @@
         .summary-row:last-child{border-bottom:none}
         .grand{color:#e53935;font-size:20px;font-weight:800;text-align:center;padding:16px}
         .btn-primary{display:block;width:100%;height:48px;border:none;border-radius:999px;font-weight:700;cursor:pointer;background:#ff7a00;color:#fff}
+
         .pill{background:var(--pill);color:#fff;border-radius:999px;padding:4px 10px;font-size:12px}
         .alert{margin:12px 0 0 0;padding:10px 12px;border-radius:10px;background:#ffe6e9;color:#9f2a37;border:1px solid #f5c2c7}
         .invisible-input{position:absolute;left:-9999px;top:auto;width:1px;height:1px;opacity:0;pointer-events:none}
@@ -54,7 +55,7 @@
         .combo-item{padding:8px 10px;cursor:pointer}
         .combo-item:hover{background:#f5f5f5}
 
-        /* Address session (panel phải) */
+        /* ===== Address session (giữ nguyên) ===== */
         .addr-session{margin-bottom:12px}
         .addr-link{display:block;width:100%;text-decoration:none;color:inherit;background:transparent;border:0;padding:0;cursor:pointer}
         .addr-card{display:flex;gap:12px;align-items:center;background:#fff;border:1px solid var(--border);
@@ -66,12 +67,12 @@
         .addr-detail{color:#374151;margin-top:2px}
         .addr-chevron{color:#9ca3af}
 
-        /* ===== Modal popup ===== */
+        /* ===== Popup địa chỉ (giữ nguyên) ===== */
         .modal-backdrop{
           position:fixed; inset:0;
-          background: rgba(0,0,0,.38) !important; 
+          background: rgba(0,0,0,.38) !important;
           -webkit-backdrop-filter: none !important;
-          backdrop-filter: none !important;        
+          backdrop-filter: none !important;
           display:none; z-index:2000;
         }
         .modal{
@@ -80,7 +81,6 @@
           z-index:2001;
         }
         .modal.open, .modal-backdrop.open{ display:flex; }
-
         .modal-card{
           width:min(1000px,96vw);
           height:min(680px,92vh);
@@ -94,6 +94,102 @@
         .modal-body{flex:1 1 auto}
         .modal-body iframe{width:100%;height:100%;border:0}
 
+        /* ===== Popup xác nhận xóa (tách CSS riêng, không đụng Address) ===== */
+        #confirmModalBk{
+          position:fixed; inset:0;
+          background: rgba(0,0,0,.38);
+          display:none; z-index:2100;
+        }
+        #confirmModal{
+          position:fixed; inset:0;
+          display:none; align-items:center; justify-content:center;
+          z-index:2101;
+        }
+        #confirmModal.open, #confirmModalBk.open{ display:flex; }
+        .confirm-card{
+          width:min(520px,92vw);
+          background:#fff; border-radius:16px;
+          box-shadow:0 20px 50px rgba(0,0,0,.25);
+          overflow:hidden; display:flex; flex-direction:column;
+        }
+        .confirm-head{position:relative;display:flex;align-items:center;justify-content:center;padding:10px 14px;border-bottom:1px solid var(--border)}
+        .confirm-title{font-weight:700;text-align:center;width:100%}
+        .confirm-close{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:transparent;border:0;font-size:22px;cursor:pointer;line-height:1}
+        .confirm-body{padding:18px}
+        .confirm-body .confirm-question{margin:0 0 16px 0;font-weight:600;text-align:center}
+        .confirm-actions{
+          display:flex;
+          justify-content:space-between; /* HỦY trái — XÁC NHẬN phải */
+          padding-top:8px;
+          gap:10px;
+        }
+        .btn-confirm{
+          display:inline-flex;align-items:center;justify-content:center;
+          min-width:120px;height:40px;border-radius:999px;padding:0 16px;font-weight:700;cursor:pointer;
+        }
+        .btn-confirm-primary{background:#ff7a00;color:#fff;border:none}
+        .btn-confirm-secondary{background:#fff;color:#111;border:1px solid var(--border)}
+
+        /* ===== Toast (xanh lá) ===== */
+        .toast-stack{
+          position:fixed; right:16px; top:16px; z-index:2300;
+          display:flex; flex-direction:column; gap:10px;
+        }
+        .toast{
+          min-width:320px;
+          max-width:560px;
+          border-radius:14px;
+          padding:14px 18px;
+          box-shadow:0 8px 20px rgba(0,0,0,.12);
+          border:1px solid var(--border);
+          background:#fff; color:#111; font-weight:600;
+          font-size:15.5px;
+          display:flex; align-items:flex-start; gap:10px;
+          opacity:0; transform:translateY(-8px);
+          transition:opacity .18s ease, transform .18s ease;
+        }
+        .toast.show{ opacity:1; transform:translateY(0); }
+        .toast-success{
+          background:#22c55e !important;
+          border-color:#16a34a !important;
+          color:#fff !important;
+        }
+        .toast-success .toast-icon{ color:#fff !important; }
+        .toast-text{ display:inline-block; }
+
+        /* ===== HARD READONLY cho input/combo (khóa hoàn toàn + nền xám) ===== */
+        .form-control[readonly],
+        .form-control.readonly,
+        .form-control[aria-readonly="true"]{
+          background:#f3f4f6 !important;
+          color:#6b7280 !important;
+          pointer-events:none;
+          user-select:none;
+          caret-color:transparent;
+        }
+        .form-control[readonly]:focus,
+        .form-control.readonly:focus,
+        .form-control[aria-readonly="true"]:focus{
+          outline:none !important;
+          box-shadow:none !important;
+          border-color:var(--border) !important;
+        }
+        .combo.readonly{ pointer-events:none; }
+        .combo.readonly .combo-input{
+          background:#f3f4f6 !important;
+          color:#6b7280 !important;
+          border-color:var(--border) !important;
+        }
+        .combo.readonly .combo-input:focus-within{
+          outline:none !important;
+          box-shadow:none !important;
+          border-color:var(--border) !important;
+        }
+        .combo.readonly .combo-text{
+          background:transparent !important;
+          color:#6b7280 !important;
+        }
+        .combo.readonly .combo-caret{ display:none !important; }
     </style>
 </head>
 
@@ -267,7 +363,7 @@
 
     <uc:Footer ID="Footer1" runat="server" />
 
-    <!-- ===== MODAL POPUP chọn địa chỉ ===== -->
+    <!-- ===== POPUP CHỌN ĐỊA CHỈ ===== -->
     <div class="modal-backdrop" id="addrModalBk"></div>
     <div class="modal" id="addrModal" aria-hidden="true" role="dialog" aria-label="Chọn địa chỉ">
         <div class="modal-card">
@@ -281,13 +377,34 @@
         </div>
     </div>
 
+    <!-- ===== POPUP XÁC NHẬN XÓA (MỚI) ===== -->
+    <div id="confirmModalBk"></div>
+    <div id="confirmModal" aria-hidden="true" role="dialog" aria-label="Xóa sản phẩm">
+        <div class="confirm-card">
+            <div class="confirm-head">
+                <div class="confirm-title">Xóa sản phẩm</div>
+                <button type="button" class="confirm-close" id="confirmCloseBtn" aria-label="Close">&times;</button>
+            </div>
+            <div class="confirm-body">
+                <p class="confirm-question">Bạn có muốn xóa sản phẩm trong giỏ hàng không?</p>
+                <div class="confirm-actions">
+                  <button type="button" class="btn-confirm btn-confirm-secondary" id="confirmCancelBtn">Hủy</button>
+                  <button type="button" class="btn-confirm btn-confirm-primary"  id="confirmOkBtn">Xác nhận</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== TOAST STACK ===== -->
+    <div class="toast-stack" id="toastStack" aria-live="polite"></div>
+
     <!-- Phone validator -->
     <script>
         function normalizePhone(s) { if (!s) return ''; s = String(s).replace(/[\s\.\-]/g, '').trim(); s = s.replace(/^\+840/, '+84'); return s; }
         function validatePhone(sender, args) { const s = normalizePhone(args.Value); args.IsValid = /^(0\d{9}|\+84\d{9})$/.test(s); }
     </script>
 
-    <!-- Combobox searchable + expose cityWardAPI (CÓ PROMISE) -->
+    <!-- Combobox searchable + expose cityWardAPI -->
     <script>
         (function () {
             const DATA_BASE = '<%= ResolveClientUrl("~/assets/vn-admin") %>';
@@ -413,7 +530,7 @@
             window.validateCityCode = function (sender, args) { args.IsValid = !!hidCityCode.value; }
             window.validateWardCode = function (sender, args) { args.IsValid = !!hidWardCode.value; }
 
-            // === Public API: trả Promise để có thể chờ map xong ===
+            // === Public API
             window.cityWardAPI = {
                 async setByNames(cityName, wardName) {
                     await provincesReady;
@@ -454,7 +571,7 @@
         })();
     </script>
 
-    <!-- Cart JS + Popup Address -->
+    <!-- Cart JS + Address Popup + Confirm Delete + Toast -->
     <script>
         (function () {
             const API = document.getElementById('<%= hidApiBase.ClientID %>').value || '';
@@ -477,6 +594,13 @@
                 const v = Math.max(0, parseInt(n || 0, 10));
                 el.textContent = v; el.style.display = v > 0 ? 'flex' : 'none';
             }
+            function readBadge() {
+                const el = document.querySelector('[data-cart-badge="true"]');
+                if (!el) return 0;
+                const n = parseInt((el.textContent || '0').trim(), 10);
+                return Number.isFinite(n) ? n : 0;
+            }
+            function bumpBadge(delta) { writeBadge(readBadge() + (parseInt(delta || 0, 10) || 0)); }
 
             function syncSelectedHidden() {
                 const selected = [];
@@ -513,30 +637,63 @@
                 document.getElementById('<%= lblSubtotal.ClientID %>').textContent = fmt(subtotal);
                 document.getElementById('<%= lblVat.ClientID %>').textContent = fmt(vat);
                 document.getElementById('<%= lblShipping.ClientID %>').textContent = fmt(ship);
-                document.getElementById('<%= lblGrandTotal.ClientID %>').textContent  = fmt(grand);
-                document.getElementById('<%= lblTotal.ClientID %>').textContent       = fmt(subtotal);
-                document.getElementById('<%= lblSumItems.ClientID %>').textContent    = String(sumItems);
+                document.getElementById('<%= lblGrandTotal.ClientID %>').textContent = fmt(grand);
+                document.getElementById('<%= lblTotal.ClientID %>').textContent = fmt(subtotal);
+                document.getElementById('<%= lblSumItems.ClientID %>').textContent = String(sumItems);
             }
             window.__cartAfterMutate = () => { recalcTotals(); updateSelectAllUI(); syncSelectedHidden(); };
 
-            // ====== POPUP chọn địa chỉ ======
+            /* ===== HARD-LOCK UI các trường địa chỉ (combo + 3 input) ===== */
+            function lockAddressUI() {
+                try {
+                    const city = document.getElementById('cmbCity');
+                    const ward = document.getElementById('cmbWard');
+                    [city, ward].forEach(el => {
+                        if (!el) return;
+                        el.classList.add('readonly');                 // xám + chặn click
+                        el.setAttribute('aria-disabled', 'true');
+                        const inp = el.querySelector('.combo-text');
+                        if (inp) {
+                            inp.setAttribute('readonly', 'readonly');
+                            inp.setAttribute('tabindex', '-1');        // không Tab vào
+                            inp.blur();
+                        }
+                    });
+                    [
+                    '<%= txtAddress.ClientID %>',
+                    '<%= txtPhone.ClientID %>',
+                    '<%= txtReceiver.ClientID %>'
+                  ].forEach(id=>{
+                      const el = document.getElementById(id);
+                      if(el){
+                          el.setAttribute('readonly','readonly');   // vẫn submit value
+                          el.setAttribute('aria-readonly','true');
+                          el.setAttribute('tabindex','-1');
+                          el.classList.add('readonly');             // nền xám + chặn click
+                          el.blur();
+                      }
+                  });
+              }catch(e){ console.error(e); }
+            }
+
+            /* ===== POPUP địa chỉ ===== */
             const modal = document.getElementById('addrModal');
             const backdrop = document.getElementById('addrModalBk');
             const iframe = document.getElementById('addrFrame');
             const openBtns = [document.getElementById('btnChooseAddr1'), document.getElementById('btnChooseAddr2')].filter(Boolean);
             const closeBtn = document.getElementById('addrCloseBtn');
 
-            const IS_AUTH   = (document.getElementById('<%= hidIsAuth.ClientID %>').value === '1');
+            const IS_AUTH = (document.getElementById('<%= hidIsAuth.ClientID %>').value === '1');
             const LOGIN_URL = '<%= ResolveUrl("~/AuthPage/Login.aspx") %>';
-            const addressSelectUrl = '<%= ResolveUrl("~/CartPage/AddressSelect.aspx") %>'; // popup-only
+            const addressSelectUrl = '<%= ResolveUrl("~/CartPage/AddressSelect.aspx") %>';
 
-            function openModal() {
+            function openAddrModal() {
                 iframe.src = addressSelectUrl;
                 modal.classList.add('open');
                 backdrop.classList.add('open');
                 modal.setAttribute('aria-hidden', 'false');
             }
-            function closeModal() {
+            function closeAddrModal() {
                 iframe.src = 'about:blank';
                 modal.classList.remove('open');
                 backdrop.classList.remove('open');
@@ -550,32 +707,25 @@
                     window.location.href = `${LOGIN_URL}?returnUrl=${ret}`;
                     return;
                 }
-                openModal();
+                openAddrModal();
             }));
-            closeBtn.addEventListener('click', closeModal);
-            backdrop.addEventListener('click', closeModal);
+            closeBtn.addEventListener('click', closeAddrModal);
+            backdrop.addEventListener('click', closeAddrModal);
 
-            // Nhận tín hiệu từ AddressSelect (trong iframe)
             window.addEventListener('message', function (ev) {
                 try {
-                    if (ev.source !== iframe.contentWindow) return; // chỉ nhận từ popup này
+                    if (ev.source !== iframe.contentWindow) return;
                     const data = ev.data || {};
                     if (data.type === 'HAFood.AddressPicked') {
-                        if (data.address) {
-                            // CHỜ map xong rồi mới đóng
-                            applyAddressToUI(data.address).finally(closeModal);
-                            return;
-                        }
+                        if (data.address) { applyAddressToUI(data.address).finally(closeAddrModal); return; }
                         if (typeof PageMethods !== 'undefined' && PageMethods.GetSelectedAddress) {
                             PageMethods.GetSelectedAddress(function (dto) {
-                                if (!dto) { closeModal(); return; }
-                                applyAddressToUI(dto).finally(closeModal);
-                            }, function () { closeModal(); });
-                        } else {
-                            closeModal();
-                        }
+                                if (!dto) { closeAddrModal(); return; }
+                                applyAddressToUI(dto).finally(closeAddrModal);
+                            }, function () { closeAddrModal(); });
+                        } else { closeAddrModal(); }
                     } else if (data.type === 'HAFood.AddressCancel') {
-                        closeModal();
+                        closeAddrModal();
                     }
                 } catch (e) { console.error(e); }
             });
@@ -602,10 +752,10 @@
                 const cityName = extractCity(dto.fullAddress || '');
                 const wardName = extractWard(dto.fullAddress || '');
 
-                // TRẢ PROMISE để caller .finally(closeModal)
                 if (window.cityWardAPI && window.cityWardAPI.setByNames) {
-                    return window.cityWardAPI.setByNames(cityName, wardName);
+                    return window.cityWardAPI.setByNames(cityName, wardName).finally(lockAddressUI);
                 }
+                lockAddressUI();
                 return Promise.resolve();
             }
 
@@ -626,7 +776,7 @@
                 return '';
             }
 
-            // ======== init
+            /* ===== INIT ===== */
             window.addEventListener('DOMContentLoaded', () => {
                 const hasItems = document.querySelectorAll('.cart-item').length > 0;
                 if (pnlEmptyEl) pnlEmptyEl.style.display = hasItems ? 'none' : 'block';
@@ -639,13 +789,226 @@
                     document.querySelectorAll('.cart-item input[type="checkbox"]').forEach(cb => cb.checked = true);
                 }
                 recalcTotals(); updateSelectAllUI(); syncSelectedHidden();
+                lockAddressUI(); // khóa ngay khi vào trang
 
                 try {
                     const sum = Array.from(document.querySelectorAll('.cart-item .qty-num')).reduce((s, el) => s + (parseInt(el.textContent.trim(), 10) || 0), 0);
                     writeBadge(sum);
                 } catch { }
             });
+
+            /* ===== Helpers giỏ hàng ===== */
+            function withAuthQuery(url) {
+                if (!USE_USER && UUID) return url + (url.includes('?') ? '&' : '?') + 'device_uuid=' + encodeURIComponent(UUID);
+                return url;
+            }
+            function ensure(opts) {
+                const headers = { 'Content-Type': 'application/json' };
+                if (HAS_JWT) headers['Authorization'] = 'Bearer ' + JWT;
+                return Object.assign({ credentials: 'include', headers }, opts || {});
+            }
+            async function safeJson(resp) { try { return await resp.json(); } catch { return {}; } }
+            function patchTotals(payload) {
+                if (payload && payload.totals) {
+                    const t = payload.totals;
+                    document.getElementById('<%= lblSubtotal.ClientID %>').textContent = fmt(t.subtotal);
+                    document.getElementById('<%= lblVat.ClientID %>').textContent = fmt(t.vat);
+                    document.getElementById('<%= lblShipping.ClientID %>').textContent = fmt(t.shipping);
+                    document.getElementById('<%= lblGrandTotal.ClientID %>').textContent  = fmt(t.grand);
+                    document.getElementById('<%= lblTotal.ClientID %>').textContent       = fmt(t.subtotal);
+                }
+                if (payload?.header?.item_Count != null){
+                    writeBadge(payload.header.item_Count);
+                }
+            }
+
+            /* ===== Toast (success only) ===== */
+            const toastStack = document.getElementById('toastStack');
+            function showToastSuccess(message) {
+                if (!toastStack) return;
+                const div = document.createElement('div');
+                div.className = 'toast toast-success';
+                div.setAttribute('role', 'alert');
+
+                const icon = document.createElement('i');
+                icon.className = 'bi bi-check-circle-fill toast-icon';
+
+                const text = document.createElement('span');
+                text.className = 'toast-text';
+                text.textContent = message || '';
+
+                div.appendChild(icon);
+                div.appendChild(text);
+                toastStack.appendChild(div);
+
+                // bật hiệu ứng
+                div.offsetHeight; // force reflow
+                div.classList.add('show');
+
+                const close = () => {
+                    div.classList.remove('show');
+                    setTimeout(() => div.remove(), 180);
+                };
+                const timer = setTimeout(close, 3000);
+                div.addEventListener('click', () => { clearTimeout(timer); close(); });
+            }
+
+            /* ===== Xóa dòng ===== */
+            async function deleteLine(row, lineId) {
+                try{
+                    const qtyBefore = Number(row.querySelector('.qty-num')?.textContent.trim() || '1') || 1;
+
+                    let url  = withAuthQuery(`${API}/api/cart/lines/${lineId}`);
+                    let resp = await fetch(url, ensure({ method:'DELETE' }));
+                    let json = await safeJson(resp);
+
+                    if (!resp.ok && json?.code === 'MISSING_USER_OR_DEVICE' && UUID){
+                        url  = `${API}/api/cart/lines/${lineId}?device_uuid=${encodeURIComponent(UUID)}`;
+                        resp = await fetch(url, ensure({ method:'DELETE' }));
+                        json = await safeJson(resp);
+                    }
+                    if (!resp.ok){
+                        // Không hiện toast lỗi theo yêu cầu — chỉ log
+                        console.error('Delete failed', json);
+                        return;
+                    }
+
+                    row.remove();
+
+                    const remaining = document.querySelectorAll('.cart-item').length;
+                    if (remaining === 0 && pnlEmptyEl) {
+                        pnlEmptyEl.style.display = 'block';
+                        if (!(json?.header?.item_Count != null)) writeBadge(0);
+                    }
+
+                    if (json?.totals || json?.header) patchTotals(json);
+                    else bumpBadge(-qtyBefore);
+
+                    recalcTotals(); updateSelectAllUI(); syncSelectedHidden();
+
+                    showToastSuccess('Bạn đã xóa sản phẩm trong giỏ hàng thành công');
+                } catch(err){
+                    console.error(err);
+                    // Không hiện toast lỗi
+                }
+            }
+
+            /* ===== Popup xác nhận xóa (mới) ===== */
+            const cModal = document.getElementById('confirmModal');
+            const cBackdrop = document.getElementById('confirmModalBk');
+            const cBtnClose = document.getElementById('confirmCloseBtn');
+            const cBtnCancel = document.getElementById('confirmCancelBtn');
+            const cBtnOk = document.getElementById('confirmOkBtn');
+
+            let pendingRow = null, pendingLineId = null;
+
+            function openConfirm(rowEl, lineId) {
+                pendingRow   = rowEl || null;
+                pendingLineId= lineId || null;
+                cModal.classList.add('open');
+                cBackdrop.classList.add('open');
+                cModal.setAttribute('aria-hidden', 'false');
+                try { cBtnOk && cBtnOk.focus(); } catch { }
+            }
+            function closeConfirm() {
+                cModal.classList.remove('open');
+                cBackdrop.classList.remove('open');
+                cModal.setAttribute('aria-hidden', 'true');
+                pendingRow = null; pendingLineId = null;
+            }
+
+            [cBtnClose, cBtnCancel].forEach(b => b && b.addEventListener('click', closeConfirm));
+            cBackdrop && cBackdrop.addEventListener('click', closeConfirm);
+            cBtnOk && cBtnOk.addEventListener('click', async function () {
+                if (!pendingRow || !pendingLineId) { closeConfirm(); return; }
+                await deleteLine(pendingRow, pendingLineId);
+                closeConfirm();
+            });
+
+            /* ===== Events: chọn checkbox & Select All ===== */
+            document.addEventListener('change', (e)=>{
+                if (e.target.matches('.cart-item input[type="checkbox"]')){
+                    recalcTotals(); updateSelectAllUI(); syncSelectedHidden();
+                }
+                if (selectAll && e.target.id === '<%= chkSelectAll.ClientID %>'){
+                    const checked = e.target.checked;
+                    document.querySelectorAll('.cart-item input[type="checkbox"]').forEach(cb=>cb.checked=checked);
+                    selectAll.indeterminate = false;
+                    recalcTotals(); syncSelectedHidden();
+                }
+            });
+
+            /* ===== Events: Tăng / Giảm / Xóa ===== */
+            document.addEventListener('click', async (e)=>{
+                const inc = e.target.closest('.qty-btn[data-inc]');
+                const dec = e.target.closest('.qty-btn[data-dec]');
+                const rm  = e.target.closest('[data-remove]');
+                if (!inc && !dec && !rm) return;
+
+                const row = (inc || dec || rm).closest('.cart-item');
+                if (!row) return;
+
+                const lineId = Number(row.getAttribute('data-line-id'));
+                const price  = Number(row.getAttribute('data-price')) || 0;
+
+                // XÓA hoặc GIẢM từ 1 -> xác nhận
+                if (rm){
+                    openConfirm(row, lineId);
+                    return;
+                }
+
+                const qtyEl = row.querySelector('.qty-num');
+                const qOld  = Number(qtyEl.textContent.trim()) || 1;
+
+                if (dec && qOld <= 1) {
+                    openConfirm(row, lineId);
+                    return;
+                }
+
+                const q     = inc ? qOld + 1 : Math.max(1, qOld - 1);
+                const delta = q - qOld;
+
+                // Optimistic UI
+                qtyEl.textContent = q;
+                const totalEl = row.querySelector('.cart-item-total');
+                if (totalEl) totalEl.textContent = fmt(price * q);
+
+                try{
+                    const url  = withAuthQuery(`${API}/api/cart/lines/batch?compact=1`);
+                    let body   = USE_USER ? { changes:[{ line_id: lineId, quantity: q }] }
+                                          : { device_uuid: UUID || null, changes:[{ line_id: lineId, quantity: q }] };
+
+                    let resp = await fetch(url, ensure({ method:'PUT', body: JSON.stringify(body) }));
+                    let json = await safeJson(resp);
+
+                    if (!resp.ok && json?.code === 'MISSING_USER_OR_DEVICE' && UUID){
+                        body = { device_uuid: UUID, changes:[{ line_id: lineId, quantity: q }] };
+                        resp = await fetch(`${API}/api/cart/lines/batch?compact=1`, ensure({ method:'PUT', body: JSON.stringify(body) }));
+                        json = await safeJson(resp);
+                    }
+                    if (!resp.ok){
+                        if (json?.code === 'CART_LINE_NOT_FOUND') location.reload();
+                        console.error('Update qty failed', json); return;
+                    }
+
+                    if (json?.totals || json?.header) patchTotals(json);
+                    else if (delta !== 0) bumpBadge(delta);
+
+                    recalcTotals(); updateSelectAllUI(); syncSelectedHidden();
+                } catch(err){ console.error(err); }
+            });
+
         })();
+    </script>
+
+    <!-- Submit guard -->
+    <script>
+        function beforeCheckoutSubmit() {
+            if (typeof (Page_ClientValidate) === 'function') {
+                if (!Page_ClientValidate('Checkout')) return false;
+            }
+            return true;
+        }
     </script>
 
 </form>

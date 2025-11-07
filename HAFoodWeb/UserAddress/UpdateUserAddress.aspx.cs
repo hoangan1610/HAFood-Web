@@ -29,7 +29,6 @@ namespace HAFoodWeb.UserAddress
 
         /* ===== Chuẩn hoá City/Ward và tách fullAddress (phục hồi ward chính xác hơn) ===== */
 
-        // Bỏ tiền tố Tỉnh/Thành phố/TP.
         private static string NormalizeCity(string s)
         {
             if (string.IsNullOrWhiteSpace(s)) return "";
@@ -39,7 +38,6 @@ namespace HAFoodWeb.UserAddress
             return s;
         }
 
-        // Bỏ phần đuôi "- Quận …", ", Quận …", ngoặc, và số 0 thừa (P.09 -> P.9)
         private static string NormalizeWard(string s)
         {
             if (string.IsNullOrWhiteSpace(s)) return "";
@@ -67,18 +65,15 @@ namespace HAFoodWeb.UserAddress
                 return;
             }
 
-            // city luôn là phần cuối
             city = NormalizeCity(parts[parts.Length - 1]);
 
             if (parts.Length >= 4)
             {
-                // Dữ liệu cũ: address, ward, district, city
                 ward = NormalizeWard(parts[parts.Length - 3]);
                 address = string.Join(", ", parts.Take(parts.Length - 3));
             }
             else
             {
-                // Dữ liệu mới: address, ward (có thể kèm "- Quận …"), city
                 ward = NormalizeWard(parts[1]);
                 address = parts[0];
             }
@@ -109,7 +104,6 @@ namespace HAFoodWeb.UserAddress
 
                 SplitFullAddress(dto.fullAddress, out var address, out var ward, out var city);
 
-                // Prefill TEXT để người dùng luôn nhìn thấy city/ward, JS sẽ map code sau
                 txtCitySel.Text = city ?? "";
                 txtWardSel.Text = ward ?? "";
                 txtCityCode.Text = "";
@@ -154,9 +148,9 @@ namespace HAFoodWeb.UserAddress
                 sw.Stop();
 
                 Debug.WriteLine($"[UpdateUserAddress] id={id} API duration = {sw.ElapsedMilliseconds} ms");
-                Toast("Cập nhật địa chỉ thành công!", "success");
-                Response.Redirect("UserAddressList.aspx?ts=" + DateTime.UtcNow.Ticks, false);
-                Context.ApplicationInstance.CompleteRequest();
+
+                // ✅ Redirect kèm ?toast=updated
+                RedirectWithToast("~/UserAddress/UserAddressList.aspx", "updated");
             }
             catch (Exception ex)
             {
@@ -173,9 +167,9 @@ namespace HAFoodWeb.UserAddress
             {
                 var token = Request?.Cookies["AuthToken"]?.Value;
                 await _service.DeleteAddressAsync(token, id).ConfigureAwait(false);
-                Toast("Đã xóa địa chỉ.", "success");
-                Response.Redirect("UserAddressList.aspx?ts=" + DateTime.UtcNow.Ticks, false);
-                Context.ApplicationInstance.CompleteRequest();
+
+                // ✅ Redirect kèm ?toast=deleted
+                RedirectWithToast("~/UserAddress/UserAddressList.aspx", "deleted");
             }
             catch (Exception ex)
             {
@@ -206,6 +200,14 @@ namespace HAFoodWeb.UserAddress
         {
             var js = $"showToast({HttpUtility.JavaScriptStringEncode(message, true)}, '{variant}');";
             ClientScript.RegisterStartupScript(this.GetType(), Guid.NewGuid().ToString(), js, true);
+        }
+
+        private void RedirectWithToast(string relativeUrl, string toastKey)
+        {
+            var url = VirtualPathUtility.ToAbsolute(relativeUrl);
+            url += (url.Contains("?") ? "&" : "?") + "toast=" + HttpUtility.UrlEncode(toastKey) + "&ts=" + DateTime.UtcNow.Ticks;
+            Response.Redirect(url, false);
+            Context.ApplicationInstance.CompleteRequest();
         }
 
         private string BuildFullAddress()
