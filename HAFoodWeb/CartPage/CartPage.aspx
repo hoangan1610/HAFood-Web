@@ -55,7 +55,7 @@
         .combo-item{padding:8px 10px;cursor:pointer}
         .combo-item:hover{background:#f5f5f5}
 
-        /* ===== Address session (giữ nguyên) ===== */
+        /* ===== Address session ===== */
         .addr-session{margin-bottom:12px}
         .addr-link{display:block;width:100%;text-decoration:none;color:inherit;background:transparent;border:0;padding:0;cursor:pointer}
         .addr-card{display:flex;gap:12px;align-items:center;background:#fff;border:1px solid var(--border);
@@ -67,7 +67,7 @@
         .addr-detail{color:#374151;margin-top:2px}
         .addr-chevron{color:#9ca3af}
 
-        /* ===== Popup địa chỉ (giữ nguyên) ===== */
+        /* ===== Popup địa chỉ ===== */
         .modal-backdrop{
           position:fixed; inset:0;
           background: rgba(0,0,0,.38) !important;
@@ -94,7 +94,7 @@
         .modal-body{flex:1 1 auto}
         .modal-body iframe{width:100%;height:100%;border:0}
 
-        /* ===== Popup xác nhận xóa (tách CSS riêng, không đụng Address) ===== */
+        /* ===== Popup xác nhận xóa ===== */
         #confirmModalBk{
           position:fixed; inset:0;
           background: rgba(0,0,0,.38);
@@ -119,7 +119,7 @@
         .confirm-body .confirm-question{margin:0 0 16px 0;font-weight:600;text-align:center}
         .confirm-actions{
           display:flex;
-          justify-content:space-between; /* HỦY trái — XÁC NHẬN phải */
+          justify-content:space-between;
           padding-top:8px;
           gap:10px;
         }
@@ -157,7 +157,7 @@
         .toast-success .toast-icon{ color:#fff !important; }
         .toast-text{ display:inline-block; }
 
-        /* ===== HARD READONLY cho input/combo (khóa hoàn toàn + nền xám) ===== */
+        /* ===== HARD READONLY cho input/combo ===== */
         .form-control[readonly],
         .form-control.readonly,
         .form-control[aria-readonly="true"]{
@@ -602,6 +602,20 @@
             }
             function bumpBadge(delta) { writeBadge(readBadge() + (parseInt(delta || 0, 10) || 0)); }
 
+            // ===== NEW: Xuất global helpers để dùng thống nhất (giống cartpage 2)
+            if (typeof window.setCartBadge !== 'function') {
+                window.setCartBadge = writeBadge;
+            }
+            if (typeof window.refreshCartCount !== 'function') {
+                window.refreshCartCount = function () {
+                    let sum = 0;
+                    document.querySelectorAll('.cart-item .qty-num').forEach(el => {
+                        sum += parseInt((el.textContent || '0').trim(), 10) || 0;
+                    });
+                    writeBadge(sum);
+                };
+            }
+
             function syncSelectedHidden() {
                 const selected = [];
                 document.querySelectorAll('.cart-item').forEach(row => {
@@ -650,12 +664,12 @@
                     const ward = document.getElementById('cmbWard');
                     [city, ward].forEach(el => {
                         if (!el) return;
-                        el.classList.add('readonly');                 // xám + chặn click
+                        el.classList.add('readonly');
                         el.setAttribute('aria-disabled', 'true');
                         const inp = el.querySelector('.combo-text');
                         if (inp) {
                             inp.setAttribute('readonly', 'readonly');
-                            inp.setAttribute('tabindex', '-1');        // không Tab vào
+                            inp.setAttribute('tabindex', '-1');
                             inp.blur();
                         }
                     });
@@ -666,10 +680,10 @@
                   ].forEach(id=>{
                       const el = document.getElementById(id);
                       if(el){
-                          el.setAttribute('readonly','readonly');   // vẫn submit value
+                          el.setAttribute('readonly','readonly');
                           el.setAttribute('aria-readonly','true');
                           el.setAttribute('tabindex','-1');
-                          el.classList.add('readonly');             // nền xám + chặn click
+                          el.classList.add('readonly');
                           el.blur();
                       }
                   });
@@ -791,10 +805,8 @@
                 recalcTotals(); updateSelectAllUI(); syncSelectedHidden();
                 lockAddressUI(); // khóa ngay khi vào trang
 
-                try {
-                    const sum = Array.from(document.querySelectorAll('.cart-item .qty-num')).reduce((s, el) => s + (parseInt(el.textContent.trim(), 10) || 0), 0);
-                    writeBadge(sum);
-                } catch { }
+                // ===== CHANGED: dùng global refreshCartCount để đồng bộ cách đặt badge
+                try { window.refreshCartCount(); } catch { }
             });
 
             /* ===== Helpers giỏ hàng ===== */
@@ -817,8 +829,9 @@
                     document.getElementById('<%= lblGrandTotal.ClientID %>').textContent  = fmt(t.grand);
                     document.getElementById('<%= lblTotal.ClientID %>').textContent       = fmt(t.subtotal);
                 }
+                // ===== CHANGED: ưu tiên badge từ server
                 if (payload?.header?.item_Count != null){
-                    writeBadge(payload.header.item_Count);
+                    window.setCartBadge(payload.header.item_Count);
                 }
             }
 
@@ -842,7 +855,7 @@
                 toastStack.appendChild(div);
 
                 // bật hiệu ứng
-                div.offsetHeight; // force reflow
+                div.offsetHeight;
                 div.classList.add('show');
 
                 const close = () => {
@@ -869,6 +882,7 @@
                     }
                     if (!resp.ok){
                         // Không hiện toast lỗi theo yêu cầu — chỉ log
+                        if (json?.code === 'CART_LINE_NOT_FOUND') location.reload();
                         console.error('Delete failed', json);
                         return;
                     }
@@ -878,11 +892,18 @@
                     const remaining = document.querySelectorAll('.cart-item').length;
                     if (remaining === 0 && pnlEmptyEl) {
                         pnlEmptyEl.style.display = 'block';
-                        if (!(json?.header?.item_Count != null)) writeBadge(0);
+                        // ===== CHANGED: nếu server không trả tổng mới -> set 0
+                        if (!(json?.header?.item_Count != null)) window.setCartBadge(0);
                     }
 
+                    // ===== CHANGED: cập nhật totals & badge
                     if (json?.totals || json?.header) patchTotals(json);
-                    else bumpBadge(-qtyBefore);
+
+                    if (json?.header?.item_Count != null){
+                        window.setCartBadge(json.header.item_Count);
+                    } else {
+                        bumpBadge(-qtyBefore);
+                    }
 
                     recalcTotals(); updateSelectAllUI(); syncSelectedHidden();
 
@@ -991,8 +1012,14 @@
                         console.error('Update qty failed', json); return;
                     }
 
+                    // ===== CHANGED: cập nhật totals & badge
                     if (json?.totals || json?.header) patchTotals(json);
-                    else if (delta !== 0) bumpBadge(delta);
+
+                    if (json?.header?.item_Count != null){
+                        window.setCartBadge(json.header.item_Count);
+                    } else if (delta !== 0) {
+                        bumpBadge(delta);
+                    }
 
                     recalcTotals(); updateSelectAllUI(); syncSelectedHidden();
                 } catch(err){ console.error(err); }
