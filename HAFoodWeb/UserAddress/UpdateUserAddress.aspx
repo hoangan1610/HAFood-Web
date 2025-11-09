@@ -152,13 +152,23 @@
             </div>
         </div>
 
-        <div class="mt-3 d-flex justify-content-between align-items-center">
-            <asp:Button ID="btnSave" runat="server" Text="Hoàn thành" CssClass="btn btn-success"
-                OnClientClick="return validateUpdate();" OnClick="btnSave_Click" />
-            <div>
-                <button type="button" class="btn btn-danger text-white" data-bs-toggle="modal" data-bs-target="#confirmDeleteModal">Xóa địa chỉ</button>
-                <asp:Button ID="btnDelete" runat="server" CssClass="d-none" UseSubmitBehavior="false" OnClick="btnDelete_Click" />
+        <!-- Actions: Hoàn thành + Xóa (trái) — Hủy (phải) -->
+        <div class="mt-3 d-flex align-items-center">
+            <div class="d-flex align-items-center gap-2">
+                <asp:Button ID="btnSave" runat="server" Text="Hoàn thành" CssClass="btn btn-success"
+                    OnClientClick="return validateUpdate();" OnClick="btnSave_Click" />
+
+                <!-- Xóa địa chỉ (kề bên Hoàn thành) -->
+                <button type="button" class="btn btn-danger text-white" data-bs-toggle="modal" data-bs-target="#confirmDeleteModal">
+                    Xóa địa chỉ
+                </button>
             </div>
+
+            <!-- Hủy ở bên phải -->
+            <button type="button" id="btnCancelUpdate" class="btn btn-danger text-white ms-auto">Hủy</button>
+
+            <!-- Nút delete thực tế (ẩn) -->
+            <asp:Button ID="btnDelete" runat="server" CssClass="d-none" UseSubmitBehavior="false" OnClick="btnDelete_Click" />
         </div>
     </div>
 
@@ -178,6 +188,12 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script>
+    // Nút Hủy (ưu tiên quay lại; nếu không có lịch sử, về danh sách)
+    document.getElementById('btnCancelUpdate')?.addEventListener('click', function () {
+        if (history.length > 1) history.back();
+        else window.location.href = '/UserAddress/UserAddressList.aspx';
+    });
+
     function showToast(message, variant) {
         var stack = document.getElementById('toastStack'); if (!stack) return;
         var div = document.createElement('div');
@@ -231,7 +247,7 @@
         const baseWard = s => rm(String(s || '')
             .replace(/^(phường|xã|thị\s*trấn|p\.|x\.|tt\.)\s*/i, '')
             .replace(/\s*(?:-|,|–)\s*(quận|huyện|thị\s*xã|thành\s*phố|q\.|h\.|tx\.|tp\.).*$/i, '')
-            .replace(/\(.*?\)/g, '')
+            .replace(/\(.*?\)\s*/g, '')
             .replace(/\b0+(\d)\b/g, '$1')
         );
 
@@ -351,6 +367,8 @@
                     prefillWardText();
                 }
             });
+
+        function baseCity(s) { return rm(String(s || '').replace(/^(tinh|thanh pho|tp\.?|tp)\s*/i, '')); }
 
         function prefillWardText() {
             wardCombo && wardCombo.setSelected('', hidWardName.value || '');

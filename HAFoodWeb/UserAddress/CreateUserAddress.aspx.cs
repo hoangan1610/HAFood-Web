@@ -12,6 +12,8 @@ namespace HAFoodWeb.UserAddress
     {
         private readonly IAddressService _service = new AddressService();
 
+        private bool IsEmbed() => "1".Equals(Request["embed"]);
+
         protected void Page_Load(object sender, EventArgs e)
         {
             if (Session == null || Session["UserId"] == null)
@@ -56,7 +58,21 @@ namespace HAFoodWeb.UserAddress
                     catch (Exception ex) { Debug.WriteLine($"[CreateUserAddress] SetDefault failed: {ex.Message}"); }
                 }
 
-                // ✅ KHÔNG gọi Toast trước Redirect (sẽ không hiển thị)
+                // Lưu vào session để AddressSelect preselect (khi chạy trong popup)
+                if (created != null)
+                {
+                    Session["selected_address_obj"] = created;
+                }
+
+                if (IsEmbed())
+                {
+                    // Quay về popup chọn địa chỉ (cùng iframe)
+                    var back = ResolveUrl("~/CartPage/AddressSelect.aspx?refresh=1&t=" + DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
+                    Response.Redirect(back, false);
+                    Context.ApplicationInstance.CompleteRequest();
+                    return;
+                }
+
                 RedirectWithToast("~/UserAddress/UserAddressList.aspx", "created");
             }
             catch (Exception ex)
@@ -72,7 +88,6 @@ namespace HAFoodWeb.UserAddress
             var missing = new List<string>();
             if (string.IsNullOrWhiteSpace(txtFullName.Text)) missing.Add("Họ và tên");
             if (string.IsNullOrWhiteSpace(txtPhone.Text)) missing.Add("Số điện thoại");
-            // BẮT BUỘC chọn từ danh sách (code phải có)
             if (string.IsNullOrWhiteSpace(txtCityCode.Text)) missing.Add("Tỉnh/Thành (chọn từ danh sách)");
             if (string.IsNullOrWhiteSpace(txtWardCode.Text)) missing.Add("Phường/Xã (chọn từ danh sách)");
             if (string.IsNullOrWhiteSpace(txtAddress.Text)) missing.Add("Địa chỉ nhận hàng");

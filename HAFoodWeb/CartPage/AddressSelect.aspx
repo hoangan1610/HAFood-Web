@@ -12,7 +12,6 @@
         body{font-family:'Poppins',system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;margin:0;background:#fafafa}
         .wrap{max-width:900px;margin:0 auto;padding:12px 16px 80px}
         .topbar{display:flex;align-items:center;gap:10px;padding:10px 4px}
-        /* KHÔNG có nút quay lại */
         .title{font-weight:700;font-size:20px}
 
         .card{background:#fff;border-radius:12px;box-shadow:0 4px 10px rgba(0,0,0,.05);padding:12px}
@@ -34,13 +33,32 @@
              display:inline-flex;align-items:center;justify-content:center;text-align:center}
         .btn-secondary{background:#f2f3f5;color:#111}
         .btn-primary{background:var(--accent);border-color:var(--accent);color:#fff}
+
+        /* nút "Thêm Địa Chỉ Mới" – canh giữa */
+        .add-new-row{
+            width:100%;
+            display:flex; flex-direction:column;
+            align-items:center; justify-content:center;
+            gap:6px; padding:16px; border-top:1px solid #f0f0f0;
+            cursor:pointer; text-align:center;
+        }
+        .add-new-row:hover{ background:#fff7f3; }
+        .add-new-row .ic{ font-size:22px; color:var(--accent) }
+        .add-new-row .txt{ font-weight:700; color:var(--accent) }
+        .add-new-row .sub{ font-size:13px; color:#6b7280 }
+
+        /* hiệu ứng chuyển cảnh mượt */
+        .page-anim{opacity:0;transform:translateY(6px);transition:opacity .18s ease, transform .18s ease}
+        .page-anim.ready{opacity:1;transform:none}
     </style>
 </head>
 <body>
 <form id="form1" runat="server">
     <asp:HiddenField ID="hfSelectedId" runat="server" />
+    <!-- URL tạo địa chỉ mới (set ở code-behind) -->
+    <asp:HiddenField ID="hfCreateUrl" runat="server" ClientIDMode="Static" />
 
-    <div class="wrap">
+    <div class="wrap page-anim ready">
         <div class="topbar">
             <div class="title">Chọn địa chỉ nhận hàng</div>
         </div>
@@ -64,6 +82,12 @@
                     </div>
                 </ItemTemplate>
             </asp:Repeater>
+
+            <!-- Hàng thêm địa chỉ mới (giữa) -->
+            <div class="add-new-row" id="rowAddNew" role="button" tabindex="0" aria-label="Thêm Địa Chỉ Mới">
+              <i class="bi bi-plus-circle ic"></i>
+              <div class="txt">Thêm địa chỉ mới</div>
+            </div>
 
             <asp:Panel ID="pnlEmpty" runat="server" CssClass="empty" Visible="false">
                 Chưa có địa chỉ nào.
@@ -93,6 +117,26 @@
     // Hủy -> báo parent đóng popup
     document.getElementById('btnCancel').addEventListener('click', function () {
         try { window.parent && window.parent.postMessage({ type: 'HAFood.AddressCancel' }, '*'); } catch (_) { }
+    });
+
+    // Hiệu ứng vào
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelector('.page-anim')?.classList.add('ready');
+    });
+
+    // Thêm địa chỉ mới -> điều hướng trong cùng iframe (đọc URL từ hidden field)
+    function goCreateAddress() {
+        const root = document.querySelector('.page-anim');
+        root && root.classList.remove('ready'); // fade-out nhanh
+        const url = document.getElementById('hfCreateUrl')?.value;
+        setTimeout(function () {
+            if (url) window.location.href = url;
+            try { window.parent && window.parent.postMessage({ type: 'HAFood.AddressCreateOpen' }, '*'); } catch (_) { }
+        }, 150);
+    }
+    document.getElementById('rowAddNew')?.addEventListener('click', goCreateAddress);
+    document.getElementById('rowAddNew')?.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); goCreateAddress(); }
     });
 </script>
 </body>

@@ -49,60 +49,43 @@
             box-shadow:0 0 0 2px rgba(255,122,69,.15) inset;
         }
 
-        /* ===== Toast (xanh lá) ===== */
+        /* ===== Toast (xanh lá / đỏ) ===== */
         .toast-stack{
           position:fixed; right:16px; top:16px; z-index:2300;
-          display:flex; flex-direction:column; gap:10px;
-          align-items:flex-end;              
+          display:flex; flex-direction:column; gap:10px; align-items:flex-end;
         }
-
         .toast{
-          min-width:unset;                   
-          width:fit-content;                 
-          max-width:min(92vw, 560px);        
-
-          display:inline-flex;               
-          align-items:flex-start; gap:10px;
-
-          border-radius:14px;
-          padding:12px 14px;
-          box-shadow:0 8px 20px rgba(0,0,0,.12);
-          border:1px solid var(--border);
-          background:#fff; color:#111; font-weight:600;
-          font-size:15.5px; line-height:1.35;
-
-          opacity:0; transform:translateY(-8px);
-          transition:opacity .18s ease, transform .18s ease;
+          min-width:unset; width:fit-content; max-width:min(92vw, 560px);
+          display:inline-flex; align-items:flex-start; gap:10px;
+          border-radius:14px; padding:12px 14px;
+          box-shadow:0 8px 20px rgba(0,0,0,.12); border:1px solid var(--border);
+          background:#fff; color:#111; font-weight:600; font-size:15.5px; line-height:1.35;
+          opacity:0; transform:translateY(-8px); transition:opacity .18s ease, transform .18s ease;
         }
-
         .toast.show{ opacity:1; transform:translateY(0); }
-
         .toast-icon{ flex:0 0 auto; }
-        .toast-text{
-          display:inline-block;
-          white-space:normal;                
-          overflow-wrap:anywhere;            
-        }
-
-        .toast-success{
-          background:#22c55e !important;
-          border-color:#16a34a !important;
-          color:#fff !important;
-        }
+        .toast-text{ display:inline-block; white-space:normal; overflow-wrap:anywhere; }
+        .toast-success{ background:#22c55e !important; border-color:#16a34a !important; color:#fff !important; }
         .toast-success .toast-icon{ color:#fff !important; }
-
-        .toast-error{
-          background:#ef4444 !important;
-          border-color:#dc2626 !important;
-          color:#fff !important;
-        }
+        .toast-error{ background:#ef4444 !important; border-color:#dc2626 !important; color:#fff !important; }
         .toast-error .toast-icon{ color:#fff !important; }
 
+        /* Hiệu ứng mượt khi chạy trong popup */
+        .page-anim{opacity:0; transform:translateY(6px); transition:opacity .18s ease, transform .18s ease}
+        .page-anim.ready{opacity:1; transform:none}
     </style>
+
+    <%-- Ẩn nút "Quay lại danh sách" khi chạy embed trong popup --%>
+    <% if ("1".Equals(Request["embed"])) { %>
+      <style>
+        a[href$="UserAddressList.aspx"]{display:none!important}
+        body{background:#fafafa}
+      </style>
+    <% } %>
 </head>
 <body>
 <form id="form1" runat="server">
-    <div class="container py-4" style="max-width:720px;">
+    <div class="container py-4 page-anim" style="max-width:720px;">
         <a href="UserAddressList.aspx" class="btn btn-outline-secondary mb-2">&larr; Quay lại danh sách</a>
         <h4 class="mb-3">Địa chỉ mới</h4>
 
@@ -169,9 +152,13 @@
             </div>
         </div>
 
-        <div class="mt-3">
-            <asp:Button ID="btnSave" runat="server" Text="Hoàn thành" CssClass="btn btn-success"
-                OnClientClick="return validateCreate();" OnClick="btnSave_Click" />
+        <!-- Actions: Hoàn thành (trái) — Hủy (phải, đỏ) -->
+        <div class="mt-3 d-flex align-items-center">
+            <div class="d-flex align-items-center gap-2">
+                <asp:Button ID="btnSave" runat="server" Text="Hoàn thành" CssClass="btn btn-success"
+                    OnClientClick="return validateCreate();" OnClick="btnSave_Click" />
+            </div>
+            <button type="button" id="btnCancelCreate" class="btn btn-danger text-white ms-auto">Hủy</button>
         </div>
     </div>
 
@@ -182,7 +169,18 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
-    // Toast API phù hợp code-behind: showToast(message, variant)
+    // kích hoạt hiệu ứng vào trang
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelector('.page-anim')?.classList.add('ready');
+    });
+
+    // Nút Hủy (ưu tiên quay lại trang trước; nếu không có, về danh sách địa chỉ)
+    document.getElementById('btnCancelCreate')?.addEventListener('click', function () {
+        if (history.length > 1) history.back();
+        else window.location.href = '/UserAddress/UserAddressList.aspx';
+    });
+
+    // Toast API: showToast(message, variant)
     function showToast(message, variant) {
         var stack = document.getElementById('toastStack'); if (!stack) return;
         var div = document.createElement('div');
@@ -215,17 +213,17 @@
     }
 </script>
 
-<!-- Searchable dropdown logic -->
+<!-- Searchable dropdown logic (không thay đổi chức năng, chỉ gọn gàng) -->
 <script>
     (function () {
         const DATA_BASE = '<%= ResolveClientUrl("~/assets/vn-admin") %>';
 
         const cityInput = document.getElementById('inpCityV3');
-        const cityMenu = document.getElementById('menuCity');
+        const cityMenu  = document.getElementById('menuCity');
         const cityCombo = document.getElementById('comboCity');
 
         const wardInput = document.getElementById('inpWardV3');
-        const wardMenu = document.getElementById('menuWard');
+        const wardMenu  = document.getElementById('menuWard');
         const wardCombo = document.getElementById('comboWard');
 
         const hidCityName = document.getElementById('<%= txtCitySel.ClientID %>');
@@ -243,7 +241,6 @@
 
         function openCombo(combo) { combo.classList.add('open'); }
         function closeCombo(combo) { combo.classList.remove('open'); }
-
         function setCityHidden(name, code) { hidCityName.value = name || ''; hidCityCode.value = code || ''; }
         function setWardHidden(name, code) { hidWardName.value = name || ''; hidWardCode.value = code || ''; }
 
@@ -281,10 +278,18 @@
         }
 
         // City events
-        cityInput.addEventListener('focus', () => { renderList(cityMenu, PROVINCES, cityInput.value, activeIndexCity = -1); openCombo(cityCombo); });
-        cityInput.addEventListener('input', () => { setCityHidden('', ''); renderList(cityMenu, PROVINCES, cityInput.value, activeIndexCity = -1); openCombo(cityCombo); });
+        cityInput.addEventListener('focus', () => {
+            renderList(cityMenu, PROVINCES, cityInput.value, activeIndexCity = -1);
+            openCombo(cityCombo);
+        });
+        cityInput.addEventListener('input', () => {
+            setCityHidden('', '');
+            renderList(cityMenu, PROVINCES, cityInput.value, activeIndexCity = -1);
+            openCombo(cityCombo);
+        });
         cityCombo.querySelector('.combo-caret').addEventListener('click', () => {
-            if (cityCombo.classList.contains('open')) closeCombo(cityCombo); else { renderList(cityMenu, PROVINCES, cityInput.value, activeIndexCity = -1); openCombo(cityCombo); }
+            if (cityCombo.classList.contains('open')) closeCombo(cityCombo);
+            else { renderList(cityMenu, PROVINCES, cityInput.value, activeIndexCity = -1); openCombo(cityCombo); }
         });
         cityMenu.addEventListener('click', async (e) => {
             const item = e.target.closest('.combo-item'); if (!item) return;
@@ -296,10 +301,15 @@
         cityInput.addEventListener('keydown', async (e) => {
             const items = Array.from(cityMenu.querySelectorAll('.combo-item'));
             if (!items.length) return;
-            if (e.key === 'ArrowDown') { e.preventDefault(); activeIndexCity = Math.min(activeIndexCity + 1, items.length - 1); items.forEach(x => x.classList.remove('active')); items[activeIndexCity].classList.add('active'); items[activeIndexCity].scrollIntoView({ block: 'nearest' }); }
-            else if (e.key === 'ArrowUp') { e.preventDefault(); activeIndexCity = Math.max(activeIndexCity - 1, 0); items.forEach(x => x.classList.remove('active')); items[activeIndexCity].classList.add('active'); items[activeIndexCity].scrollIntoView({ block: 'nearest' }); }
+            if (e.key === 'ArrowDown') { e.preventDefault(); activeIndexCity = Math.min(activeIndexCity + 1, items.length - 1); }
+            else if (e.key === 'ArrowUp') { e.preventDefault(); activeIndexCity = Math.max(activeIndexCity - 1, 0); }
             else if (e.key === 'Enter') { e.preventDefault(); items[activeIndexCity >= 0 ? activeIndexCity : 0].click(); }
             else if (e.key === 'Escape') { closeCombo(cityCombo); }
+            items.forEach(x => x.classList.remove('active'));
+            if (items[activeIndexCity]) {
+                items[activeIndexCity].classList.add('active');
+                items[activeIndexCity].scrollIntoView({ block: 'nearest' });
+            }
         });
         cityInput.addEventListener('blur', () => {
             const text = cityInput.value.trim();
@@ -309,11 +319,17 @@
         });
 
         // Ward events
-        wardInput.addEventListener('focus', () => { if (!wardInput.disabled) { renderList(wardMenu, WARDS, wardInput.value, activeIndexWard = -1); openCombo(wardCombo); } });
-        wardInput.addEventListener('input', () => { setWardHidden('', ''); if (!wardInput.disabled) { renderList(wardMenu, WARDS, wardInput.value, activeIndexWard = -1); openCombo(wardCombo); } });
+        wardInput.addEventListener('focus', () => {
+            if (!wardInput.disabled) { renderList(wardMenu, WARDS, wardInput.value, activeIndexWard = -1); openCombo(wardCombo); }
+        });
+        wardInput.addEventListener('input', () => {
+            setWardHidden('', '');
+            if (!wardInput.disabled) { renderList(wardMenu, WARDS, wardInput.value, activeIndexWard = -1); openCombo(wardCombo); }
+        });
         wardCombo.querySelector('.combo-caret').addEventListener('click', () => {
             if (wardInput.disabled) return;
-            if (wardCombo.classList.contains('open')) closeCombo(wardCombo); else { renderList(wardMenu, WARDS, wardInput.value, activeIndexWard = -1); openCombo(wardCombo); }
+            if (wardCombo.classList.contains('open')) closeCombo(wardCombo);
+            else { renderList(wardMenu, WARDS, wardInput.value, activeIndexWard = -1); openCombo(wardCombo); }
         });
         wardMenu.addEventListener('click', (e) => {
             const item = e.target.closest('.combo-item'); if (!item) return;
@@ -324,10 +340,15 @@
         wardInput.addEventListener('keydown', (e) => {
             const items = Array.from(wardMenu.querySelectorAll('.combo-item'));
             if (!items.length) return;
-            if (e.key === 'ArrowDown') { e.preventDefault(); activeIndexWard = Math.min(activeIndexWard + 1, items.length - 1); items.forEach(x => x.classList.remove('active')); items[activeIndexWard].classList.add('active'); items[activeIndexWard].scrollIntoView({ block: 'nearest' }); }
-            else if (e.key === 'ArrowUp') { e.preventDefault(); activeIndexWard = Math.max(activeIndexWard - 1, 0); items.forEach(x => x.classList.remove('active')); items[activeIndexWard].classList.add('active'); items[activeIndexWard].scrollIntoView({ block: 'nearest' }); }
+            if (e.key === 'ArrowDown') { e.preventDefault(); activeIndexWard = Math.min(activeIndexWard + 1, items.length - 1); }
+            else if (e.key === 'ArrowUp') { e.preventDefault(); activeIndexWard = Math.max(activeIndexWard - 1, 0); }
             else if (e.key === 'Enter') { e.preventDefault(); items[activeIndexWard >= 0 ? activeIndexWard : 0].click(); }
             else if (e.key === 'Escape') { closeCombo(wardCombo); }
+            items.forEach(x => x.classList.remove('active'));
+            if (items[activeIndexWard]) {
+                items[activeIndexWard].classList.add('active');
+                items[activeIndexWard].scrollIntoView({ block: 'nearest' });
+            }
         });
         wardInput.addEventListener('blur', () => {
             const text = wardInput.value.trim();
@@ -342,6 +363,7 @@
             if (!wardCombo.contains(e.target)) closeCombo(wardCombo);
         });
 
+        // load dữ liệu ban đầu
         document.addEventListener('DOMContentLoaded', async () => {
             await loadProvinces();
             wardInput.disabled = true;

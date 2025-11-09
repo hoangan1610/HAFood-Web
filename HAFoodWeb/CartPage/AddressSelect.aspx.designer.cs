@@ -33,6 +33,15 @@ namespace HAFoodWeb
         protected global::System.Web.UI.WebControls.HiddenField hfSelectedId;
 
         /// <summary>
+        /// hfCreateUrl control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.HiddenField hfCreateUrl;
+
+        /// <summary>
         /// rptAddresses control.
         /// </summary>
         /// <remarks>

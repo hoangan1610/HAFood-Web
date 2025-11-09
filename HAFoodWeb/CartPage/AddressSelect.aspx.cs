@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using System.Web;
 using System.Web.UI;
 using System.Web.UI.WebControls;
-using System.Web.Script.Serialization; // <-- thêm để serialize payload
+using System.Web.Script.Serialization;
 
 namespace HAFoodWeb
 {
@@ -16,7 +16,6 @@ namespace HAFoodWeb
 
         protected async void Page_Load(object sender, EventArgs e)
         {
-            // Bắt buộc đăng nhập — nếu thiếu token thì redirect TOÀN TRANG (không hiển thị login trong popup)
             if (Request.Cookies["AuthToken"] == null || string.IsNullOrWhiteSpace(Request.Cookies["AuthToken"].Value))
             {
                 var ret = Server.UrlEncode(ResolveUrl("~/CartPage/CartPage.aspx"));
@@ -28,6 +27,7 @@ namespace HAFoodWeb
 
             if (!IsPostBack)
             {
+                hfCreateUrl.Value = ResolveUrl("~/UserAddress/CreateUserAddress.aspx?embed=1&from=select");
                 await BindAddresses();
             }
         }
