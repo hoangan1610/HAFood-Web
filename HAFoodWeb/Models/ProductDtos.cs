@@ -3,6 +3,8 @@ using System.Collections.Generic;
 
 namespace HAFoodWeb.Models
 {
+
+
     // /api/products (list)
     public class ProductListItemDto
     {
@@ -63,19 +65,51 @@ namespace HAFoodWeb.Models
         public DateTime Created_At { get; set; }
         public DateTime Updated_At { get; set; }
         public IList<VariantDto> Variants { get; set; }
+
+        public ProductDetailDto()
+        {
+            Variants = new List<VariantDto>();
+            Brand_Name = string.Empty;
+            Name = string.Empty;
+            Tag = string.Empty;
+            Product_Keyword = string.Empty;
+            Detail = string.Empty;
+            Image_Product = string.Empty;
+            Expiry = string.Empty;
+        }
     }
 
-    public class ProductSearchRequest
+    // C# 7.3 friendly type for weight ranges
+    public class WeightRange
+    {
+        public int From { get; set; }
+        public int? To { get; set; }
+    }
+
+    public sealed class ProductSearchRequest
     {
         public string Query { get; set; }
         public long? CategoryId { get; set; }
         public string Brand { get; set; }
         public double? MinPrice { get; set; }
         public double? MaxPrice { get; set; }
-        public int? Status { get; set; } = 1;          // chỉ lấy hàng hoạt động
-        public bool OnlyInStock { get; set; } = false;
-        public int Page { get; set; } = 1;
-        public int PageSize { get; set; } = 20;
-        public string Sort { get; set; } = "updated_at:desc";
+        public bool OnlyInStock { get; set; }
+        public string Sort { get; set; }
+        public int Page { get; set; }
+        public int PageSize { get; set; }
+        public int? Status { get; set; }
+
+        // NEW: danh sách khoảng trọng lượng (gram). To = null nghĩa là open-ended.
+        public List<WeightRange> WeightRanges { get; set; }
+
+        public ProductSearchRequest()
+        {
+            Query = string.Empty;
+            Brand = string.Empty;
+            Sort = "updated_at:desc";
+            Page = 1;
+            PageSize = 20;
+            WeightRanges = new List<WeightRange>();
+        }
     }
 }

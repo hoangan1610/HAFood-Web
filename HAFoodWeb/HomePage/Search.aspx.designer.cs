@@ -42,15 +42,6 @@ namespace HAFoodWeb
         protected global::HAFoodWeb.Control.Header Header1;
 
         /// <summary>
-        /// ltCategoryTree control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.Literal ltCategoryTree;
-
-        /// <summary>
         /// ltTotal control.
         /// </summary>
         /// <remarks>
@@ -58,6 +49,15 @@ namespace HAFoodWeb
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
         protected global::System.Web.UI.WebControls.Literal ltTotal;
+
+        /// <summary>
+        /// ltCategoryTree control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Literal ltCategoryTree;
 
         /// <summary>
         /// rpProducts control.

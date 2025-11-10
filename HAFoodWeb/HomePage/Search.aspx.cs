@@ -2,8 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
+using System.Web;
 using System.Web.UI;
 using HAFoodWeb.Models;
 using HAFoodWeb.Services;
@@ -15,24 +14,85 @@ namespace HAFoodWeb
         private readonly ISearchService _search = new SearchService();
         private readonly ICategoryService _cats = new CategoryService();
 
-        protected async void Page_Load(object sender, EventArgs e)
+        protected void Page_Load(object sender, EventArgs e)
         {
-            if (!IsPostBack)
+            if (IsPostBack) return;
+
+            RegisterAsyncTask(new PageAsyncTask(async ct =>
             {
                 await BindCategoryTreeAsync();
                 await BindAsync();
-            }
+            }));
+        }
+
+        private static int? ParseNullableInt(string s)
+        {
+            int v;
+            return int.TryParse(s, out v) ? v : (int?)null;
         }
 
         private ProductSearchRequest ReadRequest()
         {
-            int.TryParse(Request["page"], out var page);
-            int.TryParse(Request["page_size"], out var pageSize);
-            long.TryParse(Request["category_id"], out var catId);
+            int page, pageSize; long catId;
+            int.TryParse(Request["page"], out page);
+            int.TryParse(Request["page_size"], out pageSize);
+            long.TryParse(Request["category_id"], out catId);
 
             double? min = null, max = null;
-            if (double.TryParse(Request["min_price"], out var mp)) min = mp;
-            if (double.TryParse(Request["max_price"], out var xp)) max = xp;
+            double tmp; // non-nullable cho TryParse
+            if (double.TryParse(Request["min_price"], out tmp)) min = tmp;
+            if (double.TryParse(Request["max_price"], out tmp)) max = tmp;
+
+            // Map sort UI → DB column
+            string sort = (Request["sort"] ?? "updated_at:desc").Trim().ToLowerInvariant();
+            if (sort == "price:asc") sort = "min_retail_price:asc";
+            else if (sort == "price:desc") sort = "min_retail_price:desc";
+            else if (sort == "name:asc") sort = "product_name:asc";
+            else if (sort == "name:desc") sort = "product_name:desc";
+
+            // Weight ranges (w=from-to)
+            var weightRanges = new List<WeightRange>();
+            var wParams = Request.QueryString.GetValues("w");
+            if (wParams != null && wParams.Length > 0)
+            {
+                foreach (var s in wParams)
+                {
+                    if (string.IsNullOrWhiteSpace(s)) continue;
+                    var parts = s.Split(new[] { '-' }, 2, StringSplitOptions.None);
+                    int from;
+                    if (parts.Length >= 1 && int.TryParse(parts[0], out from))
+                    {
+                        int toParsed; int? to = null;
+                        if (parts.Length == 2 && int.TryParse(parts[1], out toParsed)) to = toParsed;
+                        weightRanges.Add(new WeightRange { From = from, To = to });
+                    }
+                }
+            }
+
+            // Checkbox fallback
+            if (weightRanges.Count == 0)
+            {
+                if (Request["w_100_250"] == "on") weightRanges.Add(new WeightRange { From = 100, To = 250 });
+                if (Request["w_250_500"] == "on") weightRanges.Add(new WeightRange { From = 250, To = 500 });
+                if (Request["w_500_1000"] == "on") weightRanges.Add(new WeightRange { From = 500, To = 1000 });
+                if (Request["w_1000_5000"] == "on") weightRanges.Add(new WeightRange { From = 1000, To = 5000 });
+                if (Request["w_5000"] == "on") weightRanges.Add(new WeightRange { From = 5000, To = (int?)null });
+            }
+
+            // Clamp price
+            if (min.HasValue)
+            {
+                var v = min.Value; if (v < 10000) v = 10000; if (v > 1000000) v = 1000000;
+                min = Math.Round(v / 1000d) * 1000d;
+            }
+            if (max.HasValue)
+            {
+                var v = max.Value; if (v < 10000) v = 10000; if (v > 1000000) v = 1000000;
+                max = Math.Round(v / 1000d) * 1000d;
+            }
+            if (min.HasValue && max.HasValue && min > max) { var t = min; min = max; max = t; }
+
+            int? status = ParseNullableInt(Request["status"]);
 
             return new ProductSearchRequest
             {
@@ -42,44 +102,28 @@ namespace HAFoodWeb
                 MinPrice = min,
                 MaxPrice = max,
                 OnlyInStock = string.Equals(Request["only_in_stock"], "true", StringComparison.OrdinalIgnoreCase),
-                Sort = string.IsNullOrWhiteSpace(Request["sort"]) ? "updated_at:desc" : Request["sort"],
+                Sort = string.IsNullOrWhiteSpace(sort) ? "updated_at:desc" : sort,
                 Page = page > 0 ? page : 1,
                 PageSize = pageSize > 0 ? pageSize : 20,
-                Status = 1
+                Status = status,
+                WeightRanges = weightRanges
             };
         }
 
-        // ===== Helpers =====
         private string CurrentSearchPath() => ResolveUrl(Request.CurrentExecutionFilePath);
 
         private string BuildCategoryLink(long id)
         {
-            var qs = Request.QueryString.AllKeys
-                .Where(k => !string.IsNullOrEmpty(k)
-                            && !k.Equals("category_id", StringComparison.OrdinalIgnoreCase)
-                            && !k.Equals("page", StringComparison.OrdinalIgnoreCase))
-                .ToDictionary(k => k, k => Request.QueryString[k] ?? "");
+            var rawQs = Request.QueryString == null ? "" : Request.QueryString.ToString();
+            var nv = HttpUtility.ParseQueryString(rawQs ?? "");
+            nv["category_id"] = id.ToString();
+            nv["page"] = "1";
 
-            qs["category_id"] = id.ToString();
-            qs["page"] = "1";
-
-            var sb = new StringBuilder(CurrentSearchPath());
-            sb.Append("?");
-
-            bool first = true;
-            foreach (var kv in qs)
-            {
-                if (!first) sb.Append("&");
-                sb.Append(Uri.EscapeDataString(kv.Key))
-                  .Append("=")
-                  .Append(Uri.EscapeDataString(kv.Value));
-                first = false;
-            }
-            return sb.ToString();
+            var ub = new UriBuilder(Request.Url) { Path = CurrentSearchPath(), Query = nv.ToString() };
+            return ub.Uri.PathAndQuery;
         }
 
-        // ===== Category tree =====
-        private async Task BindCategoryTreeAsync()
+        private async System.Threading.Tasks.Task BindCategoryTreeAsync()
         {
             var all = await _cats.GetAllAsync() ?? new List<CategoryTreeDto>();
 
@@ -88,17 +132,13 @@ namespace HAFoodWeb
                 .GroupBy(x => x.Parent_Id.Value)
                 .ToDictionary(
                     g => g.Key,
-                    g => g.OrderBy(x => x.Sort_Order ?? int.MaxValue)
-                          .ThenBy(x => x.Name)
-                          .ToList()
+                    g => g.OrderBy(x => x.Sort_Order ?? int.MaxValue).ThenBy(x => x.Name).ToList()
                 );
 
             var idSet = new HashSet<long>(all.Select(x => x.Id));
             var roots = all
                 .Where(x => !x.Parent_Id.HasValue || !idSet.Contains(x.Parent_Id.Value))
-                .OrderBy(x => x.Sort_Order ?? int.MaxValue)
-                .ThenBy(x => x.Name)
-                .ToList();
+                .OrderBy(x => x.Sort_Order ?? int.MaxValue).ThenBy(x => x.Name).ToList();
 
             var expandSet = new HashSet<long>();
             long selId;
@@ -129,7 +169,7 @@ namespace HAFoodWeb
         {
             byParent.TryGetValue(n.Id, out var children);
             bool hasChild = children != null && children.Count > 0;
-            bool expanded = (selectedId.HasValue && n.Id == selectedId.Value) || (expandSet?.Contains(n.Id) ?? false);
+            bool expanded = (selectedId.HasValue && n.Id == selectedId.Value) || (expandSet != null && expandSet.Contains(n.Id));
 
             sb.Append("<div class='cat-node'>");
 
@@ -138,16 +178,12 @@ namespace HAFoodWeb
                 sb.Append("<div class='d-flex justify-content-between align-items-center'>");
                 sb.AppendFormat("<a class='text-decoration-none' href='{0}'>{1}</a>",
                     BuildCategoryLink(n.Id), Server.HtmlEncode(n.Name));
-                sb.AppendFormat("<span class='cat-toggle small text-muted' data-toggle-cat='{0}'>{1}</span>",
-                    n.Id, expanded ? "–" : "+");
+                sb.AppendFormat("<span class='cat-toggle small text-muted' data-toggle-cat='{0}' aria-expanded='{1}'> {2} </span>",
+                    n.Id, expanded ? "true" : "false", expanded ? "–" : "+");
                 sb.Append("</div>");
 
-                sb.AppendFormat("<div id='cat-children-{0}' class='cat-children {1}'>",
-                    n.Id, expanded ? "" : "d-none");
-
-                foreach (var c in children)
-                    RenderNode(c, sb, byParent, expandSet, selectedId);
-
+                sb.AppendFormat("<div id='cat-children-{0}' class='cat-children {1}'>", n.Id, expanded ? "" : "d-none");
+                foreach (var c in children) RenderNode(c, sb, byParent, expandSet, selectedId);
                 sb.Append("</div>");
             }
             else
@@ -155,77 +191,21 @@ namespace HAFoodWeb
                 sb.AppendFormat("<a class='text-decoration-none' href='{0}'>{1}</a>",
                     BuildCategoryLink(n.Id), Server.HtmlEncode(n.Name));
             }
-
             sb.Append("</div>");
         }
 
-        // ===== Products =====
-        protected async Task BindAsync()
+        protected async System.Threading.Tasks.Task BindAsync()
         {
             var req = ReadRequest();
 
             var list = await _search.SearchListAsync(req);
             var cards = await _search.BuildCardsAsync(req);
 
-            var ranges = ParseWeightFiltersFromRequest();
-            if (ranges.Any())
-                cards = FilterCardsByWeight(cards, ranges);
-
-            ltTotal.Text = $"{list.TotalCount:n0} sản phẩm";
+            ltTotal.Text = string.Format("{0:n0} sản phẩm", list.TotalCount);
             rpProducts.DataSource = cards;
             rpProducts.DataBind();
 
             ltPager.Text = BuildPager(req.Page, req.PageSize, list.TotalCount);
-        }
-
-        private IReadOnlyList<(int From, int To)> ParseWeightFiltersFromRequest()
-        {
-            var res = new List<(int, int)>();
-            if (Request["w_100_250"] == "on") res.Add((100, 250));
-            if (Request["w_250_500"] == "on") res.Add((250, 500));
-            if (Request["w_500_1000"] == "on") res.Add((500, 1000));
-            if (Request["w_1000_5000"] == "on") res.Add((1000, 5000));
-            if (Request["w_5000"] == "on") res.Add((5000, int.MaxValue));
-            return res;
-        }
-
-        private static readonly Regex WeightRegex =
-            new Regex(@"(\d+(?:[\.,]\d+)?)\s*(kg|g|gram)", RegexOptions.IgnoreCase | RegexOptions.Compiled);
-
-        private static int? ExtractWeightGram(string text)
-        {
-            if (string.IsNullOrWhiteSpace(text)) return null;
-            var m = WeightRegex.Match(text);
-            if (!m.Success) return null;
-
-            var num = m.Groups[1].Value.Replace(',', '.');
-            if (!double.TryParse(num, System.Globalization.NumberStyles.Any,
-                                 System.Globalization.CultureInfo.InvariantCulture, out var v))
-                return null;
-
-            var unit = m.Groups[2].Value.ToLowerInvariant();
-            return unit == "kg" ? (int)Math.Round(v * 1000) : (int)Math.Round(v);
-        }
-
-        private IList<ProductCardVM> FilterCardsByWeight(IList<ProductCardVM> cards, IReadOnlyList<(int From, int To)> ranges)
-        {
-            var keep = new List<ProductCardVM>();
-            foreach (var c in cards)
-            {
-                bool match = false;
-                foreach (var opt in c.Variants ?? Enumerable.Empty<VariantOptionVM>())
-                {
-                    var w = ExtractWeightGram(opt.Label);
-                    if (w == null) continue;
-                    foreach (var r in ranges)
-                    {
-                        if (w.Value >= r.From && w.Value < r.To) { match = true; break; }
-                    }
-                    if (match) break;
-                }
-                if (match) keep.Add(c);
-            }
-            return keep.Count > 0 ? keep : cards;
         }
 
         private string BuildPager(int page, int pageSize, int total)
@@ -235,30 +215,15 @@ namespace HAFoodWeb
 
             string SetPage(int p)
             {
-                var qs = Request.QueryString.AllKeys
-                    .Where(k => !string.IsNullOrEmpty(k)
-                                && !k.Equals("page", StringComparison.OrdinalIgnoreCase))
-                    .ToDictionary(k => k, k => Request.QueryString[k] ?? "");
+                var rawQs = Request.QueryString == null ? "" : Request.QueryString.ToString();
+                var nv = HttpUtility.ParseQueryString(rawQs ?? "");
+                nv["page"] = p.ToString();
 
-                qs["page"] = p.ToString();
-
-                var sb = new StringBuilder(CurrentSearchPath());
-                sb.Append("?");
-
-                bool first = true;
-                foreach (var kv in qs)
-                {
-                    if (!first) sb.Append("&");
-                    sb.Append(Uri.EscapeDataString(kv.Key))
-                      .Append("=")
-                      .Append(Uri.EscapeDataString(kv.Value));
-                    first = false;
-                }
-                return sb.ToString();
+                var ub = new UriBuilder(Request.Url) { Path = CurrentSearchPath(), Query = nv.ToString() };
+                return ub.Uri.PathAndQuery;
             }
 
             var sbHtml = new StringBuilder();
-
             sbHtml.AppendFormat("<li class='page-item{0}'><a class='page-link' href='{1}'>«</a></li>",
                 page <= 1 ? " disabled" : "", page <= 1 ? "#" : SetPage(page - 1));
 

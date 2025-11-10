@@ -13,12 +13,14 @@ namespace HAFoodWeb.Services
     {
         private readonly string _apiBase;
 
+        public string LastListUrl { get; private set; } = "";
+        public IList<string> LastDetailUrls { get; } = new List<string>();
+
         public SearchService()
         {
             _apiBase = (ConfigurationManager.AppSettings["ApiBaseUrl"] ?? "").TrimEnd('/');
         }
 
-        // -------------------- Public APIs --------------------
         public async Task<IList<string>> SuggestAsync(string q)
         {
             if (string.IsNullOrWhiteSpace(q)) return new List<string>();
@@ -30,9 +32,12 @@ namespace HAFoodWeb.Services
 
         public async Task<PagedResult<ProductListItemDto>> SearchListAsync(ProductSearchRequest req)
         {
+            var sort = string.IsNullOrWhiteSpace(req.Sort) ? "updated_at:desc" : req.Sort;
+
             var url = $"{_apiBase}/api/products?page={req.Page}&page_size={req.PageSize}"
                       + $"&only_in_stock={(req.OnlyInStock ? "true" : "false")}"
-                      + $"&sort={Uri.EscapeDataString(req.Sort ?? "updated_at:desc")}";
+                      + $"&sort={Uri.EscapeDataString(sort)}";
+
             if (!string.IsNullOrWhiteSpace(req.Query))
                 url += $"&q={Uri.EscapeDataString(req.Query)}";
             if (req.CategoryId.HasValue && req.CategoryId.Value > 0)
@@ -45,6 +50,18 @@ namespace HAFoodWeb.Services
                 url += $"&max_price={req.MaxPrice.Value.ToString(CultureInfo.InvariantCulture)}";
             if (req.Status.HasValue)
                 url += $"&status={req.Status.Value}";
+
+            // Gửi weight ranges dạng &w=from-to (nhiều lần)
+            if (req.WeightRanges != null && req.WeightRanges.Count > 0)
+            {
+                foreach (var wr in req.WeightRanges)
+                {
+                    var v = wr.To.HasValue ? $"{wr.From}-{wr.To.Value}" : $"{wr.From}-";
+                    url += $"&w={Uri.EscapeDataString(v)}";
+                }
+            }
+
+            LastListUrl = url; // DEBUG
 
             var fallback = new PagedResult<ProductListItemDto>
             {
@@ -60,12 +77,20 @@ namespace HAFoodWeb.Services
         public async Task<IList<ProductCardVM>> BuildCardsAsync(ProductSearchRequest req)
         {
             var list = await SearchListAsync(req);
-            if (list?.Items == null || list.Items.Count == 0)
+            if (list == null || list.Items == null || list.Items.Count == 0)
                 return new List<ProductCardVM>();
 
+            LastDetailUrls.Clear();
+
             // Lấy chi tiết để có ảnh + variants
-            var detailTasks = list.Items.Select(x => GetProductDetailAsync(x.Product_Id)).ToArray();
-            var details = await Task.WhenAll(detailTasks);
+            var tasks = list.Items.Select(x =>
+            {
+                var du = $"{_apiBase}/api/products/{x.Product_Id}";
+                LastDetailUrls.Add(du);
+                return GetProductDetailAsync(x.Product_Id);
+            }).ToArray();
+
+            var details = await Task.WhenAll(tasks);
 
             var cards = new List<ProductCardVM>(details.Length);
             for (int i = 0; i < details.Length; i++)
@@ -73,8 +98,10 @@ namespace HAFoodWeb.Services
                 var d = details[i];
                 var li = list.Items[i];
 
-                // Ảnh ưu tiên variant -> ảnh product -> fallback
-                string img = d?.Variants?.FirstOrDefault(v => !string.IsNullOrWhiteSpace(v.Image))?.Image;
+                // Ảnh: ưu tiên variant, rồi tới ảnh product, rồi fallback
+                string img = (d != null && d.Variants != null)
+                    ? d.Variants.FirstOrDefault(v => !string.IsNullOrWhiteSpace(v.Image))?.Image
+                    : null;
                 if (string.IsNullOrWhiteSpace(img))
                     img = (!string.IsNullOrWhiteSpace(d?.Image_Product) &&
                            d.Image_Product.StartsWith("http", StringComparison.OrdinalIgnoreCase))
@@ -82,13 +109,14 @@ namespace HAFoodWeb.Services
                           : "/images/product-default.png";
 
                 // Dropdown biến thể
-                var opts = new List<VariantOptionVM>(d?.Variants?.Count ?? 0);
-                if (d?.Variants != null)
+                var opts = new List<VariantOptionVM>();
+                if (d?.Variants != null && d.Variants.Count > 0)
                 {
                     foreach (var v in d.Variants)
                     {
                         var name = string.IsNullOrWhiteSpace(v.Name) ? v.Sku : v.Name;
-                        opts.Add(new VariantOptionVM { Id = v.Id, Label = $"{name} ({FormatVnd(v.Retail_Price)})" });
+                        var label = $"{name} ({FormatVnd(v.Retail_Price)})";
+                        opts.Add(new VariantOptionVM { Id = v.Id, Label = label });
                     }
                 }
 
@@ -99,8 +127,8 @@ namespace HAFoodWeb.Services
 
                 cards.Add(new ProductCardVM
                 {
-                    Id = d.Id,
-                    Name = d.Name,
+                    Id = d != null ? d.Id : li.Product_Id,
+                    Name = d != null ? d.Name : li.Product_Name,
                     ImageUrl = img,
                     MinRetail = li.Min_Retail_Price,
                     MaxRetail = li.Max_Retail_Price,
@@ -113,7 +141,7 @@ namespace HAFoodWeb.Services
             return cards;
         }
 
-        // -------------------- Helpers --------------------
+        // ------------ Helpers ------------
         private async Task<ProductDetailDto> GetProductDetailAsync(long id)
         {
             var cacheKey = $"product:detail:{id}";
