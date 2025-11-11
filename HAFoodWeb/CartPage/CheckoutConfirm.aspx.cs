@@ -4,6 +4,12 @@ using System.Threading.Tasks;
 using System.Web.UI;
 using HAFoodWeb.Services;
 using System.Web;
+using HAFoodWeb.Models;
+using System.Net.Http;
+using System.Configuration;              // ConfigurationManager
+using System.Text;                       // Encoding
+using Newtonsoft.Json;                   // Newtonsoft.Json
+using Newtonsoft.Json.Linq;              // JObject/JToken
 
 namespace HAFoodWeb
 {
@@ -20,9 +26,8 @@ namespace HAFoodWeb
         private const string SK_PENDING_PAYMENT_URL = "pending_payment_url";
         private const string SK_PENDING_PAYMENT_CREATED = "pending_payment_created_utc";
         private const string SK_PENDING_PAYMENT_METHOD = "pending_payment_method";
-        private const string SK_PENDING_ORDER_ID = "pending_order_id"; // ⭐ NEW
+        private const string SK_PENDING_ORDER_ID = "pending_order_id";
 
-        // Đổi lại nếu ThankYou nằm ở thư mục khác
         private const string THANKYOU_PATH = "~/CartPage/ThankYou.aspx";
 
         protected async void Page_Load(object sender, EventArgs e)
@@ -84,7 +89,7 @@ namespace HAFoodWeb
 
         private async Task LoadDraftAndBindAsync()
         {
-            var draft = Session[SK_DRAFT] as CartPage.CheckoutDraft;
+            var draft = Session[SK_DRAFT] as CheckoutDraft;
             if (draft == null)
             {
                 Response.Redirect("~/CartPage/CartPage.aspx", false);
@@ -121,13 +126,15 @@ namespace HAFoodWeb
                             Quantity = x.quantity,
                             ImageUrl = string.IsNullOrWhiteSpace(x.image_Variant) ? "/images/product-default.png" : x.image_Variant,
                             LineTotal = string.Format(viVN, "{0:N0} ₫", lineTotal),
-                            VariantId = x.variant_Id
+                            VariantId = x.variant_Id,
+                            Price = x.price_Variant
                         };
                     })
                     .ToList();
 
                 displayItems = freshItems.Cast<object>().ToList();
 
+                // đồng bộ Items
                 draft.Items = freshItems.Select(fi => (fi.VariantId, fi.Quantity)).ToArray();
                 Session[SK_DRAFT] = draft;
             }
@@ -169,14 +176,105 @@ namespace HAFoodWeb
             rptItems.DataBind();
 
             var vat = Math.Round(subtotal * VAT_RATE, 0, MidpointRounding.AwayFromZero);
-            var grand = subtotal + shipping + vat;
+
+            // Re-quote khuyến mãi (fallback snapshot nếu lỗi)
+            decimal discount = 0m;
+            try { discount = await QuoteDiscountAsync(draft, subtotal); }
+            catch { discount = draft.SnapshotDiscount; }
+            if (discount < 0) discount = 0;
+
+            var grand = Math.Max(0m, subtotal + shipping + vat - discount);
 
             lblSubtotal.Text = string.Format(viVN, "{0:N0} ₫", subtotal);
             lblShipping.Text = string.Format(viVN, "{0:N0} ₫", shipping);
             lblVat.Text = string.Format(viVN, "{0:N0} ₫", vat);
+            lblDiscount.Text = "-" + string.Format(viVN, "{0:N0} ₫", discount);
             lblGrandTotal.Text = string.Format(viVN, "{0:N0} ₫", grand);
 
             Session[SK_TOTALS] = (subtotal, shipping);
+        }
+
+        // Helper gọi /api/promotions/cart/quote để lấy tổng giảm (Newtonsoft.Json + C# 7.3)
+        private async Task<decimal> QuoteDiscountAsync(CheckoutDraft draft, decimal subtotal)
+        {
+            if (string.IsNullOrWhiteSpace(draft.PromoCode)) return 0m;
+
+            // chuẩn bị items
+            var cart = await _cartService.GetCartAsync(draft.DeviceUuid);
+            var selected = (draft.SelectedLineIds ?? new long[0]).ToHashSet();
+
+            var items = new System.Collections.Generic.List<object>();
+            if (cart?.items != null)
+            {
+                foreach (var x in cart.items.Where(x => selected.Contains(x.id)))
+                {
+                    items.Add(new
+                    {
+                        productId = (long?)null,
+                        variantId = (long?)x.variant_Id,
+                        qty = (int)x.quantity,
+                        unitPrice = (decimal)x.price_Variant
+                    });
+                }
+            }
+            if (items.Count == 0 && draft.Snapshot != null)
+            {
+                foreach (var s in draft.Snapshot)
+                {
+                    items.Add(new
+                    {
+                        productId = (long?)null,
+                        variantId = (long?)s.VariantId,
+                        qty = (int)s.Quantity,
+                        unitPrice = (decimal)s.Price
+                    });
+                }
+            }
+            if (items.Count == 0) return 0m;
+
+            var apiBase = ConfigurationManager.AppSettings["ApiBaseUrl"] ?? string.Empty;
+            apiBase = apiBase.TrimEnd('/');
+            var url = apiBase + "/api/promotions/cart/quote";
+
+            using (var http = new HttpClient())
+            {
+                http.Timeout = TimeSpan.FromSeconds(8);
+                if (!string.IsNullOrEmpty(draft.DeviceUuid))
+                    http.DefaultRequestHeaders.Add("X-Device-Id", draft.DeviceUuid);
+
+                var bodyObj = new
+                {
+                    code = draft.PromoCode,
+                    items = items,
+                    subtotal = subtotal,
+                    shippingFee = 0m,
+                    channel = (byte?)1
+                };
+                var json = JsonConvert.SerializeObject(bodyObj);
+                using (var content = new StringContent(json, Encoding.UTF8, "application/json"))
+                {
+                    var resp = await http.PostAsync(url, content);
+                    if (!resp.IsSuccessStatusCode) return draft.SnapshotDiscount;
+
+                    var str = await resp.Content.ReadAsStringAsync();
+                    if (string.IsNullOrWhiteSpace(str)) return draft.SnapshotDiscount;
+
+                    JObject root;
+                    try { root = JObject.Parse(str); }
+                    catch { return draft.SnapshotDiscount; }
+
+                    var best = root["best"] as JObject;
+                    if (best == null) return draft.SnapshotDiscount;
+
+                    var td = best["total_discount"] ?? best["totalDiscount"];
+                    if (td != null)
+                    {
+                        decimal dec;
+                        if (decimal.TryParse(td.ToString(), out dec)) return dec;
+                    }
+                    return draft.SnapshotDiscount;
+                }
+            }
         }
 
         // ===== Helpers =====
@@ -219,6 +317,10 @@ namespace HAFoodWeb
                 Session.Remove(SK_PENDING_PAYMENT_METHOD);
                 return false;
             }
+
+            // Normalize trước khi đi
+            url = NormalizeGatewayUrlForUA(url);
+            System.Diagnostics.Trace.WriteLine($"[PAY-REDIRECT:PENDING] UA={Request?.UserAgent} URL={url}");
 
             Response.Redirect(url, false);
             Context.ApplicationInstance.CompleteRequest();
@@ -289,11 +391,15 @@ namespace HAFoodWeb
                         if (sw.Outcome == SwitchPaymentOutcome.Switched)
                         {
                             var newPayUrl = await _orderService.CreatePaymentLinkForOrderAsync(pendingCode, paymentMethod);
-                            Session[SK_PENDING_PAYMENT_URL] = newPayUrl;
+
+                            // Normalize + lưu
+                            var normalized = NormalizeGatewayUrlForUA(newPayUrl);
+                            Session[SK_PENDING_PAYMENT_URL] = normalized;
                             Session[SK_PENDING_PAYMENT_CREATED] = DateTime.UtcNow;
                             Session[SK_PENDING_PAYMENT_METHOD] = paymentMethod;
 
-                            Response.Redirect(newPayUrl, false);
+                            System.Diagnostics.Trace.WriteLine($"[PAY-REDIRECT:SWITCHED] UA={Request?.UserAgent} URL={normalized}");
+                            Response.Redirect(normalized, false);
                             Context.ApplicationInstance.CompleteRequest();
                             return;
                         }
@@ -330,7 +436,8 @@ namespace HAFoodWeb
             // ==== CHƯA CÓ ORDER → tạo đơn mới ====
             if (paymentMethod != 0 && TryRedirectPendingPaymentIfAny(paymentMethod)) return;
 
-            var draft = Session[SK_DRAFT] as CartPage.CheckoutDraft;
+            var draft = Session[SK_DRAFT] as CheckoutDraft;
+
             if (draft == null)
             {
                 ShowNiceError("SESSION_EXPIRED", "Phiên đặt hàng đã hết hạn", "Vui lòng quay lại giỏ hàng để đặt lại.",
@@ -391,14 +498,17 @@ namespace HAFoodWeb
                     if (!string.IsNullOrWhiteSpace(resp.order_Code))
                         Session[SK_PENDING_ORDER_CODE] = resp.order_Code;
 
-                    // ⭐ LƯU orderId để ThankYou dùng sau khi quay về
+                    // LƯU orderId để ThankYou dùng sau khi quay về
                     if (resp.order_Id > 0) Session[SK_PENDING_ORDER_ID] = resp.order_Id;
 
-                    Session[SK_PENDING_PAYMENT_URL] = resp.payment_Url;
+                    // Normalize + lưu + redirect
+                    var payUrl = NormalizeGatewayUrlForUA(resp.payment_Url);
+                    Session[SK_PENDING_PAYMENT_URL] = payUrl;
                     Session[SK_PENDING_PAYMENT_CREATED] = DateTime.UtcNow;
                     Session[SK_PENDING_PAYMENT_METHOD] = paymentMethod;
 
-                    Response.Redirect(resp.payment_Url, false);
+                    System.Diagnostics.Trace.WriteLine($"[PAY-REDIRECT:CREATE] UA={Request?.UserAgent} URL={payUrl}");
+                    Response.Redirect(payUrl, false);
                     Context.ApplicationInstance.CompleteRequest();
                     return;
                 }
@@ -417,7 +527,6 @@ namespace HAFoodWeb
                 Session.Remove(SK_PENDING_PAYMENT_URL);
                 Session.Remove(SK_PENDING_PAYMENT_CREATED);
                 Session.Remove(SK_PENDING_PAYMENT_METHOD);
-                // (không cần giữ pending_order_id vì đã có id trên URL)
 
                 var url = ResolveUrl(THANKYOU_PATH) +
                           "?id=" + resp.order_Id +
@@ -442,7 +551,9 @@ namespace HAFoodWeb
                     var pendingUrl = Session[SK_PENDING_PAYMENT_URL] as string;
                     if (!string.IsNullOrWhiteSpace(pendingUrl))
                     {
+                        pendingUrl = NormalizeGatewayUrlForUA(pendingUrl);
                         ShowNiceError("CART_EMPTY", "Đơn hàng đã khởi tạo trước đó", "Đang chuyển tới trang thanh toán…");
+                        System.Diagnostics.Trace.WriteLine($"[PAY-REDIRECT:RESTORE] UA={Request?.UserAgent} URL={pendingUrl}");
                         Response.Redirect(pendingUrl, false);
                         Context.ApplicationInstance.CompleteRequest();
                         return;
@@ -452,11 +563,11 @@ namespace HAFoodWeb
 
                     if (!string.IsNullOrWhiteSpace(code))
                     {
-                        var url = ResolveUrl(THANKYOU_PATH) +
+                        var url2 = ResolveUrl(THANKYOU_PATH) +
                                   "?code=" + Uri.EscapeDataString(code) +
                                   (pid.HasValue ? "&id=" + pid.Value : "") +
                                   "&restored=1";
-                        Response.Redirect(url, false);
+                        Response.Redirect(url2, false);
                         Context.ApplicationInstance.CompleteRequest();
                         return;
                     }
@@ -488,5 +599,35 @@ namespace HAFoodWeb
             litError.Text = html;
             litError.Visible = true;
         }
+
+        // ===== Detect & normalize ZaloPay URL theo User-Agent =====
+        private static bool IsMobileUA(string ua)
+        {
+            if (string.IsNullOrEmpty(ua)) return false;
+            ua = ua.ToLowerInvariant();
+            return ua.Contains("android") || ua.Contains("iphone") || ua.Contains("ipad")
+                || ua.Contains("ipod") || ua.Contains("mobile");
+        }
+
+        private string NormalizeGatewayUrlForUA(string url)
+        {
+            if (string.IsNullOrWhiteSpace(url)) return url;
+
+            var ua = Request?.UserAgent ?? "";
+            var isMobile = IsMobileUA(ua);
+
+            // Desktop → ép dùng trang QR thay vì openinapp
+            if (!isMobile &&
+                url.IndexOf("qcgateway.zalopay.vn/openinapp?", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                // Replace là so khớp theo đúng hoa/thường; chuỗi trả về của ZP là lower-case nên OK.
+                // Nếu muốn chắc 100% bất kể hoa/thường, dùng Regex.Replace phía dưới.
+                url = url.Replace("/openinapp?", "/pay/v2/qr?");
+                // Hoặc: url = System.Text.RegularExpressions.Regex.Replace(url, "/openinapp\\?", "/pay/v2/qr?", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+            }
+
+            return url;
+        }
+
     }
 }

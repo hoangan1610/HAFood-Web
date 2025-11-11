@@ -7,7 +7,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace HAFoodWeb
+namespace HAFoodWeb.Pages
 {
 
 
@@ -121,6 +121,33 @@ namespace HAFoodWeb
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
         protected global::System.Web.UI.WebControls.HiddenField hidSelectedLines;
+
+        /// <summary>
+        /// hidPromoCodeSelected control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.HiddenField hidPromoCodeSelected;
+
+        /// <summary>
+        /// hidPromoDiscount control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.HiddenField hidPromoDiscount;
+
+        /// <summary>
+        /// hidPromoMetaJson control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.HiddenField hidPromoMetaJson;
 
         /// <summary>
         /// updCart control.
@@ -276,6 +303,15 @@ namespace HAFoodWeb
         protected global::System.Web.UI.WebControls.TextBox txtReceiver;
 
         /// <summary>
+        /// txtPromo control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.TextBox txtPromo;
+
+        /// <summary>
         /// txtNote control.
         /// </summary>
         /// <remarks>
@@ -285,13 +321,14 @@ namespace HAFoodWeb
         protected global::System.Web.UI.WebControls.TextBox txtNote;
 
         /// <summary>
-        /// txtPromo control.
+        /// CartVouchers1 control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.TextBox txtPromo;
+        protected global::HAFoodWeb.Cart.CartVouchers CartVouchers1;
+
 
         /// <summary>
         /// updSummary control.
@@ -346,6 +383,15 @@ namespace HAFoodWeb
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
         protected global::System.Web.UI.WebControls.Label lblVat;
+
+        /// <summary>
+        /// lblDiscount control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Label lblDiscount;
 
         /// <summary>
         /// lblGrandTotal control.

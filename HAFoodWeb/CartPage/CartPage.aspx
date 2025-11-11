@@ -1,7 +1,12 @@
-﻿<%@ Page Language="C#" AutoEventWireup="true" CodeBehind="CartPage.aspx.cs" Inherits="HAFoodWeb.CartPage" Async="true" %>
+﻿<%@ Page Language="C#" AutoEventWireup="true"
+    CodeBehind="CartPage.aspx.cs"
+    Inherits="HAFoodWeb.Pages.CartPage"
+    Async="true" %>
+
 <%@ Register Src="~/Control/Header.ascx" TagPrefix="uc" TagName="Header" %>
 <%@ Register Src="~/Control/Footer.ascx" TagPrefix="uc" TagName="Footer" %>
 <%@ Register Src="~/CartPage/CartItem.ascx" TagPrefix="uc" TagName="CartItem" %>
+<%@ Register Src="~/CartPage/CartVouchers.ascx" TagPrefix="uc" TagName="CartVouchers" %>
 <!DOCTYPE html>
 <html lang="vi">
 <head runat="server">
@@ -211,6 +216,11 @@
     <asp:TextBox ID="txtWardCode" runat="server" CssClass="invisible-input" />
     <asp:HiddenField ID="hidSelectedLines" runat="server" />
 
+    <!-- Hidden voucher fields -->
+    <asp:HiddenField ID="hidPromoCodeSelected" runat="server" />
+    <asp:HiddenField ID="hidPromoDiscount" runat="server" />
+    <asp:HiddenField ID="hidPromoMetaJson" runat="server" />
+
     <div class="page">
         <div class="page-grid">
             <!-- LEFT -->
@@ -334,10 +344,16 @@
                                 Display="Dynamic" CssClass="fv" ValidationGroup="Checkout" />
                         </div>
 
+                        <!-- Ẩn hoàn toàn input khuyến mãi cũ -->
+                        <asp:TextBox ID="txtPromo" runat="server" CssClass="invisible-input" />
+                        <div class="form-row" style="display:none"><label>Mã khuyến mãi</label><input type="text" disabled class="form-control" value="" /></div>
+
                         <div class="form-row"><label>Ghi chú cho đơn hàng</label><asp:TextBox ID="txtNote" runat="server" CssClass="form-control" /></div>
-                        <div class="form-row"><label>Mã khuyến mãi</label><asp:TextBox ID="txtPromo" runat="server" CssClass="form-control" /></div>
                     </div>
                 </div>
+
+                <!-- Voucher UI (đã làm xong ở các file khác) -->
+                <uc:CartVouchers ID="CartVouchers1" runat="server" />
 
                 <asp:UpdatePanel ID="updSummary" runat="server" UpdateMode="Conditional">
                     <ContentTemplate>
@@ -347,6 +363,7 @@
                             <div class="summary-row"><span>Tổng tiền hàng:</span><asp:Label ID="lblSubtotal" runat="server" Text="0 ₫" /></div>
                             <div class="summary-row"><span>Phí vận chuyển:</span><asp:Label ID="lblShipping" runat="server" Text="0 ₫" /></div>
                             <div class="summary-row"><span>VAT (8%):</span><asp:Label ID="lblVat" runat="server" Text="0 ₫" /></div>
+                            <div class="summary-row"><span>Giảm khuyến mãi:</span><asp:Label ID="lblDiscount" runat="server" Text="0 ₫" /></div>
                             <div class="grand">Tổng thanh toán: <asp:Label ID="lblGrandTotal" runat="server" Text="0 ₫" /></div>
                             <div style="padding:0 16px 16px">
                                 <asp:Button ID="btnCheckout" runat="server" CssClass="btn-primary" Text="Tiếp Tục Đặt Hàng"
@@ -407,7 +424,8 @@
     <!-- Combobox searchable + expose cityWardAPI -->
     <script>
         (function () {
-            const DATA_BASE = '<%= ResolveClientUrl("~/assets/vn-admin") %>';
+           const DATA_BASE = '<%= Page.ResolveClientUrl("~/assets/vn-admin") %>';
+
 
             const cityBox = document.getElementById('cmbCity');
             const wardBox = document.getElementById('cmbWard');
@@ -698,8 +716,9 @@
             const closeBtn = document.getElementById('addrCloseBtn');
 
             const IS_AUTH = (document.getElementById('<%= hidIsAuth.ClientID %>').value === '1');
-            const LOGIN_URL = '<%= ResolveUrl("~/AuthPage/Login.aspx") %>';
-            const addressSelectUrl = '<%= ResolveUrl("~/CartPage/AddressSelect.aspx") %>';
+            const LOGIN_URL = '<%= Page.ResolveUrl("~/AuthPage/Login.aspx") %>';
+const addressSelectUrl = '<%= Page.ResolveUrl("~/CartPage/AddressSelect.aspx") %>';
+
 
             function openAddrModal() {
                 iframe.src = addressSelectUrl;
@@ -1031,6 +1050,13 @@
     <!-- Submit guard -->
     <script>
         function beforeCheckoutSubmit() {
+            try{
+                var hidCode = document.getElementById('<%= hidPromoCodeSelected.ClientID %>');
+                var txtPromo = document.getElementById('<%= txtPromo.ClientID %>');
+                if (hidCode && txtPromo && hidCode.value && !txtPromo.value){
+                    txtPromo.value = hidCode.value;
+                }
+            }catch(e){}
             if (typeof (Page_ClientValidate) === 'function') {
                 if (!Page_ClientValidate('Checkout')) return false;
             }

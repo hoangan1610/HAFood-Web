@@ -12,9 +12,9 @@ using System.Web.Services; // cho PageMethods
 using System.Web.UI;
 using System.Web.UI.WebControls;
 
-namespace HAFoodWeb
+namespace HAFoodWeb.Pages
 {
-    public partial class CartPage : Page
+    public partial class CartPage : System.Web.UI.Page
     {
         private readonly ICartService _cartService = new CartService();
         private const decimal VAT_RATE = 0.08m;
@@ -22,35 +22,7 @@ namespace HAFoodWeb
         // Giữ địa chỉ hiện tại để render session
         protected AddressDto CurrentAddress;
 
-        public class CheckoutDraftItem
-        {
-            public long VariantId { get; set; }
-            public int Quantity { get; set; }
-            public string ProductName { get; set; }
-            public string VariantName { get; set; }
-            public string ImageUrl { get; set; }
-            public decimal Price { get; set; }
-        }
-
-        public class CheckoutDraft
-        {
-            public string ShipName { get; set; }
-            public string ShipPhone { get; set; }
-            public string ShipAddress { get; set; }
-            public string PromoCode { get; set; }
-            public string Note { get; set; }
-            public long[] SelectedLineIds { get; set; }
-            public (long variant_Id, int quantity)[] Items { get; set; }
-            public string DeviceUuid { get; set; }
-            public string CityCode { get; set; }
-            public string WardCode { get; set; }
-
-            public CheckoutDraftItem[] Snapshot { get; set; }
-            public decimal SnapshotSubtotal { get; set; }
-            public decimal SnapshotVat { get; set; }
-            public decimal SnapshotShipping { get; set; }
-            public decimal SnapshotGrand { get; set; }
-        }
+      
 
         protected async void Page_Load(object sender, EventArgs e)
         {
@@ -295,6 +267,7 @@ namespace HAFoodWeb
                      .Select(s => s.Trim().Trim(',')));
         }
 
+
         private void AddPageError(string message)
         {
             var cv = new CustomValidator
@@ -400,12 +373,21 @@ namespace HAFoodWeb
             string wardText = txtWardSel.Text?.Trim();
             string fullAddr = MergeAddress(txtAddress.Text, wardText, cityText);
 
+            // ⭐ Lấy mã KM từ hidden nếu textbox trống
+            var promoCode = (txtPromo?.Text ?? "").Trim();
+            if (string.IsNullOrEmpty(promoCode))
+                promoCode = (hidPromoCodeSelected?.Value ?? "").Trim();
+
+            // ⭐ Lưu số giảm tạm thời (đơn vị VND) để fallback nếu re-quote lỗi
+            decimal snapshotDiscount = 0m;
+            decimal.TryParse(hidPromoDiscount?.Value ?? "0", out snapshotDiscount);
+
             var draft = new CheckoutDraft
             {
                 ShipName = txtReceiver.Text.Trim(),
                 ShipPhone = txtPhone.Text.Trim(),
                 ShipAddress = fullAddr,
-                PromoCode = txtPromo?.Text?.Trim(),
+                PromoCode = promoCode,
                 Note = txtNote?.Text?.Trim(),
                 SelectedLineIds = lineIds.Count > 0 ? lineIds.ToArray() : null,
                 Items = items.ToArray(),
@@ -416,7 +398,8 @@ namespace HAFoodWeb
                 SnapshotSubtotal = subtotal,
                 SnapshotVat = vat,
                 SnapshotShipping = shipping,
-                SnapshotGrand = grand
+                SnapshotGrand = grand,
+                SnapshotDiscount = snapshotDiscount          // ⭐ NEW
             };
 
             try
@@ -444,6 +427,7 @@ namespace HAFoodWeb
             Response.Redirect(url, false);
             Context.ApplicationInstance.CompleteRequest();
         }
+
 
         /* ====== PageMethods cho popup ====== */
         [WebMethod(EnableSession = true)]

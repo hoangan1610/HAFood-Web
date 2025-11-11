@@ -83,6 +83,7 @@
                                 <div class="sum-row"><span>Tổng tiền hàng</span><asp:Label ID="lblSubtotal" runat="server" Text="0 ₫" /></div>
                                 <div class="sum-row"><span>Phí vận chuyển</span><asp:Label ID="lblShipping" runat="server" Text="0 ₫" /></div>
                                 <div class="sum-row"><span>VAT (8%)</span><asp:Label ID="lblVat" runat="server" Text="0 ₫" /></div>
+                                <div class="sum-row"><span>Giảm khuyến mãi</span><asp:Label ID="lblDiscount" runat="server" Text="0 ₫" /></div>
                                 <div class="sum-row grand"><span>Tổng thanh toán</span><asp:Label ID="lblGrandTotal" runat="server" Text="0 ₫" /></div>
                                 <div class="muted" style="text-align:right"><small>Mã KM: <asp:Label ID="lblPromo" runat="server" Text="(không)"/></small></div>
                             </div>

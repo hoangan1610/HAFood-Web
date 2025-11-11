@@ -48,48 +48,50 @@ namespace HAFoodWeb.Cart
             set
             {
                 ViewState["Price"] = value;
-                litPrice.Text = string.Format(System.Globalization.CultureInfo.GetCultureInfo("vi-VN"), "{0:N0} ₫", value);
+                litPrice.Text = string.Format(
+                    System.Globalization.CultureInfo.GetCultureInfo("vi-VN"),
+                    "{0:N0} ₫", value);
                 UpdateTotal();
             }
         }
 
         public int Quantity
         {
-            get => ViewState["Quantity"] is int v ? v : 0;
+            get => ViewState["Quantity"] is int v ? v : 1;
             set
             {
                 ViewState["Quantity"] = value;
-                litQty.Text = value.ToString();
+                litQty.Text = Math.Max(1, value).ToString();
                 UpdateTotal();
             }
         }
 
         public bool Selected
         {
-            get { return chkSelect.Checked; }
-            set { chkSelect.Checked = value; }
+            get => chkSelect.Checked;
+            set => chkSelect.Checked = value;
         }
 
         protected void Page_PreRender(object sender, EventArgs e)
         {
+            // gán data-* để JS đọc
             if (Wrap != null)
             {
                 Wrap.Attributes["class"] = "cart-item";
 
-                var line = LineId;
-                var variant = VariantId;
-                var price = Price;
-
-                if (line > 0) Wrap.Attributes["data-line-id"] = line.ToString();
+                if (LineId > 0) Wrap.Attributes["data-line-id"] = LineId.ToString();
                 else Wrap.Attributes.Remove("data-line-id");
 
-                if (variant > 0) Wrap.Attributes["data-variant-id"] = variant.ToString();
+                if (VariantId > 0) Wrap.Attributes["data-variant-id"] = VariantId.ToString();
                 else Wrap.Attributes.Remove("data-variant-id");
 
-                Wrap.Attributes["data-price"] = price.ToString(System.Globalization.CultureInfo.InvariantCulture);
+                Wrap.Attributes["data-price"] = Price.ToString(System.Globalization.CultureInfo.InvariantCulture);
             }
 
-            litQty.Text = Quantity.ToString();
+            // đảm bảo số lượng > 0 và sync literal
+            if (string.IsNullOrEmpty(litQty.Text))
+                litQty.Text = Math.Max(1, Quantity).ToString();
+
             UpdateTotal();
         }
 
@@ -98,9 +100,7 @@ namespace HAFoodWeb.Cart
             var total = Price * Math.Max(1, Quantity);
             litTotal.Text = string.Format(
                 System.Globalization.CultureInfo.GetCultureInfo("vi-VN"),
-                "{0:N0} ₫",
-                total
-            );
+                "{0:N0} ₫", total);
         }
     }
 }

@@ -152,6 +152,8 @@
   <ItemGroup>
     <Content Include="About.aspx" />
     <Content Include="assets\cat\default.png" />
+    <Content Include="assets\css\cart-voucher.css" />
+    <Content Include="assets\js\cart-voucher.js" />
     <Content Include="AuthPage\ForgotPassword.aspx" />
     <Content Include="AuthPage\Login.aspx" />
     <Content Include="AuthPage\OTP.aspx" />
@@ -161,6 +163,7 @@
     <Content Include="CartPage\AddressSelect.aspx" />
     <Content Include="CartPage\CartPage.aspx" />
     <Content Include="CartPage\CartItem.ascx" />
+    <Content Include="CartPage\CartVouchers.ascx" />
     <Content Include="CartPage\CheckoutConfirm.aspx" />
     <Content Include="CartPage\ThankYou.aspx" />
     <Content Include="Contact.aspx" />
@@ -380,6 +383,13 @@
     <Compile Include="CartPage\CartItem.ascx.designer.cs">
       <DependentUpon>CartItem.ascx</DependentUpon>
     </Compile>
+    <Compile Include="CartPage\CartVouchers.ascx.cs">
+      <DependentUpon>CartVouchers.ascx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="CartPage\CartVouchers.ascx.designer.cs">
+      <DependentUpon>CartVouchers.ascx</DependentUpon>
+    </Compile>
     <Compile Include="CartPage\CheckoutConfirm.aspx.cs">
       <DependentUpon>CheckoutConfirm.aspx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>
@@ -455,6 +465,7 @@
     <Compile Include="Models\CartResponseDto.cs" />
     <Compile Include="Models\CategoryTreeDto.cs" />
     <Compile Include="Models\ChatDto.cs" />
+    <Compile Include="Models\CheckoutDraft.cs" />
     <Compile Include="Models\OrderDetailDto.cs" />
     <Compile Include="Models\OrderHeaderDto.cs" />
     <Compile Include="Models\OrderItemDto.cs" />

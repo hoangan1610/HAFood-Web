@@ -1,0 +1,444 @@
+﻿:root {
+    --brand: #ff7a00;
+    --ring: rgba(255,122,0,.35);
+    --muted: #6b7280;
+    --line: #e9ecef;
+    --bg: #fafafa;
+}
+
+/* Panel & header */
+.voucher-panel {
+    margin-top: 16px;
+    background: #fff;
+    border-radius: 10px;
+    border: 1px solid var(--line);
+    box-shadow: 0 4px 10px rgba(0,0,0,.05)
+}
+
+.voucher-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--line)
+}
+
+.voucher-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 700;
+    white-space: nowrap
+}
+
+/* Actions */
+.voucher-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap
+}
+
+.voucher-pick {
+    color: #0a58ca;
+    font-weight: 700;
+    text-decoration: none;
+    white-space: nowrap
+}
+
+    .voucher-pick:hover {
+        text-decoration: underline
+    }
+
+/* Applied chip (JS sẽ render đầy đủ label, KHÔNG dùng ::before để tránh trùng) */
+.voucher-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: #eef1f4;
+    color: #1f2937;
+    border: 1px solid #e5e7eb;
+    padding: 6px 10px;
+    border-radius: 999px;
+    font-weight: 700;
+    font-size: 13px;
+    max-width: 46vw;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis
+}
+
+    .voucher-chip .chip-remove {
+        border: 0;
+        background: transparent;
+        cursor: pointer;
+        font-weight: 700;
+        line-height: 1;
+        padding: 0 4px;
+        border-radius: 6px
+    }
+
+        .voucher-chip .chip-remove:hover {
+            background: #e5e7eb
+        }
+
+/* Ẩn list inline (modal-only) nhưng giữ cho screen reader/ARIA */
+.voucher-list {
+    display: none !important
+}
+
+/* Card (reusable) */
+.voucher-card {
+    width: clamp(260px,calc(50% - 6px),520px);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 12px;
+    background: #fff;
+    transition: box-shadow .18s,transform .18s
+}
+
+    .voucher-card:hover {
+        box-shadow: 0 6px 18px rgba(0,0,0,.06);
+        transform: translateY(-1px)
+    }
+
+.vouch-icon {
+    color: var(--brand);
+    font-size: 20px
+}
+
+.vouch-name {
+    font-weight: 700;
+    font-size: 15px;
+    line-height: 1.2
+}
+
+.vouch-code {
+    margin-top: 6px;
+    display: inline-block;
+    font: 12px ui-monospace,Menlo,Consolas,monospace;
+    background: #f3f4f6;
+    color: #111;
+    border-radius: 8px;
+    padding: 3px 8px
+}
+
+.vouch-desc {
+    margin-top: 6px;
+    color: var(--muted);
+    font-size: 13px
+}
+
+.vouch-cta {
+    display: flex;
+    align-items: center;
+    gap: 10px
+}
+
+.vouch-apply, .vouch-remove {
+    appearance: none;
+    font: inherit;
+    line-height: 1;
+    border: 0;
+    outline: 0;
+    border-radius: 999px;
+    height: 36px;
+    padding: 0 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer
+}
+
+.vouch-apply {
+    background: var(--brand);
+    color: #fff;
+    font-weight: 700;
+    box-shadow: 0 2px 0 rgba(0,0,0,.06);
+    transition: transform .06s, box-shadow .18s, background .18s
+}
+
+    .vouch-apply:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 8px 18px var(--ring)
+    }
+
+    .vouch-apply:active {
+        transform: translateY(0)
+    }
+
+    .vouch-apply[disabled] {
+        background: #e5e7eb;
+        color: #9ca3af;
+        cursor: not-allowed;
+        box-shadow: none
+    }
+
+    .vouch-apply.is-active {
+        background: #22c55e
+    }
+
+.vouch-remove {
+    background: transparent;
+    color: #e53935;
+    font-weight: 700;
+    padding: 0 6px
+}
+
+    .vouch-remove:hover {
+        text-decoration: underline
+    }
+
+@media (max-width:640px) {
+    .voucher-chip {
+        order: 2
+    }
+
+    .voucher-pick {
+        order: 1
+    }
+
+    .voucher-card {
+        width: 100%
+    }
+}
+
+/* ===== Modal ===== */
+.vouch-bk {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.35);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .2s
+}
+
+    .vouch-bk.open {
+        opacity: 1;
+        pointer-events: auto
+    }
+
+.vouch-modal {
+    position: fixed;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    pointer-events: none
+}
+
+    .vouch-modal.open {
+        pointer-events: auto
+    }
+
+.vouch-sheet {
+    width: min(840px,96vw);
+    max-height: 86vh;
+    background: #fff;
+    border-radius: 14px;
+    box-shadow: 0 12px 36px rgba(0,0,0,.2);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transform: translateY(10px);
+    opacity: .98;
+    transition: transform .2s
+}
+
+.vouch-modal.open .vouch-sheet {
+    transform: translateY(0)
+}
+
+.vouch-hd {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--line)
+}
+
+.vouch-title {
+    font-weight: 800;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    gap: 8px
+}
+
+.vouch-x {
+    appearance: none;
+    border: 0;
+    background: transparent;
+    font-size: 20px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 8px
+}
+
+    .vouch-x:hover {
+        background: #f3f4f6
+    }
+
+.vouch-subhd {
+    display: flex;
+    gap: 8px;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--line)
+}
+
+.vouch-input {
+    flex: 1;
+    min-width: 0;
+    height: 38px;
+    border: 1px solid #d1d5db;
+    border-radius: 10px;
+    padding: 0 12px;
+    font-size: 14px
+}
+
+    .vouch-input:focus {
+        outline: 2px solid var(--ring);
+        border-color: var(--brand)
+    }
+
+.vouch-apply2 {
+    height: 38px;
+    border: 0;
+    border-radius: 10px;
+    padding: 0 14px;
+    background: #0a58ca;
+    color: #fff;
+    font-weight: 700;
+    cursor: pointer
+}
+
+    .vouch-apply2:hover {
+        filter: brightness(.95)
+    }
+
+.vouch-list {
+    padding: 10px 12px 0;
+    overflow: auto
+}
+
+.vouch-row {
+    display: grid;
+    grid-template-columns: 72px 1fr auto;
+    gap: 8px;
+    align-items: center;
+    padding: 12px;
+    border-radius: 12px;
+    border: 1px solid var(--line);
+    margin: 8px 4px;
+    background: #fff
+}
+
+    .vouch-row:hover {
+        box-shadow: 0 6px 18px rgba(0,0,0,.06)
+    }
+
+.v-lhs {
+    font: 12px ui-monospace,Menlo,Consolas,monospace;
+    color: var(--brand);
+    font-weight: 800
+}
+
+.v-name {
+    font-weight: 800
+}
+
+.v-code {
+    margin-top: 4px;
+    display: inline-block;
+    font: 12px ui-monospace,Menlo,Consolas,monospace;
+    background: #eef1f4;
+    color: #111;
+    border-radius: 8px;
+    padding: 2px 8px
+}
+
+.v-desc {
+    margin-top: 6px;
+    color: var(--muted);
+    font-size: 13px
+}
+
+.v-cta {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding-left: 8px
+}
+
+.voucher-radio {
+    width: 18px;
+    height: 18px
+}
+
+.vouch-ft {
+    position: sticky;
+    bottom: 0;
+    display: flex;
+    gap: 10px;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    border-top: 1px solid var(--line);
+    background: #fff
+}
+
+.vouch-btn {
+    height: 40px;
+    padding: 0 16px;
+    border-radius: 12px;
+    border: 1px solid #d1d5db;
+    background: #fff;
+    font-weight: 800;
+    cursor: pointer
+}
+
+    .vouch-btn.ghost {
+        background: #fff
+    }
+
+    .vouch-btn.primary {
+        border: 0;
+        background: #1062ff;
+        color: #fff
+    }
+
+        .vouch-btn.primary:hover {
+            filter: brightness(.95)
+        }
+
+/* khi aria-hidden=true: không nhận focus và không “lộ bóng” */
+.vouch-modal[aria-hidden="true"] {
+    visibility: hidden;
+}
+
+.vouch-modal.open {
+    visibility: visible;
+}
+
+
+.vouch-modal[aria-hidden="true"] .vouch-sheet {
+    transform: translateY(10px);
+    opacity: .98;
+}
+
+.vouch-modal .vouch-sheet {
+    transition: transform .2s ease, opacity .2s ease;
+}
+
+
+@media (max-width:640px) {
+    .vouch-sheet {
+        width: 96vw;
+        border-radius: 12px
+    }
+
+    .vouch-row {
+        grid-template-columns: 56px 1fr auto
+    }
+}
+
