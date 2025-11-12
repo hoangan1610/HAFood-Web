@@ -154,6 +154,8 @@
     <Content Include="assets\cat\default.png" />
     <Content Include="assets\css\cart-voucher.css" />
     <Content Include="assets\js\cart-voucher.js" />
+    <Content Include="assets\js\flashsale.js" />
+    <Content Include="assets\js\product-flashsale.js" />
     <Content Include="AuthPage\ForgotPassword.aspx" />
     <Content Include="AuthPage\Login.aspx" />
     <Content Include="AuthPage\OTP.aspx" />

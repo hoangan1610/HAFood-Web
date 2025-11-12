@@ -11,15 +11,15 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>HAFood</title>
 
+     <meta name="api-base" content="<%: System.Configuration.ConfigurationManager.AppSettings["ApiBaseUrl"] ?? "" %>" />
+  <script>window.__API_BASE = (document.querySelector('meta[name="api-base"]')?.content || '').replace(/\/+$/, '');</script>
   <!-- Bootstrap -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
 
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <!-- Great Vibes + Playfair Display (giống layout cũ) -->
   <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Playfair+Display:wght@600;700&display=swap&subset=latin,vietnamese" rel="stylesheet">
-  <!-- Noto Serif: fallback có hỗ trợ tiếng Việt, dùng cùng với Georgia -->
   <link href="https://fonts.googleapis.com/css2?family=Noto+Serif:ital,wght@0,400;0,700;1,400;1,700&display=swap&subset=latin,vietnamese" rel="stylesheet">
 
   <style>
@@ -33,7 +33,7 @@
     .text-truncate-2{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
     .price-now{color:#ff3b30;font-weight:700}
     .price-old{text-decoration:line-through;color:#888;margin-left:.5rem}
-    .badge-off{position:absolute;top:.5rem;right:.5rem;background:#ffe08a;color:#333;padding:.35rem .5rem;border-radius:.35rem;font-weight:700}
+    .badge-off{position:absolute;top:.5rem;right:.5rem;background:#ffe08a;color:#333;padding:.35rem .5rem;border-radius:.35rem;font-weight:700;display:none}
     .of-contain{object-fit:contain}
 
     /* ==== Horizontal shelf (Mới về) ==== */
@@ -98,28 +98,19 @@
     }
 
     /* ==== Product card tweaks ==== */
-    .product-card .ratio{background:#FFF4E5 !important}  /* nền kem */
+    .product-card .ratio{background:#FFF4E5 !important}
     .shelf .ratio{background:#FFF4E5 !important}
     .product-name{
       font-family:"Georgia","Noto Serif","Times New Roman",Times,serif;
-      font-weight:700;font-size:1.12rem; /* nhỉnh hơn xíu */
+      font-weight:700;font-size:1.12rem;
     }
-    .product-price{
-      font-family:"Georgia","Times New Roman",Times,serif;
-    }
+    .product-price{ font-family:"Georgia","Times New Roman",Times,serif; }
 
-    /* ====== FONT THEO NGÔN NGỮ (Cách 1) ======
-       Đặt KHỐI NÀY Ở CUỐI để override các font-family phía trên */
     :lang(vi) {
-      /* Toàn bộ nội dung tiếng Việt sẽ dùng serif hỗ trợ VN để không lỗi dấu */
       font-family: "Noto Serif", "Times New Roman", Times, serif;
     }
-    :lang(en), .en-georgia {
-      /* Những đoạn tiếng Anh (được đánh dấu lang="en") giữ đúng Georgia */
-      font-family: Georgia, "Times New Roman", Times, serif;
-    }
+    :lang(en), .en-georgia { font-family: Georgia, "Times New Roman", Times, serif; }
 
-    /* Ép các khu vực có selector mạnh (như .headline) dùng Noto Serif khi là tiếng Việt */
     .services-wrap .headline:lang(vi),
     .sec-title:lang(vi),
     .service-title:lang(vi),
@@ -129,7 +120,6 @@
       font-family: "Noto Serif", "Times New Roman", Times, serif !important;
     }
 
-    /* Tránh cắt dấu khi đậm/italic */
     body { line-height: 1.55; }
     .sec-title, .service-title, .product-name { line-height: 1.35; }
   </style>
@@ -145,18 +135,15 @@
   <!-- SLIDESHOW -->
   <uc:Slideshow ID="Slideshow1" runat="server" />
 
-  <!-- SERVICES (Welcome To HAFood) -->
+  <!-- SERVICES -->
   <section class="services-wrap py-5">
     <div class="container">
       <div class="text-center mb-4">
-        <!-- Tiếng Anh: dùng Georgia -->
         <div class="eyebrow" lang="en">Services</div>
-        <!-- Tiếng Việt: được ép dùng Noto Serif, không lỗi dấu -->
         <div class="headline">Chào mừng đến với HAFood</div>
       </div>
 
       <div class="row g-4 justify-content-center">
-        <!-- 1. Always Fresh -->
         <div class="col-6 col-md-3">
           <div class="service-item fresh">
             <div class="service-icon">
@@ -167,7 +154,6 @@
           </div>
         </div>
 
-        <!-- 2. 100% Natural -->
         <div class="col-6 col-md-3">
           <div class="service-item natural">
             <div class="service-icon">
@@ -178,7 +164,6 @@
           </div>
         </div>
 
-        <!-- 3. Best Quality -->
         <div class="col-6 col-md-3">
           <div class="service-item quality">
             <div class="service-icon">
@@ -189,7 +174,6 @@
           </div>
         </div>
 
-        <!-- 4. Food Safety -->
         <div class="col-6 col-md-3">
           <div class="service-item safe">
             <div class="service-icon">
@@ -223,7 +207,7 @@
     </asp:Repeater>
   </div>
 
-  <!-- NEW ARRIVALS: Horizontal shelf -->
+  <!-- NEW ARRIVALS -->
   <div class="container my-5">
     <div class="text-center mb-3">
       <h3 class="sec-title">Sản phẩm mới về</h3>
@@ -234,13 +218,14 @@
       <asp:Repeater ID="rpNew" runat="server">
         <ItemTemplate>
           <div class="shelf-item">
-            <div class="card product-card shadow-sm h-100">
+            <div class="card product-card shadow-sm h-100 js-product-card">
               <a href='<%# Eval("Id", ResolveUrl("~/product/Product.aspx?id={0}")) %>' class="text-decoration-none">
                 <div class="ratio ratio-4x3 position-relative">
                   <img src="<%# Eval("ImageUrl") %>" loading="lazy"
                        class="w-100 h-100 of-contain p-2" alt="<%# Eval("Name") %>"
                        onerror="this.src='/images/product-default.png';" />
-                  <%# Eval("DiscountBadgeHtml") %>
+                  <!-- badge % OFF sẽ được JS bật nếu có sale -->
+                  <div class="badge-off js-badge-off"></div>
                   <span class="badge bg-success position-absolute top-0 start-0 m-2">Mới</span>
                 </div>
               </a>
@@ -251,9 +236,14 @@
                      href='<%# Eval("Id", ResolveUrl("~/product/Product.aspx?id={0}")) %>'><%# Eval("Name") %></a>
                 </h6>
 
-                <div class="mb-2 product-price"><%# Eval("PriceRangeHtml") %></div>
+                <div class="mb-2 product-price">
+                  <span class="price-now js-price-now"><%# Eval("PriceRangeHtml") %></span>
+                  <span class="price-old js-price-old"></span>
+                  <small class="text-danger ms-2 js-countdown"></small>
+                  <small class="text-muted ms-2 js-remaining"></small>
+                </div>
 
-                <select class="form-select form-select-sm mb-2">
+                <select class="form-select form-select-sm mb-2 js-variant-select">
                   <asp:Repeater ID="rpVar" runat="server" DataSource='<%# Eval("Variants") %>'>
                     <ItemTemplate>
                       <option value="<%# Eval("Id") %>"><%# Eval("Label") %></option>
@@ -279,16 +269,16 @@
       <HeaderTemplate><div class="row gx-3 gy-4"></HeaderTemplate>
       <ItemTemplate>
         <div class="col-12 col-sm-6 col-lg-3">
-          <div class="card product-card h-100 shadow-sm d-flex">
+          <div class="card product-card h-100 shadow-sm d-flex js-product-card">
             <a href='<%# Eval("Id", ResolveUrl("~/product/Product.aspx?id={0}")) %>' class="text-decoration-none">
-              <div class="ratio ratio-4x3">
+              <div class="ratio ratio-4x3 position-relative">
                 <img src="<%# Eval("ImageUrl") %>" loading="lazy"
                      class="w-100 h-100 of-contain p-2"
                      onerror="this.src='/images/product-default.png';"
                      alt="<%# Eval("Name") %>" />
+                <div class="badge-off js-badge-off"></div>
               </div>
             </a>
-            <%# Eval("DiscountBadgeHtml") %>
 
             <div class="card-body d-flex flex-column">
               <h6 class="card-title text-truncate-2 mb-2">
@@ -296,10 +286,15 @@
                    href='<%# Eval("Id", ResolveUrl("~/product/Product.aspx?id={0}")) %>'><%# Eval("Name") %></a>
               </h6>
 
-              <div class="mb-2 product-price"><%# Eval("PriceRangeHtml") %></div>
+              <div class="mb-2 product-price">
+                <span class="price-now js-price-now"><%# Eval("PriceRangeHtml") %></span>
+                <span class="price-old js-price-old"></span>
+                <small class="text-danger ms-2 js-countdown"></small>
+                <small class="text-muted ms-2 js-remaining"></small>
+              </div>
 
               <div class="mb-2">
-                <select class="form-select form-select-sm">
+                <select class="form-select form-select-sm js-variant-select">
                   <asp:Repeater ID="rpVariantInner" runat="server" DataSource='<%# Eval("Variants") %>'>
                     <ItemTemplate><option value="<%# Eval("Id") %>"><%# Eval("Label") %></option></ItemTemplate>
                   </asp:Repeater>
@@ -326,7 +321,7 @@
   <!-- JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   <script>
-      // Hover tiêu đề -> icon xoay theo trục Y đúng 1 vòng
+      // icon xoay 1 vòng khi hover tiêu đề
       document.addEventListener('DOMContentLoaded', function () {
           document.querySelectorAll('.service-item').forEach(function (item) {
               const title = item.querySelector('.service-title');
@@ -345,6 +340,9 @@
           });
       });
   </script>
+
+  <!-- Flash sale JS tách file -->
+  <script src="/assets/js/flashsale.js?v=1"></script>
 </form>
 </body>
 </html>

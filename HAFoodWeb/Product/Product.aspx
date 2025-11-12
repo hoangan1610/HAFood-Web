@@ -23,21 +23,14 @@
     .text-truncate-2{-webkit-line-clamp:2;display:-webkit-box;-webkit-box-orient:vertical;overflow:hidden}
     .product-card{transition:transform .15s ease, box-shadow .15s ease}
     .product-card:hover{transform:translateY(-3px);box-shadow:0 .5rem 1rem rgba(0,0,0,.06)}
-
-    /* Toast + Fly image */
-    .ha-toast {
-      position: fixed; top: 20px; right: 20px;
-      background: #28a745; color: #fff;
-      padding: 10px 14px; border-radius: 6px;
-      box-shadow: 0 .25rem .75rem rgba(0,0,0,.15);
-      z-index: 20000; display: none;
-    }
-    .ha-fly-img {
-      position: fixed; width: 80px; height: 80px; object-fit: contain;
-      pointer-events: none; z-index: 19000; border-radius: 8px;
-      transition: transform .6s ease-in, opacity .6s ease-in;
-    }
+    .ha-toast { position: fixed; top: 20px; right: 20px; background: #28a745; color: #fff; padding: 10px 14px; border-radius: 6px; box-shadow: 0 .25rem .75rem rgba(0,0,0,.15); z-index: 20000; display: none; }
+    .ha-fly-img { position: fixed; width: 80px; height: 80px; object-fit: contain; pointer-events: none; z-index: 19000; border-radius: 8px; transition: transform .6s ease-in, opacity .6s ease-in; }
   </style>
+
+  <!-- Xuất API_BASE cho JS -->
+  <script>
+      window.__API_BASE = '<%= System.Configuration.ConfigurationManager.AppSettings["ApiBaseUrl"] ?? "" %>';
+  </script>
 </head>
 
 <body>
@@ -78,9 +71,15 @@
           <div class="mb-2 text-muted">Thương hiệu: <strong><asp:Literal ID="litBrand" runat="server" /></strong></div>
 
           <div class="mb-3">
-            <span class="price-now"><asp:Literal ID="litPrice" runat="server" /></span>
-            <span id="oldPrice" runat="server" class="price-old d-none"></span>
-          </div>
+  <!-- Gắn id tĩnh cho span giá hiện tại -->
+  <span id="priceNow" class="price-now"><asp:Literal ID="litPrice" runat="server" /></span>
+  <span id="oldPrice" runat="server" class="price-old d-none"></span>
+  <div class="small mt-1">
+    <span id="fsCountdown" class="text-danger me-3"></span>
+    <span id="fsRemain" class="text-muted"></span>
+  </div>
+</div>
+
 
           <div class="row g-3 align-items-end">
             <div class="col-sm-6">
@@ -95,10 +94,10 @@
               <a id="btnBuy" class="btn btn-warning btn-sm">Mua ngay</a>
             </div>
 
-            <!-- ✅ ScriptManager với PageMethods -->
+            <!-- ScriptManager với PageMethods -->
             <asp:ScriptManager ID="ScriptManager1" runat="server" EnablePartialRendering="true" EnablePageMethods="true" />
 
-            <!-- ✅ UpdatePanel cho nút thêm vào giỏ -->
+            <!-- UpdatePanel cho nút thêm vào giỏ -->
             <asp:UpdatePanel ID="upAddCart" runat="server" UpdateMode="Conditional">
               <ContentTemplate>
                 <div class="col-sm-3 d-grid mt-2 mt-sm-0">
@@ -158,143 +157,81 @@
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
-<script>
-    // ===== Các function UI giữ nguyên của bạn =====
-    function showToast(msg) {
-        const el = document.getElementById('haToast');
-        if (!el) return;
-        el.textContent = msg || 'Đã thêm vào giỏ hàng';
-        el.style.display = 'block';
-        setTimeout(() => { el.style.display = 'none'; }, 1800);
-    }
+  <script>
+      // ===== Toast + fly-to-cart =====
+      function showToast(msg) { const el = document.getElementById('haToast'); if (!el) return; el.textContent = msg || 'Đã thêm vào giỏ hàng'; el.style.display = 'block'; setTimeout(() => { el.style.display = 'none'; }, 1800); }
+      function flyToCart() { const img = document.getElementById('<%= imgMain.ClientID %>');const cartIcon=document.getElementById('cartIcon');if(!img||!cartIcon)return;const r1=img.getBoundingClientRect(),r2=cartIcon.getBoundingClientRect();const clone=img.cloneNode(true);clone.classList.add('ha-fly-img');clone.style.left=r1.left+'px';clone.style.top=r1.top+'px';clone.style.width=Math.min(r1.width,80)+'px';clone.style.height=Math.min(r1.height,80)+'px';document.body.appendChild(clone);requestAnimationFrame(()=>{clone.style.transform=`translate(${r2.left-r1.left}px, ${r2.top-r1.top}px) scale(0.2)`;clone.style.opacity='0.2';});setTimeout(()=>{clone.remove();},650);}
+    window.onAddToCartSuccess ??= async function(){try{showToast('Đã thêm vào giỏ hàng');}catch{}try{flyToCart();}catch{}try{await window.refreshCartCount?.(true);setTimeout(()=>{try{window.refreshCartCount?.(true);}catch{}},200);}catch{}};
 
-    function flyToCart() {
-        const img = document.getElementById('<%= imgMain.ClientID %>');
-        const cartIcon = document.getElementById('cartIcon');
-        if (!img || !cartIcon) return;
-
-        const rectImg = img.getBoundingClientRect();
-        const rectCart = cartIcon.getBoundingClientRect();
-
-        const clone = img.cloneNode(true);
-        clone.classList.add('ha-fly-img');
-        clone.style.left = rectImg.left + 'px';
-        clone.style.top = rectImg.top + 'px';
-        clone.style.width = Math.min(rectImg.width, 80) + 'px';
-        clone.style.height = Math.min(rectImg.height, 80) + 'px';
-        document.body.appendChild(clone);
-
-        const dx = rectCart.left - rectImg.left;
-        const dy = rectCart.top - rectImg.top;
-        requestAnimationFrame(() => {
-            clone.style.transform = `translate(${dx}px, ${dy}px) scale(0.2)`;
-            clone.style.opacity = '0.2';
-        });
-        setTimeout(() => { clone.remove(); }, 650);
-    }
-
-    // onAddToCartSuccess: chỉ UI + sync lại count (đã có guard trong Header)
-    window.onAddToCartSuccess ??= async function () {
-        try { showToast('Đã thêm vào giỏ hàng'); } catch { }
-        try { flyToCart(); } catch { }
-        try {
-            await window.refreshCartCount?.(true);
-            setTimeout(() => { try { window.refreshCartCount?.(true); } catch { } }, 200);
-        } catch { }
-    };
-
-    // ==== BỎ .asmx, dùng Cart.ashx. Tránh khai báo trùng bằng guarded global ====
+    // ==== Cart.ashx ====
     window.CART_API = window.CART_API ?? '<%= ResolveUrl("~/Ajax/Cart.ashx") %>';
 
-    // Thêm vào giỏ kiểu optimistic – guard để không redefine
-    window.addToCartOptimistic ??= async function () {
-        const qtyInput = document.getElementById('qty');
-        const qty = Math.max(1, parseInt(qtyInput?.value || '1', 10));
-
-        // + ngay để mượt
-        window.dispatchEvent(new CustomEvent('cart:add', { detail: { delta: qty } }));
-        try { window.onAddToCartSuccess?.(); } catch { }
-
-        try {
-            const productId = parseInt(new URLSearchParams(location.search).get('id') || '0', 10);
-            const variantId = parseInt(document.getElementById('<%= ddlVariant.ClientID %>').value || '0', 10);
-
-            const r = await fetch(`${window.CART_API}?action=add`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json; charset=utf-8', 'Accept': 'application/json' },
-                credentials: 'include',
-                cache: 'no-store',
-                body: JSON.stringify({
-                    productId,
-                    variantId,
-                    qty
-                    // name/price/image nếu muốn gửi thêm thì bổ sung ở đây
-                })
-            });
-            if (!r.ok) throw new Error('HTTP ' + r.status);
-            const j = await r.json();
-            if (!j?.ok) throw new Error(j?.message || 'Add failed');
-
-            if (Number.isFinite(j.count)) window.setCartBadge?.(j.count);
-            setTimeout(() => { try { window.refreshCartCount?.(true); } catch { } }, 200);
-        } catch (err) {
-            // Nếu lỗi -> revert số vừa cộng
-            window.dispatchEvent(new CustomEvent('cart:revert', { detail: { delta: qty } }));
-            console.error('AddToCart failed:', err);
-        }
+    window.addToCartOptimistic ??= async function(){
+      const qty = Math.max(1, parseInt(document.getElementById('qty')?.value || '1', 10));
+      window.dispatchEvent(new CustomEvent('cart:add',{detail:{delta:qty}}));
+      try{window.onAddToCartSuccess?.();}catch{}
+      try{
+        const productId = parseInt(new URLSearchParams(location.search).get('id') || '0',10);
+        const variantId = parseInt(document.getElementById('<%= ddlVariant.ClientID %>').value || '0',10);
+        const r = await fetch(`${window.CART_API}?action=add`,{
+          method:'POST',headers:{'Content-Type':'application/json; charset=utf-8','Accept':'application/json'},
+          credentials:'include',cache:'no-store',
+          body:JSON.stringify({productId,variantId,qty})
+        });
+        if(!r.ok) throw new Error('HTTP '+r.status);
+        const j = await r.json();
+        if(!j?.ok) throw new Error(j?.message||'Add failed');
+        if(Number.isFinite(j.count)) window.setCartBadge?.(j.count);
+        setTimeout(()=>{try{window.refreshCartCount?.(true);}catch{}},200);
+      }catch(err){
+        window.dispatchEvent(new CustomEvent('cart:revert',{detail:{delta:qty}}));
+        console.error('AddToCart failed:',err);
+      }
     };
 
-    // Gắn click cho ASP:Button chỉ 1 lần (chặn postback)
-    (function bindAddToCartOnce() {
-        if (window.__addToCartBound) return;
-        window.__addToCartBound = true;
-
-        document.addEventListener('DOMContentLoaded', () => {
-            const btn = document.getElementById('<%= btnAddToCart.ClientID %>');
-        if (btn) btn.addEventListener('click', e => { e.preventDefault(); window.addToCartOptimistic(); });
-    });
+    (function bindAddToCartOnce(){
+      if(window.__addToCartBound) return; window.__addToCartBound = true;
+      document.addEventListener('DOMContentLoaded',()=>{
+        const btn=document.getElementById('<%= btnAddToCart.ClientID %>');
+        if(btn) btn.addEventListener('click',e=>{e.preventDefault();window.addToCartOptimistic();});
+      });
     })();
 
-    // ==== (Giữ các đoạn đổi ảnh/biến thể của bạn như cũ) ====
-    document.addEventListener('click', function (e) {
-        if (e.target && e.target.classList.contains('thumb')) {
-            document.getElementById('<%= imgMain.ClientID %>').src = e.target.getAttribute('data-url');
-      document.querySelectorAll('.thumb').forEach(x => x.classList.remove('active'));
-      e.target.classList.add('active');
-    }
-  });
-
-  document.addEventListener('DOMContentLoaded', function () {
-    const json = document.getElementById('<%= hVariantsJson.ClientID %>').value || '[]';
-    const variants = JSON.parse(json);
-    const ddl = document.getElementById('<%= ddlVariant.ClientID %>');
-    const priceEl = document.getElementById('<%= litPrice.ClientID %>');
-    const skuEl = document.getElementById('sku');
-    const stockEl = document.getElementById('stock');
-    const imgMain = document.getElementById('<%= imgMain.ClientID %>');
-
-      function formatVnd(n) { try { return n.toLocaleString('vi-VN') + 'đ'; } catch { return n + 'đ'; } }
-      function apply(v) {
-          if (!v) return;
-          priceEl.innerText = formatVnd(v.retailPrice);
-          skuEl.innerText = v.sku || '';
-          stockEl.innerText = (v.stock ?? 0);
-          if (v.image) imgMain.src = v.image;
+    // Gallery thumbs
+    document.addEventListener('click',function(e){
+      if(e.target && e.target.classList.contains('thumb')){
+        document.getElementById('<%= imgMain.ClientID %>').src = e.target.getAttribute('data-url');
+        document.querySelectorAll('.thumb').forEach(x=>x.classList.remove('active'));
+        e.target.classList.add('active');
       }
+    });
 
-      ddl && ddl.addEventListener('change', function () {
-          const id = Number(this.value);
-          const v = variants.find(x => x.id === id);
-          apply(v);
-      });
+    // Đồng bộ SKU/Stock/Image khi đổi biến thể (KHÔNG sửa giá — để flashsale JS xử lý)
+    document.addEventListener('DOMContentLoaded',function(){
+      const json=document.getElementById('<%= hVariantsJson.ClientID %>').value||'[]';
+      const variants=JSON.parse(json||'[]');
+      const ddl=document.getElementById('<%= ddlVariant.ClientID %>');
+      const skuEl=document.getElementById('sku');
+      const stockEl=document.getElementById('stock');
+      const imgMain=document.getElementById('<%= imgMain.ClientID %>');
 
-      if (ddl && ddl.value) {
-          const v0 = variants.find(x => x.id === Number(ddl.value));
-          apply(v0);
-      }
-  });
-</script>
+      function apply(v){ if(!v)return; skuEl.innerText=v.sku||''; stockEl.innerText=(v.stock??0); if(v.image) imgMain.src=v.image; }
+      ddl && ddl.addEventListener('change',function(){ const id=Number(this.value); apply(variants.find(x=>x.id===id)); });
+      if(ddl && ddl.value){ apply(variants.find(x=>x.id===Number(ddl.value))); }
+    });
 
+    // Config cho JS flashsale sản phẩm
+      window.ProductFS = {
+          ddlId: '<%= ddlVariant.ClientID %>',
+    priceNowId: 'priceNow',                          // span tĩnh mới
+       oldPriceId: '<%= oldPrice.ClientID %>',          // lấy đúng ClientID của server control
+       countdownId: 'fsCountdown',
+       remainId: 'fsRemain',
+       channel: 1
+   };
+  </script>
 
+  <!-- Flash sale cho trang sản phẩm -->
+  <script src="/assets/js/product-flashsale.js?v=2"></script>
 </body>
 </html>

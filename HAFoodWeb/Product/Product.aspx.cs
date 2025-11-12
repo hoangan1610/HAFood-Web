@@ -25,7 +25,7 @@ namespace HAFoodWeb
             if (!long.TryParse(Request.QueryString["id"], out var id) || id <= 0)
             {
                 Response.StatusCode = 404;
-                HttpContext.Current.ApplicationInstance.CompleteRequest(); // thay vì Response.End()
+                HttpContext.Current.ApplicationInstance.CompleteRequest();
                 return;
             }
 
@@ -42,22 +42,19 @@ namespace HAFoodWeb
                 BindProduct(dto);
                 await BindRelatedAsync().ConfigureAwait(false);
             }
-            else
-            {
-                
-            
-                var json = new JavaScriptSerializer().Serialize(
-                    (dto.Variants ?? new List<VariantDto>()).Select(v => new
-                    {
-                        id = v.Id,
-                        sku = v.Sku,
-                        name = string.IsNullOrWhiteSpace(v.Name) ? v.Sku : v.Name,
-                        retailPrice = v.Retail_Price,
-                        stock = v.Stock,
-                        image = v.Image
-                    }).ToList());
-                hVariantsJson.Value = json;
-            }
+
+            // Luôn export variants json (kể cả postback)
+            var json = new JavaScriptSerializer().Serialize(
+                (dto.Variants ?? new List<VariantDto>()).Select(v => new
+                {
+                    id = v.Id,
+                    sku = v.Sku,
+                    name = string.IsNullOrWhiteSpace(v.Name) ? v.Sku : v.Name,
+                    retailPrice = v.Retail_Price,
+                    stock = v.Stock,
+                    image = v.Image
+                }).ToList());
+            hVariantsJson.Value = json;
         }
 
         private void BindProduct(ProductDetailDto d)
@@ -83,7 +80,7 @@ namespace HAFoodWeb
             rpThumbs.DataSource = gallery.Select(x => new { Url = x }).ToList();
             rpThumbs.DataBind();
 
-            // dropdown
+            // dropdown + giá initial (min–max)
             decimal min = decimal.MaxValue, max = 0;
             var opts = new List<Tuple<long, string, VariantDto>>();
             foreach (var v in d.Variants ?? new List<VariantDto>())
@@ -100,29 +97,13 @@ namespace HAFoodWeb
             ddlVariant.DataValueField = "Id";
             ddlVariant.DataBind();
 
-            litPrice.Text = (min == max || max == 0)
-                ? FormatVnd(min)
-                : $"{FormatVnd(min)} - {FormatVnd(max)}";
+            litPrice.Text = (min == max || max == 0) ? FormatVnd(min) : $"{FormatVnd(min)} - {FormatVnd(max)}";
 
             var first = opts.FirstOrDefault()?.Item3;
             litSku.Text = first?.Sku ?? "";
             litStock.Text = (first?.Stock ?? 0).ToString();
 
-            litDetail.Text = string.IsNullOrWhiteSpace(d.Detail)
-                ? "Đang cập nhật mô tả sản phẩm."
-                : d.Detail;
-
-            var json = new JavaScriptSerializer().Serialize(
-                (d.Variants ?? new List<VariantDto>()).Select(v => new
-                {
-                    id = v.Id,
-                    sku = v.Sku,
-                    name = string.IsNullOrWhiteSpace(v.Name) ? v.Sku : v.Name,
-                    retailPrice = v.Retail_Price,
-                    stock = v.Stock,
-                    image = v.Image
-                }).ToList());
-            hVariantsJson.Value = json;
+            litDetail.Text = string.IsNullOrWhiteSpace(d.Detail) ? "Đang cập nhật mô tả sản phẩm." : d.Detail;
         }
 
         private async Task BindRelatedAsync()
@@ -145,35 +126,29 @@ namespace HAFoodWeb
                 if (!long.TryParse(ddlVariant.SelectedValue, out var variantId)) return;
                 if (!int.TryParse(Request.Form["qty"], out var quantity) || quantity <= 0) return;
 
-                // Lấy dữ liệu biến thể từ hidden field để snapshot
+                // Lấy snapshot biến thể từ hidden
                 var serializer = new JavaScriptSerializer();
                 var variants = serializer.Deserialize<List<Dictionary<string, object>>>(hVariantsJson.Value ?? "[]");
-                var variantInfo = variants.FirstOrDefault(v =>
-                    v.ContainsKey("id") && Convert.ToInt64(v["id"]) == variantId);
+                var variantInfo = variants.FirstOrDefault(v => v.ContainsKey("id") && Convert.ToInt64(v["id"]) == variantId);
                 if (variantInfo == null) return;
 
-                // Tạo request add-to-cart
                 var req = new CartAddRequest
                 {
                     variant_Id = variantId,
                     quantity = quantity,
                     name_Variant = variantInfo.ContainsKey("name") ? variantInfo["name"]?.ToString() : "",
-                    // Để null nếu không có -> backend snapshot giá
                     price_Variant = variantInfo.ContainsKey("retailPrice")
                         ? (decimal?)Convert.ToDecimal(variantInfo["retailPrice"], CultureInfo.InvariantCulture)
                         : (decimal?)null,
                     image_Variant = variantInfo.ContainsKey("image") ? variantInfo["image"]?.ToString() : ""
                 };
 
-                // Dùng DeviceTracker: lấy UUID
                 var tracker = new DeviceTracker(Request, Response);
                 string deviceUuid = tracker.GetOrCreateDeviceUuid();
 
                 var res = await _cartService.AddCartItemAsync(deviceUuid, req);
-
                 if (res?.items != null)
                 {
-                    // ✅ gọi JS: toast + fly + cập nhật badge
                     ScriptManager.RegisterStartupScript(this, GetType(), "OnAddCartOk",
                         "try{onAddToCartSuccess();}catch(e){}", true);
                 }
@@ -186,7 +161,6 @@ namespace HAFoodWeb
             }
         }
 
-        // ✅ PageMethod cho JS update badge (PageMethods.GetCartCount)
         [WebMethod]
         [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
         public static async Task<int> GetCartCount()
@@ -198,15 +172,10 @@ namespace HAFoodWeb
                 string deviceUuid = tracker.GetOrCreateDeviceUuid();
 
                 var cartService = new CartService();
-                // QUAN TRỌNG: luôn ConfigureAwait(false) trong tầng service để tránh “bắt” lại context WebForms
                 var cart = await cartService.GetCartAsync(deviceUuid).ConfigureAwait(false);
                 return cart?.header?.item_Count ?? 0;
             }
-            catch
-            {
-                return 0;
-            }
+            catch { return 0; }
         }
-
     }
 }
