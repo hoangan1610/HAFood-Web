@@ -168,7 +168,7 @@
     if (t) {
       var msg = t === 'created' ? 'Tạo địa chỉ thành công!'
               : t === 'updated' ? 'Cập nhật địa chỉ thành công!'
-              : t === 'deleted' ? 'Đã xóa địa chỉ.'
+              : t === 'deleted' ? 'Đã xóa địa chỉ'
               : null;
       if (msg) showToast(msg, 'success');
       // Xoá các tham số điều khiển để F5 không hiện lại

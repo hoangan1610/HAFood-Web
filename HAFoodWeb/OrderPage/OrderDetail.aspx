@@ -36,7 +36,7 @@
             <div class="meta-small">Địa chỉ: <span id="litShipAddress" runat="server"></span></div>
             <div class="meta-small">Ghi chú: <span id="litNote" runat="server"></span></div>
 
-           <!-- PHƯƠNG THỨC THANH TOÁN -->
+            <!-- PHƯƠNG THỨC THANH TOÁN -->
             <asp:Panel ID="pnlPayment" runat="server" Visible="false" CssClass="mt-2">
               <div class="meta-small fw-semibold text-primary">
                 Phương thức thanh toán: <span id="litPayment" runat="server"></span>

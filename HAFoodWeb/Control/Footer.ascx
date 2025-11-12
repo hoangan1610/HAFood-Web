@@ -88,7 +88,11 @@
     .haf-chat-card{
         background:#1f2937; border:1px solid #263244; color:#e5e7eb;
         border-radius: 14px; padding: 14px; line-height: 1.5;
+        /* FIX: tạo khoảng cách tách khỏi tin nhắn đầu tiên */
+        margin-bottom: 12px;
     }
+    /* đảm bảo tin nhắn đầu tiên luôn có khoảng cách với khung gợi ý */
+    .haf-chat-card + .haf-msg{ margin-top: 10px; }
 
     .haf-chat-input{
         flex: 0 0 auto;

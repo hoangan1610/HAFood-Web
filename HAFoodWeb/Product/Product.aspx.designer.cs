@@ -78,6 +78,24 @@ namespace HAFoodWeb
         protected global::System.Web.UI.WebControls.Literal litBrand;
 
         /// <summary>
+        /// litSku control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Literal litSku;
+
+        /// <summary>
+        /// litStock control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Literal litStock;
+
+        /// <summary>
         /// litPrice control.
         /// </summary>
         /// <remarks>
@@ -130,24 +148,6 @@ namespace HAFoodWeb
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
         protected global::System.Web.UI.WebControls.Button btnAddToCart;
-
-        /// <summary>
-        /// litSku control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.Literal litSku;
-
-        /// <summary>
-        /// litStock control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.Literal litStock;
 
         /// <summary>
         /// litDetail control.

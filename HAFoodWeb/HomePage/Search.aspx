@@ -295,9 +295,20 @@
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   <script>
-/* ===== Utilities ===== */
-const debounce = (fn, ms) => { let t; return (...args) => { clearTimeout(t); t = setTimeout(() => fn.apply(this, args), ms) } };
-const apiBase = '<%= System.Configuration.ConfigurationManager.AppSettings["ApiBaseUrl"]?.TrimEnd('/') %>';
+  /* ==== COMPAT: tự đổi catId -> category_id (nếu link cũ còn cache) ==== */
+  (function () {
+      var url = new URL(window.location.href);
+      var p = url.searchParams;
+      if (p.has('catId') && !p.has('category_id')) {
+          p.set('category_id', p.get('catId'));
+          p.delete('catId');
+          window.location.replace(url.pathname + '?' + p.toString());
+      }
+  })();
+
+  /* ===== Utilities ===== */
+  const debounce = (fn, ms) => { let t; return (...args) => { clearTimeout(t); t = setTimeout(() => fn.apply(this, args), ms) } };
+  const apiBase = '<%= System.Configuration.ConfigurationManager.AppSettings["ApiBaseUrl"]?.TrimEnd('/') %>';
 
       /* ===== Suggest (desktop) ===== */
       const box = document.getElementById('suggest');
@@ -397,15 +408,23 @@ const apiBase = '<%= System.Configuration.ConfigurationManager.AppSettings["ApiB
       }
       window.applyFilters = applyFilters;
 
-      /* Xóa tất cả (giữ q/sort/category_id/page_size) */
+      /* Xóa tất cả: XÓA SẠCH toàn bộ query (chỉ giữ page_size nếu đang có) */
       function clearAllFilters() {
-          const qs = new URLSearchParams(location.search);
-          const keep = ['q', 'sort', 'category_id', 'page_size'];
-          const p = new URLSearchParams();
-          keep.forEach(k => { if (qs.has(k)) p.set(k, qs.get(k)); });
-          p.set('page', '1');
-          const qstr = p.toString();
-          location.href = location.pathname + (qstr ? ('?' + qstr) : '');
+          const url = new URL(location.href);
+          const qs = url.searchParams;
+          const base = location.pathname;
+
+          // Nếu muốn giữ page_size (tùy cấu hình UI), giữ lại nhẹ nhàng
+          const size = qs.get('page_size');
+          if (size) {
+              const p = new URLSearchParams();
+              p.set('page_size', size);
+              p.set('page', '1');
+              location.href = base + '?' + p.toString();
+          } else {
+              // Xóa sạch mọi tham số
+              location.href = base;
+          }
       }
       document.getElementById('btnClearAll')?.addEventListener('click', clearAllFilters);
 
@@ -441,7 +460,9 @@ const apiBase = '<%= System.Configuration.ConfigurationManager.AppSettings["ApiB
           if (has) {
               const clearBtn = document.createElement('button');
               clearBtn.type = 'button'; clearBtn.className = 'btn btn-sm btn-outline-secondary ms-1';
-              clearBtn.textContent = 'Xóa tất cả'; clearBtn.onclick = clearAllFilters; dom.appendChild(clearBtn);
+              clearBtn.textContent = 'Xóa tất cả';
+              clearBtn.onclick = clearAllFilters;   // dùng cùng hàm xóa sạch
+              dom.appendChild(clearBtn);
           }
       })();
 

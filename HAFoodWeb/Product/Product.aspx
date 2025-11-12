@@ -25,6 +25,26 @@
     .product-card:hover{transform:translateY(-3px);box-shadow:0 .5rem 1rem rgba(0,0,0,.06)}
     .ha-toast { position: fixed; top: 20px; right: 20px; background: #28a745; color: #fff; padding: 10px 14px; border-radius: 6px; box-shadow: 0 .25rem .75rem rgba(0,0,0,.15); z-index: 20000; display: none; }
     .ha-fly-img { position: fixed; width: 80px; height: 80px; object-fit: contain; pointer-events: none; z-index: 19000; border-radius: 8px; transition: transform .6s ease-in, opacity .6s ease-in; }
+
+    /* Breadcrumb: dùng dấu '>', bỏ gạch chân link, xanh đậm hơn */
+    .ha-breadcrumb{ --bs-breadcrumb-divider: '>'; }
+    .ha-breadcrumb a{
+      text-decoration: none !important;
+      color: #0a58ca !important;
+    }
+    .ha-breadcrumb a:hover,
+    .ha-breadcrumb a:focus{
+      text-decoration: none !important;
+      color: #084298 !important;
+    }
+
+    /* Meta rows (Thương hiệu, SKU, Tồn kho) */
+    .meta-row{ font-size:1.06rem; }           /* to hơn 1 xíu */
+    .meta-label{ color:#6c757d; }             /* xám nhạt */
+    .meta-value{ color:#000; font-weight:700; }/* đen đậm */
+
+    /* Nhãn giá */
+    .price-label{ color:#6c757d; margin-right:.35rem; font-weight:500; }
   </style>
 
   <!-- Xuất API_BASE cho JS -->
@@ -42,10 +62,12 @@
     <div class="container my-4">
       <!-- BREADCRUMB -->
       <nav class="mb-3" aria-label="breadcrumb">
-        <ol class="breadcrumb">
+        <ol class="breadcrumb ha-breadcrumb">
           <li class="breadcrumb-item"><a href="/">Trang chủ</a></li>
           <li class="breadcrumb-item"><a href="/HomePage/Search">Sản phẩm</a></li>
-          <li class="breadcrumb-item active" aria-current="page"><asp:Literal ID="litNameCrumb" runat="server" /></li>
+          <li class="breadcrumb-item active" aria-current="page">
+            <asp:Literal ID="litNameCrumb" runat="server" />
+          </li>
         </ol>
       </nav>
 
@@ -67,19 +89,35 @@
 
         <!-- RIGHT: Info -->
         <div class="col-lg-7">
-          <h1 class="product-title mb-2"><asp:Literal ID="litName" runat="server" /></h1>
-          <div class="mb-2 text-muted">Thương hiệu: <strong><asp:Literal ID="litBrand" runat="server" /></strong></div>
+          <h1 class="product-title mb-2">
+            <asp:Literal ID="litName" runat="server" />
+          </h1>
 
+          <!-- Thương hiệu -->
+          <div class="meta-row mb-1">
+            <span class="meta-label">Thương hiệu:</span>
+            <span class="meta-value"><asp:Literal ID="litBrand" runat="server" /></span>
+          </div>
+
+          <!-- SKU & Tồn kho (đưa lên ngay dưới Thương hiệu) -->
+          <div class="meta-row mb-3">
+            <span class="meta-label">SKU:</span>
+            <span id="sku" class="meta-value"><asp:Literal ID="litSku" runat="server" /></span>
+            <span class="mx-2">·</span>
+            <span class="meta-label">Tồn kho:</span>
+            <span id="stock" class="meta-value"><asp:Literal ID="litStock" runat="server" /></span>
+          </div>
+
+          <!-- Giá (thêm chữ Giá:) -->
           <div class="mb-3">
-  <!-- Gắn id tĩnh cho span giá hiện tại -->
-  <span id="priceNow" class="price-now"><asp:Literal ID="litPrice" runat="server" /></span>
-  <span id="oldPrice" runat="server" class="price-old d-none"></span>
-  <div class="small mt-1">
-    <span id="fsCountdown" class="text-danger me-3"></span>
-    <span id="fsRemain" class="text-muted"></span>
-  </div>
-</div>
-
+            <span class="price-label">Giá:</span>
+            <span id="priceNow" class="price-now"><asp:Literal ID="litPrice" runat="server" /></span>
+            <span id="oldPrice" runat="server" class="price-old d-none"></span>
+            <div class="small mt-1">
+              <span id="fsCountdown" class="text-danger me-3"></span>
+              <span id="fsRemain" class="text-muted"></span>
+            </div>
+          </div>
 
           <div class="row g-3 align-items-end">
             <div class="col-sm-6">
@@ -112,11 +150,6 @@
             </asp:UpdatePanel>
           </div>
 
-          <div class="mt-3 small text-muted">
-            SKU: <span id="sku"><asp:Literal ID="litSku" runat="server" /></span> ·
-            Tồn kho: <span id="stock"><asp:Literal ID="litStock" runat="server" /></span>
-          </div>
-
           <hr class="my-4" />
           <div>
             <h5 class="mb-2">Mô tả</h5>
@@ -140,7 +173,7 @@
                 <div class="card-body d-flex flex-column">
                   <h6 class="text-truncate-2 mb-2"><%# Eval("Name") %></h6>
                   <div class="mb-2"><%# Eval("PriceRangeHtml") %></div>
-                  <a class="btn btn-outline-success btn-sm mt-auto" href='<%# Eval("Id", "/product.aspx?id={0}") %>'>Xem</a>
+                  <a class="btn btn-outline-success btn-sm mt-auto" href='<%# Eval("Id", "/Product/Product.aspx?id={0}") %>'>Xem</a>
                 </div>
               </div>
             </div>
@@ -221,14 +254,14 @@
     });
 
     // Config cho JS flashsale sản phẩm
-      window.ProductFS = {
-          ddlId: '<%= ddlVariant.ClientID %>',
-    priceNowId: 'priceNow',                          // span tĩnh mới
-       oldPriceId: '<%= oldPrice.ClientID %>',          // lấy đúng ClientID của server control
-       countdownId: 'fsCountdown',
-       remainId: 'fsRemain',
-       channel: 1
-   };
+    window.ProductFS = {
+      ddlId: '<%= ddlVariant.ClientID %>',
+      priceNowId: 'priceNow',                        // span tĩnh
+      oldPriceId: '<%= oldPrice.ClientID %>',        // client id của server control
+          countdownId: 'fsCountdown',
+          remainId: 'fsRemain',
+          channel: 1
+      };
   </script>
 
   <!-- Flash sale cho trang sản phẩm -->
