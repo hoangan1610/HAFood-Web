@@ -51,6 +51,19 @@
             transform: scale(1.05);
         }
 
+        /* Thêm kiểu giống trang Login cho nhóm liên kết */
+        .link-option {
+            text-decoration: none;
+            color: #6c757d;
+            font-size: 16px;
+            margin: 0 30px;
+            transition: color 0.3s ease;
+        }
+
+        .link-option:hover {
+            color: #000000;
+        }
+
         .return-link {
             text-decoration: none;
             color: #6c757d;
@@ -96,6 +109,15 @@
         <div class="mb-3">
             <asp:TextBox ID="txtPhone" runat="server" CssClass="form-control" placeholder="Số điện thoại" />
             <asp:Label ID="lblPhoneError" runat="server" CssClass="text-danger" />
+        </div>
+
+        <div class="text-center mb-3">
+            <asp:HyperLink ID="lnkBackToLogin" runat="server" NavigateUrl="~/AuthPage/Login.aspx" CssClass="link-option">
+                Bạn đã có tài khoản ?
+            </asp:HyperLink>
+            <asp:HyperLink ID="lnkForgotPassword" runat="server" NavigateUrl="~/AuthPage/ForgotPassword.aspx" CssClass="link-option">
+                Quên mật khẩu
+            </asp:HyperLink>
         </div>
 
         <div class="text-center">

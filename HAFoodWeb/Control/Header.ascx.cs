@@ -1,5 +1,4 @@
-﻿using HAFoodWeb.Models;
-using HAFoodWeb.Services;
+﻿using HAFoodWeb.Services;
 using System;
 using System.Threading.Tasks;
 using System.Web;
@@ -15,14 +14,15 @@ namespace HAFoodWeb.Control
         {
             if (!IsPostBack) DataBind();
 
+            // Xác định trạng thái đăng nhập để hiện đúng dropdown + set hidden field
             var token = Request?.Cookies["AuthToken"]?.Value;
             var isAuth = !string.IsNullOrEmpty(token);
 
             if (guestDropdown != null) guestDropdown.Visible = !isAuth;
             if (authDropdown != null) authDropdown.Visible = isAuth;
-
             if (hfIsAuth != null) hfIsAuth.Value = isAuth ? "1" : "0";
 
+            // Chỉ còn đồng bộ device + giỏ (không còn bind danh mục/sản phẩm)
             try
             {
                 Page.RegisterAsyncTask(new PageAsyncTask(async () =>
@@ -32,11 +32,10 @@ namespace HAFoodWeb.Control
             }
             catch (InvalidOperationException)
             {
+                // Fallback khi không dùng được async task (ví dụ trong lifecycle đặc biệt)
                 EnsureDeviceAndCartAsync().GetAwaiter().GetResult();
             }
-            catch (Exception)
-            {
-            }
+            catch { /* nuốt lỗi an toàn cho header */ }
         }
 
         private async Task EnsureDeviceAndCartAsync()
@@ -44,30 +43,25 @@ namespace HAFoodWeb.Control
             try
             {
                 var tracker = new DeviceTracker(Request, Response);
-
                 int? userInfoId = null;
                 try
                 {
-                    if (Session != null && Session["UserId"] != null)
+                    if (Session != null && Session["UserId"] != null &&
+                        int.TryParse(Convert.ToString(Session["UserId"]), out var tmp))
                     {
-                        if (int.TryParse(Convert.ToString(Session["UserId"]), out var tmp))
-                            userInfoId = tmp;
+                        userInfoId = tmp;
                     }
                 }
-                catch {  }
+                catch { }
 
                 tracker.GetOrCreateDeviceUuid();
-
                 await tracker.SendAsync(userInfoId).ConfigureAwait(false);
 
                 await LoadCartCountAsync().ConfigureAwait(false);
             }
-            catch
-            {
-            }
+            catch { /* tránh làm vỡ header nếu có lỗi nhỏ */ }
         }
 
-       
         private async Task LoadCartCountAsync()
         {
             try
@@ -77,14 +71,14 @@ namespace HAFoodWeb.Control
 
                 var cartService = new CartService();
                 var cart = await cartService.GetCartAsync(deviceUuid).ConfigureAwait(false);
-
                 var count = cart?.header?.item_Count ?? 0;
 
+                // LUÔN hiển thị badge, kể cả khi 0
                 if (cartCountBadge != null)
                 {
                     cartCountBadge.Visible = true;
-                    cartCountBadge.InnerText = count.ToString();
-                    cartCountBadge.Attributes["style"] = count > 0 ? "display:flex;" : "display:none;";
+                    cartCountBadge.InnerText = (count < 0 ? 0 : count).ToString();
+                    cartCountBadge.Attributes["style"] = "display:flex;"; // luôn hiển thị
                 }
             }
             catch
@@ -93,12 +87,12 @@ namespace HAFoodWeb.Control
                 {
                     cartCountBadge.Visible = true;
                     cartCountBadge.InnerText = "0";
-                    cartCountBadge.Attributes["style"] = "display:none;";
+                    cartCountBadge.Attributes["style"] = "display:flex;";
                 }
             }
         }
 
-    
+        // WebMethod tiện lợi nếu bạn cần gọi từ client (không phụ thuộc vào .ashx)
         [WebMethod]
         [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
         public static int GetCartCount()
@@ -122,7 +116,6 @@ namespace HAFoodWeb.Control
             }
         }
 
-      
         protected async void btnLogout_Click(object sender, EventArgs e)
         {
             try
@@ -131,13 +124,7 @@ namespace HAFoodWeb.Control
                 if (!string.IsNullOrEmpty(token))
                 {
                     var userService = new UserService();
-                    try
-                    {
-                        await userService.LogoutAsync(token).ConfigureAwait(false);
-                    }
-                    catch
-                    {
-                    }
+                    try { await userService.LogoutAsync(token).ConfigureAwait(false); } catch { }
                 }
 
                 if (Request?.Cookies["AuthToken"] != null)
@@ -150,15 +137,8 @@ namespace HAFoodWeb.Control
                     Response.Cookies.Add(cookie);
                 }
 
-                // Clear session
-                try
-                {
-                    Session?.Clear();
-                    Session?.Abandon();
-                }
-                catch { }
+                try { Session?.Clear(); Session?.Abandon(); } catch { }
 
-                // Redirect an toàn (không dùng Response.End)
                 Response.Redirect("~/HomePage/HomePage.aspx", false);
                 Context.ApplicationInstance.CompleteRequest();
             }

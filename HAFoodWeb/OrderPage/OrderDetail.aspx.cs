@@ -57,7 +57,7 @@ namespace HAFoodWeb
                 litShipAddress.InnerText = Decode(h.ship_Full_Address ?? "");
                 litNote.InnerText = Decode(h.note ?? "");
 
-                // Xử lý hiển thị phương thức & trạng thái thanh toán
+                // ===== PHƯƠNG THỨC & TRẠNG THÁI THANH TOÁN =====
                 string paymentText = "";
                 if (!string.IsNullOrWhiteSpace(h.payment_Provider))
                 {
@@ -75,7 +75,7 @@ namespace HAFoodWeb
                     }
                     else
                     {
-                        paymentText = "" + Decode(h.payment_Provider);
+                        paymentText = Decode(h.payment_Provider);
                     }
                 }
                 else if (h.payment_Method.HasValue)
@@ -83,15 +83,19 @@ namespace HAFoodWeb
                     switch (h.payment_Method.Value)
                     {
                         case 1:
-                            paymentText = "Thanh toán khi nhận hàng";
+                            paymentText = "Thanh toán khi nhận hàng"; 
                             break;
                         case 2:
                             paymentText = "Chuyển khoản ngân hàng";
                             break;
                         default:
-                            paymentText = "Phương thức khác";
+                            paymentText = "COD"; 
                             break;
                     }
+                }
+                else
+                {
+                    paymentText = "COD";
                 }
 
                 if (!string.IsNullOrWhiteSpace(paymentText))
@@ -104,6 +108,7 @@ namespace HAFoodWeb
                     pnlPayment.Visible = false;
                 }
 
+                // Trạng thái đơn
                 litStatus.InnerText = GetStatusText(h.status);
 
                 // Items
