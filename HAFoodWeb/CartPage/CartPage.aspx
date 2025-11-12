@@ -415,6 +415,12 @@
     <!-- ===== TOAST STACK ===== -->
     <div class="toast-stack" id="toastStack" aria-live="polite"></div>
 
+    <script>
+        // Giá trị mặc định là 1 nếu chưa set nơi khác
+        window.CHANNEL = (typeof window.CHANNEL !== 'undefined') ? window.CHANNEL : 1;
+    </script>
+
+
     <!-- Phone validator -->
     <script>
         function normalizePhone(s) { if (!s) return ''; s = String(s).replace(/[\s\.\-]/g, '').trim(); s = s.replace(/^\+840/, '+84'); return s; }
@@ -424,6 +430,7 @@
     <!-- Combobox searchable + expose cityWardAPI -->
     <script>
         (function () {
+            const CHANNEL = Number(window.CHANNEL || 1);
            const DATA_BASE = '<%= Page.ResolveClientUrl("~/assets/vn-admin") %>';
 
 
@@ -830,9 +837,18 @@ const addressSelectUrl = '<%= Page.ResolveUrl("~/CartPage/AddressSelect.aspx") %
 
             /* ===== Helpers giỏ hàng ===== */
             function withAuthQuery(url) {
-                if (!USE_USER && UUID) return url + (url.includes('?') ? '&' : '?') + 'device_uuid=' + encodeURIComponent(UUID);
-                return url;
+                const ch = (() => {
+                    const wch = window.CHANNEL;
+                    const n = (typeof wch === 'number') ? wch : parseInt(wch, 10);
+                    return Number.isFinite(n) ? n : 1;
+                })();
+
+                const parts = ['channel=' + encodeURIComponent(ch)];
+                if (!USE_USER && UUID) parts.push('device_uuid=' + encodeURIComponent(UUID));
+                return url + (url.includes('?') ? '&' : '?') + parts.join('&');
             }
+
+
             function ensure(opts) {
                 const headers = { 'Content-Type': 'application/json' };
                 if (HAS_JWT) headers['Authorization'] = 'Bearer ' + JWT;
@@ -890,15 +906,16 @@ const addressSelectUrl = '<%= Page.ResolveUrl("~/CartPage/AddressSelect.aspx") %
                 try{
                     const qtyBefore = Number(row.querySelector('.qty-num')?.textContent.trim() || '1') || 1;
 
-                    let url  = withAuthQuery(`${API}/api/cart/lines/${lineId}`);
-                    let resp = await fetch(url, ensure({ method:'DELETE' }));
+                    let url = withAuthQuery(`${API}/api/cart/lines/${lineId}`);
+                    let resp = await fetch(url, ensure({ method: 'DELETE' }));
                     let json = await safeJson(resp);
 
-                    if (!resp.ok && json?.code === 'MISSING_USER_OR_DEVICE' && UUID){
-                        url  = `${API}/api/cart/lines/${lineId}?device_uuid=${encodeURIComponent(UUID)}`;
-                        resp = await fetch(url, ensure({ method:'DELETE' }));
+                    if (!resp.ok && json?.code === 'MISSING_USER_OR_DEVICE' && UUID) {
+                        url = withAuthQuery(`${API}/api/cart/lines/${lineId}`);
+                        resp = await fetch(url, ensure({ method: 'DELETE' }));
                         json = await safeJson(resp);
                     }
+
                     if (!resp.ok){
                         // Không hiện toast lỗi theo yêu cầu — chỉ log
                         if (json?.code === 'CART_LINE_NOT_FOUND') location.reload();

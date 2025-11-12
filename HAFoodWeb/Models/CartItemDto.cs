@@ -7,10 +7,12 @@ namespace HAFoodWeb.Models
         public long id { get; set; }
         public long cart_Id { get; set; }
         public long variant_Id { get; set; }
-
-        // C# 7.3: bỏ dấu ? với string
         public string name_Variant { get; set; }
         public decimal price_Variant { get; set; }
+
+        // NEW: map từ RS2 của usp_cart_view (price_effective AS price_effective)
+        public decimal price_Effective { get; set; }   // <== THÊM DÒNG NÀY
+
         public string image_Variant { get; set; }
         public int quantity { get; set; }
         public int status { get; set; }
@@ -26,4 +28,5 @@ namespace HAFoodWeb.Models
         public long category_Id { get; set; }
         public string image_Product { get; set; }
     }
+
 }

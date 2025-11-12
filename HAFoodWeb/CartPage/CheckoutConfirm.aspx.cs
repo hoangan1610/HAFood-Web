@@ -30,6 +30,10 @@ namespace HAFoodWeb
 
         private const string THANKYOU_PATH = "~/CartPage/ThankYou.aspx";
 
+        // Helper lấy đơn giá đang áp dụng
+        private static decimal Eff(decimal priceEffective, decimal priceVariant)
+            => priceEffective > 0 ? priceEffective : priceVariant;
+
         protected async void Page_Load(object sender, EventArgs e)
         {
             Response.Cache.SetCacheability(System.Web.HttpCacheability.NoCache);
@@ -117,7 +121,8 @@ namespace HAFoodWeb
                     .Where(x => selectedLines.Contains(x.id))
                     .Select(x =>
                     {
-                        var lineTotal = x.price_Variant * x.quantity;
+                        var unit = Eff(x.price_Effective, x.price_Variant); // ✅ dùng giá hiệu lực
+                        var lineTotal = unit * x.quantity;
                         subtotal += lineTotal;
                         return new
                         {
@@ -127,7 +132,7 @@ namespace HAFoodWeb
                             ImageUrl = string.IsNullOrWhiteSpace(x.image_Variant) ? "/images/product-default.png" : x.image_Variant,
                             LineTotal = string.Format(viVN, "{0:N0} ₫", lineTotal),
                             VariantId = x.variant_Id,
-                            Price = x.price_Variant
+                            Price = unit
                         };
                     })
                     .ToList();
@@ -208,12 +213,13 @@ namespace HAFoodWeb
             {
                 foreach (var x in cart.items.Where(x => selected.Contains(x.id)))
                 {
+                    var unit = Eff(x.price_Effective, x.price_Variant); // ✅ quote theo giá hiệu lực
                     items.Add(new
                     {
                         productId = (long?)null,
                         variantId = (long?)x.variant_Id,
                         qty = (int)x.quantity,
-                        unitPrice = (decimal)x.price_Variant
+                        unitPrice = (decimal)unit
                     });
                 }
             }
@@ -269,7 +275,8 @@ namespace HAFoodWeb
                     var td = best["total_discount"] ?? best["totalDiscount"];
                     if (td != null)
                     {
-                        decimal dec;
+                        if (decimal.TryParse(td.ToString(), System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var dec))
+                            return dec;
                         if (decimal.TryParse(td.ToString(), out dec)) return dec;
                     }
                     return draft.SnapshotDiscount;
@@ -620,14 +627,11 @@ namespace HAFoodWeb
             if (!isMobile &&
                 url.IndexOf("qcgateway.zalopay.vn/openinapp?", StringComparison.OrdinalIgnoreCase) >= 0)
             {
-                // Replace là so khớp theo đúng hoa/thường; chuỗi trả về của ZP là lower-case nên OK.
-                // Nếu muốn chắc 100% bất kể hoa/thường, dùng Regex.Replace phía dưới.
                 url = url.Replace("/openinapp?", "/pay/v2/qr?");
-                // Hoặc: url = System.Text.RegularExpressions.Regex.Replace(url, "/openinapp\\?", "/pay/v2/qr?", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                // Hoặc: Regex.Replace(url, "/openinapp\\?", "/pay/v2/qr?", RegexOptions.IgnoreCase);
             }
 
             return url;
         }
-
     }
 }

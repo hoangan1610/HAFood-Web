@@ -2,6 +2,7 @@
 using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using System.Web;
 using Newtonsoft.Json;
@@ -11,7 +12,13 @@ using HAFoodWeb.Models;         // CartAddRequest, CartResponseDto
 
 namespace HAFoodWeb.Ajax
 {
-    // WebForms async handler cho .NET Framework
+    /// <summary>
+    /// Stable badge counter for WebForms (.ashx)
+    /// Rules:
+    ///  - Authenticated -> ONLY user cart (/api/cart)
+    ///  - Guest         -> ONLY device cart (/api/cart?device_uuid=...)
+    ///  No cross-fallback to avoid flicker.
+    /// </summary>
     public class Cart : HttpTaskAsyncHandler
     {
         private static readonly HttpClient http = CreateHttp();
@@ -20,7 +27,7 @@ namespace HAFoodWeb.Ajax
         {
             var handler = new HttpClientHandler
             {
-                // DEV self-signed cert? Bật dòng dưới trong môi trường DEV:
+                // DEV: self-signed cert?
                 // ServerCertificateCustomValidationCallback = (m, c, ch, e) => true
             };
             var h = new HttpClient(handler);
@@ -46,30 +53,32 @@ namespace HAFoodWeb.Ajax
                 {
                     case "count":
                         {
-                            var count = await GetCountSmartAsync(ctx);
+                            int channel = TryGetChannel(ctx);
+                            var count = await GetCountStableAsync(ctx, channel).ConfigureAwait(false);
                             WriteJson(ctx, 200, new { ok = true, count });
                             return;
                         }
 
                     case "add":
                         {
-                            var body = await ReadBodyAsync(ctx);
+                            var body = await ReadBodyAsync(ctx).ConfigureAwait(false);
                             var req = Deserialize<AddReq>(body) ?? new AddReq();
                             if (req.Qty <= 0) req.Qty = 1;
 
+                            int channel = TryGetChannel(ctx);
                             var deviceUuid = GetUuid(ctx);
-                            var svc = new CartService();
 
+                            // Add item (guest flow is acceptable for both states; API will merge to user cart if needed)
+                            var svc = new CartService();
                             var add = new CartAddRequest
                             {
                                 variant_Id = req.VariantId,
                                 quantity = req.Qty
                             };
+                            var added = await svc.AddCartItemAsync(deviceUuid, add).ConfigureAwait(false);
 
-                            var added = await svc.AddCartItemAsync(deviceUuid, add);
-                            var count = ExtractCount(added);
-                            if (count < 0) count = await GetCountSmartAsync(ctx);
-
+                            // Return count from the SAME data source we will use for "count" (stable)
+                            var count = await GetCountStableAsync(ctx, channel).ConfigureAwait(false);
                             WriteJson(ctx, 200, new { ok = true, count });
                             return;
                         }
@@ -93,8 +102,9 @@ namespace HAFoodWeb.Ajax
 
         private static bool IsAuthenticated(HttpContext ctx)
         {
-            var hasCookie = !string.IsNullOrWhiteSpace(ctx != null && ctx.Request != null && ctx.Request.Cookies["AuthToken"] != null ? ctx.Request.Cookies["AuthToken"].Value : null);
-            var hasPrincipal = (ctx != null && ctx.User != null && ctx.User.Identity != null) ? ctx.User.Identity.IsAuthenticated : false;
+            var token = ctx?.Request?.Cookies["AuthToken"]?.Value;
+            var hasCookie = !string.IsNullOrWhiteSpace(token);
+            var hasPrincipal = ctx?.User?.Identity?.IsAuthenticated ?? false;
             return hasCookie || hasPrincipal;
         }
 
@@ -104,57 +114,70 @@ namespace HAFoodWeb.Ajax
             return tracker.GetOrCreateDeviceUuid();
         }
 
-        // Đếm “thông minh” (async, tránh deadlock)
-        private static async Task<int> GetCountSmartAsync(HttpContext ctx)
+        private static int TryGetChannel(HttpContext ctx)
+        {
+            // ưu tiên query ?channel=…, fallback header x-channel, default=1
+            var q = ctx?.Request?["channel"];
+            if (int.TryParse(q, out var c) && c > 0) return c;
+
+            var hdr = ctx?.Request?.Headers["x-channel"];
+            if (int.TryParse(hdr, out c) && c > 0) return c;
+
+            return 1;
+        }
+
+        /// <summary>
+        /// Stable strategy:
+        ///  - If AUTH -> ONLY user cart (/api/cart)
+        ///  - Else    -> ONLY device cart (/api/cart?device_uuid=...)
+        /// </summary>
+        private static async Task<int> GetCountStableAsync(HttpContext ctx, int channel)
         {
             var svc = new CartService();
             var uuid = GetUuid(ctx);
 
             if (IsAuthenticated(ctx))
             {
-                // 1) Ưu tiên GIỎ USER
-                var userCart = await svc.GetCartAsync();
+                // Use direct HTTP to ensure Authorization header present even on same-origin.
+                var viaHttp = await GetUserCountViaHttpAsync(ctx, channel).ConfigureAwait(false);
+                if (viaHttp >= 0) return viaHttp;
+
+                // Fallback to service (kept in case of transient issues)
+                var userCart = await svc.GetCartAsync().ConfigureAwait(false);
                 var userCount = ExtractCount(userCart);
-                if (userCount > 0) return userCount;
-                if (userCount == 0) return 0; // user có giỏ nhưng rỗng
-
-                // 1b) Thử gọi HTTP trực tiếp (Authorization) không kèm device
-                var direct = await GetUserCountViaHttpAsync(ctx);
-                if (direct >= 0) return direct;
-
-                // 2) Fallback DEVICE
-                var guestCart = await svc.GetCartAsync(uuid);
-                var guestCount = ExtractCount(guestCart);
-                return Math.Max(0, guestCount);
+                return Math.Max(0, userCount);
             }
             else
             {
-                var cart = await svc.GetCartAsync(uuid);
+                var cart = await svc.GetCartAsync(uuid).ConfigureAwait(false);
                 var count = ExtractCount(cart);
                 return Math.Max(0, count);
             }
         }
 
-        private static async Task<int> GetUserCountViaHttpAsync(HttpContext ctx)
+        private static async Task<int> GetUserCountViaHttpAsync(HttpContext ctx, int channel)
         {
             try
             {
                 var apiBase = (System.Configuration.ConfigurationManager.AppSettings["ApiBaseUrl"] ?? "").TrimEnd('/');
                 if (string.IsNullOrEmpty(apiBase)) return -1;
 
-                var token = ctx.Request.Cookies["AuthToken"] != null ? ctx.Request.Cookies["AuthToken"].Value : null;
+                var token = ctx?.Request?.Cookies["AuthToken"]?.Value;
                 if (string.IsNullOrWhiteSpace(token)) return -1;
 
-                using (var req = new HttpRequestMessage(HttpMethod.Get, apiBase + "/api/cart"))
+                var url = apiBase + "/api/cart";
+                if (channel > 0) url += (url.Contains("?") ? "&" : "?") + "channel=" + channel;
+
+                using (var req = new HttpRequestMessage(HttpMethod.Get, url))
                 {
                     req.Headers.Accept.ParseAdd("application/json");
-                    req.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+                    req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
-                    using (var resp = await http.SendAsync(req, HttpCompletionOption.ResponseHeadersRead))
+                    using (var resp = await http.SendAsync(req, HttpCompletionOption.ResponseHeadersRead).ConfigureAwait(false))
                     {
                         if (!resp.IsSuccessStatusCode) return -1;
 
-                        var json = await resp.Content.ReadAsStringAsync();
+                        var json = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
                         var dto = JsonConvert.DeserializeObject<CartResponseDto>(json);
                         return ExtractCount(dto);
                     }
@@ -166,16 +189,18 @@ namespace HAFoodWeb.Ajax
             }
         }
 
-        // Ưu tiên header.item_Count; nếu không có, sum quantity; -1 nếu không đọc được
+        /// <summary>
+        /// Ưu tiên header.item_Count; nếu không có, sum quantity; -1 nếu không đọc được
+        /// </summary>
         private static int ExtractCount(CartResponseDto dto)
         {
             try
             {
-                if (dto != null && dto.header != null && dto.header.item_Count >= 0)
+                if (dto?.header?.item_Count >= 0)
                     return dto.header.item_Count;
 
-                if (dto != null && dto.items != null)
-                    return Math.Max(0, dto.items.Sum(it => it != null ? it.quantity : 0));
+                if (dto?.items != null)
+                    return Math.Max(0, dto.items.Sum(it => it?.quantity ?? 0));
             }
             catch { }
             return -1;
@@ -183,11 +208,11 @@ namespace HAFoodWeb.Ajax
 
         private static async Task<string> ReadBodyAsync(HttpContext ctx)
         {
-            if (ctx.Request.InputStream == null) return "";
+            if (ctx?.Request?.InputStream == null) return "";
             ctx.Request.InputStream.Position = 0;
             using (var sr = new StreamReader(ctx.Request.InputStream))
             {
-                return await sr.ReadToEndAsync();
+                return await sr.ReadToEndAsync().ConfigureAwait(false);
             }
         }
 
@@ -203,7 +228,7 @@ namespace HAFoodWeb.Ajax
             ctx.Response.Write(JsonConvert.SerializeObject(obj));
         }
 
-        public override bool IsReusable { get { return false; } }
+        public override bool IsReusable => false;
 
         private class AddReq
         {

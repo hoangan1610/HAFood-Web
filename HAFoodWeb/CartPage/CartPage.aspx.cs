@@ -224,7 +224,8 @@ namespace HAFoodWeb.Pages
             cartItem.ProductName = data.product_Name;
             cartItem.VariantName = data.variant_Name;
             cartItem.ImageUrl = data.image_Variant;
-            cartItem.Price = data.price_Variant;
+            cartItem.Price = (data.price_Effective > 0 ? data.price_Effective : data.price_Variant);
+
             cartItem.Quantity = data.quantity;
             cartItem.WeightPerUnit = 0m;
         }
@@ -343,7 +344,8 @@ namespace HAFoodWeb.Pages
                     lineIds.Add(line.id);
                     items.Add((line.variant_Id, line.quantity));
 
-                    var price = line.price_Variant;
+                    var price = line.price_Effective > 0 ? line.price_Effective : line.price_Variant; // ✅ ưu tiên giá hiệu lực
+
                     var qty = line.quantity;
 
                     snapshot.Add(new CheckoutDraftItem
