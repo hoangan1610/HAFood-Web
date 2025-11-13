@@ -60,6 +60,15 @@ namespace HAFoodWeb
         protected global::System.Web.UI.HtmlControls.HtmlGenericControl litOrderCode;
 
         /// <summary>
+        /// litStatus control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.HtmlControls.HtmlGenericControl litStatus;
+
+        /// <summary>
         /// litShipName control.
         /// </summary>
         /// <remarks>
@@ -112,15 +121,6 @@ namespace HAFoodWeb
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
         protected global::System.Web.UI.HtmlControls.HtmlGenericControl litPayment;
-
-        /// <summary>
-        /// litStatus control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.HtmlControls.HtmlGenericControl litStatus;
 
         /// <summary>
         /// pnlItems control.

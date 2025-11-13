@@ -1,80 +1,248 @@
 ﻿<%@ Page Language="C#" AutoEventWireup="true" CodeBehind="UserProfileEdit.aspx.cs" Inherits="HAFoodWeb.UserProfileEdit" Async="true" %>
 
 <!DOCTYPE html>
-<html>
+<html lang="vi">
 <head runat="server">
     <title>Chỉnh sửa thông tin cá nhân</title>
     <meta charset="utf-8" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
 
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #f8f9fa;
+        :root {
+            --haf-primary: #ff7b32;
+            --haf-primary-hover: #e8631d;
+            --haf-bg: #f5f5f5;
+            --haf-border: #e5e7eb;
+            --haf-text-main: #111827;
+            --haf-text-muted: #6b7280;
+            --haf-error: #dc2626;
+            --haf-success: #16a34a;
         }
 
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            margin: 0;
+            padding: 20px 10px 30px;
+            background:
+              radial-gradient(circle at top left,
+                               #ffe8cc 0,
+                               #ffe0bd 20%,
+                               #fdf5ee 40%,
+                               #f5f5f5 70%,
+                               #f5f5f5 100%);
+            background-color: var(--haf-bg);
+        }
+
+        .account-page {
+            width: 100%;
+            max-width: 100%;
+            margin: 0 auto;
+        }
+
+        .account-page-header {
+            margin-bottom: 8px;
+        }
+
+        .page-title {
+            font-weight: 700;
+            font-size: 1.7rem;
+            color: #212529;
+            margin: 0.12rem 0 0;  /* sát badge */
+        }
+
+        .page-subtitle {
+            font-size: .9rem;
+            color: #6c757d;
+        }
+
+        .title-badge {
+            font-size: .75rem;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+            font-weight: 700;
+            color: #fd7e14;
+            background: rgba(253, 126, 20, .08);
+            padding: .26rem .7rem;
+            border-radius: 999px;
+            display: inline-flex;
+            align-items: center;
+            gap: .35rem;
+            margin-bottom: 0;
+        }
+
+        .title-badge i {
+            font-size: .9rem;
+        }
+
+        /* CARD EDIT */
         .edit-container {
             position: relative;
-            max-width: 500px;
-            margin: 30px auto;
-            background: white;
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            max-width: 720px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            padding: 26px 26px 26px;
+            border-radius: 18px;
+            box-shadow: 0 12px 26px rgba(15, 23, 42, 0.14);
+            border: 1px solid var(--haf-border);
+            overflow: hidden;
+        }
+
+        .edit-header {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            text-align: center;
+            margin-bottom: 16px;
         }
 
         .edit-container h2 {
-            text-align: center;
-            margin-bottom: 20px;
+            margin: 0;
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--haf-text-main);
+        }
+
+        .backButton {
+            position: absolute;
+            top: 14px;
+            left: 14px;
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 7px 11px;
+            border-radius: 999px;
+            border: 1px solid var(--haf-border);
+            background-color: #ffffff;
+            color: var(--haf-text-muted);
+            font-size: 13px;
+            text-decoration: none;
+            cursor: pointer;
+            box-shadow: 0 6px 14px rgba(15, 23, 42, 0.15);
+            transition: background-color .12s ease, color .12s ease, transform .08s ease, box-shadow .12s ease;
+            z-index: 10;
+        }
+
+        .backButton i {
+            font-size: 13px;
+        }
+
+        .backButton:hover {
+            background-color: #f9fafb;
+            color: var(--haf-text-main);
+            transform: translateY(-1px);
+            box-shadow: 0 10px 18px rgba(15, 23, 42, 0.2);
+        }
+
+        .avatar-preview-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 14px;
+            margin-top: 8px;
+        }
+
+        .avatar-preview-ring {
+            position: relative;
+            width: 112px;
+            height: 112px;
+            border-radius: 50%;
+            padding: 3px;
+            background-color: rgba(255, 123, 50, 0.18);
+            border: 1px solid rgba(255, 123, 50, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .avatar-preview {
             display: block;
-            width: 140px;
-            height: 140px;
+            width: 102px;
+            height: 102px;
             border-radius: 50%;
             object-fit: cover;
-            border: 2px solid #ddd;
-            margin: 0 auto 15px;
+            border: 2px solid #ffffff;
+            background-color: #ffffff;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1.1fr 1.4fr;
+            gap: 14px 20px;
+            margin-top: 8px;
+        }
+
+        .form-grid-full {
+            grid-column: 1 / -1;
         }
 
         .form-field {
-            margin-bottom: 12px;
+            margin-bottom: 0;
         }
 
         .form-field label {
             display: block;
-            font-weight: bold;
-            margin-bottom: 6px;
+            font-weight: 600;
+            margin-bottom: 5px;
+            font-size: 13px;
+            color: var(--haf-text-main);
         }
 
         .form-field input[type="text"],
-        .form-field input[type="email"] {
+        .form-field input[type="email"],
+        .form-field input[type="file"] {
             width: 100%;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 6px;
+            padding: 9px 10px;
+            border: 1px solid var(--haf-border);
+            border-radius: 10px;
             box-sizing: border-box;
+            font-size: 14px;
+            outline: none;
+            transition: border-color .15s ease, box-shadow .15s ease, background-color .15s ease;
+            background-color: #ffffff;
+        }
+
+        .form-field input[type="file"] {
+            padding: 5px 8px;
+            font-size: 13px;
+        }
+
+        .form-field input[type="text"]:focus,
+        .form-field input[type="email"]:focus {
+            border-color: rgba(255, 123, 50, 0.7);
+            box-shadow: 0 0 0 1px rgba(255, 123, 50, 0.45);
+            background-color: #fff7ed;
         }
 
         .form-field input[disabled] {
-            background-color: #f1f1f1;
+            background-color: #f3f4f6;
+            color: var(--haf-text-muted);
+        }
+
+        .field-error {
+            color: var(--haf-error);
+            font-size: 12px;
+            margin-top: 6px;
+            display: none;
         }
 
         .aspNetButton {
-            width: 60%;
-            padding: 12px;
-            margin-top: 10px;
+            width: 70%;
+            max-width: 260px;
+            padding: 11px 16px;
+            margin-top: 16px;
             border: none;
-            border-radius: 20px;
-            background-color: #e55a00;
+            border-radius: 999px;
+            background: linear-gradient(135deg, var(--haf-primary), var(--haf-primary-hover));
             color: white;
-            font-size: 16px;
+            font-size: 14px;
+            font-weight: 600;
             cursor: pointer;
-            box-shadow: 0 4px 10px rgba(255, 123, 0, 0.3);
-            transition: background-color 0.3s ease, transform 0.2s;
+            box-shadow: 0 14px 24px rgba(255, 123, 50, 0.35);
+            transition: background-color 0.18s ease, transform 0.12s ease, box-shadow 0.16s ease;
             display: block;
             margin-left: auto;
             margin-right: auto;
@@ -84,88 +252,86 @@
         }
 
         .aspNetButton:hover:not(:disabled) {
-            background-color: #d14e00;
-            transform: translateY(-2px);
-        }
-
-        .backButton {
-            position: absolute;
-            top: 14px;
-            left: 14px;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 8px 12px;
-            border: 1px solid #ced4da;
-            background-color: transparent;
-            color: #6c757d;
-            font-size: 14px;
-            border-radius: 10px;
-            text-decoration: none;
-            cursor: pointer;
-            box-shadow: none;
-            transition: background-color .12s ease, color .12s ease, transform .08s;
-            z-index: 10;
-        }
-
-        .backButton:hover {
-            background-color: rgba(0,0,0,0.03);
-            color: #495057;
+            background-color: var(--haf-primary-hover);
             transform: translateY(-1px);
+            box-shadow: 0 18px 30px rgba(255, 123, 50, 0.45);
         }
 
-        .success-message {
-            color: green;
-            text-align: center;
-            margin-bottom: 15px;
-            font-weight: bold;
+        .aspNetButton:active:not(:disabled) {
+            transform: translateY(0);
+            box-shadow: 0 12px 22px rgba(255, 123, 50, 0.36);
         }
 
-        .error-message {
-            color: red;
-            text-align: center;
-            margin-bottom: 15px;
-            font-weight: bold;
-        }
-
-        .field-error {
-            color: #d9534f;
-            font-size: 13px;
-            margin-top: 6px;
-            display: none;
-        }
-
-        /* Toast nhỏ gọn, nổi trên cùng header */
+        /* Toast */
         .toast {
             position: fixed;
-            top: 20px;
-            right: 15px;
-            background-color: #28a745;
+            top: 16px;
+            right: 16px;
+            background-color: var(--haf-success);
             color: #fff;
             padding: 8px 14px;
-            border-radius: 6px;
-            font-size: 14px;
+            border-radius: 999px;
+            font-size: 13px;
             font-weight: 600;
             display: flex;
             align-items: center;
-            gap: 6px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            gap: 7px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.22);
             opacity: 0;
-            transform: translateY(-15px);
+            transform: translateY(-15px) translateX(10px);
             transition: all 0.35s ease;
             z-index: 99999;
+            pointer-events: none;
         }
 
         .toast.show {
             opacity: 1;
-            transform: translateY(0);
+            transform: translateY(0) translateX(0);
         }
 
-        .toast.success { background-color: #28a745; }
-        .toast.error   { background-color: #d9534f; }
+        .toast.success {
+            background-color: var(--haf-success);
+        }
+
+        .toast.error {
+            background-color: var(--haf-error);
+        }
 
         .toast i {
-            font-size: 16px;
+            font-size: 15px;
+        }
+
+        @media (max-width: 640px) {
+            body {
+                padding: 16px 10px 24px;
+            }
+
+            .edit-container {
+                padding: 18px 14px 20px;
+                border-radius: 14px;
+            }
+
+            .edit-container h2 {
+                font-size: 18px;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .form-grid-full {
+                grid-column: auto;
+            }
+
+            .aspNetButton {
+                width: 100%;
+                max-width: none;
+            }
+
+            .backButton {
+                top: 10px;
+                left: 10px;
+            }
         }
     </style>
 </head>
@@ -173,56 +339,71 @@
 <body>
     <form id="form1" runat="server">
 
-        <div class="edit-container">
-            <h2>Chỉnh sửa thông tin</h2>
-
-            <a id="btnBack" class="backButton" href="<%= ResolveUrl("~/UserInfo/UserProfile.aspx") %>" aria-label="Quay lại Hồ sơ của tôi">
-                <i class="fa-solid fa-arrow-left me-2"></i>Quay lại
-            </a>
-
-            <asp:Image ID="imgAvatar" runat="server" CssClass="avatar-preview" />
-
-            <div class="form-field">
-                <label for="fileAvatar">Thay đổi ảnh đại diện</label>
-                <asp:FileUpload ID="fileAvatar" runat="server" />
+        <div class="account-page my-3 px-3 px-md-4">
+            <!-- HEADER -->
+            <div class="account-page-header">
+                <div class="title-badge">
+                    <i class="fa-solid fa-pen-to-square"></i>
+                    HAFood - Chỉnh sửa hồ sơ
+                </div>
+                <h2 class="page-title">Chỉnh sửa thông tin</h2>
             </div>
 
-            <div class="form-field">
-                <label for="txtFullName">Họ và tên</label>
-                <asp:TextBox ID="txtFullName" runat="server" />
-                <div id="fullNameError" class="field-error">Thông báo lỗi tên</div>
+            <div class="edit-container">
+                <a id="btnBack" class="backButton" href="<%= ResolveUrl("~/UserInfo/UserProfile.aspx") %>" aria-label="Quay lại Hồ sơ của tôi">
+                    <i class="fa-solid fa-arrow-left"></i>
+                    <span>Quay lại</span>
+                </a>
+
+                <div class="edit-header">
+                    <h2>Thông tin cá nhân</h2>
+                </div>
+
+                <div class="avatar-preview-wrapper">
+                    <div class="avatar-preview-ring">
+                        <asp:Image ID="imgAvatar" runat="server" CssClass="avatar-preview" />
+                    </div>
+                </div>
+
+                <div class="form-grid">
+                    <div class="form-field form-grid-full">
+                        <label for="fileAvatar">Thay đổi ảnh đại diện</label>
+                        <asp:FileUpload ID="fileAvatar" runat="server" />
+                    </div>
+
+                    <div class="form-field">
+                        <label for="txtFullName">Họ và tên</label>
+                        <asp:TextBox ID="txtFullName" runat="server" />
+                        <div id="fullNameError" class="field-error">Thông báo lỗi tên</div>
+                    </div>
+
+                    <div class="form-field">
+                        <label for="txtEmail">Email</label>
+                        <asp:TextBox ID="txtEmail" runat="server" Enabled="false" />
+                    </div>
+
+                    <div class="form-field">
+                        <label for="txtPhone">Số điện thoại</label>
+                        <asp:TextBox ID="txtPhone" runat="server" MaxLength="10" />
+                        <div id="phoneError" class="field-error">Thông báo lỗi số điện thoại</div>
+                    </div>
+                </div>
+
+                <asp:Label ID="lblMessage" runat="server" EnableViewState="false"></asp:Label>
+
+                <asp:Button ID="btnSave" runat="server" Text="Lưu thay đổi" CssClass="aspNetButton"
+                            OnClick="btnSave_Click" OnClientClick="return validateForm();" />
             </div>
-
-            <div class="form-field">
-                <label for="txtEmail">Email</label>
-                <asp:TextBox ID="txtEmail" runat="server" Enabled="false" />
-            </div>
-
-            <div class="form-field">
-                <label for="txtPhone">Số điện thoại</label>
-                <asp:TextBox ID="txtPhone" runat="server" MaxLength="10" />
-                <div id="phoneError" class="field-error">Thông báo lỗi số điện thoại</div>
-            </div>
-
-            <!-- Server-side chung -->
-            <asp:Label ID="lblMessage" runat="server" EnableViewState="false"></asp:Label>
-
-            <!-- OnClientClick trả về false sẽ ngăn postback -->
-            <asp:Button ID="btnSave" runat="server" Text="Lưu thay đổi" CssClass="aspNetButton"
-                        OnClick="btnSave_Click" OnClientClick="return validateForm();" />
         </div>
 
-        <!-- Toast (dùng 1 div, type được set bằng class) -->
+        <!-- Toast -->
         <div id="toast" class="toast">
             <i id="toastIcon" class="fa-solid fa-circle-check"></i>
             <span id="toastMessage"></span>
         </div>
 
         <script>
-            // Regex tên unicode
             var nameRegex = /^\p{L}[\p{L}\s]*$/u;
-
-            // ✅ Regex chuẩn: Bắt đầu bằng 0 + đủ 10 chữ số
             var phoneRegex = /^0\d{9}$/;
 
             var fullNameInput = document.getElementById('<%= txtFullName.ClientID %>');
@@ -263,7 +444,6 @@
                     phoneError.style.display = 'block';
                     return false;
                 }
-                // ✅ kiểm tra 1 lần bằng regex
                 if (!phoneRegex.test(val)) {
                     phoneError.innerText = '❌ Số điện thoại phải gồm 10 chữ số và bắt đầu bằng số 0.';
                     phoneError.style.display = 'block';

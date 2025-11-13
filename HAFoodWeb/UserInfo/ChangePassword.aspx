@@ -47,12 +47,86 @@
             background-color: #d14e00;
             transform: translateY(-2px);
         }
-        .error { color: red; font-size: 14px; margin-top: 5px; }
-        .success { color: green; font-size: 14px; margin-top: 5px; }
+
+        /* Toast styles */
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            min-width: 260px;
+            max-width: 320px;
+            padding: 12px 16px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-20px);
+            transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s;
+            z-index: 9999;
+            font-size: 14px;
+
+            /* 🔥 chữ trắng & in đậm */
+            color: #fff;
+            font-weight: bold;
+        }
+        .toast.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+        .toast.success {
+            background-color: #28a745; /* xanh lá đậm hơn tí cho hợp màu trắng */
+        }
+        .toast.error {
+            background-color: #dc3545; /* đỏ đậm cho chữ trắng rõ hơn */
+        }
+        .toast i {
+            font-size: 18px;
+        }
     </style>
+
+    <script type="text/javascript">
+        function showToast(message, type) {
+            var toast = document.getElementById('toast');
+            var icon = document.getElementById('toastIcon');
+            var text = document.getElementById('toastMessage');
+
+            if (!toast || !icon || !text) return;
+
+            if (type === 'success') {
+                icon.className = 'fa-solid fa-circle-check';
+            } else if (type === 'error') {
+                icon.className = 'fa-solid fa-circle-xmark';
+            } else {
+                icon.className = 'fa-solid fa-circle-info';
+            }
+
+            toast.classList.remove('success', 'error');
+            if (type) {
+                toast.classList.add(type);
+            }
+
+            text.textContent = message;
+
+            toast.classList.add('show');
+
+            setTimeout(function () {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+    </script>
 </head>
 <body>
     <form id="form1" runat="server">
+        <!-- Toast container -->
+        <div id="toast" class="toast">
+            <i id="toastIcon" class="fa-solid"></i>
+            <span id="toastMessage"></span>
+        </div>
+
         <div class="change-container">
             <h2>Thay đổi mật khẩu</h2>
 
@@ -65,8 +139,6 @@
                 <label for="txtNewPassword">Mật khẩu mới</label>
                 <asp:TextBox ID="txtNewPassword" runat="server" TextMode="Password" />
             </div>
-
-            <asp:Label ID="lblMessage" runat="server" EnableViewState="false"></asp:Label>
 
             <asp:Button ID="btnSubmit" runat="server" Text="Xác nhận thay đổi" CssClass="aspNetButton" OnClick="btnSubmit_Click" />
         </div>

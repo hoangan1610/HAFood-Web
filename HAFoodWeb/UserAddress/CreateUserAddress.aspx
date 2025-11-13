@@ -1,26 +1,102 @@
-﻿<%@ Page Language="C#" AutoEventWireup="true"
-    CodeBehind="CreateUserAddress.aspx.cs"
-    Inherits="HAFoodWeb.UserAddress.CreateUserAddress" Async="true" %>
+﻿<%@ Page Language="C#" AutoEventWireup="true"     CodeBehind="CreateUserAddress.aspx.cs"     Inherits="HAFoodWeb.UserAddress.CreateUserAddress" Async="true" %>
 
 <!DOCTYPE html>
-<html>
+<html lang="vi">
 <head runat="server">
     <meta charset="utf-8" />
     <title>Địa chỉ mới</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <!-- Bootstrap + Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
+
     <style>
-        :root{ --accent:#ff7a45; --border:#e5e7eb; --menu:#fff; --shadow:0 10px 25px rgba(0,0,0,.08); }
-        body{font-family:'Poppins',system-ui,Arial,sans-serif}
-        .section-card{ border-radius:12px; }
-        .section-title{ font-weight:600; }
+        :root{
+            --accent:#ff7a45;
+            --border:#e5e7eb;
+            --menu:#fff;
+            --shadow:0 10px 25px rgba(0,0,0,.08);
+        }
+
+        body{
+            font-family:'Segoe UI',system-ui,-apple-system,BlinkMacSystemFont,sans-serif;
+            margin:0;
+            /* nền giống OrderPage: mảng cam góc trái */
+            background:radial-gradient(circle at top left,#ffe8cc 0,#f8f9fa 40%,#e9ecef 100%);
+            min-height:100vh;
+        }
+
+        /* ===== Header ngoài (badge + tiêu đề, không phải card) ===== */
+        .page-header{
+            width:100%;
+            max-width:100% !important;
+            margin:24px 0 8px !important;
+            padding:0 24px !important;
+            background:transparent;
+            box-shadow:none;
+        }
+
+        .title-badge{
+            font-size:.75rem;
+            letter-spacing:.08em;
+            text-transform:uppercase;
+            font-weight:700;
+            color:#fd7e14;
+            background:rgba(253,126,20,.08);
+            padding:.26rem .7rem;
+            border-radius:999px;
+            display:inline-flex;
+            align-items:center;
+            gap:.35rem;
+            margin-bottom:.25rem;
+        }
+        .title-badge i{ font-size:.9rem; }
+        .page-title{
+            font-weight:700;
+            font-size:1.6rem;
+            color:#212529;
+            margin:0 0 .15rem;
+        }
+        .page-subtitle{ font-size:.9rem; color:#6c757d; margin:0; }
+
+        /* ===== Khung nội dung trắng ===== */
+        .page-shell{
+            max-width:720px;
+            margin:0 auto 2.5rem;   /* header đã có margin-top */
+            background:#fff;
+            border-radius:1.25rem;
+            box-shadow:0 .75rem 1.8rem rgba(15,23,42,.14);
+            padding:1.4rem 1.6rem 1.7rem;
+        }
+
+        .page-anim{
+            opacity:0;
+            transform:translateY(6px);
+            transition:opacity .18s ease, transform .18s ease;
+        }
+        .page-anim.ready{
+            opacity:1;
+            transform:none;
+        }
+
+        .btn-back{
+            display:inline-flex; align-items:center; gap:.35rem;
+            border-radius:999px; padding:.45rem 1rem;
+            border:1px solid #dee2e6; background:#f8f9fa;
+            color:#495057; font-size:.88rem; font-weight:500; text-decoration:none; white-space:nowrap;
+        }
+        .btn-back:hover{ background:#e9ecef; color:#212529; text-decoration:none; }
+
+        .section-card{ border-radius:12px; border:1px solid #e9ecef; background:#fff; margin-bottom:1rem; }
+        .section-card .card-body{ padding:1.1rem 1.1rem 1rem; }
+        .section-title{ font-weight:600; font-size:.96rem; }
 
         /* ==== Searchable Select (Combo) ==== */
         .combo{ position:relative; }
         .combo .combo-input{
             width:100%; height:38px; border:1px solid var(--border); border-radius:.375rem;
-            padding:.375rem 2rem .375rem .75rem; background:#fff;
+            padding:.375rem 2rem .375rem .75rem; background:#fff; font-size:.95rem;
         }
         .combo .combo-input[disabled]{ background:#f5f5f5; cursor:not-allowed; }
         .combo .combo-caret{
@@ -36,6 +112,7 @@
         .combo.open .combo-menu{ display:block; }
         .combo .combo-item{
             padding:.45rem .75rem; cursor:pointer; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+            font-size:.94rem;
         }
         .combo .combo-item:hover, .combo .combo-item.active{ background:#f1f5f9; }
 
@@ -43,23 +120,22 @@
         .rbl-chips label{
             display:inline-block; cursor:pointer; padding:.5rem .9rem; margin-right:.5rem; margin-bottom:.5rem;
             border-radius:9999px; border:1px solid var(--border); background:#f6f6f6; color:#222; font-weight:500; line-height:1;
+            font-size:.9rem;
         }
         .rbl-chips input[type="radio"]:checked + label{
             background:rgba(255,122,69,.08); border-color:var(--accent); color:var(--accent);
             box-shadow:0 0 0 2px rgba(255,122,69,.15) inset;
         }
 
-        /* ===== Toast (xanh lá / đỏ) ===== */
+        /* ===== Toast ===== */
         .toast-stack{
-          position:fixed; right:16px; top:16px; z-index:2300;
-          display:flex; flex-direction:column; gap:10px; align-items:flex-end;
+            position:fixed; right:16px; top:16px; z-index:2300; display:flex; flex-direction:column; gap:10px; align-items:flex-end;
         }
         .toast{
           min-width:unset; width:fit-content; max-width:min(92vw, 560px);
           display:inline-flex; align-items:flex-start; gap:10px;
-          border-radius:14px; padding:12px 14px;
-          box-shadow:0 8px 20px rgba(0,0,0,.12); border:1px solid var(--border);
-          background:#fff; color:#111; font-weight:600; font-size:15.5px; line-height:1.35;
+          border-radius:14px; padding:12px 14px; box-shadow:0 8px 20px rgba(0,0,0,.12);
+          border:1px solid var(--border); background:#fff; color:#111; font-weight:600; font-size:15.5px; line-height:1.35;
           opacity:0; transform:translateY(-8px); transition:opacity .18s ease, transform .18s ease;
         }
         .toast.show{ opacity:1; transform:translateY(0); }
@@ -70,9 +146,13 @@
         .toast-error{ background:#ef4444 !important; border-color:#dc2626 !important; color:#fff !important; }
         .toast-error .toast-icon{ color:#fff !important; }
 
-        /* Hiệu ứng mượt khi chạy trong popup */
-        .page-anim{opacity:0; transform:translateY(6px); transition:opacity .18s ease, transform .18s ease}
-        .page-anim.ready{opacity:1; transform:none}
+        @media (max-width: 575.98px){
+            .page-header{
+                margin:12px 0 8px !important;
+                padding:0 16px !important;
+            }
+        }
+
     </style>
 
     <%-- Ẩn nút "Quay lại danh sách" khi chạy embed trong popup --%>
@@ -85,9 +165,25 @@
 </head>
 <body>
 <form id="form1" runat="server">
-    <div class="container py-4 page-anim" style="max-width:720px;">
-        <a href="UserAddressList.aspx" class="btn btn-outline-secondary mb-2">&larr; Quay lại danh sách</a>
-        <h4 class="mb-3">Địa chỉ mới</h4>
+
+    <!-- ===== Header ngoài (badge + tiêu đề) ===== -->
+    <div class="page-header">
+        <div class="title-badge">
+            <i class="bi bi-geo-alt"></i>
+            HAFood - Địa chỉ giao hàng
+        </div>
+        <h2 class="page-title">Địa chỉ mới</h2>
+        <p class="page-subtitle">Thêm địa chỉ nhận hàng để thanh toán nhanh hơn.</p>
+    </div>
+
+    <!-- ===== Khung nội dung trắng ===== -->
+    <div class="page-shell page-anim">
+        <div class="d-flex justify-content-end mb-2">
+            <a href="UserAddressList.aspx" class="btn-back">
+                <i class="bi bi-arrow-left-short"></i>
+                Danh sách địa chỉ
+            </a>
+        </div>
 
         <!-- hidden mirrors (tên + code đã chọn) -->
         <asp:TextBox ID="txtCitySel" runat="server" CssClass="d-none" />
@@ -95,7 +191,7 @@
         <asp:TextBox ID="txtCityCode" runat="server" CssClass="d-none" />
         <asp:TextBox ID="txtWardCode" runat="server" CssClass="d-none" />
 
-        <div class="card shadow-sm border-0 mb-3 section-card">
+        <div class="card border-0 section-card">
             <div class="card-body">
                 <div class="section-title mb-3">Địa chỉ</div>
 
@@ -135,7 +231,7 @@
             </div>
         </div>
 
-        <div class="card shadow-sm border-0 mb-3 section-card">
+        <div class="card border-0 section-card">
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center mb-2">
                     <div class="section-title">Đặt làm địa chỉ mặc định</div>
@@ -152,7 +248,7 @@
             </div>
         </div>
 
-        <!-- Actions: Hoàn thành (trái) — Hủy (phải, đỏ) -->
+        <!-- Actions -->
         <div class="mt-3 d-flex align-items-center">
             <div class="d-flex align-items-center gap-2">
                 <asp:Button ID="btnSave" runat="server" Text="Hoàn thành" CssClass="btn btn-success"
@@ -171,16 +267,17 @@
 <script>
     // kích hoạt hiệu ứng vào trang
     document.addEventListener('DOMContentLoaded', function () {
+        document.querySelector('.page-shell')?.classList.add('ready');
         document.querySelector('.page-anim')?.classList.add('ready');
     });
 
-    // Nút Hủy (ưu tiên quay lại trang trước; nếu không có, về danh sách địa chỉ)
+    // Nút Hủy
     document.getElementById('btnCancelCreate')?.addEventListener('click', function () {
         if (history.length > 1) history.back();
         else window.location.href = '/UserAddress/UserAddressList.aspx';
     });
 
-    // Toast API: showToast(message, variant)
+    // Toast API
     function showToast(message, variant) {
         var stack = document.getElementById('toastStack'); if (!stack) return;
         var div = document.createElement('div');
@@ -213,7 +310,7 @@
     }
 </script>
 
-<!-- Searchable dropdown logic (không thay đổi chức năng, chỉ gọn gàng) -->
+<!-- Searchable dropdown logic (giữ nguyên chức năng) -->
 <script>
     (function () {
         const DATA_BASE = '<%= ResolveClientUrl("~/assets/vn-admin") %>';

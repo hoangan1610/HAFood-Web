@@ -8,16 +8,67 @@
     <meta charset="utf-8" />
     <title>Sửa địa chỉ</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <!-- Bootstrap + Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
+
     <style>
-        :root{ --accent:#ff7a45; --border:#e5e7eb; --menu:#fff; --shadow:0 10px 25px rgba(0,0,0,.08); }
-        .section-card{ border-radius:12px; }
-        .section-title{ font-weight:600; }
+        :root{ --accent:#ff7a45; --border:#e5e7eb; --menu:#fff; }
+
+        body{
+            font-family:'Segoe UI',system-ui,-apple-system,BlinkMacSystemFont,sans-serif;
+            margin:0;
+            /* nền giống OrderPage */
+            background:radial-gradient(circle at top left,#ffe8cc 0,#f8f9fa 40%,#e9ecef 100%);
+            min-height:100vh;
+        }
+
+        /* ===== Header ngoài (badge + title) ===== */
+        .page-header{
+            width:100%;
+            max-width:100% !important;
+            margin:24px 0 8px !important;
+            padding:0 24px !important;
+            background:transparent;
+            box-shadow:none;
+        }
+
+        .title-badge{
+            font-size:.75rem; letter-spacing:.08em; text-transform:uppercase;
+            font-weight:700; color:#fd7e14; background:rgba(253,126,20,.08);
+            padding:.26rem .7rem; border-radius:999px; display:inline-flex; align-items:center; gap:.35rem; margin-bottom:.25rem;
+        }
+        .title-badge i{ font-size:.9rem; }
+        .page-title{ font-weight:700; font-size:1.6rem; color:#212529; margin:0 0 .2rem; }
+        .page-subtitle{ font-size:.9rem; color:#6c757d; margin:0; }
+
+        /* ===== Khung nội dung trắng ===== */
+        .page-shell{
+            max-width:720px;
+            margin:0 auto 2.5rem;
+            background:#fff;
+            border-radius:1.25rem;
+            box-shadow:0 .75rem 1.8rem rgba(15,23,42,.14);
+            padding:1.4rem 1.6rem 1.7rem;
+        }
+
+        .btn-back{
+            display:inline-flex; align-items:center; gap:.35rem;
+            border-radius:999px; padding:.45rem 1rem;
+            border:1px solid #dee2e6; background:#f8f9fa;
+            color:#495057; font-size:.88rem; font-weight:500; text-decoration:none; white-space:nowrap;
+        }
+        .btn-back:hover{ background:#e9ecef; color:#212529; text-decoration:none; }
+
+        .section-card{ border-radius:12px; border:1px solid #e9ecef; background:#fff; margin-bottom:1rem; }
+        .section-card .card-body{ padding:1.1rem 1.1rem 1rem; }
+        .section-title{ font-weight:600; font-size:.96rem; }
+
         .rbl-chips input[type="radio"]{ position:absolute; opacity:0; width:0; height:0; }
         .rbl-chips label{
             display:inline-block; cursor:pointer; padding:.5rem .9rem; margin-right:.5rem; margin-bottom:.5rem;
-            border-radius:9999px; border:1px solid var(--border); background:#f6f6f6; color:#222; font-weight:500; line-height:1;
+            border-radius:9999px; border:1px solid var(--border); background:#f6f6f6; color:#222; font-weight:500; line-height:1; font-size:.9rem;
         }
         .rbl-chips input[type="radio"]:checked + label{
             background:rgba(255,122,69,.08); border-color:var(--accent); color:var(--accent);
@@ -26,73 +77,64 @@
 
         /* Combo searchable (builder sẽ render vào container) */
         .combo{position:relative}
-        .combo-input{display:flex;align-items:center;height:38px;border:1px solid var(--border);border-radius:.375rem;background:#fff;padding:0 .75rem;cursor:text}
-        .combo-text{flex:1 1 auto;border:none;outline:none;height:100%;font:inherit}
+        .combo-input{ display:flex;align-items:center;height:38px;border:1px solid var(--border);border-radius:.375rem;background:#fff;padding:0 .75rem;cursor:text }
+        .combo-text{flex:1 1 auto;border:none;outline:none;height:100%;font:inherit;font-size:.95rem}
         .combo-caret{margin-left:8px}
-        .combo-menu{position:absolute;left:0;right:0;top:calc(100% + 4px);background:#fff;border:1px solid var(--border);
-                    border-radius:.5rem;box-shadow:var(--shadow);max-height:330px;overflow:auto;display:none;z-index:1000}
+        .combo-menu{
+            position:absolute;left:0;right:0;top:calc(100% + 4px);background:#fff;border:1px solid var(--border);
+            border-radius:.5rem;box-shadow:0 10px 25px rgba(0,0,0,.08);max-height:330px;overflow:auto;display:none;z-index:1000
+        }
         .combo.open .combo-menu{display:block}
         .combo-item{padding:.45rem .75rem;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
         .combo-item:hover{background:#f1f5f9}
 
-        /* ===== Toast (xanh lá) ===== */
-        .toast-stack{
-          position:fixed; right:16px; top:16px; z-index:2300;
-          display:flex; flex-direction:column; gap:10px;
-          align-items:flex-end;              
-        }
-
+        /* Toast (giữ nguyên) */
+        .toast-stack{ position:fixed; right:16px; top:16px; z-index:2300; display:flex; flex-direction:column; gap:10px; align-items:flex-end; }
         .toast{
-          min-width:unset;                   
-          width:fit-content;                 
-          max-width:min(92vw, 560px);        
-
-          display:inline-flex;               
-          align-items:flex-start; gap:10px;
-
-          border-radius:14px;
-          padding:12px 14px;
-          box-shadow:0 8px 20px rgba(0,0,0,.12);
-          border:1px solid var(--border);
-          background:#fff; color:#111; font-weight:600;
-          font-size:15.5px; line-height:1.35;
-
-          opacity:0; transform:translateY(-8px);
-          transition:opacity .18s ease, transform .18s ease;
+          min-width:unset; width:fit-content; max-width:min(92vw, 560px);
+          display:inline-flex; align-items:flex-start; gap:10px;
+          border-radius:14px; padding:12px 14px; box-shadow:0 8px 20px rgba(0,0,0,.12);
+          border:1px solid var(--border); background:#fff; color:#111; font-weight:600; font-size:15.5px; line-height:1.35;
+          opacity:0; transform:translateY(-8px); transition:opacity .18s ease, transform .18s ease;
         }
-
         .toast.show{ opacity:1; transform:translateY(0); }
-
-        .toast-icon{ flex:0 0 auto; }
-        .toast-text{
-          display:inline-block;
-          white-space:normal;                
-          overflow-wrap:anywhere;            
-        }
-
-        .toast-success{
-          background:#22c55e !important;
-          border-color:#16a34a !important;
-          color:#fff !important;
-        }
+        .toast-icon{ flex:0 0 auto; font-size:1.1rem; margin-top:2px; }
+        .toast-text{ display:inline-block; white-space:normal; overflow-wrap:anywhere; }
+        .toast-success{ background:#22c55e !important; border-color:#16a34a !important; color:#fff !important; }
         .toast-success .toast-icon{ color:#fff !important; }
-
-        .toast-error{
-          background:#ef4444 !important;
-          border-color:#dc2626 !important;
-          color:#fff !important;
-        }
+        .toast-error{ background:#ef4444 !important; border-color:#dc2626 !important; color:#fff !important; }
         .toast-error .toast-icon{ color:#fff !important; }
+
+        @media (max-width: 575.98px){
+            .page-header{
+                margin:12px 0 8px !important;
+                padding:0 16px !important;
+            }
+        }
 
     </style>
 </head>
 <body>
 <form id="form1" runat="server">
-    <div class="container py-4" style="max-width:720px;">
-        <a href="UserAddressList.aspx"
-           class="btn btn-outline-secondary mb-2 text-decoration-none d-inline-flex align-items-center justify-content-center"
-           style="height:40px;border-radius:10px;">&larr; Quay lại danh sách</a>
-        <h4 class="mb-3">Sửa địa chỉ</h4>
+
+    <!-- ===== Header ngoài ===== -->
+    <div class="page-header">
+        <div class="title-badge">
+            <i class="bi bi-geo-alt"></i>
+            HAFood - Địa chỉ giao hàng
+        </div>
+        <h2 class="page-title">Sửa địa chỉ</h2>
+        <p class="page-subtitle">Chỉnh sửa thông tin địa chỉ nhận hàng hiện tại.</p>
+    </div>
+
+    <!-- ===== Khung nội dung trắng ===== -->
+    <div class="page-shell">
+        <div class="d-flex justify-content-end mb-2">
+            <a href="UserAddressList.aspx" class="btn-back">
+                <i class="bi bi-arrow-left-short"></i>
+                Danh sách địa chỉ
+            </a>
+        </div>
 
         <asp:HiddenField ID="hfId" runat="server" />
 
@@ -102,7 +144,7 @@
         <asp:TextBox ID="txtCityCode" runat="server" CssClass="d-none" />
         <asp:TextBox ID="txtWardCode" runat="server" CssClass="d-none" />
 
-        <div class="card shadow-sm border-0 mb-3 section-card">
+        <div class="card border-0 section-card">
             <div class="card-body">
                 <div class="section-title mb-3">Địa chỉ</div>
 
@@ -135,7 +177,7 @@
             </div>
         </div>
 
-        <div class="card shadow-sm border-0 mb-3 section-card">
+        <div class="card border-0 section-card">
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center mb-2">
                     <div class="section-title">Đặt làm địa chỉ mặc định</div>
@@ -152,20 +194,20 @@
             </div>
         </div>
 
-        <!-- Actions: Hoàn thành + Xóa (trái) — Hủy (phải) -->
+        <!-- Actions -->
         <div class="mt-3 d-flex align-items-center">
             <div class="d-flex align-items-center gap-2">
                 <asp:Button ID="btnSave" runat="server" Text="Hoàn thành" CssClass="btn btn-success"
                     OnClientClick="return validateUpdate();" OnClick="btnSave_Click" />
 
-                <!-- Xóa địa chỉ (kề bên Hoàn thành) -->
+                <!-- Xóa địa chỉ -->
                 <button type="button" class="btn btn-danger text-white" data-bs-toggle="modal" data-bs-target="#confirmDeleteModal">
                     Xóa địa chỉ
                 </button>
             </div>
 
             <!-- Hủy ở bên phải -->
-            <button type="button" id="btnCancelUpdate" class="btn btn-danger text-white ms-auto">Hủy</button>
+            <button type="button" id="btnCancelUpdate" class="btn btn-outline-secondary ms-auto">Hủy</button>
 
             <!-- Nút delete thực tế (ẩn) -->
             <asp:Button ID="btnDelete" runat="server" CssClass="d-none" UseSubmitBehavior="false" OnClick="btnDelete_Click" />
@@ -188,7 +230,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    // Nút Hủy (ưu tiên quay lại; nếu không có lịch sử, về danh sách)
+    // Nút Hủy
     document.getElementById('btnCancelUpdate')?.addEventListener('click', function () {
         if (history.length > 1) history.back();
         else window.location.href = '/UserAddress/UserAddressList.aspx';
@@ -201,9 +243,7 @@
         div.setAttribute('role', 'alert');
         var icon = document.createElement('i');
         icon.className = 'bi ' + (variant === 'success' ? 'bi-check-circle-fill' : 'bi-exclamation-triangle-fill') + ' toast-icon';
-        var text = document.createElement('span');
-        text.className = 'toast-text';
-        text.textContent = message || '';
+        var text = document.createElement('span'); text.className = 'toast-text'; text.textContent = message || '';
         div.appendChild(icon); div.appendChild(text); stack.appendChild(div);
         div.offsetHeight; div.classList.add('show');
         var close = function () { div.classList.remove('show'); setTimeout(function () { div.remove(); }, 180); };
@@ -226,7 +266,7 @@
     }
 </script>
 
-<!-- Combo Searchable + fuzzy-restore City/Ward -->
+<!-- Combo Searchable + fuzzy-restore City/Ward (giữ nguyên chức năng) -->
 <script>
     (function () {
         const DATA_BASE = '<%= ResolveClientUrl("~/assets/vn-admin") %>';
@@ -368,11 +408,7 @@
                 }
             });
 
-        function baseCity(s) { return rm(String(s || '').replace(/^(tinh|thanh pho|tp\.?|tp)\s*/i, '')); }
-
-        function prefillWardText() {
-            wardCombo && wardCombo.setSelected('', hidWardName.value || '');
-        }
+        function prefillWardText() { wardCombo && wardCombo.setSelected('', hidWardName.value || ''); }
 
         async function loadWards(provCode) {
             wardCombo && wardCombo.clear();
