@@ -1,5 +1,6 @@
 ﻿using HAFoodWeb.Services;
 using System;
+using System.Web;
 using System.Web.UI;
 
 namespace HAFoodWeb.UserInfo
@@ -20,27 +21,40 @@ namespace HAFoodWeb.UserInfo
             }
         }
 
+        private void ShowToast(string message, string type)
+        {
+            string safeMessage = HttpUtility.JavaScriptStringEncode(message ?? string.Empty);
+            string safeType = HttpUtility.JavaScriptStringEncode(type ?? string.Empty);
+
+            // Chạy sau khi trang load xong
+            string script = $@"
+                window.addEventListener('load', function() {{
+                    showToast('{safeMessage}', '{safeType}');
+                }});";
+
+            ClientScript.RegisterStartupScript(this.GetType(), "toastMessage", script, true);
+        }
+
         protected async void btnSubmit_Click(object sender, EventArgs e)
         {
             string oldPass = txtOldPassword.Text.Trim();
             string newPass = txtNewPassword.Text.Trim();
 
-            // ✅ Kiểm tra dữ liệu đầu vào
             if (string.IsNullOrEmpty(oldPass) || string.IsNullOrEmpty(newPass))
             {
-                lblMessage.Text = "<span class='error'>Vui lòng nhập đầy đủ thông tin.</span>";
+                ShowToast("Vui lòng nhập đầy đủ thông tin.", "error");
                 return;
             }
 
             if (newPass.Length < 8)
             {
-                lblMessage.Text = "<span class='error'>Mật khẩu mới phải có ít nhất 8 ký tự.</span>";
+                ShowToast("Mật khẩu mới phải có ít nhất 8 ký tự.", "error");
                 return;
             }
 
             if (newPass == oldPass)
             {
-                lblMessage.Text = "<span class='error'>Mật khẩu mới không được giống mật khẩu cũ.</span>";
+                ShowToast("Mật khẩu mới không được giống mật khẩu cũ.", "error");
                 return;
             }
 
@@ -51,18 +65,25 @@ namespace HAFoodWeb.UserInfo
                 return;
             }
 
-            // ✅ Gọi service đổi mật khẩu
             var result = await _userService.ChangePasswordAsync(token, oldPass, newPass);
 
             if (result != null && result.Success)
             {
-                lblMessage.Text = "<span class='success'>Thay đổi mật khẩu thành công!</span>";
+                ShowToast("Thay đổi mật khẩu thành công!", "success");
+
                 txtOldPassword.Text = "";
                 txtNewPassword.Text = "";
+
+                ClientScript.RegisterStartupScript(
+                    this.GetType(),
+                    "redirectUserProfile",
+                    "setTimeout(function(){ window.location.href='/UserInfo/UserProfile.aspx'; }, 3000);",
+                    true
+                );
             }
             else
             {
-                lblMessage.Text = $"<span class='error'>{result?.Message ?? "Thay đổi mật khẩu thất bại, mật khẩu cũ không đúng"}</span>";
+                ShowToast("Mật khẩu hiện tại không đúng, vui lòng thử lại !", "error");
             }
         }
     }

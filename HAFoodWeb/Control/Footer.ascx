@@ -3,30 +3,222 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
 
 <style>
-    /* ===== Footer gốc ===== */
-    .footer-container { background-color: #1a1a1a; color: #ffffff; padding: 60px 0 20px; margin-top: 80px; }
-    .footer-logo { max-width: 120px; margin: 0 auto 30px; display: block; border-radius: 40%; }
-    .footer-section h5 { font-size: 18px; font-weight: 600; margin-bottom: 25px; color: #ffffff; }
-    .footer-links { list-style: none; padding: 0; margin: 0; }
-    .footer-links li { margin-bottom: 12px; }
-    .footer-links a { color: #b0b0b0; text-decoration: none; font-size: 14px; transition: color 0.3s ease; }
-    .footer-links a:hover { color: #8bc34a; }
-    .footer-contact-info p { color: #b0b0b0; font-size: 14px; margin-bottom: 15px; display: flex; align-items: flex-start; gap: 10px; justify-content: center; }
-    .footer-contact-info i { color: #8bc34a; margin-top: 3px; font-size: 16px; }
-    .social-links { display: flex; gap: 15px; margin-top: 20px; }
-    .social-links a { width: 40px; height: 40px; background-color: #2a2a2a; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #ffffff; font-size: 18px; transition: all 0.3s ease; }
-    .social-links a:hover { background-color: #8bc34a; transform: translateY(-3px); color: #ffffff; }
-    .footer-bottom { border-top: 1px solid #333; margin-top: 40px; padding-top: 25px; text-align: center; color: #888; font-size: 14px; }
+    /* ===== FOOTER MỚI ===== */
+    .footer-container {
+        position: relative;
+        background: radial-gradient(circle at top left, #1e293b 0, #020617 55%, #020617 100%);
+        color: #e5e7eb;
+        padding: 64px 0 24px;
+        margin-top: 80px;
+        overflow: hidden;
+    }
 
-    /* ===== Nút về đầu trang ===== */
-    .back-to-top { position: fixed; bottom: 95px; right: 30px; width: 50px; height: 50px; background-color: #8bc34a;
-        border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #ffffff;
-        font-size: 24px; cursor: pointer; transition: all 0.3s ease; opacity: 0; visibility: hidden; z-index: 1000;
-        box-shadow: 0 4px 12px rgba(139, 195, 74, 0.4); }
-    .back-to-top.show { opacity: 1; visibility: visible; }
-    .back-to-top:hover { background-color: #7cb342; transform: translateY(-5px); box-shadow: 0 6px 16px rgba(139, 195, 74, 0.5); }
+    .footer-container::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(circle at top, rgba(74, 222, 128, 0.12), transparent 55%);
+        opacity: 0.8;
+        pointer-events: none;
+    }
 
-    /* ===== CHAT WIDGET ===== */
+    .footer-container .container {
+        position: relative;
+        z-index: 1;
+    }
+
+    .footer-section {
+        margin-bottom: 32px;
+    }
+
+    .footer-logo {
+        max-width: 140px;
+        margin: 0 auto 20px;
+        display: block;
+        border-radius: 32px;
+        background: #020617;
+        padding: 8px;
+        box-shadow: 0 10px 30px rgba(15, 23, 42, 0.75);
+    }
+
+    .footer-section h5 {
+        font-size: 14px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        font-weight: 700;
+        margin-bottom: 18px;
+        color: #f9fafb;
+        position: relative;
+        padding-bottom: 6px;
+    }
+
+    .footer-section h5::after {
+        content: "";
+        position: absolute;
+        left: 0;
+        bottom: 0;
+        width: 36px;
+        height: 2px;
+        border-radius: 9999px;
+        background: linear-gradient(90deg, #22c55e, #a3e635);
+    }
+
+    .footer-center-text {
+        max-width: 460px;
+        margin: 0 auto 18px;
+        font-size: 14px;
+        color: #cbd5e1;
+        text-align: center;
+    }
+
+    .footer-links {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .footer-links li {
+        margin-bottom: 10px;
+    }
+
+    .footer-links a {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 6px 0;
+        color: #94a3b8;
+        font-size: 14px;
+        text-decoration: none;
+        transition: color 0.2s ease, transform 0.15s ease;
+    }
+
+    .footer-links a i {
+        font-size: 12px;
+        opacity: 0.5;
+        transition: transform 0.15s ease, opacity 0.15s ease;
+    }
+
+    .footer-links a:hover {
+        color: #bbf7d0;
+        transform: translateX(2px);
+    }
+
+    .footer-links a:hover i {
+        opacity: 1;
+        transform: translateX(3px);
+    }
+
+    .footer-contact-info {
+        margin-top: 6px;
+        text-align: left;
+    }
+
+    .footer-contact-info p {
+        color: #cbd5e1;
+        font-size: 14px;
+        margin-bottom: 10px;
+        display: flex;
+        align-items: flex-start;
+        justify-content: flex-start;
+        gap: 10px;
+        background: rgba(15, 23, 42, 0.85);
+        border-radius: 9999px;
+        padding: 8px 14px;
+        border: 1px solid rgba(148, 163, 184, 0.18);
+    }
+
+    .footer-contact-info span {
+        flex: 1;
+    }
+
+    .footer-contact-info i {
+        color: #22c55e;
+        margin-top: 2px;
+        font-size: 16px;
+    }
+
+    .social-links {
+        display: flex;
+        gap: 14px;
+        margin-top: 22px;
+    }
+
+    .social-links a {
+        width: 40px;
+        height: 40px;
+        border-radius: 9999px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        color: #e5e7eb;
+        background: radial-gradient(circle at 30% 20%, rgba(148, 163, 184, 0.25), rgba(15, 23, 42, 1));
+        border: 1px solid rgba(148, 163, 184, 0.45);
+        box-shadow: 0 10px 25px rgba(15, 23, 42, 0.75);
+        transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+    }
+
+    .social-links a:hover {
+        transform: translateY(-3px) scale(1.02);
+        box-shadow: 0 14px 32px rgba(22, 163, 74, 0.65);
+        border-color: rgba(74, 222, 128, 0.9);
+        background: linear-gradient(135deg, #22c55e, #a3e635);
+        color: #022c22;
+    }
+
+    .footer-bottom {
+        border-top: 1px solid rgba(148, 163, 184, 0.28);
+        margin-top: 32px;
+        padding-top: 20px;
+        text-align: center;
+        color: #9ca3af;
+        font-size: 13px;
+    }
+
+    .footer-bottom .highlight {
+        color: #bbf7d0;
+        font-weight: 500;
+    }
+
+    /* ===== NÚT VỀ ĐẦU TRANG ===== */
+    .back-to-top {
+        position: fixed;
+        bottom: 96px;
+        right: 30px;
+        width: 46px;
+        height: 46px;
+        border-radius: 9999px;
+        background: radial-gradient(circle at 30% 20%, #4ade80, #16a34a);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #022c22;
+        font-size: 22px;
+        cursor: pointer;
+        transition: transform 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease, background 0.18s ease;
+        opacity: 0;
+        visibility: hidden;
+        z-index: 1000;
+        box-shadow: 0 14px 30px rgba(22, 163, 74, 0.55);
+    }
+
+    .back-to-top.show {
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(0);
+    }
+
+    .back-to-top:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 18px 40px rgba(22, 163, 74, 0.75);
+    }
+
+    .back-to-top i {
+        transform: translateY(1px);
+    }
+
+    /* ===== CHAT WIDGET (GIỮ NGUYÊN) ===== */
     .haf-chat-launcher{
         position: fixed; right: 30px; bottom: 30px;
         display: inline-flex; align-items: center; gap: 10px;
@@ -135,6 +327,32 @@
     .haf-quick-btn:hover{ background:#111827; }
     .haf-quick-btn:active{ transform: translateY(1px); }
 
+    /* Responsive footer layout */
+    @media (max-width: 991.98px){
+        .footer-container{
+            padding-top: 52px;
+        }
+        .footer-section{
+            text-align: center;
+        }
+        .footer-section h5::after{
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        .footer-links a{
+            justify-content: center;
+        }
+        .footer-contact-info{
+            text-align: center;
+        }
+        .footer-contact-info p{
+            justify-content: center;
+        }
+        .social-links{
+            justify-content: center;
+        }
+    }
+
     /* Mobile */
     @media (max-width: 480px){
         .haf-chat-panel{ right: 10px; left: 10px; bottom: 80px; width: auto; height: 70vh; min-height: 420px; }
@@ -153,28 +371,78 @@
             <div class="col-lg-3 col-md-6 footer-section">
                 <h5>Sản phẩm</h5>
                 <ul class="footer-links">
-                    <li><a href="#" aria-label="Danh sách yêu thích">Danh sách yêu thích</a></li>
-                    <li><a href="#" aria-label="Blog">Blog</a></li>
-                    <li><a href="#" aria-label="Câu hỏi thường gặp">Câu hỏi thường gặp</a></li>
-                    <li><a href="#" aria-label="Giao hàng">Giao hàng</a></li>
-                    <li><a href="#" aria-label="Tìm kiếm">Tìm kiếm</a></li>
-                    <li><a href="#" aria-label="Bộ sưu tập">Bộ sưu tập</a></li>
+                    <li>
+                        <a href="#" aria-label="Danh sách yêu thích">
+                            <span>Danh sách yêu thích</span>
+                            <i class="bi bi-chevron-right"></i>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" aria-label="Blog">
+                            <span>Blog</span>
+                            <i class="bi bi-chevron-right"></i>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" aria-label="Câu hỏi thường gặp">
+                            <span>Câu hỏi thường gặp</span>
+                            <i class="bi bi-chevron-right"></i>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" aria-label="Giao hàng">
+                            <span>Giao hàng</span>
+                            <i class="bi bi-chevron-right"></i>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" aria-label="Tìm kiếm">
+                            <span>Tìm kiếm</span>
+                            <i class="bi bi-chevron-right"></i>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" aria-label="Bộ sưu tập">
+                            <span>Bộ sưu tập</span>
+                            <i class="bi bi-chevron-right"></i>
+                        </a>
+                    </li>
                 </ul>
             </div>
 
             <!-- Thông tin công ty -->
             <div class="col-lg-6 col-md-6 footer-section">
                 <img src="<%= ResolveUrl("~/images/HAFood_logo.png") %>" alt="Logo HAFood" class="footer-logo">
-                <div class="footer-contact-info" style="text-align: center;">
-                    <p><i class="bi bi-geo-alt-fill" aria-hidden="true"></i><span>Trường của tôi, 1 Võ Văn Ngân, Thủ Đức, TP. Hồ Chí Minh</span></p>
-                    <p><i class="bi bi-envelope-fill" aria-hidden="true"></i><span>hafood123@gmail.com</span></p>
-                    <p><i class="bi bi-telephone-fill" aria-hidden="true"></i><span>(+84) 123-456-789</span></p>
+                <p class="footer-center-text">
+                    HAFood mang đến thực phẩm tươi, an toàn, giao nhanh trong ngày tại TP. Hồ Chí Minh.
+                </p>
+                <div class="footer-contact-info">
+                    <p>
+                        <i class="bi bi-geo-alt-fill" aria-hidden="true"></i>
+                        <span>Trường của tôi, 1 Võ Văn Ngân, Thủ Đức, TP. Hồ Chí Minh</span>
+                    </p>
+                    <p>
+                        <i class="bi bi-envelope-fill" aria-hidden="true"></i>
+                        <span>hafood123@gmail.com</span>
+                    </p>
+                    <p>
+                        <i class="bi bi-telephone-fill" aria-hidden="true"></i>
+                        <span>(+84) 123-456-789</span>
+                    </p>
                 </div>
                 <div class="social-links justify-content-center">
-                    <a href="#" aria-label="X (Twitter)"><i class="bi bi-twitter-x"></i></a>
-                    <a href="https://www.facebook.com/vinhhung.tran.37454961" aria-label="Facebook của Trần Vĩnh Hùng" target="_blank" rel="noopener noreferrer"><i class="bi bi-facebook"></i></a>
-                    <a href="#" aria-label="Pinterest"><i class="bi bi-pinterest"></i></a>
-                    <a href="#" aria-label="Instagram"><i class="bi bi-instagram"></i></a>
+                    <a href="#" aria-label="X (Twitter)">
+                        <i class="bi bi-twitter-x"></i>
+                    </a>
+                    <a href="https://www.facebook.com/vinhhung.tran.37454961" aria-label="Facebook của Trần Vĩnh Hùng" target="_blank" rel="noopener noreferrer">
+                        <i class="bi bi-facebook"></i>
+                    </a>
+                    <a href="#" aria-label="Pinterest">
+                        <i class="bi bi-pinterest"></i>
+                    </a>
+                    <a href="#" aria-label="Instagram">
+                        <i class="bi bi-instagram"></i>
+                    </a>
                 </div>
             </div>
 
@@ -182,11 +450,36 @@
             <div class="col-lg-3 col-md-6 footer-section">
                 <h5>Công ty chúng tôi</h5>
                 <ul class="footer-links">
-                    <li><a href="#" aria-label="Liên hệ">Liên hệ</a></li>
-                    <li><a href="#" aria-label="Giao hàng">Giao hàng</a></li>
-                    <li><a href="#" aria-label="Điều khoản &amp; Điều kiện sử dụng">Điều khoản &amp; Điều kiện sử dụng</a></li>
-                    <li><a href="#" aria-label="Về chúng tôi">Về chúng tôi</a></li>
-                    <li><a href="#" aria-label="Thông báo pháp lý">Thông báo pháp lý</a></li>
+                    <li>
+                        <a href="#" aria-label="Liên hệ">
+                            <span>Liên hệ</span>
+                            <i class="bi bi-chevron-right"></i>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" aria-label="Giao hàng">
+                            <span>Giao hàng</span>
+                            <i class="bi bi-chevron-right"></i>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" aria-label="Điều khoản &amp; Điều kiện sử dụng">
+                            <span>Điều khoản &amp; Điều kiện sử dụng</span>
+                            <i class="bi bi-chevron-right"></i>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" aria-label="Về chúng tôi">
+                            <span>Về chúng tôi</span>
+                            <i class="bi bi-chevron-right"></i>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" aria-label="Thông báo pháp lý">
+                            <span>Thông báo pháp lý</span>
+                            <i class="bi bi-chevron-right"></i>
+                        </a>
+                    </li>
                 </ul>
             </div>
         </div>
@@ -195,7 +488,9 @@
         <div class="row">
             <div class="col-12">
                 <div class="footer-bottom">
-                    <p class="mb-0">Bản quyền © 2025 • Vận hành bởi HAFood</p>
+                    <p class="mb-0">
+                        Bản quyền © 2025 • <span class="highlight">Vận hành bởi HAFood</span>
+                    </p>
                 </div>
             </div>
         </div>
