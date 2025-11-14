@@ -1,4 +1,4 @@
-﻿// /assets/js/flashsale.js (v3.1 - SSE + Poll, không bắn price hàng loạt khi SSE OK)
+﻿// /assets/js/flashsale.js (v3.3 - SSE + Poll, offset chỉ lấy từ HTTP)
 (function () {
     "use strict";
 
@@ -56,19 +56,22 @@
     }
 
     // ===== Cập nhật activeMap từ danh sách server trả về =====
-    function updateActiveFromList(list, serverNowHint) {
+    // updateOffset: mặc định true (HTTP), SSE truyền false
+    function updateActiveFromList(list, serverNowHint, updateOffset = true) {
         const arr = Array.isArray(list) ? list : [];
         if (!arr.length) {
             activeMap.clear();
             return { ok: true, hasSale: false };
         }
 
-        let sv = serverNowHint;
-        if (!sv) {
-            const first = arr[0];
-            sv = first && (first.server_Now || first.server_now || first.serverNow);
+        if (updateOffset) {
+            let sv = serverNowHint;
+            if (!sv) {
+                const first = arr[0];
+                sv = first && (first.server_Now || first.server_now || first.serverNow);
+            }
+            updateServerOffset(sv);
         }
-        updateServerOffset(sv);
 
         activeMap.clear();
 
@@ -109,7 +112,8 @@
                 return { ok: false, hasSale: false };
             }
             const list = await safeJson(r) || [];
-            return updateActiveFromList(list, null);
+            // HTTP => updateOffset = true
+            return updateActiveFromList(list, null, true);
         } catch (e) {
             console.warn("[flashsale] fetchActiveOnce failed:", e);
             return { ok: false, hasSale: false };
@@ -225,7 +229,7 @@
             if (d) { chosen = d; break; }
         }
 
-        // ⚠️ CHỈ fallback /variants/price khi đang ở chế độ polling
+        // Fallback /variants/{id}/price: chỉ dùng khi đang poll
         if (!chosen) {
             if (mode === "poll") {
                 const vFirst = sel.options[0]?.value;
@@ -239,7 +243,7 @@
                     }
                 } else return;
             } else {
-                // mode SSE: không gọi price hàng loạt, để nguyên giá SSR
+                // mode SSE: nếu không có trong activeMap thì coi như không sale
                 return;
             }
         }
@@ -258,10 +262,10 @@
             }
         }
 
-        const p = pct(chosen.base, chosen.eff);
+        const p1 = pct(chosen.base, chosen.eff);
         if (badge) {
-            if (p) {
-                badge.textContent = `-${p}%`;
+            if (p1) {
+                badge.textContent = `-${p1}%`;
                 badge.style.display = "block";
             } else {
                 badge.style.display = "none";
@@ -418,9 +422,8 @@
                 try {
                     const msg = JSON.parse(ev.data);
                     const items = Array.isArray(msg.items) ? msg.items : [];
-                    const serverNow = msg.serverNow || msg.server_now || null;
-
-                    const res = updateActiveFromList(items, serverNow);
+                    // serverNow từ SSE KHÔNG dùng để set offset nữa
+                    const res = updateActiveFromList(items, null, false);
                     if (res.hasSale || activeMap.size === 0) {
                         applyAllCards();
                     }
@@ -452,13 +455,19 @@
             console.warn("[flashsale] API_BASE không hợp lệ. Fallback:", location.origin);
         }
 
-        startTick();
+        // 1) Sync 1 lần với API /flashsale/active để lấy giờ server mới nhất
+        (async () => {
+            await pollOnce();   // cập nhật activeMap + applyAllCards lần đầu
+            startTick();        // bắt đầu đếm ngược
 
-        const okSse = startSse();
-        if (!okSse) {
-            startPollingFallback();
-        }
+            // 2) Kết nối SSE để nhận cập nhật realtime
+            const okSse = startSse();
+            if (!okSse) {
+                startPollingFallback();
+            }
+        })();
 
+        // 3) Xử lý ẩn/hiện tab
         document.addEventListener("visibilitychange", () => {
             if (document.visibilityState === "hidden") {
                 stopTick();
