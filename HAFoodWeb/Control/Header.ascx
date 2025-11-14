@@ -348,7 +348,7 @@
       <asp:Image ID="imgLogo" runat="server" ImageUrl="~/images/HAFood_logo.png" AlternateText="Logo" CssClass="brand-logo-img" />
       <div class="brand-text">
         <span class="brand-title">HAFood</span>
-        <span class="brand-tagline">Thực phẩm sạch mỗi ngày</span>
+        <span class="brand-tagline">Đồ ăn vặt chất lượng</span>
       </div>
     </asp:HyperLink>
 
@@ -368,7 +368,7 @@
          data-authid='<%= authDropdown.ClientID %>'>
 
       <!-- Icon search mở input -->
-      <i class="bi bi-search" id="openSearch" title="Tìm kiếm"></i>
+      <%--<i class="bi bi-search" id="openSearch" title="Tìm kiếm"></i>--%>
 
       <asp:HiddenField ID="hfIsAuth" runat="server" />
 
