@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Web;
+using System.Text.RegularExpressions;
 
 namespace HAFoodWeb.UserAddress
 {
@@ -58,15 +59,10 @@ namespace HAFoodWeb.UserAddress
                     catch (Exception ex) { Debug.WriteLine($"[CreateUserAddress] SetDefault failed: {ex.Message}"); }
                 }
 
-                // Lưu vào session để AddressSelect preselect (khi chạy trong popup)
-                if (created != null)
-                {
-                    Session["selected_address_obj"] = created;
-                }
+                if (created != null) Session["selected_address_obj"] = created;
 
                 if (IsEmbed())
                 {
-                    // Quay về popup chọn địa chỉ (cùng iframe)
                     var back = ResolveUrl("~/CartPage/AddressSelect.aspx?refresh=1&t=" + DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
                     Response.Redirect(back, false);
                     Context.ApplicationInstance.CompleteRequest();
@@ -78,7 +74,6 @@ namespace HAFoodWeb.UserAddress
             catch (Exception ex)
             {
                 Debug.WriteLine($"[CreateUserAddress] ERROR: {ex}");
-                // ❗Lỗi: hiển thị ngay ở trang hiện tại bằng Bootstrap toast đỏ
                 Toast("Không thể lưu địa chỉ. Vui lòng thử lại.", "danger");
             }
         }
@@ -96,6 +91,29 @@ namespace HAFoodWeb.UserAddress
             if (missing.Count > 0)
             {
                 Toast("Vui lòng điền: " + string.Join(", ", missing), "danger");
+                return false;
+            }
+
+            // ====== Kiểm tra ĐỊNH DẠNG (gộp lỗi) ======
+            var errs = new List<string>();
+
+            var name = (txtFullName.Text ?? "").Trim();
+            if (!Regex.IsMatch(name, @"^[\p{L}\s]+$", RegexOptions.CultureInvariant))
+                errs.Add("Họ và tên không được chứa ký tự đặc biệt");
+
+            var phone = (txtPhone.Text ?? "").Trim();
+            if (!Regex.IsMatch(phone, @"^\d{10}$"))
+                errs.Add("Số điện thoại phải gồm đúng 10 chữ số");
+            if (!Regex.IsMatch(phone, @"^0"))
+                errs.Add("Số điện thoại phải bắt đầu bằng số 0");
+
+            var address = (txtAddress.Text ?? "").Trim();
+            if (!Regex.IsMatch(address, @"^[\p{L}\d\s,\.\-\/]+$", RegexOptions.CultureInvariant))
+                errs.Add("Địa chỉ nhận hàng không được chứa ký tự đặc biệt");
+
+            if (errs.Count > 0)
+            {
+                Toast("Vui lòng kiểm tra:\n• " + string.Join("\n• ", errs), "danger");
                 return false;
             }
             return true;
@@ -117,8 +135,8 @@ namespace HAFoodWeb.UserAddress
 
         private string BuildFullAddress()
         {
-            var city = (txtCitySel.Text ?? "").Trim();   // tên hiển thị
-            var ward = (txtWardSel.Text ?? "").Trim();   // tên hiển thị
+            var city = (txtCitySel.Text ?? "").Trim();
+            var ward = (txtWardSel.Text ?? "").Trim();
             var address = (txtAddress.Text ?? "").Trim();
 
             string Join(params string[] parts)

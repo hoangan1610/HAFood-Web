@@ -15,7 +15,7 @@ namespace HAFoodWeb
     {
         private readonly IOrderService _orderService = new OrderService();
 
-        private const int PageSize = 5;
+        private const int PageSize = 4;
 
         protected int CurrentPage
         {

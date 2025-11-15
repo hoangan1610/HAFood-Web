@@ -132,6 +132,19 @@ namespace HAFoodWeb
                 var variantInfo = variants.FirstOrDefault(v => v.ContainsKey("id") && Convert.ToInt64(v["id"]) == variantId);
                 if (variantInfo == null) return;
 
+                // ❗GUARD: HẾT HÀNG -> THÔNG BÁO & THOÁT
+                try
+                {
+                    var stockVal = variantInfo.ContainsKey("stock") ? Convert.ToInt32(variantInfo["stock"]) : 0;
+                    if (stockVal <= 0)
+                    {
+                        ScriptManager.RegisterStartupScript(this, GetType(), "OutOfStock",
+                            "try{showToast('Sản phẩm hiện tại đang hết hàng, xin quý khách vui lòng chọn sản phẩm khác');}catch(e){}", true);
+                        return;
+                    }
+                }
+                catch { /* ignore parse errors */ }
+
                 var req = new CartAddRequest
                 {
                     variant_Id = variantId,

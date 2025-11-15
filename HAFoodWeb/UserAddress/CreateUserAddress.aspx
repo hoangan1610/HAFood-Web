@@ -22,12 +22,10 @@
         body{
             font-family:'Segoe UI',system-ui,-apple-system,BlinkMacSystemFont,sans-serif;
             margin:0;
-            /* nền giống OrderPage: mảng cam góc trái */
             background:radial-gradient(circle at top left,#ffe8cc 0,#f8f9fa 40%,#e9ecef 100%);
             min-height:100vh;
         }
 
-        /* ===== Header ngoài (badge + tiêu đề, không phải card) ===== */
         .page-header{
             width:100%;
             max-width:100% !important;
@@ -52,33 +50,20 @@
             margin-bottom:.25rem;
         }
         .title-badge i{ font-size:.9rem; }
-        .page-title{
-            font-weight:700;
-            font-size:1.6rem;
-            color:#212529;
-            margin:0 0 .15rem;
-        }
+        .page-title{ font-weight:700; font-size:1.6rem; color:#212529; margin:0 0 .15rem; }
         .page-subtitle{ font-size:.9rem; color:#6c757d; margin:0; }
 
-        /* ===== Khung nội dung trắng ===== */
         .page-shell{
             max-width:720px;
-            margin:0 auto 2.5rem;   /* header đã có margin-top */
+            margin:0 auto 2.5rem;
             background:#fff;
             border-radius:1.25rem;
             box-shadow:0 .75rem 1.8rem rgba(15,23,42,.14);
             padding:1.4rem 1.6rem 1.7rem;
         }
 
-        .page-anim{
-            opacity:0;
-            transform:translateY(6px);
-            transition:opacity .18s ease, transform .18s ease;
-        }
-        .page-anim.ready{
-            opacity:1;
-            transform:none;
-        }
+        .page-anim{ opacity:0; transform:translateY(6px); transition:opacity .18s ease, transform .18s ease; }
+        .page-anim.ready{ opacity:1; transform:none; }
 
         .btn-back{
             display:inline-flex; align-items:center; gap:.35rem;
@@ -92,7 +77,16 @@
         .section-card .card-body{ padding:1.1rem 1.1rem 1rem; }
         .section-title{ font-weight:600; font-size:.96rem; }
 
-        /* ==== Searchable Select (Combo) ==== */
+        .rbl-chips input[type="radio"]{ position:absolute; opacity:0; width:0; height:0; }
+        .rbl-chips label{
+            display:inline-block; cursor:pointer; padding:.5rem .9rem; margin-right:.5rem; margin-bottom:.5rem;
+            border-radius:9999px; border:1px solid var(--border); background:#f6f6f6; color:#222; font-weight:500; line-height:1; font-size:.9rem;
+        }
+        .rbl-chips input[type="radio"]:checked + label{
+            background:rgba(255,122,69,.08); border-color:var(--accent); color:var(--accent);
+            box-shadow:0 0 0 2px rgba(255,122,69,.15) inset;
+        }
+
         .combo{ position:relative; }
         .combo .combo-input{
             width:100%; height:38px; border:1px solid var(--border); border-radius:.375rem;
@@ -116,21 +110,8 @@
         }
         .combo .combo-item:hover, .combo .combo-item.active{ background:#f1f5f9; }
 
-        .rbl-chips input[type="radio"]{ position:absolute; opacity:0; width:0; height:0; }
-        .rbl-chips label{
-            display:inline-block; cursor:pointer; padding:.5rem .9rem; margin-right:.5rem; margin-bottom:.5rem;
-            border-radius:9999px; border:1px solid var(--border); background:#f6f6f6; color:#222; font-weight:500; line-height:1;
-            font-size:.9rem;
-        }
-        .rbl-chips input[type="radio"]:checked + label{
-            background:rgba(255,122,69,.08); border-color:var(--accent); color:var(--accent);
-            box-shadow:0 0 0 2px rgba(255,122,69,.15) inset;
-        }
-
-        /* ===== Toast ===== */
-        .toast-stack{
-            position:fixed; right:16px; top:16px; z-index:2300; display:flex; flex-direction:column; gap:10px; align-items:flex-end;
-        }
+        /* Toast */
+        .toast-stack{ position:fixed; right:16px; top:16px; z-index:2300; display:flex; flex-direction:column; gap:10px; align-items:flex-end; }
         .toast{
           min-width:unset; width:fit-content; max-width:min(92vw, 560px);
           display:inline-flex; align-items:flex-start; gap:10px;
@@ -140,19 +121,19 @@
         }
         .toast.show{ opacity:1; transform:translateY(0); }
         .toast-icon{ flex:0 0 auto; }
-        .toast-text{ display:inline-block; white-space:normal; overflow-wrap:anywhere; }
+        .toast-text{
+            display:inline-block;
+            white-space:pre-line; /* 🔧 Cho phép xuống dòng khi gộp nhiều lỗi */
+            overflow-wrap:anywhere;
+        }
         .toast-success{ background:#22c55e !important; border-color:#16a34a !important; color:#fff !important; }
         .toast-success .toast-icon{ color:#fff !important; }
         .toast-error{ background:#ef4444 !important; border-color:#dc2626 !important; color:#fff !important; }
         .toast-error .toast-icon{ color:#fff !important; }
 
         @media (max-width: 575.98px){
-            .page-header{
-                margin:12px 0 8px !important;
-                padding:0 16px !important;
-            }
+            .page-header{ margin:12px 0 8px !important; padding:0 16px !important; }
         }
-
     </style>
 
     <%-- Ẩn nút "Quay lại danh sách" khi chạy embed trong popup --%>
@@ -166,26 +147,18 @@
 <body>
 <form id="form1" runat="server">
 
-    <!-- ===== Header ngoài (badge + tiêu đề) ===== -->
     <div class="page-header">
-        <div class="title-badge">
-            <i class="bi bi-geo-alt"></i>
-            HAFood - Địa chỉ giao hàng
-        </div>
+        <div class="title-badge"><i class="bi bi-geo-alt"></i> HAFood - Địa chỉ giao hàng</div>
         <h2 class="page-title">Địa chỉ mới</h2>
         <p class="page-subtitle">Thêm địa chỉ nhận hàng để thanh toán nhanh hơn.</p>
     </div>
 
-    <!-- ===== Khung nội dung trắng ===== -->
     <div class="page-shell page-anim">
         <div class="d-flex justify-content-end mb-2">
-            <a href="UserAddressList.aspx" class="btn-back">
-                <i class="bi bi-arrow-left-short"></i>
-                Danh sách địa chỉ
-            </a>
+            <a href="UserAddressList.aspx" class="btn-back"><i class="bi bi-arrow-left-short"></i> Danh sách địa chỉ</a>
         </div>
 
-        <!-- hidden mirrors (tên + code đã chọn) -->
+        <!-- hidden mirrors -->
         <asp:TextBox ID="txtCitySel" runat="server" CssClass="d-none" />
         <asp:TextBox ID="txtWardSel" runat="server" CssClass="d-none" />
         <asp:TextBox ID="txtCityCode" runat="server" CssClass="d-none" />
@@ -242,7 +215,7 @@
                 <hr class="my-3" />
                 <div class="section-title mb-2">Loại địa chỉ</div>
                 <asp:RadioButtonList ID="rblType" runat="server" RepeatLayout="Flow" RepeatDirection="Horizontal" CssClass="rbl-chips" ClientIDMode="Static">
-                    <asp:ListItem Text="Văn Phòng" Value="1" Selected="True" />
+                    <asp:ListItem Text="Văn Phòng" Value="1" />
                     <asp:ListItem Text="Nhà Riêng"  Value="0" />
                 </asp:RadioButtonList>
             </div>
@@ -258,26 +231,22 @@
         </div>
     </div>
 
-    <!-- Toast Stack -->
     <div class="toast-stack" id="toastStack" aria-live="polite"></div>
 </form>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
-    // kích hoạt hiệu ứng vào trang
     document.addEventListener('DOMContentLoaded', function () {
         document.querySelector('.page-shell')?.classList.add('ready');
         document.querySelector('.page-anim')?.classList.add('ready');
     });
 
-    // Nút Hủy
     document.getElementById('btnCancelCreate')?.addEventListener('click', function () {
         if (history.length > 1) history.back();
         else window.location.href = '/UserAddress/UserAddressList.aspx';
     });
 
-    // Toast API
     function showToast(message, variant) {
         var stack = document.getElementById('toastStack'); if (!stack) return;
         var div = document.createElement('div');
@@ -291,7 +260,7 @@
         div.appendChild(icon); div.appendChild(text); stack.appendChild(div);
         div.offsetHeight; div.classList.add('show');
         var close = function () { div.classList.remove('show'); setTimeout(function () { div.remove(); }, 180); };
-        var timer = setTimeout(close, 3000);
+        var timer = setTimeout(close, 3500);
         div.addEventListener('click', function () { clearTimeout(timer); close(); });
     }
 
@@ -306,6 +275,39 @@
         if (!document.getElementById('txtAddress').value.trim()) missing.push('Địa chỉ nhận hàng');
         if (!document.querySelector('#rblType input[type=radio]:checked')) missing.push('Loại địa chỉ');
         if (missing.length) { showToast('Vui lòng điền: ' + missing.join(', '), 'danger'); return false; }
+
+        // ====== Kiểm tra ĐỊNH DẠNG (gồm nhiều lỗi sẽ gộp) ======
+        var errs = [];
+
+        // Họ tên: chỉ chữ + khoảng trắng
+        var fullName = document.getElementById('txtFullName').value.trim();
+        var reName = /^[\p{L}\s]+$/u;
+        if (!reName.test(fullName)) {
+            errs.push('Họ và tên không được chứa ký tự đặc biệt');
+        }
+
+        // SĐT: đúng 10 chữ số
+        var phone = document.getElementById('txtPhone').value.trim();
+        if (!/^\d{10}$/.test(phone)) {
+            errs.push('Số điện thoại phải gồm đúng 10 chữ số');
+        }
+        // SĐT: bắt đầu bằng 0
+        if (!/^0/.test(phone)) {
+            errs.push('Số điện thoại phải bắt đầu bằng số 0');
+        }
+
+        // Địa chỉ: chỉ cho phép chữ, số, khoảng trắng và , . - /
+        var address = document.getElementById('txtAddress').value.trim();
+        var reAddress = /^[\p{L}\d\s,.\-\/]+$/u;
+        if (!reAddress.test(address)) {
+            errs.push('Địa chỉ nhận hàng không được chứa ký tự đặc biệt');
+        }
+
+        if (errs.length) {
+            showToast('Vui lòng kiểm tra:\n• ' + errs.join('\n• '), 'danger');
+            return false;
+        }
+        // ==========================================
         return true;
     }
 </script>
@@ -374,7 +376,6 @@
             renderList(wardMenu, WARDS, wardInput.value, -1);
         }
 
-        // City events
         cityInput.addEventListener('focus', () => {
             renderList(cityMenu, PROVINCES, cityInput.value, activeIndexCity = -1);
             openCombo(cityCombo);
@@ -415,7 +416,6 @@
             setTimeout(() => closeCombo(cityCombo), 150);
         });
 
-        // Ward events
         wardInput.addEventListener('focus', () => {
             if (!wardInput.disabled) { renderList(wardMenu, WARDS, wardInput.value, activeIndexWard = -1); openCombo(wardCombo); }
         });
@@ -454,13 +454,11 @@
             setTimeout(() => closeCombo(wardCombo), 150);
         });
 
-        // outside click close
         document.addEventListener('mousedown', (e) => {
             if (!cityCombo.contains(e.target)) closeCombo(cityCombo);
             if (!wardCombo.contains(e.target)) closeCombo(wardCombo);
         });
 
-        // load dữ liệu ban đầu
         document.addEventListener('DOMContentLoaded', async () => {
             await loadProvinces();
             wardInput.disabled = true;
