@@ -539,10 +539,30 @@
       // ==== Cart.ashx ====
       window.CART_API = window.CART_API ?? '<%= ResolveUrl("~/Ajax/Cart.ashx") %>';
 
+      // === LẤY TỒN KHO CỦA BIẾN THỂ ĐANG CHỌN (đọc từ hVariantsJson) ===
+      function getSelectedVariantStock() {
+          try {
+              const json = document.getElementById('<%= hVariantsJson.ClientID %>').value || '[]';
+              const variants = JSON.parse(json || '[]');
+              const ddl = document.getElementById('<%= ddlVariant.ClientID %>');
+              const id = Number(ddl?.value || 0);
+              const found = variants.find(v => Number(v.id) === id);
+              const stock = Number(found?.stock ?? 0);
+              return Number.isFinite(stock) ? stock : 0;
+          } catch { return 0; }
+      }
+
+      // === THÊM GIỎ: CHẶN KHI HẾT HÀNG ===
       window.addToCartOptimistic = async function () {
+          // ❗Nếu stock <= 0 -> báo hết hàng và thoát
+          const stockLeft = getSelectedVariantStock();
+          if (stockLeft <= 0) {
+              showToast('Sản phẩm hiện tại đang hết hàng, xin quý khách vui lòng chọn sản phẩm khác');
+              return; // không cộng badge, không gọi API
+          }
+
           const qty = Math.max(1, parseInt(document.getElementById('qty')?.value || '1', 10));
 
-          // ⭐⭐ TĂNG NGAY TRÊN UI
           window.dispatchEvent(new CustomEvent('cart:add', { detail: { delta: qty } }));
 
           try {
@@ -564,11 +584,9 @@
               const j = await r.json();
               if (!j?.ok) throw new Error(j?.message || 'Add failed');
 
-              // ⭐ Không dùng serverCount để set lại badge
               window.onAddToCartSuccess(qty);
 
           } catch (err) {
-              // ⭐⭐ LỖI → TRẢ LẠI SỐ VỪA CỘNG
               window.dispatchEvent(new CustomEvent('cart:revert', { detail: { delta: qty } }));
               console.error('AddToCart failed:', err);
           }
@@ -579,58 +597,58 @@
           window.__addToCartBound = true;
           document.addEventListener('DOMContentLoaded', () => {
               const btn = document.getElementById('<%= btnAddToCart.ClientID %>');
-            if (btn) btn.addEventListener('click', e => {
-                e.preventDefault();
-                window.addToCartOptimistic();
-            });
-        });
+              if (btn) btn.addEventListener('click', e => {
+                  e.preventDefault();
+                  window.addToCartOptimistic();
+              });
+          });
       })();
 
       // Gallery thumbs
       document.addEventListener('click', function (e) {
           if (e.target && e.target.classList.contains('thumb')) {
               document.getElementById('<%= imgMain.ClientID %>').src = e.target.getAttribute('data-url');
-            document.querySelectorAll('.thumb').forEach(x => x.classList.remove('active'));
-            e.target.classList.add('active');
-        }
-    });
+              document.querySelectorAll('.thumb').forEach(x => x.classList.remove('active'));
+              e.target.classList.add('active');
+          }
+      });
 
-    // Đồng bộ SKU/Stock/Image khi đổi biến thể
-    document.addEventListener('DOMContentLoaded', function () {
-        const json = document.getElementById('<%= hVariantsJson.ClientID %>').value || '[]';
-        const variants = JSON.parse(json || '[]');
-        const ddl = document.getElementById('<%= ddlVariant.ClientID %>');
-        const skuEl = document.getElementById('sku');
-        const stockEl = document.getElementById('stock');
-        const imgMain = document.getElementById('<%= imgMain.ClientID %>');
+      // Đồng bộ SKU/Stock/Image khi đổi biến thể
+      document.addEventListener('DOMContentLoaded', function () {
+          const json = document.getElementById('<%= hVariantsJson.ClientID %>').value || '[]';
+          const variants = JSON.parse(json || '[]');
+          const ddl = document.getElementById('<%= ddlVariant.ClientID %>');
+          const skuEl = document.getElementById('sku');
+          const stockEl = document.getElementById('stock');
+          const imgMain = document.getElementById('<%= imgMain.ClientID %>');
 
-        function apply(v) {
-            if (!v) return;
-            skuEl.innerText = v.sku || '';
-            stockEl.innerText = (v.stock ?? 0);
-            if (v.image) imgMain.src = v.image;
-        }
+          function apply(v) {
+              if (!v) return;
+              skuEl.innerText = v.sku || '';
+              stockEl.innerText = (v.stock ?? 0);
+              if (v.image) imgMain.src = v.image;
+          }
 
-        ddl && ddl.addEventListener('change', function () {
-            const id = Number(this.value);
-            apply(variants.find(x => x.id === id));
-        });
+          ddl && ddl.addEventListener('change', function () {
+              const id = Number(this.value);
+              apply(variants.find(x => x.id === id));
+          });
 
-        if (ddl && ddl.value) {
-            apply(variants.find(x => x.id === Number(ddl.value)));
-        }
-    });
+          if (ddl && ddl.value) {
+              apply(variants.find(x => x.id === Number(ddl.value)));
+          }
+      });
 
-    // Flash sale config
-    window.ProductFS = {
-        ddlId: '<%= ddlVariant.ClientID %>',
-        priceNowId: 'priceNow',
-        oldPriceId: '<%= oldPrice.ClientID %>',
+      // Flash sale config
+      window.ProductFS = {
+          ddlId: '<%= ddlVariant.ClientID %>',
+          priceNowId: 'priceNow',
+          oldPriceId: '<%= oldPrice.ClientID %>',
           countdownId: 'fsCountdown',
           remainId: 'fsRemain',
           channel: 1
       };
-    </script>
+  </script>
 
     <script src="/assets/js/product-flashsale.js?v=2"></script>
 

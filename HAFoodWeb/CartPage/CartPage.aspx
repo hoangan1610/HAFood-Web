@@ -28,7 +28,7 @@
         .cart-header > div:nth-child(6),
         .cart-header > div:nth-child(7){ text-align:center; }
         .cart-list{padding:0 8px 8px}
-        .total-row{padding:16px;border-top:2px solid var(--border);display:flex;gap:8px;justify-content:flex-end;font-weight:700}
+        .total-row{padding:16px;border-top:2px solid var(--border);display:flex;gap:8px;justify-content:flex-end;font-weight:700;align-items:center}
 
         .panel{background:#fff;border-radius:var(--radius);box-shadow:0 4px 10px rgba(0,0,0,.05)}
         .panel-title{padding:14px 16px;border-bottom:2px solid var(--border);font-weight:700;display:flex;align-items:center;gap:8px}
@@ -44,6 +44,37 @@
         .summary-row:last-child{border-bottom:none}
         .grand{color:#e53935;font-size:20px;font-weight:800;text-align:center;padding:16px}
         .btn-primary{display:block;width:100%;height:48px;border:none;border-radius:999px;font-weight:700;cursor:pointer;background:#ff7a00;color:#fff}
+
+        /* ===== NÚT XÓA TẤT CẢ ===== */
+        .btn-clear-all{
+          display:inline-flex;
+          align-items:center;
+          gap:6px;
+          padding:0 14px;
+          height:32px;
+          border-radius:999px;
+          border:1px solid #ef4444;
+          background:#fff;
+          color:#b91c1c;
+          font-size:14px;
+          font-weight:600;
+          cursor:pointer;
+          margin-right:auto;
+        }
+        .btn-clear-all i{ font-size:16px; }
+        .btn-clear-all:hover{
+          background:#fee2e2;
+        }
+        .btn-clear-all:disabled{
+          opacity:0.6;
+          cursor:not-allowed;
+          border-color:#e5e7eb;
+          background:#f9fafb;
+          color:#9ca3af;
+        }
+        .btn-clear-all:disabled:hover{
+          background:#f9fafb;
+        }
 
         .pill{background:var(--pill);color:#fff;border-radius:999px;padding:4px 10px;font-size:12px}
         .alert{margin:12px 0 0 0;padding:10px 12px;border-radius:10px;background:#ffe6e9;color:#9f2a37;border:1px solid #f5c2c7}
@@ -99,18 +130,33 @@
         .modal-body{flex:1 1 auto}
         .modal-body iframe{width:100%;height:100%;border:0}
 
-        /* ===== Popup xác nhận xóa ===== */
-        #confirmModalBk{
-          position:fixed; inset:0;
+        /* ===== Popup xác nhận xóa (dùng chung cho cả xóa 1 & xóa tất cả) ===== */
+        #confirmModalBk,
+        #confirmAllModalBk{
+          position:fixed;
+          inset:0;
           background: rgba(0,0,0,.38);
-          display:none; z-index:2100;
+          display:none;
+          z-index:2100;
         }
-        #confirmModal{
-          position:fixed; inset:0;
-          display:none; align-items:center; justify-content:center;
+
+        #confirmModal,
+        #confirmAllModal{
+          position:fixed;
+          inset:0;
+          display:none;
+          align-items:center;
+          justify-content:center;
           z-index:2101;
         }
-        #confirmModal.open, #confirmModalBk.open{ display:flex; }
+
+        #confirmModal.open,
+        #confirmModalBk.open,
+        #confirmAllModal.open,
+        #confirmAllModalBk.open{
+          display:flex;
+        }
+
         .confirm-card{
           width:min(520px,92vw);
           background:#fff; border-radius:16px;
@@ -243,6 +289,12 @@
                         </div>
 
                         <div class="total-row">
+                            <!-- Nút XÓA TẤT CẢ (luôn hiển thị, bật/tắt bằng disabled) -->
+                            <button type="button" id="btnClearAll" class="btn-clear-all">
+                                <i class="bi bi-trash3"></i>
+                                <span>Xóa tất cả</span>
+                            </button>
+
                             <span>Tổng chọn:</span> <asp:Label ID="lblTotal" runat="server" Text="0 ₫"></asp:Label>
                         </div>
                     </div>
@@ -394,7 +446,7 @@
         </div>
     </div>
 
-    <!-- ===== POPUP XÁC NHẬN XÓA (MỚI) ===== -->
+    <!-- ===== POPUP XÁC NHẬN XÓA (MỚI) - XÓA 1 SẢN PHẨM ===== -->
     <div id="confirmModalBk"></div>
     <div id="confirmModal" aria-hidden="true" role="dialog" aria-label="Xóa sản phẩm">
         <div class="confirm-card">
@@ -407,6 +459,24 @@
                 <div class="confirm-actions">
                   <button type="button" class="btn-confirm btn-confirm-secondary" id="confirmCancelBtn">Hủy</button>
                   <button type="button" class="btn-confirm btn-confirm-primary"  id="confirmOkBtn">Xác nhận</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== POPUP XÁC NHẬN XÓA TẤT CẢ ===== -->
+    <div id="confirmAllModalBk"></div>
+    <div id="confirmAllModal" aria-hidden="true" role="dialog" aria-label="Xóa tất cả sản phẩm">
+        <div class="confirm-card">
+            <div class="confirm-head">
+                <div class="confirm-title">Xóa tất cả sản phẩm</div>
+                <button type="button" class="confirm-close" id="confirmAllCloseBtn" aria-label="Close">&times;</button>
+            </div>
+            <div class="confirm-body">
+                <p class="confirm-question">Bạn có muốn xóa tất cả sản phẩm trong giỏ hàng không?</p>
+                <div class="confirm-actions">
+                  <button type="button" class="btn-confirm btn-confirm-secondary" id="confirmAllCancelBtn">Hủy</button>
+                  <button type="button" class="btn-confirm btn-confirm-primary"  id="confirmAllOkBtn">Xác nhận</button>
                 </div>
             </div>
         </div>
@@ -431,8 +501,7 @@
     <script>
         (function () {
             const CHANNEL = Number(window.CHANNEL || 1);
-           const DATA_BASE = '<%= Page.ResolveClientUrl("~/assets/vn-admin") %>';
-
+            const DATA_BASE = '<%= Page.ResolveClientUrl("~/assets/vn-admin") %>';
 
             const cityBox = document.getElementById('cmbCity');
             const wardBox = document.getElementById('cmbWard');
@@ -627,7 +696,7 @@
             }
             function bumpBadge(delta) { writeBadge(readBadge() + (parseInt(delta || 0, 10) || 0)); }
 
-            // ===== NEW: Xuất global helpers để dùng thống nhất (giống cartpage 2)
+            // ===== NEW: Xuất global helpers để dùng thống nhất
             if (typeof window.setCartBadge !== 'function') {
                 window.setCartBadge = writeBadge;
             }
@@ -699,20 +768,20 @@
                         }
                     });
                     [
-                    '<%= txtAddress.ClientID %>',
-                    '<%= txtPhone.ClientID %>',
-                    '<%= txtReceiver.ClientID %>'
-                  ].forEach(id=>{
-                      const el = document.getElementById(id);
-                      if(el){
-                          el.setAttribute('readonly','readonly');
-                          el.setAttribute('aria-readonly','true');
-                          el.setAttribute('tabindex','-1');
-                          el.classList.add('readonly');
-                          el.blur();
-                      }
-                  });
-              }catch(e){ console.error(e); }
+                        '<%= txtAddress.ClientID %>',
+                        '<%= txtPhone.ClientID %>',
+                        '<%= txtReceiver.ClientID %>'
+                    ].forEach(id=>{
+                        const el = document.getElementById(id);
+                        if(el){
+                            el.setAttribute('readonly','readonly');
+                            el.setAttribute('aria-readonly','true');
+                            el.setAttribute('tabindex','-1');
+                            el.classList.add('readonly');
+                            el.blur();
+                        }
+                    });
+                }catch(e){ console.error(e); }
             }
 
             /* ===== POPUP địa chỉ ===== */
@@ -724,8 +793,7 @@
 
             const IS_AUTH = (document.getElementById('<%= hidIsAuth.ClientID %>').value === '1');
             const LOGIN_URL = '<%= Page.ResolveUrl("~/AuthPage/Login.aspx") %>';
-const addressSelectUrl = '<%= Page.ResolveUrl("~/CartPage/AddressSelect.aspx") %>';
-
+            const addressSelectUrl = '<%= Page.ResolveUrl("~/CartPage/AddressSelect.aspx") %>';
 
             function openAddrModal() {
                 iframe.src = addressSelectUrl;
@@ -831,7 +899,11 @@ const addressSelectUrl = '<%= Page.ResolveUrl("~/CartPage/AddressSelect.aspx") %
                 recalcTotals(); updateSelectAllUI(); syncSelectedHidden();
                 lockAddressUI(); // khóa ngay khi vào trang
 
-                // ===== CHANGED: dùng global refreshCartCount để đồng bộ cách đặt badge
+                const clearBtn = document.getElementById('btnClearAll');
+                if (clearBtn) {
+                    clearBtn.disabled = !hasItems;
+                }
+
                 try { window.refreshCartCount(); } catch { }
             });
 
@@ -848,7 +920,6 @@ const addressSelectUrl = '<%= Page.ResolveUrl("~/CartPage/AddressSelect.aspx") %
                 return url + (url.includes('?') ? '&' : '?') + parts.join('&');
             }
 
-
             function ensure(opts) {
                 const headers = { 'Content-Type': 'application/json' };
                 if (HAS_JWT) headers['Authorization'] = 'Bearer ' + JWT;
@@ -862,10 +933,9 @@ const addressSelectUrl = '<%= Page.ResolveUrl("~/CartPage/AddressSelect.aspx") %
                     document.getElementById('<%= lblVat.ClientID %>').textContent = fmt(t.vat);
                     document.getElementById('<%= lblShipping.ClientID %>').textContent = fmt(t.shipping);
                     document.getElementById('<%= lblGrandTotal.ClientID %>').textContent  = fmt(t.grand);
-                    document.getElementById('<%= lblTotal.ClientID %>').textContent       = fmt(t.subtotal);
+                    document.getElementById('<%= lblTotal.ClientID %>').textContent = fmt(t.subtotal);
                 }
-                // ===== CHANGED: ưu tiên badge từ server
-                if (payload?.header?.item_Count != null){
+                if (payload?.header?.item_Count != null) {
                     window.setCartBadge(payload.header.item_Count);
                 }
             }
@@ -889,7 +959,6 @@ const addressSelectUrl = '<%= Page.ResolveUrl("~/CartPage/AddressSelect.aspx") %
                 div.appendChild(text);
                 toastStack.appendChild(div);
 
-                // bật hiệu ứng
                 div.offsetHeight;
                 div.classList.add('show');
 
@@ -902,8 +971,8 @@ const addressSelectUrl = '<%= Page.ResolveUrl("~/CartPage/AddressSelect.aspx") %
             }
 
             /* ===== Xóa dòng ===== */
-            async function deleteLine(row, lineId) {
-                try{
+            async function deleteLine(row, lineId, silent) {
+                try {
                     const qtyBefore = Number(row.querySelector('.qty-num')?.textContent.trim() || '1') || 1;
 
                     let url = withAuthQuery(`${API}/api/cart/lines/${lineId}`);
@@ -916,8 +985,7 @@ const addressSelectUrl = '<%= Page.ResolveUrl("~/CartPage/AddressSelect.aspx") %
                         json = await safeJson(resp);
                     }
 
-                    if (!resp.ok){
-                        // Không hiện toast lỗi theo yêu cầu — chỉ log
+                    if (!resp.ok) {
                         if (json?.code === 'CART_LINE_NOT_FOUND') location.reload();
                         console.error('Delete failed', json);
                         return;
@@ -928,14 +996,16 @@ const addressSelectUrl = '<%= Page.ResolveUrl("~/CartPage/AddressSelect.aspx") %
                     const remaining = document.querySelectorAll('.cart-item').length;
                     if (remaining === 0 && pnlEmptyEl) {
                         pnlEmptyEl.style.display = 'block';
-                        // ===== CHANGED: nếu server không trả tổng mới -> set 0
+
+                        const clearBtn = document.getElementById('btnClearAll');
+                        if (clearBtn) clearBtn.disabled = true;
+
                         if (!(json?.header?.item_Count != null)) window.setCartBadge(0);
                     }
 
-                    // ===== CHANGED: cập nhật totals & badge
                     if (json?.totals || json?.header) patchTotals(json);
 
-                    if (json?.header?.item_Count != null){
+                    if (json?.header?.item_Count != null) {
                         window.setCartBadge(json.header.item_Count);
                     } else {
                         bumpBadge(-qtyBefore);
@@ -943,14 +1013,15 @@ const addressSelectUrl = '<%= Page.ResolveUrl("~/CartPage/AddressSelect.aspx") %
 
                     recalcTotals(); updateSelectAllUI(); syncSelectedHidden();
 
-                    showToastSuccess('Bạn đã xóa sản phẩm trong giỏ hàng thành công');
-                } catch(err){
+                    if (!silent) {
+                        showToastSuccess('Bạn đã xóa sản phẩm trong giỏ hàng thành công');
+                    }
+                } catch (err) {
                     console.error(err);
-                    // Không hiện toast lỗi
                 }
             }
 
-            /* ===== Popup xác nhận xóa (mới) ===== */
+            /* ===== Popup xác nhận xóa (mới) - XÓA 1 SẢN PHẨM ===== */
             const cModal = document.getElementById('confirmModal');
             const cBackdrop = document.getElementById('confirmModalBk');
             const cBtnClose = document.getElementById('confirmCloseBtn');
@@ -960,8 +1031,8 @@ const addressSelectUrl = '<%= Page.ResolveUrl("~/CartPage/AddressSelect.aspx") %
             let pendingRow = null, pendingLineId = null;
 
             function openConfirm(rowEl, lineId) {
-                pendingRow   = rowEl || null;
-                pendingLineId= lineId || null;
+                pendingRow = rowEl || null;
+                pendingLineId = lineId || null;
                 cModal.classList.add('open');
                 cBackdrop.classList.add('open');
                 cModal.setAttribute('aria-hidden', 'false');
@@ -978,87 +1049,128 @@ const addressSelectUrl = '<%= Page.ResolveUrl("~/CartPage/AddressSelect.aspx") %
             cBackdrop && cBackdrop.addEventListener('click', closeConfirm);
             cBtnOk && cBtnOk.addEventListener('click', async function () {
                 if (!pendingRow || !pendingLineId) { closeConfirm(); return; }
-                await deleteLine(pendingRow, pendingLineId);
+                await deleteLine(pendingRow, pendingLineId, false);
                 closeConfirm();
             });
 
+            /* ===== Popup xác nhận xóa TẤT CẢ ===== */
+            const caModal = document.getElementById('confirmAllModal');
+            const caBackdrop = document.getElementById('confirmAllModalBk');
+            const caBtnClose = document.getElementById('confirmAllCloseBtn');
+            const caBtnCancel = document.getElementById('confirmAllCancelBtn');
+            const caBtnOk = document.getElementById('confirmAllOkBtn');
+            const btnClearAll = document.getElementById('btnClearAll');
+
+            function openConfirmAll() {
+                caModal.classList.add('open');
+                caBackdrop.classList.add('open');
+                caModal.setAttribute('aria-hidden', 'false');
+                try { caBtnOk && caBtnOk.focus(); } catch { }
+            }
+            function closeConfirmAll() {
+                caModal.classList.remove('open');
+                caBackdrop.classList.remove('open');
+                caModal.setAttribute('aria-hidden', 'true');
+            }
+
+            [caBtnClose, caBtnCancel].forEach(b => b && b.addEventListener('click', closeConfirmAll));
+            caBackdrop && caBackdrop.addEventListener('click', closeConfirmAll);
+
+            btnClearAll && btnClearAll.addEventListener('click', () => {
+                if (btnClearAll.disabled) return;
+                const hasRows = document.querySelectorAll('.cart-item').length > 0;
+                if (!hasRows) return;
+                openConfirmAll();
+            });
+
+            caBtnOk && caBtnOk.addEventListener('click', async function () {
+                const rows = Array.from(document.querySelectorAll('.cart-item'));
+                if (!rows.length) { closeConfirmAll(); return; }
+
+                for (const row of rows) {
+                    const lineId = Number(row.getAttribute('data-line-id'));
+                    if (!lineId) continue;
+                    await deleteLine(row, lineId, true);
+                }
+
+                showToastSuccess('Bạn đã xóa tất cả sản phẩm trong giỏ hàng thành công');
+                closeConfirmAll();
+            });
+
             /* ===== Events: chọn checkbox & Select All ===== */
-            document.addEventListener('change', (e)=>{
-                if (e.target.matches('.cart-item input[type="checkbox"]')){
+            document.addEventListener('change', (e) => {
+                if (e.target.matches('.cart-item input[type="checkbox"]')) {
                     recalcTotals(); updateSelectAllUI(); syncSelectedHidden();
                 }
-                if (selectAll && e.target.id === '<%= chkSelectAll.ClientID %>'){
+                if (selectAll && e.target.id === '<%= chkSelectAll.ClientID %>') {
                     const checked = e.target.checked;
-                    document.querySelectorAll('.cart-item input[type="checkbox"]').forEach(cb=>cb.checked=checked);
+                    document.querySelectorAll('.cart-item input[type="checkbox"]').forEach(cb => cb.checked = checked);
                     selectAll.indeterminate = false;
                     recalcTotals(); syncSelectedHidden();
                 }
             });
 
             /* ===== Events: Tăng / Giảm / Xóa ===== */
-            document.addEventListener('click', async (e)=>{
+            document.addEventListener('click', async (e) => {
                 const inc = e.target.closest('.qty-btn[data-inc]');
                 const dec = e.target.closest('.qty-btn[data-dec]');
-                const rm  = e.target.closest('[data-remove]');
+                const rm = e.target.closest('[data-remove]');
                 if (!inc && !dec && !rm) return;
 
                 const row = (inc || dec || rm).closest('.cart-item');
                 if (!row) return;
 
                 const lineId = Number(row.getAttribute('data-line-id'));
-                const price  = Number(row.getAttribute('data-price')) || 0;
+                const price = Number(row.getAttribute('data-price')) || 0;
 
-                // XÓA hoặc GIẢM từ 1 -> xác nhận
-                if (rm){
+                if (rm) {
                     openConfirm(row, lineId);
                     return;
                 }
 
                 const qtyEl = row.querySelector('.qty-num');
-                const qOld  = Number(qtyEl.textContent.trim()) || 1;
+                const qOld = Number(qtyEl.textContent.trim()) || 1;
 
                 if (dec && qOld <= 1) {
                     openConfirm(row, lineId);
                     return;
                 }
 
-                const q     = inc ? qOld + 1 : Math.max(1, qOld - 1);
+                const q = inc ? qOld + 1 : Math.max(1, qOld - 1);
                 const delta = q - qOld;
 
-                // Optimistic UI
                 qtyEl.textContent = q;
                 const totalEl = row.querySelector('.cart-item-total');
                 if (totalEl) totalEl.textContent = fmt(price * q);
 
-                try{
-                    const url  = withAuthQuery(`${API}/api/cart/lines/batch?compact=1`);
-                    let body   = USE_USER ? { changes:[{ line_id: lineId, quantity: q }] }
-                                          : { device_uuid: UUID || null, changes:[{ line_id: lineId, quantity: q }] };
+                try {
+                    const url = withAuthQuery(`${API}/api/cart/lines/batch?compact=1`);
+                    let body = USE_USER ? { changes: [{ line_id: lineId, quantity: q }] }
+                        : { device_uuid: UUID || null, changes: [{ line_id: lineId, quantity: q }] };
 
-                    let resp = await fetch(url, ensure({ method:'PUT', body: JSON.stringify(body) }));
+                    let resp = await fetch(url, ensure({ method: 'PUT', body: JSON.stringify(body) }));
                     let json = await safeJson(resp);
 
-                    if (!resp.ok && json?.code === 'MISSING_USER_OR_DEVICE' && UUID){
-                        body = { device_uuid: UUID, changes:[{ line_id: lineId, quantity: q }] };
-                        resp = await fetch(`${API}/api/cart/lines/batch?compact=1`, ensure({ method:'PUT', body: JSON.stringify(body) }));
+                    if (!resp.ok && json?.code === 'MISSING_USER_OR_DEVICE' && UUID) {
+                        body = { device_uuid: UUID, changes: [{ line_id: lineId, quantity: q }] };
+                        resp = await fetch(`${API}/api/cart/lines/batch?compact=1`, ensure({ method: 'PUT', body: JSON.stringify(body) }));
                         json = await safeJson(resp);
                     }
-                    if (!resp.ok){
+                    if (!resp.ok) {
                         if (json?.code === 'CART_LINE_NOT_FOUND') location.reload();
                         console.error('Update qty failed', json); return;
                     }
 
-                    // ===== CHANGED: cập nhật totals & badge
                     if (json?.totals || json?.header) patchTotals(json);
 
-                    if (json?.header?.item_Count != null){
+                    if (json?.header?.item_Count != null) {
                         window.setCartBadge(json.header.item_Count);
                     } else if (delta !== 0) {
                         bumpBadge(delta);
                     }
 
                     recalcTotals(); updateSelectAllUI(); syncSelectedHidden();
-                } catch(err){ console.error(err); }
+                } catch (err) { console.error(err); }
             });
 
         })();
@@ -1067,13 +1179,13 @@ const addressSelectUrl = '<%= Page.ResolveUrl("~/CartPage/AddressSelect.aspx") %
     <!-- Submit guard -->
     <script>
         function beforeCheckoutSubmit() {
-            try{
+            try {
                 var hidCode = document.getElementById('<%= hidPromoCodeSelected.ClientID %>');
                 var txtPromo = document.getElementById('<%= txtPromo.ClientID %>');
-                if (hidCode && txtPromo && hidCode.value && !txtPromo.value){
+                if (hidCode && txtPromo && hidCode.value && !txtPromo.value) {
                     txtPromo.value = hidCode.value;
                 }
-            }catch(e){}
+            } catch (e) { }
             if (typeof (Page_ClientValidate) === 'function') {
                 if (!Page_ClientValidate('Checkout')) return false;
             }

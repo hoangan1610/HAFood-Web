@@ -230,7 +230,7 @@
         }
 
         .aspNetButton {
-            width: 70%;
+            width: 60%;
             max-width: 260px;
             padding: 11px 16px;
             margin-top: 16px;

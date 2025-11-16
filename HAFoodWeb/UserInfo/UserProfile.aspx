@@ -225,7 +225,7 @@
         }
 
         .aspNetButton {
-            width: 100%;
+            width: 60%;
             padding: 11px 16px;
             border: none;
             border-radius: 999px;
@@ -237,6 +237,9 @@
             box-shadow: 0 12px 20px rgba(255, 123, 50, 0.35);
             transition: transform 0.12s ease, box-shadow 0.16s ease, filter 0.18s ease;
             text-align: center;
+            margin-left: auto;
+            margin-right: auto;
+            
         }
 
         .aspNetButton:hover:not(:disabled) {

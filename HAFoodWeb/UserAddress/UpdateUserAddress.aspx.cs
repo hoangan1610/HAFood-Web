@@ -27,8 +27,6 @@ namespace HAFoodWeb.UserAddress
                 await LoadAddressAsync();
         }
 
-        /* ===== Chuẩn hoá City/Ward và tách fullAddress (phục hồi ward chính xác hơn) ===== */
-
         private static string NormalizeCity(string s)
         {
             if (string.IsNullOrWhiteSpace(s)) return "";
@@ -42,8 +40,7 @@ namespace HAFoodWeb.UserAddress
         {
             if (string.IsNullOrWhiteSpace(s)) return "";
             s = s.Trim();
-            s = Regex.Replace(s, @"\s*[-,–]\s*(quận|huyện|thị\s*xã|thành\s*phố|q\.|h\.|tx\.|tp\.).*$",
-                              "", RegexOptions.IgnoreCase);
+            s = Regex.Replace(s, @"\s*[-,–]\s*(quận|huyện|thị\s*xã|thành\s*phố|q\.|h\.|tx\.|tp\.).*$", "", RegexOptions.IgnoreCase);
             s = Regex.Replace(s, @"\s*\(.*?\)\s*", "", RegexOptions.IgnoreCase);
             s = Regex.Replace(s, @"\b0+(\d)", "$1");
             s = Regex.Replace(s, @"\s{2,}", " ");
@@ -59,11 +56,7 @@ namespace HAFoodWeb.UserAddress
 
             if (parts.Length == 0) return;
 
-            if (parts.Length == 1)
-            {
-                address = parts[0];
-                return;
-            }
+            if (parts.Length == 1) { address = parts[0]; return; }
 
             city = NormalizeCity(parts[parts.Length - 1]);
 
@@ -149,7 +142,6 @@ namespace HAFoodWeb.UserAddress
 
                 Debug.WriteLine($"[UpdateUserAddress] id={id} API duration = {sw.ElapsedMilliseconds} ms");
 
-                // ✅ Redirect kèm ?toast=updated
                 RedirectWithToast("~/UserAddress/UserAddressList.aspx", "updated");
             }
             catch (Exception ex)
@@ -168,7 +160,6 @@ namespace HAFoodWeb.UserAddress
                 var token = Request?.Cookies["AuthToken"]?.Value;
                 await _service.DeleteAddressAsync(token, id).ConfigureAwait(false);
 
-                // ✅ Redirect kèm ?toast=deleted
                 RedirectWithToast("~/UserAddress/UserAddressList.aspx", "deleted");
             }
             catch (Exception ex)
@@ -191,6 +182,29 @@ namespace HAFoodWeb.UserAddress
             if (missing.Count > 0)
             {
                 Toast("Vui lòng điền: " + string.Join(", ", missing), "danger");
+                return false;
+            }
+
+            // ====== Kiểm tra ĐỊNH DẠNG (gộp lỗi) ======
+            var errs = new List<string>();
+
+            var name = (txtFullName.Text ?? "").Trim();
+            if (!Regex.IsMatch(name, @"^[\p{L}\s]+$", RegexOptions.CultureInvariant))
+                errs.Add("Họ và tên không được chứa ký tự đặc biệt");
+
+            var phone = (txtPhone.Text ?? "").Trim();
+            if (!Regex.IsMatch(phone, @"^\d{10}$"))
+                errs.Add("Số điện thoại phải gồm đúng 10 chữ số");
+            if (!Regex.IsMatch(phone, @"^0"))
+                errs.Add("Số điện thoại phải bắt đầu bằng số 0");
+
+            var address = (txtAddress.Text ?? "").Trim();
+            if (!Regex.IsMatch(address, @"^[\p{L}\d\s,\.\-\/]+$", RegexOptions.CultureInvariant))
+                errs.Add("Địa chỉ nhận hàng không được chứa ký tự đặc biệt");
+
+            if (errs.Count > 0)
+            {
+                Toast("Vui lòng kiểm tra:\n• " + string.Join("\n• ", errs), "danger");
                 return false;
             }
             return true;

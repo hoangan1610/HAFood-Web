@@ -19,12 +19,10 @@
         body{
             font-family:'Segoe UI',system-ui,-apple-system,BlinkMacSystemFont,sans-serif;
             margin:0;
-            /* nền giống OrderPage */
             background:radial-gradient(circle at top left,#ffe8cc 0,#f8f9fa 40%,#e9ecef 100%);
             min-height:100vh;
         }
 
-        /* ===== Header ngoài (badge + title) ===== */
         .page-header{
             width:100%;
             max-width:100% !important;
@@ -43,7 +41,6 @@
         .page-title{ font-weight:700; font-size:1.6rem; color:#212529; margin:0 0 .2rem; }
         .page-subtitle{ font-size:.9rem; color:#6c757d; margin:0; }
 
-        /* ===== Khung nội dung trắng ===== */
         .page-shell{
             max-width:720px;
             margin:0 auto 2.5rem;
@@ -75,7 +72,6 @@
             box-shadow:0 0 0 2px rgba(255,122,69,.15) inset;
         }
 
-        /* Combo searchable (builder sẽ render vào container) */
         .combo{position:relative}
         .combo-input{ display:flex;align-items:center;height:38px;border:1px solid var(--border);border-radius:.375rem;background:#fff;padding:0 .75rem;cursor:text }
         .combo-text{flex:1 1 auto;border:none;outline:none;height:100%;font:inherit;font-size:.95rem}
@@ -88,7 +84,7 @@
         .combo-item{padding:.45rem .75rem;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
         .combo-item:hover{background:#f1f5f9}
 
-        /* Toast (giữ nguyên) */
+        /* Toast */
         .toast-stack{ position:fixed; right:16px; top:16px; z-index:2300; display:flex; flex-direction:column; gap:10px; align-items:flex-end; }
         .toast{
           min-width:unset; width:fit-content; max-width:min(92vw, 560px);
@@ -99,41 +95,33 @@
         }
         .toast.show{ opacity:1; transform:translateY(0); }
         .toast-icon{ flex:0 0 auto; font-size:1.1rem; margin-top:2px; }
-        .toast-text{ display:inline-block; white-space:normal; overflow-wrap:anywhere; }
+        .toast-text{
+            display:inline-block;
+            white-space:pre-line; /* 🔧 Cho phép xuống dòng khi gộp nhiều lỗi */
+            overflow-wrap:anywhere;
+        }
         .toast-success{ background:#22c55e !important; border-color:#16a34a !important; color:#fff !important; }
         .toast-success .toast-icon{ color:#fff !important; }
         .toast-error{ background:#ef4444 !important; border-color:#dc2626 !important; color:#fff !important; }
         .toast-error .toast-icon{ color:#fff !important; }
 
         @media (max-width: 575.98px){
-            .page-header{
-                margin:12px 0 8px !important;
-                padding:0 16px !important;
-            }
+            .page-header{ margin:12px 0 8px !important; padding:0 16px !important; }
         }
-
     </style>
 </head>
 <body>
 <form id="form1" runat="server">
 
-    <!-- ===== Header ngoài ===== -->
     <div class="page-header">
-        <div class="title-badge">
-            <i class="bi bi-geo-alt"></i>
-            HAFood - Địa chỉ giao hàng
-        </div>
+        <div class="title-badge"><i class="bi bi-geo-alt"></i> HAFood - Địa chỉ giao hàng</div>
         <h2 class="page-title">Sửa địa chỉ</h2>
         <p class="page-subtitle">Chỉnh sửa thông tin địa chỉ nhận hàng hiện tại.</p>
     </div>
 
-    <!-- ===== Khung nội dung trắng ===== -->
     <div class="page-shell">
         <div class="d-flex justify-content-end mb-2">
-            <a href="UserAddressList.aspx" class="btn-back">
-                <i class="bi bi-arrow-left-short"></i>
-                Danh sách địa chỉ
-            </a>
+            <a href="UserAddressList.aspx" class="btn-back"><i class="bi bi-arrow-left-short"></i> Danh sách địa chỉ</a>
         </div>
 
         <asp:HiddenField ID="hfId" runat="server" />
@@ -194,27 +182,21 @@
             </div>
         </div>
 
-        <!-- Actions -->
         <div class="mt-3 d-flex align-items-center">
             <div class="d-flex align-items-center gap-2">
                 <asp:Button ID="btnSave" runat="server" Text="Hoàn thành" CssClass="btn btn-success"
                     OnClientClick="return validateUpdate();" OnClick="btnSave_Click" />
 
-                <!-- Xóa địa chỉ -->
                 <button type="button" class="btn btn-danger text-white" data-bs-toggle="modal" data-bs-target="#confirmDeleteModal">
                     Xóa địa chỉ
                 </button>
             </div>
 
-            <!-- Hủy ở bên phải -->
             <button type="button" id="btnCancelUpdate" class="btn btn-outline-secondary ms-auto">Hủy</button>
-
-            <!-- Nút delete thực tế (ẩn) -->
             <asp:Button ID="btnDelete" runat="server" CssClass="d-none" UseSubmitBehavior="false" OnClick="btnDelete_Click" />
         </div>
     </div>
 
-    <!-- Modal xóa -->
     <div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-labelledby="confirmDeleteLabel" aria-hidden="true">
       <div class="modal-dialog modal-dialog-centered"><div class="modal-content">
         <div class="modal-header"><h5 class="modal-title" id="confirmDeleteLabel">Xóa địa chỉ?</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button></div>
@@ -224,13 +206,11 @@
       </div></div>
     </div>
 
-    <!-- Toast Stack -->
     <div class="toast-stack" id="toastStack" aria-live="polite"></div>
 </form>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    // Nút Hủy
     document.getElementById('btnCancelUpdate')?.addEventListener('click', function () {
         if (history.length > 1) history.back();
         else window.location.href = '/UserAddress/UserAddressList.aspx';
@@ -247,7 +227,7 @@
         div.appendChild(icon); div.appendChild(text); stack.appendChild(div);
         div.offsetHeight; div.classList.add('show');
         var close = function () { div.classList.remove('show'); setTimeout(function () { div.remove(); }, 180); };
-        var timer = setTimeout(close, 3000);
+        var timer = setTimeout(close, 3500);
         div.addEventListener('click', function () { clearTimeout(timer); close(); });
     }
 
@@ -262,11 +242,40 @@
         if (!document.getElementById('txtAddress').value.trim()) missing.push('Địa chỉ nhận hàng');
         if (!document.querySelector('#rblType input[type=radio]:checked')) missing.push('Loại địa chỉ');
         if (missing.length) { showToast('Vui lòng điền: ' + missing.join(', '), 'danger'); return false; }
+
+        // ====== Kiểm tra ĐỊNH DẠNG (gộp lỗi) ======
+        var errs = [];
+
+        var fullName = document.getElementById('txtFullName').value.trim();
+        var reName = /^[\p{L}\s]+$/u;
+        if (!reName.test(fullName)) {
+            errs.push('Họ và tên không được chứa ký tự đặc biệt');
+        }
+
+        var phone = document.getElementById('txtPhone').value.trim();
+        if (!/^\d{10}$/.test(phone)) {
+            errs.push('Số điện thoại phải gồm đúng 10 chữ số');
+        }
+        if (!/^0/.test(phone)) {
+            errs.push('Số điện thoại phải bắt đầu bằng số 0');
+        }
+
+        var address = document.getElementById('txtAddress').value.trim();
+        var reAddress = /^[\p{L}\d\s,.\-\/]+$/u;
+        if (!reAddress.test(address)) {
+            errs.push('Địa chỉ nhận hàng không được chứa ký tự đặc biệt');
+        }
+
+        if (errs.length) {
+            showToast('Vui lòng kiểm tra:\n• ' + errs.join('\n• '), 'danger');
+            return false;
+        }
+        // ==========================================
         return true;
     }
 </script>
 
-<!-- Combo Searchable + fuzzy-restore City/Ward (giữ nguyên chức năng) -->
+<!-- Combo + dữ liệu (giữ nguyên chức năng) -->
 <script>
     (function () {
         const DATA_BASE = '<%= ResolveClientUrl("~/assets/vn-admin") %>';
