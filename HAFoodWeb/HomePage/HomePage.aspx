@@ -279,6 +279,11 @@
                 <div class="badge-off js-badge-off"></div>
               </div>
             </a>
+              <div class="container my-5 text-center">
+  <a href="<%= ResolveUrl("~/HomePage/SpinPage.aspx") %>" class="btn btn-success btn-lg">
+      🎁 Thử vận may với Vòng quay HAFood
+  </a>
+</div>
 
             <div class="card-body d-flex flex-column">
               <h6 class="card-title text-truncate-2 mb-2">
@@ -346,3 +351,5 @@
 </form>
 </body>
 </html>
+
+

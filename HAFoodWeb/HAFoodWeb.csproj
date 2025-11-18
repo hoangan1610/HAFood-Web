@@ -154,8 +154,27 @@
     <Content Include="assets\cat\default.png" />
     <Content Include="assets\css\cart-voucher.css" />
     <Content Include="assets\js\cart-voucher.js" />
+    <Content Include="assets\js\createjs.min.js" />
+    <Content Include="assets\js\CSSPlugin.js" />
     <Content Include="assets\js\flashsale.js" />
+    <Content Include="assets\js\tweenjs.min.js" />
     <Content Include="assets\js\product-flashsale.js" />
+    <Content Include="assets\spin\item-random\extra_spin.png" />
+    <Content Include="assets\spin\item-random\item1.png" />
+    <Content Include="assets\spin\item-random\item2.png" />
+    <Content Include="assets\spin\item-random\item3.png" />
+    <Content Include="assets\spin\item-random\item4.png" />
+    <Content Include="assets\spin\item-random\item5.png" />
+    <Content Include="assets\spin\item-random\item6.png" />
+    <Content Include="assets\spin\item-random\points_20.png" />
+    <Content Include="assets\spin\item-random\points_50.png" />
+    <Content Include="assets\spin\item-random\points_10.png" />
+    <Content Include="assets\spin\item-random\sad_face.png" />
+    <Content Include="assets\spin\item-random\voucher-20k.png" />
+    <Content Include="assets\spin\kim-vong-quay.png" />
+    <Content Include="assets\spin\qrcode.png" />
+    <Content Include="assets\spin\tamvongtron.png" />
+    <Content Include="assets\spin\Vong-quay-nen.png" />
     <Content Include="AuthPage\ForgotPassword.aspx" />
     <Content Include="AuthPage\Login.aspx" />
     <Content Include="AuthPage\OTP.aspx" />
@@ -190,6 +209,7 @@
     <Content Include="Control\Header.ascx" />
     <Content Include="Control\SlideShow.ascx" />
     <Content Include="Default.aspx" />
+    <Content Include="HomePage\SpinPage.aspx" />
     <Content Include="favicon.ico" />
     <Content Include="Global.asax" />
     <Content Include="HomePage\HomePage.aspx" />
@@ -270,6 +290,7 @@
     <Content Include="assets\vn-admin\wards\tuyen-quang.json" />
     <Content Include="assets\vn-admin\wards\vinh-long.json" />
     <Content Include="Proxy\ChatProxy.ashx" />
+    <Content Include="Proxy\SpinProxy.ashx" />
     <None Include="Scripts\jquery-3.7.0.intellisense.js" />
     <Content Include="Scripts\jquery-3.7.0.js" />
     <Content Include="Scripts\jquery-3.7.0.min.js" />
@@ -461,6 +482,10 @@
     <Compile Include="HomePage\Search.aspx.designer.cs">
       <DependentUpon>Search.aspx</DependentUpon>
     </Compile>
+    <Compile Include="HomePage\SpinPage.aspx.cs">
+      <DependentUpon>SpinPage.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
     <Compile Include="Infrastructure\AppCache.cs" />
     <Compile Include="Infrastructure\HttpJson.cs" />
     <Compile Include="Models\AddressDto.cs" />
@@ -502,6 +527,9 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Proxy\ChatProxy.ashx.cs">
       <DependentUpon>ChatProxy.ashx</DependentUpon>
+    </Compile>
+    <Compile Include="Proxy\SpinProxy.ashx.cs">
+      <DependentUpon>SpinProxy.ashx</DependentUpon>
     </Compile>
     <Compile Include="Proxy\Suggest.ashx.cs">
       <DependentUpon>Suggest.ashx</DependentUpon>
@@ -598,6 +626,7 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />
+    <Folder Include="Event\" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
