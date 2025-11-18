@@ -3,6 +3,7 @@
     Inherits="HAFoodWeb.Cart.CartVouchers" %>
 
 <link rel="stylesheet" href="<%= ResolveUrl("~/assets/css/cart-voucher.css") %>" />
+<div id="voucherNotice" class="voucher-notice" style="display:none"></div>
 
 <div class="voucher-panel open"><%-- open chỉ để bo góc/đổ bóng --%>
   <div class="voucher-head">
@@ -21,44 +22,83 @@
   <div id="voucherHost" class="voucher-list" aria-live="polite"></div>
 </div>
 
-<script src="<%= ResolveUrl("~/assets/js/cart-voucher.js") %>"></script>
+<%--<script src="<%= ResolveUrl("~/assets/js/cart-voucher.js") %>"></script>--%>
+
+<script src="<%= ResolveUrl("~/assets/js/cart-voucher.js?v=20251119_2") %>"></script>
 
 <script>
     (function () {
-        if (!window.initCartVouchers) return;
+        function doInit() {
+            // kiểm tra initCartVouchers có hay chưa
+            if (typeof window.initCartVouchers !== 'function') {
+                console.warn('[voucher] initCartVouchers NOT FOUND ở doInit');
+                return;
+            }
 
-        const opts = {
-            apiBase: document.getElementById('<%= this.HidApiBase.ClientID %>').value || '',
-        jwt: (document.getElementById('<%= this.HidJwt.ClientID %>')?.value || '').trim(),
-        deviceUuid: document.getElementById('<%= this.HidDeviceUuid.ClientID %>').value || '',
-        channel: 1,
-        selectors: {
-            listEl: '#voucherHost',
-            txtPromo: '#<%= this.TxtPromoClientId %>',
-          lblSubtotal: '#<%= this.LblSubtotalClientId %>',
-          lblVat: '#<%= this.LblVatClientId %>',
-        lblShipping: '#<%= this.LblShippingClientId %>',
-        lblDiscount: '#<%= this.LblDiscountClientId %>',
-        lblGrandTotal: '#<%= this.LblGrandClientId %>',
-        selectedLinesHidden: '#<%= this.HidSelectedLinesClientId %>',
-        hidPromoCode: '#<%= this.HidPromoCodeClientId %>',
-        hidPromoDiscount: '#<%= this.HidPromoDiscountClientId %>',
-        hidPromoMetaJson: '#<%= this.HidPromoMetaJsonClientId %>'
-            },
-            formSelector: 'form#form1'
-        };
+            var apiBaseHid = document.getElementById('<%= this.HidApiBase.ClientID %>');
+            var jwtHid = document.getElementById('<%= this.HidJwt.ClientID %>');
+            var deviceHid = document.getElementById('<%= this.HidDeviceUuid.ClientID %>');
 
-        function ready() {
-            const hasItems = document.querySelectorAll('.cart-item').length > 0;
-            const hid = document.querySelector(opts.selectors.selectedLinesHidden);
-            const hiddenHasValue = !!(hid && hid.value && hid.value.trim());
-            if (hasItems || hiddenHasValue) { window.initCartVouchers(opts); return true; }
-            return false;
+            var jwtHidden = (jwtHid && jwtHid.value || '').trim();
+
+            // thử lấy từ cookie (phòng khi sau login quay lại)
+            var m = document.cookie.match(/(?:^|;\s*)AuthToken=([^;]+)/);
+            var jwtCookie = m ? m[1] : '';
+
+            var jwt = (jwtHidden || jwtCookie || '').trim();
+
+            console.log('[voucher] jwtHidden len =', jwtHidden.length,
+                'jwtCookie len =', jwtCookie.length,
+                'jwt len =', jwt.length);
+
+            const opts = {
+                apiBase: (apiBaseHid && apiBaseHid.value || '').trim(),
+                jwt: jwt,
+                deviceUuid: deviceHid && deviceHid.value || '',
+                channel: 1,
+                selectors: {
+                    listEl: '#voucherHost',
+                    txtPromo: '#<%= this.TxtPromoClientId %>',
+                    lblSubtotal: '#<%= this.LblSubtotalClientId %>',
+                    lblVat: '#<%= this.LblVatClientId %>',
+                    lblShipping: '#<%= this.LblShippingClientId %>',
+                    lblDiscount: '#<%= this.LblDiscountClientId %>',
+                    lblGrandTotal: '#<%= this.LblGrandClientId %>',
+                    selectedLinesHidden: '#<%= this.HidSelectedLinesClientId %>',
+                    hidPromoCode: '#<%= this.HidPromoCodeClientId %>',
+                    hidPromoDiscount: '#<%= this.HidPromoDiscountClientId %>',
+                    hidPromoMetaJson: '#<%= this.HidPromoMetaJsonClientId %>'
+                },
+                formSelector: 'form#form1'
+            };
+
+            console.log('[voucher] opts.jwt =', opts.jwt);
+
+            // 🌟 GỌI INIT Ở ĐÂY
+            window.initCartVouchers(opts);
         }
-        if (!ready()) {
-            if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', () => { if (!ready()) setTimeout(ready, 120); });
-            } else { setTimeout(ready, 120); }
+
+        // Đợi DOM ready rồi mới init, tránh race với script src
+        if (document.readyState === 'complete' || document.readyState === 'interactive') {
+            setTimeout(doInit, 0);
+        } else {
+            document.addEventListener('DOMContentLoaded', function () {
+                setTimeout(doInit, 0);
+            });
         }
     })();
+
+    function showVoucherNotice(msg) {
+        const el = document.getElementById('voucherNotice');
+        if (!el) return;
+        el.textContent = msg || '';
+        el.style.display = msg ? 'block' : 'none';
+        if (msg) {
+            setTimeout(() => {
+                if (el.textContent === msg) el.style.display = 'none';
+            }, 4000);
+        }
+    }
+
 </script>
+

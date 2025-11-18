@@ -22,7 +22,7 @@ namespace HAFoodWeb.Pages
         // Giữ địa chỉ hiện tại để render session
         protected AddressDto CurrentAddress;
 
-      
+
 
         protected async void Page_Load(object sender, EventArgs e)
         {
@@ -42,17 +42,25 @@ namespace HAFoodWeb.Pages
             // đặt cờ auth cho JS
             hidIsAuth.Value = IsLoggedIn() ? "1" : "0";
 
-            var host = Request.Url.Host?.ToLowerInvariant();
-            if (host == "localhost" || host == "127.0.0.1")
+            // 👉 LUÔN cố gắng bơm JWT cho JS (không phụ thuộc host)
+            var jwt = Session["JwtToken"] as string;
+
+            // nếu Session mất mà cookie AuthToken vẫn còn thì lấy lại từ cookie
+            if (string.IsNullOrWhiteSpace(jwt))
             {
-                var jwt = Session["JwtToken"] as string;
-                if (!string.IsNullOrWhiteSpace(jwt))
-                    hidJwt.Value = jwt;
+                var cookieJwt = Request.Cookies["AuthToken"]?.Value;
+                if (!string.IsNullOrWhiteSpace(cookieJwt))
+                {
+                    jwt = cookieJwt;
+                    Session["JwtToken"] = jwt;  // optional: đồng bộ lại session
+                }
             }
+
+            hidJwt.Value = jwt ?? string.Empty;
 
             if (!IsPostBack)
             {
-                // Ưu tiên địa chỉ đã chọn ở AddressSelect (session)
+                // ... phần còn lại giữ nguyên
                 var chosen = Session["selected_address_obj"] as AddressDto;
                 if (chosen != null)
                 {
@@ -79,6 +87,7 @@ namespace HAFoodWeb.Pages
                 await BindCart();
             }
         }
+
 
         /* ===== Helpers cho địa chỉ ===== */
 
