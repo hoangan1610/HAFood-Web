@@ -20,7 +20,6 @@ namespace HAFoodWeb.Proxy
 
             var action = (context.Request["action"] ?? "").ToLowerInvariant();
 
-            // Lấy token – TODO: thay bằng đúng logic đang dùng cho site của bạn
             var token = GetUserToken(context);
             if (string.IsNullOrEmpty(token))
             {
@@ -45,6 +44,13 @@ namespace HAFoodWeb.Proxy
                         ProxyRoll(context, token);
                         break;
 
+                    case "checkin":     // 👈 THÊM DÒNG NÀY
+                        ProxyCheckin(context, token);
+                        break;
+
+                    case "status":
+                        ProxyStatus(context, token);
+                        break;
                     default:
                         context.Response.StatusCode = 400;
                         context.Response.Write("{\"success\":false,\"message\":\"UNKNOWN_ACTION\"}");
@@ -58,6 +64,7 @@ namespace HAFoodWeb.Proxy
                 context.Response.Write("{\"success\":false,\"message\":\"" + msg + "\"}");
             }
         }
+
 
         /// <summary>
         /// TODO: chỉnh lại cho khớp logic auth hiện tại (cookie, session, v.v.)
@@ -142,5 +149,39 @@ namespace HAFoodWeb.Proxy
                 new AuthenticationHeaderValue("Bearer", token);
             return client;
         }
+
+        private static void ProxyCheckin(HttpContext ctx, string token)
+        {
+            // API checkin: POST /api/gam/checkin?channel=1
+            var apiUrl = $"{ApiBase}/api/gam/checkin?channel=1";
+
+            using (var client = CreateClient(token))
+            {
+                // nếu API không yêu cầu body, có thể gửi {} cho chắc
+                var content = new StringContent("{}", Encoding.UTF8, "application/json");
+
+                using (var resp = client.PostAsync(apiUrl, content).Result)
+                {
+                    var body = resp.Content.ReadAsStringAsync().Result;
+                    ctx.Response.StatusCode = (int)resp.StatusCode;
+                    ctx.Response.Write(body);
+                }
+            }
+        }
+
+        private static void ProxyStatus(HttpContext ctx, string token)
+        {
+            // có thể cho channel là query ?channel=1, tạm hard-code 1
+            var apiUrl = $"{ApiBase}/api/gam/status?channel=1";
+
+            using (var client = CreateClient(token))
+            using (var resp = client.GetAsync(apiUrl).Result)
+            {
+                var body = resp.Content.ReadAsStringAsync().Result;
+                ctx.Response.StatusCode = (int)resp.StatusCode;
+                ctx.Response.Write(body);
+            }
+        }
+
     }
 }
