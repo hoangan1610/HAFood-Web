@@ -366,7 +366,6 @@ namespace HAFoodWeb.Pages
                     items.Add((line.variant_Id, line.quantity));
 
                     var price = line.price_Effective > 0 ? line.price_Effective : line.price_Variant; // ✅ ưu tiên giá hiệu lực
-
                     var qty = line.quantity;
 
                     snapshot.Add(new CheckoutDraftItem
@@ -389,8 +388,20 @@ namespace HAFoodWeb.Pages
                 return;
             }
 
+            // 🔹 ƯU TIÊN đọc phí ship từ hidden (do JS + /api/shipping/quote đã set)
+            if (!string.IsNullOrWhiteSpace(hidShippingFee.Value))
+            {
+                shipping = ParseMoneyFromLabel(hidShippingFee.Value);
+            }
+            else
+            {
+                // fallback: trong trường hợp nào đó hidden chưa có, đọc từ label (nhưng gần như luôn là 0)
+                shipping = ParseMoneyFromLabel(lblShipping.Text);
+            }
+
             var vat = Math.Round(subtotal * VAT_RATE, 0, MidpointRounding.AwayFromZero);
             var grand = subtotal + shipping + vat;
+
 
             string cityText = txtCitySel.Text?.Trim();
             string wardText = txtWardSel.Text?.Trim();
@@ -415,8 +426,15 @@ namespace HAFoodWeb.Pages
                 SelectedLineIds = lineIds.Count > 0 ? lineIds.ToArray() : null,
                 Items = items.ToArray(),
                 DeviceUuid = deviceUuid,
+
                 CityCode = txtCityCode.Text?.Trim(),
                 WardCode = txtWardCode.Text?.Trim(),
+
+                // ✅ mới: lấy tổng gram từ label "1.200 g"
+                // 🔹 NEW: đọc từ hidden mà JS đã set
+                TotalWeightGram = ParseIntFromLabel(hidTotalWeightGram.Value),
+
+
                 Snapshot = snapshot.ToArray(),
                 SnapshotSubtotal = subtotal,
                 SnapshotVat = vat,
@@ -452,11 +470,31 @@ namespace HAFoodWeb.Pages
         }
 
 
+
         /* ====== PageMethods cho popup ====== */
         [WebMethod(EnableSession = true)]
         public static AddressDto GetSelectedAddress()
         {
             return HttpContext.Current.Session["selected_address_obj"] as AddressDto;
         }
+
+        private static int ParseIntFromLabel(string text)
+        {
+            if (string.IsNullOrWhiteSpace(text)) return 0;
+            // Bỏ hết ký tự không phải số / dấu trừ
+            var s = Regex.Replace(text, @"[^\d\-]", "");
+            if (int.TryParse(s, out var n)) return n;
+            return 0;
+        }
+        private static decimal ParseMoneyFromLabel(string text)
+        {
+            if (string.IsNullOrWhiteSpace(text)) return 0m;
+            // Bỏ hết ký tự không phải số / dấu trừ
+            var s = System.Text.RegularExpressions.Regex.Replace(text, @"[^\d\-]", "");
+            if (decimal.TryParse(s, out var d)) return d;
+            return 0m;
+        }
+
+
     }
 }

@@ -25,6 +25,9 @@ namespace HAFoodWeb.Models
         public string CityCode { get; set; }
         public string WardCode { get; set; }
 
+        // ✅ NEW: tổng khối lượng (gram)
+        public int TotalWeightGram { get; set; }
+
         public CheckoutDraftItem[] Snapshot { get; set; }
         public decimal SnapshotSubtotal { get; set; }
         public decimal SnapshotVat { get; set; }
@@ -33,4 +36,6 @@ namespace HAFoodWeb.Models
 
         public decimal SnapshotDiscount { get; set; }
     }
+
+
 }

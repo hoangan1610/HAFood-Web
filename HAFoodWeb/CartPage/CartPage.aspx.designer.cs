@@ -329,7 +329,6 @@ namespace HAFoodWeb.Pages
         /// </remarks>
         protected global::HAFoodWeb.Cart.CartVouchers CartVouchers1;
 
-
         /// <summary>
         /// updSummary control.
         /// </summary>
@@ -358,6 +357,15 @@ namespace HAFoodWeb.Pages
         protected global::System.Web.UI.WebControls.Label lblTotalWeight;
 
         /// <summary>
+        /// hidTotalWeightGram control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.HiddenField hidTotalWeightGram;
+
+        /// <summary>
         /// lblSubtotal control.
         /// </summary>
         /// <remarks>
@@ -374,6 +382,15 @@ namespace HAFoodWeb.Pages
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
         protected global::System.Web.UI.WebControls.Label lblShipping;
+
+        /// <summary>
+        /// hidShippingFee control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.HiddenField hidShippingFee;
 
         /// <summary>
         /// lblVat control.

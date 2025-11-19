@@ -354,30 +354,43 @@ namespace HAFoodWeb.Services
     }
 
     // ✅ Cho phép null ở value types: long?, byte?
+    // ===== DTO gửi lên API /api/orders/checkout =====
     public class OrderCheckoutRequest
     {
         public long? cart_Id { get; set; }          // nullable để gửi null
+        public long? device_Id { get; set; }        // nullable
+
         public string ship_Name { get; set; } = "";
         public string ship_Full_Address { get; set; } = "";
         public string ship_Phone { get; set; } = "";
-        public byte payment_Method { get; set; }   // tinyint -> byte
 
-        public string ip { get; set; }              // bỏ ?
-        public string note { get; set; }            // bỏ ?
+        public byte payment_Method { get; set; }    // tinyint -> byte
+
+        public string ip { get; set; }              // optional
+        public string note { get; set; }            // optional
 
         public long? address_Id { get; set; }       // nullable
-        public long? device_Id { get; set; }        // nullable
 
-        public string promo_Code { get; set; }    // bỏ ?
-        public long[] selected_Line_Ids { get; set; }  // bỏ ?
-        public OrderItem[] items { get; set; }      // bỏ ?
+        public string promo_Code { get; set; }      // optional
+        public long[] selected_Line_Ids { get; set; }  // optional
+        public OrderItem[] items { get; set; }          // optional
+
+        // ✅ NEW: để BE tính phí ship theo địa chỉ + khối lượng
+        public string ship_City_Code { get; set; }      // mã tỉnh/thành
+        public string ship_Ward_Code { get; set; }      // mã xã/phường
+        public int? total_Weight_Gram { get; set; }     // tổng gram tất cả item
     }
 
+    // Mảng items[]
     public class OrderItem
     {
         public long variant_Id { get; set; }
         public int quantity { get; set; }
     }
+
+
+
+   
 
     public class OrderCheckoutResponse
     {

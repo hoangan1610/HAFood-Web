@@ -808,5 +808,18 @@
 
     }
 
+    // === Expose hàm global để CartPage gọi lại khi phí ship thay đổi ===
+    global.haRequoteVoucherTotals = function () {
+        try {
+            if (!currentOpts) return;
+            const code = getAppliedCode();   // đang áp mã nào (nếu có)
+            // Gọi lại quote với code hiện tại (hoặc rỗng)
+            quoteAndPatchTotals(currentOpts, code || '');
+        } catch (e) {
+            console.error('haRequoteVoucherTotals error', e);
+        }
+    };
+
     global.initCartVouchers = initCartVouchers;
 })(window);
+

@@ -7,6 +7,8 @@
 <%@ Register Src="~/Control/Footer.ascx" TagPrefix="uc" TagName="Footer" %>
 <%@ Register Src="~/CartPage/CartItem.ascx" TagPrefix="uc" TagName="CartItem" %>
 <%@ Register Src="~/CartPage/CartVouchers.ascx" TagPrefix="uc" TagName="CartVouchers" %>
+
+
 <!DOCTYPE html>
 <html lang="vi">
 <head runat="server">
@@ -267,6 +269,8 @@
     <asp:HiddenField ID="hidPromoDiscount" runat="server" />
     <asp:HiddenField ID="hidPromoMetaJson" runat="server" />
 
+
+
     <div class="page">
         <div class="page-grid">
             <!-- LEFT -->
@@ -411,10 +415,25 @@
                     <ContentTemplate>
                         <div class="summary">
                             <div class="summary-row"><span>Tổng số sản phẩm:</span><asp:Label ID="lblSumItems" runat="server" Text="0" /></div>
-                            <div class="summary-row"><span>Trọng lượng hàng:</span><asp:Label ID="lblTotalWeight" runat="server" Text="0" /></div>
+                            <div class="summary-row">
+    <span>Trọng lượng hàng:</span>
+    <asp:Label ID="lblTotalWeight" runat="server" Text="0" />
+    <%-- NEW: mirror tổng trọng lượng (gram) --%>
+    <asp:HiddenField ID="hidTotalWeightGram" runat="server" />
+</div>
+
                             <div class="summary-row"><span>Tổng tiền hàng:</span><asp:Label ID="lblSubtotal" runat="server" Text="0 ₫" /></div>
-                            <div class="summary-row"><span>Phí vận chuyển:</span><asp:Label ID="lblShipping" runat="server" Text="0 ₫" /></div>
-                            <div class="summary-row"><span>VAT (8%):</span><asp:Label ID="lblVat" runat="server" Text="0 ₫" /></div>
+                           <div class="summary-row">
+    <span>Phí vận chuyển:</span>
+    <asp:Label ID="lblShipping" runat="server" Text="0 ₫" />
+    <%-- NEW: mirror shipping cho server --%>
+    <asp:HiddenField ID="hidShippingFee" runat="server" />
+</div>
+<div class="summary-row">
+    <span>VAT (8%):</span>
+    <asp:Label ID="lblVat" runat="server" Text="0 ₫" />
+</div>
+
                             <div class="summary-row"><span>Giảm khuyến mãi:</span><asp:Label ID="lblDiscount" runat="server" Text="0 ₫" /></div>
                             <div class="grand">Tổng thanh toán: <asp:Label ID="lblGrandTotal" runat="server" Text="0 ₫" /></div>
                             <div style="padding:0 16px 16px">
@@ -662,7 +681,35 @@
                 },
                 whenReady() { return provincesReady.then(() => wardsReady); }
             };
+
+            // ⭐⭐ AUTO MAP CHO ĐỊA CHỈ MẶC ĐỊNH TỪ SERVER ⭐⭐
+            // Nếu server đã bơm sẵn tên Tỉnh/Thành + Xã/Phường nhưng code đang rỗng,
+            // thì map lại sang code ngay khi load xong data, rồi gọi quote ship.
+            (function autoMapInitialAddress() {
+                const needMap =
+                    (hidCityName.value && !hidCityCode.value) ||
+                    (hidWardName.value && !hidWardCode.value);
+
+                if (!needMap) return; // đã có code rồi thì thôi
+
+                window.cityWardAPI.setByNames(hidCityName.value, hidWardName.value)
+                    .then(function () {
+                        // Sau khi có code, nếu hàm quote ship đã tồn tại thì gọi luôn
+                        if (typeof window.haQuoteShipping === 'function') {
+                            window.haQuoteShipping();
+                        } else {
+                            // phòng trường hợp script ship load chậm hơn
+                            setTimeout(function () {
+                                if (typeof window.haQuoteShipping === 'function') {
+                                    window.haQuoteShipping();
+                                }
+                            }, 300);
+                        }
+                    })
+                    .catch(function (e) { console.error('autoMapInitialAddress error', e); });
+            })();
         })();
+
     </script>
 
     <!-- Cart JS + Address Popup + Confirm Delete + Toast -->
@@ -734,40 +781,59 @@
             function recalcTotals() {
                 let subtotal = 0,
                     sumItems = 0,
-                    totalWeightGram = 0; // ✅ tổng trọng lượng (gram)
+                    totalWeightGram = 0;
 
                 document.querySelectorAll('.cart-item').forEach(row => {
                     const cb = row.querySelector('input[type="checkbox"]');
                     if (!cb || !cb.checked) return;
 
                     const price = Number(row.getAttribute('data-price')) || 0;
-                    const unitWeight = Number(row.getAttribute('data-weight')) || 0; // ✅ lấy weight / 1 đơn vị
+                    const unitWeight = Number(row.getAttribute('data-weight')) || 0;
                     const qtyEl = row.querySelector('.qty-num');
                     const qty = Number(qtyEl?.textContent.trim() || '1') || 1;
 
                     subtotal += price * qty;
                     sumItems += qty;
-                    totalWeightGram += unitWeight * qty; // ✅ cộng dồn trọng lượng
+                    totalWeightGram += unitWeight * qty;
                 });
 
-                const vat = Math.round(subtotal * 0.08),
-                    ship = 0,
-                    grand = subtotal + vat + ship;
+                const vat = Math.round(subtotal * 0.08);
 
-                document.getElementById('<%= lblSubtotal.ClientID %>').textContent = fmt(subtotal);
-                document.getElementById('<%= lblVat.ClientID %>').textContent = fmt(vat);
-                document.getElementById('<%= lblShipping.ClientID %>').textContent = fmt(ship);
-                document.getElementById('<%= lblGrandTotal.ClientID %>').textContent = fmt(grand);
-    document.getElementById('<%= lblTotal.ClientID %>').textContent = fmt(subtotal);
-    document.getElementById('<%= lblSumItems.ClientID %>').textContent = String(sumItems);
+                // 🔹 NEW: lấy ship từ hidden (do quoteShipping bơm vào)
+                var hidShip = document.getElementById('<%= hidShippingFee.ClientID %>');
+                var ship = 0;
+                if (hidShip && hidShip.value) {
+                    ship = Number(hidShip.value) || 0;
+                }
 
-    // ✅ update "Trọng lượng hàng:"
-                var lblWeight = document.getElementById('<%= lblTotalWeight.ClientID %>');
+                const grand = subtotal + vat + ship;
+
+                const lblSubtotal = document.getElementById('<%= lblSubtotal.ClientID %>');
+                const lblVat = document.getElementById('<%= lblVat.ClientID %>');
+                const lblShipping = document.getElementById('<%= lblShipping.ClientID %>');
+                const lblGrand = document.getElementById('<%= lblGrandTotal.ClientID %>');
+    const lblTotal = document.getElementById('<%= lblTotal.ClientID %>');
+    const lblSumItems = document.getElementById('<%= lblSumItems.ClientID %>');
+
+    if (lblSubtotal) lblSubtotal.textContent = fmt(subtotal);
+    if (lblVat) lblVat.textContent = fmt(vat);
+    if (lblShipping) lblShipping.textContent = fmt(ship);
+    if (lblGrand) lblGrand.textContent = fmt(grand);
+    if (lblTotal) lblTotal.textContent = fmt(subtotal);
+    if (lblSumItems) lblSumItems.textContent = String(sumItems);
+
+    // ✅ update "Trọng lượng hàng:" (label + hidden)
+    var lblWeight = document.getElementById('<%= lblTotalWeight.ClientID %>');
+                var hidWeight = document.getElementById('<%= hidTotalWeightGram.ClientID %>');
                 if (lblWeight) {
                     lblWeight.textContent =
                         (Math.max(0, totalWeightGram) || 0).toLocaleString('vi-VN') + ' g';
                 }
+                if (hidWeight) {
+                    hidWeight.value = String(Math.max(0, totalWeightGram) || 0);
+                }
             }
+
 
             window.__cartAfterMutate = () => { recalcTotals(); updateSelectAllUI(); syncSelectedHidden(); };
 
@@ -859,33 +925,46 @@
             });
 
             function applyAddressToUI(dto) {
-                const pnlHas  = document.getElementById('<%= pnlAddrSession.ClientID %>');
-                const pnlNone = document.getElementById('<%= pnlNoAddr.ClientID %>');
-                if (pnlHas) pnlHas.style.display = 'block';
-                if (pnlNone) pnlNone.style.display = 'none';
+                const pnlHas = document.getElementById('<%= pnlAddrSession.ClientID %>');
+                            const pnlNone = document.getElementById('<%= pnlNoAddr.ClientID %>');
+                            if (pnlHas) pnlHas.style.display = 'block';
+                            if (pnlNone) pnlNone.style.display = 'none';
 
-                const nameEl   = document.getElementById('<%= lblAddrName.ClientID %>');
-                const phoneEl  = document.getElementById('<%= lblAddrPhone.ClientID %>');
+                            const nameEl = document.getElementById('<%= lblAddrName.ClientID %>');
+                            const phoneEl = document.getElementById('<%= lblAddrPhone.ClientID %>');
                 const detailEl = document.getElementById('<%= lblAddrDetail.ClientID %>');
 
-                if (nameEl) nameEl.textContent   = dto.fullName || '';
-                if (phoneEl) phoneEl.textContent = dto.phone || '';
+                if (nameEl)   nameEl.textContent   = dto.fullName || '';
+                if (phoneEl)  phoneEl.textContent  = dto.phone || '';
                 if (detailEl) detailEl.textContent = dto.fullAddress || '';
 
                 const street = parseStreet(dto.fullAddress || '');
                 document.getElementById('<%= txtAddress.ClientID %>').value  = street;
                 document.getElementById('<%= txtReceiver.ClientID %>').value = dto.fullName || '';
-                document.getElementById('<%= txtPhone.ClientID %>').value    = dto.phone || '';
+                document.getElementById('<%= txtPhone.ClientID %>').value = dto.phone || '';
 
                 const cityName = extractCity(dto.fullAddress || '');
                 const wardName = extractWard(dto.fullAddress || '');
 
+                // Map lại City/Ward sang code rồi quote ship
                 if (window.cityWardAPI && window.cityWardAPI.setByNames) {
-                    return window.cityWardAPI.setByNames(cityName, wardName).finally(lockAddressUI);
+                    return window.cityWardAPI.setByNames(cityName, wardName)
+                        .then(function () {
+                            if (typeof window.haQuoteShipping === 'function') {
+                                window.haQuoteShipping();
+                            }
+                        })
+                        .finally(lockAddressUI);
                 }
+
+                // Fallback: không có cityWardAPI thì vẫn lock + quote
                 lockAddressUI();
+                if (typeof window.haQuoteShipping === 'function') {
+                    window.haQuoteShipping();
+                }
                 return Promise.resolve();
             }
+
 
             function parseStreet(full) {
                 const parts = (full || '').split(',').map(s => s.trim()).filter(Boolean);
@@ -1211,6 +1290,131 @@
             }
             return true;
         }
+    </script>
+    <script>
+        (function () {
+            // Lấy API base từ hidden
+            var apiBaseEl = document.getElementById('<%= hidApiBase.ClientID %>');
+        var apiBase = (apiBaseEl && apiBaseEl.value || '').trim().replace(/\/+$/, '');
+
+        function parseMoney(text) {
+            var s = (text || '').replace(/[^\d\-]/g, '');
+            var n = parseInt(s, 10);
+            return Number.isFinite(n) ? n : 0;
+        }
+
+        async function quoteShipping() {
+            if (!apiBase) return;
+
+            var cityCode = (document.getElementById('<%= txtCityCode.ClientID %>')?.value || '').trim();
+            var wardCode = (document.getElementById('<%= txtWardCode.ClientID %>')?.value || '').trim();
+
+            // Chưa chọn đủ Tỉnh/Thành + Xã/Phường -> coi như chưa tính ship
+            if (!cityCode || !wardCode) {
+                var lblShip = document.getElementById('<%= lblShipping.ClientID %>');
+    if (lblShip) lblShip.textContent = '0 ₫';
+
+                var hidShip0 = document.getElementById('<%= hidShippingFee.ClientID %>');
+                if (hidShip0) hidShip0.value = '0';
+
+                if (window.haRequoteVoucherTotals) {
+                    window.haRequoteVoucherTotals();
+                }
+                return;
+            }
+
+
+            var lblSubtotal = document.getElementById('<%= lblSubtotal.ClientID %>');
+            var lblWeight = document.getElementById('<%= lblTotalWeight.ClientID %>');
+            var subtotal = parseMoney(lblSubtotal ? lblSubtotal.textContent : '0');
+
+            // lblTotalWeight đang dạng "1.200 g" → bóc số
+            var totalWeightGram = parseMoney(lblWeight ? lblWeight.textContent : '0');
+
+            var payload = {
+                cityCode: cityCode,
+                wardCode: wardCode,
+                subtotal: subtotal,
+                totalWeightGram: totalWeightGram,
+                channel: 1
+            };
+
+            try {
+                var resp = await fetch(apiBase + '/api/shipping/quote', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify(payload)
+                });
+
+                if (!resp.ok) throw new Error('HTTP ' + resp.status);
+                var json = await resp.json();
+
+                var fee = Number(json.shippingFee || json.shipping_fee || 0) || 0;
+
+                // 🔹 NEW: lưu vào hidden để server đọc
+                var hidShip = document.getElementById('<%= hidShippingFee.ClientID %>');
+                if (hidShip) {
+                    hidShip.value = String(fee);
+                }
+
+                var lblShip2 = document.getElementById('<%= lblShipping.ClientID %>');
+                if (lblShip2) {
+                    lblShip2.textContent = fee.toLocaleString('vi-VN') + ' ₫';
+                }
+
+                // 🔹 (optional) cập nhật luôn GrandTotal local (nếu không muốn phụ thuộc voucher)
+                var lblSubtotal2 = document.getElementById('<%= lblSubtotal.ClientID %>');
+var lblVat2 = document.getElementById('<%= lblVat.ClientID %>');
+                var lblGrand = document.getElementById('<%= lblGrandTotal.ClientID %>');
+
+                var subtotal2 = parseMoney(lblSubtotal2 ? lblSubtotal2.textContent : '0');
+                var vat2 = Math.round(subtotal2 * 0.08);
+                if (lblVat2) lblVat2.textContent = vat2.toLocaleString('vi-VN') + ' ₫';
+                if (lblGrand) lblGrand.textContent = (subtotal2 + vat2 + fee).toLocaleString('vi-VN') + ' ₫';
+
+                // Gọi lại voucher để tổng tiền sync (nếu có KM)
+                if (window.haRequoteVoucherTotals) {
+                    window.haRequoteVoucherTotals();
+                }
+
+            } catch (e) {
+                console.error('quoteShipping error', e);
+                var lblShip3 = document.getElementById('<%= lblShipping.ClientID %>');
+                    if (lblShip3) lblShip3.textContent = '0 ₫';
+
+                    if (window.haRequoteVoucherTotals) {
+                        window.haRequoteVoucherTotals();
+                    }
+                }
+            }
+
+            // Expose cho chỗ khác nếu cần
+            window.haQuoteShipping = quoteShipping;
+
+            // Gọi khi page load
+            if (document.readyState === 'complete' || document.readyState === 'interactive') {
+                setTimeout(quoteShipping, 0);
+            } else {
+                document.addEventListener('DOMContentLoaded', function () {
+                    setTimeout(quoteShipping, 0);
+                });
+            }
+
+            // Gọi lại khi user đổi Tỉnh/Thành hoặc Xã/Phường (combochange là event trong createCombo)
+            document.getElementById('cmbCity')?.addEventListener('combochange', function () {
+                quoteShipping();
+            });
+            document.getElementById('cmbWard')?.addEventListener('combochange', function () {
+                quoteShipping();
+            });
+
+            // Nếu sau này anh có postback bằng UpdatePanel, có thể hook thêm:
+            // if (window.Sys && Sys.WebForms && Sys.WebForms.PageRequestManager) {
+            //     var prm = Sys.WebForms.PageRequestManager.getInstance();
+            //     prm.add_endRequest(function() { quoteShipping(); });
+            // }
+        })();
     </script>
 
 </form>

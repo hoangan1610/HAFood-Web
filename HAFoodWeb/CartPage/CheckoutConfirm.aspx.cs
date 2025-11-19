@@ -34,6 +34,22 @@ namespace HAFoodWeb
         private static decimal Eff(decimal priceEffective, decimal priceVariant)
             => priceEffective > 0 ? priceEffective : priceVariant;
 
+
+        // ✅ Helper tính phí ship giống rule BE
+        private static decimal CalcShipping(decimal subtotal, string cityCode, string wardCode)
+        {
+            var hasAddr = !string.IsNullOrWhiteSpace(cityCode)
+                          && !string.IsNullOrWhiteSpace(wardCode);
+
+            // Chưa có địa chỉ đủ / không có tiền hàng → không tính ship
+            if (!hasAddr || subtotal <= 0) return 0m;
+
+            // Rule mẫu: >= 300k free, < 300k thu 25k
+            if (subtotal >= 300000m) return 0m;
+
+            return 25000m;
+        }
+
         protected async void Page_Load(object sender, EventArgs e)
         {
             Response.Cache.SetCacheability(System.Web.HttpCacheability.NoCache);
@@ -160,7 +176,8 @@ namespace HAFoodWeb
                     Session[SK_DRAFT] = draft;
 
                     subtotal = draft.SnapshotSubtotal;
-                    shipping = draft.SnapshotShipping;
+                    // ❌ shipping chưa gán ở đây, sẽ xử lý phía dưới
+                    // shipping = draft.SnapshotShipping;
                 }
                 else
                 {
@@ -177,8 +194,24 @@ namespace HAFoodWeb
                 }
             }
 
+
+         
+
+            // ✅ ƯU TIÊN dùng đúng phí ship user thấy ở CartPage
             rptItems.DataSource = displayItems;
             rptItems.DataBind();
+
+            // ✅ ƯU TIÊN dùng đúng phí ship user thấy ở CartPage
+            if (draft.SnapshotShipping > 0)
+            {
+                shipping = draft.SnapshotShipping;  // ví dụ 20.000 ₫
+            }
+            else
+            {
+                // Nếu snapshot chưa có (trường hợp cũ / bug), fallback tính tạm theo rule
+                shipping = CalcShipping(subtotal, draft.CityCode, draft.WardCode);
+            }
+
 
             var vat = Math.Round(subtotal * VAT_RATE, 0, MidpointRounding.AwayFromZero);
 
@@ -510,6 +543,11 @@ namespace HAFoodWeb
                 device_Id = null,
                 promo_Code = draft.PromoCode,
 
+                // ✅ MỚI: bơm thêm thông tin để BE tính ship
+                ship_City_Code = draft.CityCode,
+                ship_Ward_Code = draft.WardCode,
+                total_Weight_Gram = draft.TotalWeightGram,
+
                 selected_Line_Ids = (draft.SelectedLineIds != null && draft.SelectedLineIds.Length > 0)
                     ? draft.SelectedLineIds
                     : (long[])null,
@@ -613,6 +651,7 @@ namespace HAFoodWeb
                     actionsHtml: $"<button class='btn-soft' onclick=\"location.reload()\">Thử lại</button>");
             }
         }
+
 
         private void ShowNiceError(string code, string title, string message, string actionsHtml = null)
         {
