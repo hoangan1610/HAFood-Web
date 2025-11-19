@@ -732,23 +732,43 @@
             }
 
             function recalcTotals() {
-                let subtotal = 0, sumItems = 0;
+                let subtotal = 0,
+                    sumItems = 0,
+                    totalWeightGram = 0; // ✅ tổng trọng lượng (gram)
+
                 document.querySelectorAll('.cart-item').forEach(row => {
                     const cb = row.querySelector('input[type="checkbox"]');
                     if (!cb || !cb.checked) return;
+
                     const price = Number(row.getAttribute('data-price')) || 0;
+                    const unitWeight = Number(row.getAttribute('data-weight')) || 0; // ✅ lấy weight / 1 đơn vị
                     const qtyEl = row.querySelector('.qty-num');
                     const qty = Number(qtyEl?.textContent.trim() || '1') || 1;
-                    subtotal += price * qty; sumItems += qty;
+
+                    subtotal += price * qty;
+                    sumItems += qty;
+                    totalWeightGram += unitWeight * qty; // ✅ cộng dồn trọng lượng
                 });
-                const vat = Math.round(subtotal * 0.08), ship = 0, grand = subtotal + vat + ship;
+
+                const vat = Math.round(subtotal * 0.08),
+                    ship = 0,
+                    grand = subtotal + vat + ship;
+
                 document.getElementById('<%= lblSubtotal.ClientID %>').textContent = fmt(subtotal);
                 document.getElementById('<%= lblVat.ClientID %>').textContent = fmt(vat);
                 document.getElementById('<%= lblShipping.ClientID %>').textContent = fmt(ship);
                 document.getElementById('<%= lblGrandTotal.ClientID %>').textContent = fmt(grand);
-                document.getElementById('<%= lblTotal.ClientID %>').textContent = fmt(subtotal);
-                document.getElementById('<%= lblSumItems.ClientID %>').textContent = String(sumItems);
+    document.getElementById('<%= lblTotal.ClientID %>').textContent = fmt(subtotal);
+    document.getElementById('<%= lblSumItems.ClientID %>').textContent = String(sumItems);
+
+    // ✅ update "Trọng lượng hàng:"
+                var lblWeight = document.getElementById('<%= lblTotalWeight.ClientID %>');
+                if (lblWeight) {
+                    lblWeight.textContent =
+                        (Math.max(0, totalWeightGram) || 0).toLocaleString('vi-VN') + ' g';
+                }
             }
+
             window.__cartAfterMutate = () => { recalcTotals(); updateSelectAllUI(); syncSelectedHidden(); };
 
             /* ===== HARD-LOCK UI các trường địa chỉ (combo + 3 input) ===== */

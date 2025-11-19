@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Globalization;
 using System.Web;
 using System.Web.UI;
 using System.Web.UI.HtmlControls;
@@ -86,6 +87,8 @@ namespace HAFoodWeb.Cart
                 else Wrap.Attributes.Remove("data-variant-id");
 
                 Wrap.Attributes["data-price"] = Price.ToString(System.Globalization.CultureInfo.InvariantCulture);
+
+                Wrap.Attributes["data-weight"] = WeightPerUnit.ToString(CultureInfo.InvariantCulture);
             }
 
             // đảm bảo số lượng > 0 và sync literal

@@ -232,11 +232,14 @@ namespace HAFoodWeb.Pages
             cartItem.VariantId = data.variant_Id;
             cartItem.ProductName = data.product_Name;
             cartItem.VariantName = data.variant_Name;
-            cartItem.ImageUrl = data.image_Variant;
+            cartItem.ImageUrl = data.image_Variant ?? data.image_Product;
             cartItem.Price = (data.price_Effective > 0 ? data.price_Effective : data.price_Variant);
 
             cartItem.Quantity = data.quantity;
-            cartItem.WeightPerUnit = 0m;
+
+            // 👇 GÁN TRỌNG LƯỢNG / 1 ĐƠN VỊ (GRAM)
+            cartItem.WeightPerUnit = data.variant_Weight;   // int → decimal, C# tự cast
+
         }
 
         private void UpdateTotalsPanel()
@@ -244,7 +247,9 @@ namespace HAFoodWeb.Pages
             decimal subtotal = 0m;
             int sumItems = 0;
             decimal shipping = 0m;
-            decimal weight = 0m;
+
+            // tổng gram
+            decimal totalWeightGram = 0m;
 
             foreach (RepeaterItem item in rptCart.Items)
             {
@@ -253,6 +258,9 @@ namespace HAFoodWeb.Pages
                 {
                     subtotal += cartItem.Price * cartItem.Quantity;
                     sumItems += cartItem.Quantity;
+
+                    // 👇 cộng weight (gram * qty)
+                    totalWeightGram += cartItem.WeightPerUnit * cartItem.Quantity;
                 }
             }
 
@@ -262,12 +270,16 @@ namespace HAFoodWeb.Pages
             var viVN = System.Globalization.CultureInfo.GetCultureInfo("vi-VN");
             lblTotal.Text = string.Format(viVN, "{0:N0} ₫", subtotal);
             lblSumItems.Text = sumItems.ToString();
-            lblTotalWeight.Text = string.Format("{0:N0}", weight);
+
+            // Hiển thị dạng "xxx g"
+            lblTotalWeight.Text = string.Format("{0:N0} g", totalWeightGram);
+
             lblSubtotal.Text = string.Format(viVN, "{0:N0} ₫", subtotal);
             lblShipping.Text = string.Format(viVN, "{0:N0} ₫", shipping);
             lblVat.Text = string.Format(viVN, "{0:N0} ₫", vat);
             lblGrandTotal.Text = string.Format(viVN, "{0:N0} ₫", grand);
         }
+
 
         private static string MergeAddress(string street, string wardText, string cityText)
         {

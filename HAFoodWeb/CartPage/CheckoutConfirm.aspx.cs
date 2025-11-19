@@ -182,10 +182,27 @@ namespace HAFoodWeb
 
             var vat = Math.Round(subtotal * VAT_RATE, 0, MidpointRounding.AwayFromZero);
 
-            // Re-quote khuyến mãi (fallback snapshot nếu lỗi)
-            decimal discount = 0m;
-            try { discount = await QuoteDiscountAsync(draft, subtotal); }
-            catch { discount = draft.SnapshotDiscount; }
+            // ⭐ BẮT ĐẦU TỪ SNAPSHOT (GIÁ TRỊ GIẢM TẠM THỜI TÍNH Ở CART)
+            decimal discount = draft.SnapshotDiscount;
+
+            // Nếu có mã KM thì thử re-quote, chỉ override nếu kết quả > 0
+            if (!string.IsNullOrWhiteSpace(draft.PromoCode))
+            {
+                try
+                {
+                    var quoted = await QuoteDiscountAsync(draft, subtotal);
+
+                    // Nếu API quote ra số dương → dùng nó
+                    if (quoted > 0)
+                        discount = quoted;
+                    // Nếu quoted <= 0 → giữ nguyên discount từ snapshot
+                }
+                catch
+                {
+                    // lỗi thì giữ snapshot như cũ, khỏi làm gì
+                }
+            }
+
             if (discount < 0) discount = 0;
 
             var grand = Math.Max(0m, subtotal + shipping + vat - discount);
@@ -193,10 +210,17 @@ namespace HAFoodWeb
             lblSubtotal.Text = string.Format(viVN, "{0:N0} ₫", subtotal);
             lblShipping.Text = string.Format(viVN, "{0:N0} ₫", shipping);
             lblVat.Text = string.Format(viVN, "{0:N0} ₫", vat);
-            lblDiscount.Text = "-" + string.Format(viVN, "{0:N0} ₫", discount);
+
+            // Nếu muốn 0 thì không in dấu trừ
+            if (discount == 0)
+                lblDiscount.Text = string.Format(viVN, "{0:N0} ₫", 0);
+            else
+                lblDiscount.Text = "-" + string.Format(viVN, "{0:N0} ₫", discount);
+
             lblGrandTotal.Text = string.Format(viVN, "{0:N0} ₫", grand);
 
             Session[SK_TOTALS] = (subtotal, shipping);
+
         }
 
         // Helper gọi /api/promotions/cart/quote để lấy tổng giảm (Newtonsoft.Json + C# 7.3)
