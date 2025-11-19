@@ -236,7 +236,11 @@
             updateAppliedChip();
 
             // 👉 Nếu anh muốn hiện thông báo, chèn vào đây:
-            showVoucherNotice(`Mã ${payload.code} đã được gỡ vì đơn hàng không còn đủ điều kiện.`);
+            const msg = reasonText || statusText
+                ? `Mã ${payload.code} không áp dụng: ${reasonText || statusText}`
+                : `Mã ${payload.code} đã được gỡ vì đơn hàng không còn đủ điều kiện.`;
+            showVoucherNotice(msg);
+
 
             return; // dừng luôn, không xử lý tiếp nữa
         }
@@ -260,14 +264,36 @@
     function renderVouchers(listSel, promos) {
         const host = document.querySelector(listSel); if (!host) return;
         host.innerHTML = ''; const list = Array.isArray(promos) ? promos : [];
-        if (!list.length) { host.innerHTML = '<div class="vouch-note">Hiện chưa có khuyến mãi phù hợp cho giỏ hàng này.</div>'; updateAppliedChip(); return; }
+        if (!list.length) {
+            host.innerHTML = '<div class="vouch-note">Hiện chưa có khuyến mãi phù hợp cho giỏ hàng này.</div>';
+            updateAppliedChip();
+            return;
+        }
         const applied = getAppliedCode();
 
         for (const p of list) {
             const name = p.name ?? p.code ?? 'Khuyến mãi';
             const code = p.code ?? p.Code ?? '';
-            const desc = p.status_text ?? p.statusText ?? p.description ?? 'Áp dụng theo điều kiện chương trình.';
-            const disabled = (p.is_disabled === true) || (p.isDisabled === true) || (p.eligible === false) || (p.Eligible === false) || (p.can_apply === false) || (p.canApply === false) || (typeof desc === 'string' && /không|chưa|hết/i.test(desc));
+
+            // 🔸 GỘP statusText + reason
+            //const statusText = p.status_text ?? p.statusText ?? p.description ?? '';
+            //const reasonText = p.reason ?? p.Reason ?? '';
+            //let desc = statusText || 'Áp dụng theo điều kiện chương trình.';
+            //if (reasonText && !desc.includes(reasonText)) {
+            //    desc += ' – ' + reasonText;
+            //}
+
+            const desc = buildPromoDesc(p);
+
+            const disabled =
+                (p.is_disabled === true) ||
+                (p.isDisabled === true) ||
+                (p.eligible === false) ||
+                (p.Eligible === false) ||
+                (p.can_apply === false) ||
+                (p.canApply === false) ||
+                (typeof desc === 'string' && /không|chưa|hết/i.test(desc));
+
             const isActive = applied && code && (applied.toUpperCase() === String(code).toUpperCase());
             const card = document.createElement('div'); card.className = 'voucher-card';
             card.innerHTML =
@@ -275,6 +301,7 @@
                 '<div class="vouch-main">' +
                 `<div class="vouch-name">${name}</div>` +
                 (code ? `<div class="vouch-code">${code}</div>` : '') +
+                // 🔸 dùng desc đã gộp reason
                 `<div class="vouch-desc">${desc}</div>` +
                 '</div>' +
                 '<div class="vouch-cta"></div>';
@@ -314,7 +341,29 @@
         if (had) await releaseVoucher('user_clear');
         renderVouchers(currentOpts.selectors.listEl, []); // sync aria
     }
-    // ===== Kết hợp voucher chung + voucher cá nhân =====
+   
+
+    // 🔹 Build mô tả đẹp cho voucher (gộp reason + format min)
+    function buildPromoDesc(p) {
+        const statusText = p.status_text ?? p.statusText ?? '';
+        const reasonText = p.reason ?? p.Reason ?? '';
+        const min = Number(p.min_order_amount ?? p.minOrderAmount ?? 0) || 0;
+
+        // Case: BE trả reason kiểu "Không đạt giá trị tối thiểu 100000.00"
+        if (/không đạt giá trị tối thiểu/i.test(reasonText) && min > 0) {
+            // Dùng fmtVn nhưng bỏ khoảng trắng trước ₫ cho đẹp
+            const minStr = fmtVn(min).replace(/\s*₫/, '₫');
+            return `Áp dụng cho đơn từ ${minStr}`;
+        }
+
+        // Các case khác giữ logic cũ
+        let desc = statusText || reasonText || p.description || 'Áp dụng theo điều kiện chương trình.';
+        if (reasonText && !desc.includes(reasonText) && desc !== reasonText) {
+            desc += ' – ' + reasonText;
+        }
+        return desc;
+    }
+
     // ===== Kết hợp voucher chung + voucher cá nhân =====
     async function fetchPromosForCart(opts, items, subtotal, shipping) {
         console.log('[voucher] fetchPromosForCart START, jwt =', opts && opts.jwt,
@@ -660,27 +709,35 @@
                     function rowTpl(p, appliedCode) {
                         const name = p.name ?? p.code ?? 'Khuyến mãi';
                         const code = p.code ?? p.Code ?? '';
-                        const desc = p.status_text ?? p.statusText ?? p.description ?? 'Áp dụng theo điều kiện chương trình.';
-                        const disabled = (p.is_disabled === true) || (p.isDisabled === true) ||
+
+                        // 🔸 GỘP statusText + reason
+                        const desc = buildPromoDesc(p);
+
+
+                        const disabled =
+                            (p.is_disabled === true) || (p.isDisabled === true) ||
                             (p.eligible === false) || (p.Eligible === false) ||
                             (p.can_apply === false) || (p.canApply === false) ||
                             (typeof desc === 'string' && /không|chưa|hết/i.test(desc));
                         const isActive = appliedCode && code && (appliedCode.toUpperCase() === String(code).toUpperCase());
+
                         const row = document.createElement('label');
                         row.className = 'vouch-row';
                         row.innerHTML = `
-          <div class="v-lhs">VOUCHER</div>
-          <div class="v-mid">
-            <div class="v-name">${name} ${p.for_you ? '<span class="voucher-tag">Dành riêng cho bạn</span>' : ''}</div>
-            ${code ? `<div class="v-code">${code}</div>` : ''}
-            <div class="v-desc">${desc}</div>
-          </div>
-          <div class="v-cta">
-            <input type="radio" name="vsel" class="voucher-radio"
-                   ${isActive ? 'checked' : ''} ${disabled ? 'disabled' : ''} data-code="${code}">
-          </div>`;
+      <div class="v-lhs">VOUCHER</div>
+      <div class="v-mid">
+        <div class="v-name">${name} ${p.for_you ? '<span class="voucher-tag">Dành riêng cho bạn</span>' : ''}</div>
+        ${code ? `<div class="v-code">${code}</div>` : ''}
+        <!-- 🔸 dùng desc đã gộp reason -->
+        <div class="v-desc">${desc}</div>
+      </div>
+      <div class="v-cta">
+        <input type="radio" name="vsel" class="voucher-radio"
+               ${isActive ? 'checked' : ''} ${disabled ? 'disabled' : ''} data-code="${code}">
+      </div>`;
                         return row;
                     }
+
 
                     if (listHost) {
                         listHost.innerHTML = '';
