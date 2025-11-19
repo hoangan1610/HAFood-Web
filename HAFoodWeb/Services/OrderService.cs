@@ -179,77 +179,56 @@ namespace HAFoodWeb.Services
                 throw new InvalidOperationException("ApiBaseUrl is not configured.");
 
             var codeEsc = Uri.EscapeDataString(orderCode);
+            var url = $"{_apiBase}/api/orders/{codeEsc}/payment-link";
 
-            // Thử tuần tự các endpoint có thể có trên BE
-            var tries = new (HttpMethod method, string url, object body)[]
+            // Body khớp CreatePayLinkDto { Method }
+            var bodyObj = new { Method = method }; // hoặc new { method = method }; model binding case-insensitive nên đều được
+            var json = JsonConvert.SerializeObject(bodyObj);
+
+            var req = new HttpRequestMessage(HttpMethod.Post, url)
             {
-        // Orders module
-        (HttpMethod.Post, $"{_apiBase}/api/orders/{codeEsc}/payment-link",            new { method }),
-        (HttpMethod.Get,  $"{_apiBase}/api/orders/{codeEsc}/payment-link?method={method}", null),
-        (HttpMethod.Post, $"{_apiBase}/api/orders/payment-link",                     new { order_code = orderCode, method }),
-        (HttpMethod.Post, $"{_apiBase}/api/orders/payment/init",                     new { order_code = orderCode, method }),
-
-        // Payments module
-        (HttpMethod.Post, $"{_apiBase}/api/payments/create-link",                    new { order_code = orderCode, method }),
-        (HttpMethod.Post, $"{_apiBase}/api/payments/payment-link",                   new { order_code = orderCode, method }),
-        (HttpMethod.Get,  $"{_apiBase}/api/payments/create-link?order_code={codeEsc}&method={method}", null),
-        (HttpMethod.Get,  $"{_apiBase}/api/payments/payment-link?order_code={codeEsc}&method={method}", null),
+                Content = new StringContent(json, Encoding.UTF8, "application/json")
             };
+            req.Headers.Accept.ParseAdd("*/*");
+            AttachAuthHeader(req);
 
-            Exception last = null;
+            var resp = await HttpJson.Client.SendAsync(req);
+            var text = await resp.Content.ReadAsStringAsync();
 
-            foreach (var (m, url, body) in tries)
+            Debug.WriteLine($"POST {url}\nREQ: {json}\nRESP({(int)resp.StatusCode}): {text}");
+
+            if (!resp.IsSuccessStatusCode)
+                throw new ApplicationException($"Create payment link failed {(int)resp.StatusCode}: {text}");
+
+            JObject obj;
+            try
             {
-                try
+                obj = JsonConvert.DeserializeObject<JObject>(text);
+            }
+            catch
+            {
+                // fallback: nếu BE sau này trả plain text URL
+                var trimmed = (text ?? "").Trim().Trim('"');
+                if (!string.IsNullOrWhiteSpace(trimmed) &&
+                    trimmed.StartsWith("http", StringComparison.OrdinalIgnoreCase))
                 {
-                    var req = new HttpRequestMessage(m, url);
-                    req.Headers.Accept.ParseAdd("*/*");
-                    AttachAuthHeader(req);
-                    if (m != HttpMethod.Get && body != null)
-                        req.Content = new StringContent(JsonConvert.SerializeObject(body), Encoding.UTF8, "application/json");
-
-                    var resp = await HttpJson.Client.SendAsync(req);
-                    var text = await resp.Content.ReadAsStringAsync();
-                    Debug.WriteLine($"PAYLINK TRY {m} {url} -> {(int)resp.StatusCode}\n{text}");
-
-                    if (!resp.IsSuccessStatusCode)
-                    {
-                        // 404: thử endpoint kế tiếp
-                        if (resp.StatusCode == HttpStatusCode.NotFound) { last = new ApplicationException($"404 {url}"); continue; }
-                        // Lỗi khác → ném luôn (hết vòng sẽ bị catch và return lỗi)
-                        throw new ApplicationException($"Create payment link failed {(int)resp.StatusCode}: {text}");
-                    }
-
-                    // Parse linh hoạt JSON
-                    try
-                    {
-                        var obj = JsonConvert.DeserializeObject<JObject>(text);
-                        if (obj != null)
-                        {
-                            var payUrl = obj.Value<string>("payment_Url")
-                                     ?? obj.Value<string>("paymentUrl")
-                                     ?? obj.Value<string>("redirectUrl")
-                                     ?? obj.Value<string>("url");
-                            if (!string.IsNullOrWhiteSpace(payUrl)) return payUrl;
-                        }
-                    }
-                    catch { /* ignore */ }
-
-                    // Plain text
-                    var trimmed = (text ?? "").Trim().Trim('"');
-                    if (trimmed.StartsWith("http", StringComparison.OrdinalIgnoreCase))
-                        return trimmed;
-
-                    last = new ApplicationException("Success but cannot parse payment url: " + text);
+                    return trimmed;
                 }
-                catch (Exception ex)
-                {
-                    last = ex; // lưu lại để báo khi hết fallback
-                }
+                throw new ApplicationException("Success but cannot parse payment url: " + text);
             }
 
-            throw new ApplicationException(last?.Message ?? "Create payment link failed.");
+            // CHÚ Ý: đúng key là payment_url (chữ u thường)
+            var payUrl = obj.Value<string>("payment_url")
+                     ?? obj.Value<string>("payment_Url")
+                     ?? obj.Value<string>("paymentUrl")
+                     ?? obj.Value<string>("url");
+
+            if (string.IsNullOrWhiteSpace(payUrl))
+                throw new ApplicationException("Payment url not found in response: " + text);
+
+            return payUrl;
         }
+
 
 
 
