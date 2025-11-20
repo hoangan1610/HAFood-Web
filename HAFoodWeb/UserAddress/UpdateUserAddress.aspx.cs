@@ -8,6 +8,7 @@ using System.Text.RegularExpressions;
 using Newtonsoft.Json;
 using HAFoodWeb.Models;
 using HAFoodWeb.Services;
+using System.Web.UI; // cần cho ScriptManager
 
 namespace HAFoodWeb.UserAddress
 {
@@ -185,7 +186,6 @@ namespace HAFoodWeb.UserAddress
                 return false;
             }
 
-            // ====== Kiểm tra ĐỊNH DẠNG (gộp lỗi) ======
             var errs = new List<string>();
 
             var name = (txtFullName.Text ?? "").Trim();
@@ -210,10 +210,30 @@ namespace HAFoodWeb.UserAddress
             return true;
         }
 
+        // 🔧 SỬA: đăng ký script đợi tới khi window.showToast tồn tại mới gọi
         private void Toast(string message, string variant)
         {
-            var js = $"showToast({HttpUtility.JavaScriptStringEncode(message, true)}, '{variant}');";
-            ClientScript.RegisterStartupScript(this.GetType(), Guid.NewGuid().ToString(), js, true);
+            var msg = HttpUtility.JavaScriptStringEncode(message, true);
+            var key = "toast_" + Guid.NewGuid().ToString("N");
+
+            var js = $@"
+(function() {{
+  function fire() {{
+    if (window.showToast) {{
+      window.showToast({msg}, '{variant}');
+    }} else {{
+      setTimeout(fire, 50);
+    }}
+  }}
+  if (document.readyState === 'complete') fire();
+  else window.addEventListener('load', fire);
+}})();";
+
+            var sm = ScriptManager.GetCurrent(this);
+            if (sm != null)
+                ScriptManager.RegisterStartupScript(this, GetType(), key, js, true);
+            else
+                ClientScript.RegisterStartupScript(GetType(), key, js, true);
         }
 
         private void RedirectWithToast(string relativeUrl, string toastKey)

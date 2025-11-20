@@ -15,24 +15,37 @@
         body{
             font-family:'Segoe UI',system-ui,-apple-system,BlinkMacSystemFont,sans-serif;
             margin:0;
-            /* nền giống OrderPage */
+            min-height:100%;
             background:radial-gradient(circle at top left,#ffe8cc 0,#f8f9fa 40%,#e9ecef 100%);
         }
 
-        /* Header ngoài, không còn là card */
         .page-header{
             width:100%;
             max-width:100% !important;
-            margin:20px 0 8px !important;
-            padding:0 16px !important; 
+            margin:16px 0 4px !important;
+            padding:0 16px !important;
             background:transparent;
             box-shadow:none;
         }
         body { overflow-x: hidden; }
 
-        .wrap{ max-width:900px; margin:0 auto 32px; padding:0 16px 24px; }
-        .wrap-inner{ background:#fff; border-radius:1.25rem; box-shadow:0 .75rem 1.8rem rgba(15,23,42,.14); padding:1.3rem 1.4rem 1.5rem; }
-        .topbar{ display:flex; align-items:flex-start; gap:10px; padding:4px 0 16px; }
+        .wrap{
+            max-width:900px;
+            margin:0 auto 20px;
+            padding:0 16px 16px;
+        }
+        .wrap-inner{
+            background:#fff;
+            border-radius:1.25rem;
+            box-shadow:0 .75rem 1.8rem rgba(15,23,42,.14);
+            padding:1.1rem 1.25rem 1.3rem;
+        }
+        .topbar{
+            display:flex;
+            align-items:flex-start;
+            gap:10px;
+            padding:4px 0 12px;
+        }
 
         .title-badge{
             font-size:.75rem; letter-spacing:.08em; text-transform:uppercase; font-weight:700;
@@ -41,7 +54,6 @@
         }
         .title-badge i{ font-size:.9rem; }
         .page-title{ font-weight:700; font-size:1.6rem; color:#212529; margin:0 0 .2rem; }
-        .page-subtitle{ font-size:.9rem; color:#6c757d; margin:0; }
 
         .card{background:#fff;border-radius:12px;box-shadow:0 4px 10px rgba(0,0,0,.05);padding:12px}
         .addr-item{display:grid;grid-template-columns:1fr auto;gap:10px;padding:12px;border-bottom:1px solid #f0f0f0}
@@ -50,19 +62,27 @@
         .addr-sep{color:#9ca3af;margin:0 6px}
         .addr-phone{color:#6b7280}
         .addr-detail{color:#374151;margin-top:4px}
-        .badge-default{display:inline-flex;align-items:center;gap:.25rem;margin-top:8px;background:rgba(255,122,69,.08);color:var(--accent);border:1px solid var(--accent);
-                       border-radius:999px;padding:2px 8px;font-size:12px}
+        .badge-default{
+            display:inline-flex;align-items:center;gap:.25rem;margin-top:8px;
+            background:rgba(255,122,69,.08);color:var(--accent);border:1px solid var(--accent);
+            border-radius:999px;padding:2px 8px;font-size:12px
+        }
         .badge-default i{font-size:.85rem;}
 
-        .btn{height:36px;min-width:120px;border:1px solid var(--border);border-radius:10px;padding:0 14px;
-             font-weight:700;cursor:pointer;background:#f2f3f5;color:#111;text-decoration:none;
-             display:inline-flex;align-items:center;justify-content:center;text-align:center}
+        .btn{
+            height:36px;min-width:120px;border:1px solid var(--border);border-radius:10px;padding:0 14px;
+            font-weight:700;cursor:pointer;background:#f2f3f5;color:#111;text-decoration:none;
+            display:inline-flex;align-items:center;justify-content:center;text-align:center
+        }
         .btn-primary{background:var(--accent);border-color:var(--accent);color:#fff}
         .btn-ghost{background:#fff}
         .btn + .btn{margin-left:8px}
 
         .list-actions{display:flex;align-items:center;gap:8px}
-        .empty{padding:20px;text-align:center;color:#6b7280;margin-top:12px;background:#fff;border-radius:12px;box-shadow:0 4px 10px rgba(0,0,0,.05)}
+        .empty{
+            padding:20px;text-align:center;color:#6b7280;margin-top:12px;background:#fff;
+            border-radius:12px;box-shadow:0 4px 10px rgba(0,0,0,.05)
+        }
         .add-new{margin-left:auto;text-decoration:none}
         .add-new .btn{min-width:180px}
 
@@ -85,9 +105,29 @@
         .toast-error{ background:#ef4444 !important; border-color:#dc2626 !important; color:#fff !important; }
         .toast-error .toast-icon{ color:#fff !important; }
 
+        .paging {
+            display:flex;
+            justify-content:center;
+            align-items:center;
+            gap:0.5rem;
+            margin-top:1.0rem;
+        }
+        .paging .btn{
+            min-width:40px;
+            border-radius:999px;
+            font-size:.86rem;
+        }
+        .paging .btn-warning{
+            border-radius:999px;
+            font-weight:700;
+        }
+        .paging .btn-outline-secondary{
+            background:rgba(255,255,255,.85);
+        }
+
         @media (max-width: 575.98px){
             .page-header{
-                margin:12px 0 8px !important;
+                margin:12px 0 6px !important;
                 padding:0 16px !important;
             }
         }
@@ -97,7 +137,7 @@
 <body>
 <form id="form1" runat="server">
 
-    <!-- Header ngoài section với nền cam -->
+    <!-- Header -->
     <div class="page-header">
         <div class="title-badge">
             <i class="bi bi-geo-alt"></i>
@@ -120,43 +160,66 @@
                 <div class="card empty">Người dùng chưa có địa chỉ.</div>
             </asp:PlaceHolder>
 
-            <div class="card">
-                <asp:Repeater ID="rptAddresses" runat="server" OnItemCommand="rptAddresses_ItemCommand">
-                    <ItemTemplate>
-                        <div class="addr-item">
-                            <div>
+            <asp:Panel ID="pnlList" runat="server">
+                <div class="card">
+                    <asp:Repeater ID="rptAddresses" runat="server" OnItemCommand="rptAddresses_ItemCommand">
+                        <ItemTemplate>
+                            <div class="addr-item">
                                 <div>
-                                    <span class="addr-name"><%# Eval("fullName") %></span>
-                                    <span class="addr-sep">|</span>
-                                    <span class="addr-phone"><%# Eval("phone") %></span>
+                                    <div>
+                                        <span class="addr-name"><%# Eval("fullName") %></span>
+                                        <span class="addr-sep">|</span>
+                                        <span class="addr-phone"><%# Eval("phone") %></span>
+                                    </div>
+                                    <div class="addr-detail"><%# Eval("fullAddress") %></div>
+                                    <div class="small-meta">
+                                        Loại:
+                                        <%# (Eval("type") != null && Eval("type").ToString() == "1") ? "Văn phòng" : "Nhà riêng" %>
+                                        <%# string.IsNullOrEmpty((string)Eval("label")) ? "" : " • " + Eval("label") %>
+                                    </div>
+                                    <asp:PlaceHolder ID="phDefault" runat="server" Visible='<%# Eval("isDefault") != null && (bool)Eval("isDefault") %>'>
+                                        <span class="badge-default">
+                                            <i class="bi bi-star-fill"></i>
+                                            Mặc định
+                                        </span>
+                                    </asp:PlaceHolder>
                                 </div>
-                                <div class="addr-detail"><%# Eval("fullAddress") %></div>
-                                <div class="small-meta">
-                                    Loại:
-                                    <%# (Eval("type") != null && Eval("type").ToString() == "1") ? "Văn phòng" : "Nhà riêng" %>
-                                    <%# string.IsNullOrEmpty((string)Eval("label")) ? "" : " • " + Eval("label") %>
-                                </div>
-                                <asp:PlaceHolder ID="phDefault" runat="server" Visible='<%# Eval("isDefault") != null && (bool)Eval("isDefault") %>'>
-                                    <span class="badge-default">
-                                        <i class="bi bi-star-fill"></i>
-                                        Mặc định
-                                    </span>
-                                </asp:PlaceHolder>
-                            </div>
 
-                            <div class="list-actions">
-                                <a class="btn btn-ghost" href='<%# "UpdateUserAddress.aspx?id=" + Eval("id") %>'>Chỉnh sửa</a>
-                                <asp:LinkButton ID="btnSetDefault" runat="server"
-                                    CssClass="btn"
-                                    CommandName="setDefault"
-                                    CommandArgument='<%# Eval("id") %>' Visible='<%# !(bool)Eval("isDefault") %>'>
-                                    Đặt mặc định
-                                </asp:LinkButton>
+                                <div class="list-actions">
+                                    <a class="btn btn-ghost" href='<%# "UpdateUserAddress.aspx?id=" + Eval("id") %>'>Chỉnh sửa</a>
+                                    <asp:LinkButton ID="btnSetDefault" runat="server"
+                                        CssClass="btn"
+                                        CommandName="setDefault"
+                                        CommandArgument='<%# Eval("id") %>' Visible='<%# !(bool)Eval("isDefault") %>'>
+                                        Đặt mặc định
+                                    </asp:LinkButton>
+                                </div>
                             </div>
-                        </div>
-                    </ItemTemplate>
-                </asp:Repeater>
-            </div>
+                        </ItemTemplate>
+                    </asp:Repeater>
+                </div>
+
+                <!-- PHÂN TRANG -->
+                <asp:Panel ID="pnlPagination" runat="server" CssClass="paging" Visible="false">
+                    <asp:Button ID="btnPrev" runat="server"
+                        CssClass="btn btn-outline-secondary btn-sm"
+                        Text="← Trước" OnClick="btnPrev_Click" />
+                    <asp:Repeater ID="rpPaging" runat="server" OnItemCommand="rpPaging_ItemCommand">
+                        <ItemTemplate>
+                            <asp:LinkButton ID="lnkPage" runat="server"
+                                CssClass='<%# (int)Container.DataItem == CurrentPage ? "btn btn-sm btn-warning mx-1" : "btn btn-sm btn-outline-secondary mx-1" %>'
+                                CommandName="ChangePage"
+                                CommandArgument='<%# Container.DataItem %>'
+                                Text='<%# Container.DataItem %>'>
+                            </asp:LinkButton>
+                        </ItemTemplate>
+                    </asp:Repeater>
+                    <asp:Button ID="btnNext" runat="server"
+                        CssClass="btn btn-outline-secondary btn-sm"
+                        Text="Sau →" OnClick="btnNext_Click" />
+                </asp:Panel>
+            </asp:Panel>
+
         </div>
     </div>
 

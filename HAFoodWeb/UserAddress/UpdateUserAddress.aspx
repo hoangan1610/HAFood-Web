@@ -32,13 +32,30 @@
             box-shadow:none;
         }
 
+        /* ====== Back trái, Badge + Title phải ====== */
+        .header-grid{
+            display:grid;
+            grid-template-columns: 1fr 1fr;
+            align-items:center;
+            gap:12px;
+        }
+        .header-left{
+            display:flex; justify-content:flex-start; align-items:center;
+        }
+        .header-right{
+            display:flex; flex-direction:column;
+            align-items:flex-end; text-align:right;
+        }
+
         .title-badge{
             font-size:.75rem; letter-spacing:.08em; text-transform:uppercase;
             font-weight:700; color:#fd7e14; background:rgba(253,126,20,.08);
-            padding:.26rem .7rem; border-radius:999px; display:inline-flex; align-items:center; gap:.35rem; margin-bottom:.25rem;
+            padding:.26rem .7rem; border-radius:999px;
+            display:inline-flex; align-items:center; gap:.35rem; margin-bottom:.25rem;
         }
         .title-badge i{ font-size:.9rem; }
-        .page-title{ font-weight:700; font-size:1.6rem; color:#212529; margin:0 0 .2rem; }
+
+        .page-title{ font-weight:700; font-size:1.6rem; color:#212529; margin:.1rem 0 .2rem; }
         .page-subtitle{ font-size:.9rem; color:#6c757d; margin:0; }
 
         .page-shell{
@@ -95,18 +112,15 @@
         }
         .toast.show{ opacity:1; transform:translateY(0); }
         .toast-icon{ flex:0 0 auto; font-size:1.1rem; margin-top:2px; }
-        .toast-text{
-            display:inline-block;
-            white-space:pre-line; /* 🔧 Cho phép xuống dòng khi gộp nhiều lỗi */
-            overflow-wrap:anywhere;
-        }
+        .toast-text{ white-space:pre-line; overflow-wrap:anywhere; }
         .toast-success{ background:#22c55e !important; border-color:#16a34a !important; color:#fff !important; }
-        .toast-success .toast-icon{ color:#fff !important; }
         .toast-error{ background:#ef4444 !important; border-color:#dc2626 !important; color:#fff !important; }
-        .toast-error .toast-icon{ color:#fff !important; }
+        .toast-error .toast-icon, .toast-success .toast-icon{ color:#fff !important; }
 
         @media (max-width: 575.98px){
             .page-header{ margin:12px 0 8px !important; padding:0 16px !important; }
+            .header-grid{ grid-template-columns: 1fr; }
+            .header-right{ align-items:flex-start; text-align:left; }
         }
     </style>
 </head>
@@ -114,16 +128,23 @@
 <form id="form1" runat="server">
 
     <div class="page-header">
-        <div class="title-badge"><i class="bi bi-geo-alt"></i> HAFood - Địa chỉ giao hàng</div>
-        <h2 class="page-title">Sửa địa chỉ</h2>
-        <p class="page-subtitle">Chỉnh sửa thông tin địa chỉ nhận hàng hiện tại.</p>
+        <div class="header-grid">
+            <div class="header-left">
+                <a href="UserAddressList.aspx" class="btn-back">
+                    ← Quay lại địa chỉ
+                </a>
+            </div>
+            <div class="header-right">
+                <div class="title-badge">
+                    <i class="bi bi-geo-alt"></i> HAFood - Địa chỉ giao hàng
+                </div>
+                <h2 class="page-title">Sửa địa chỉ</h2>
+                <p class="page-subtitle">Chỉnh sửa thông tin địa chỉ nhận hàng hiện tại.</p>
+            </div>
+        </div>
     </div>
 
     <div class="page-shell">
-        <div class="d-flex justify-content-end mb-2">
-            <a href="UserAddressList.aspx" class="btn-back"><i class="bi bi-arrow-left-short"></i> Danh sách địa chỉ</a>
-        </div>
-
         <asp:HiddenField ID="hfId" runat="server" />
 
         <!-- hidden mirrors -->
@@ -243,39 +264,23 @@
         if (!document.querySelector('#rblType input[type=radio]:checked')) missing.push('Loại địa chỉ');
         if (missing.length) { showToast('Vui lòng điền: ' + missing.join(', '), 'danger'); return false; }
 
-        // ====== Kiểm tra ĐỊNH DẠNG (gộp lỗi) ======
         var errs = [];
-
         var fullName = document.getElementById('txtFullName').value.trim();
         var reName = /^[\p{L}\s]+$/u;
-        if (!reName.test(fullName)) {
-            errs.push('Họ và tên không được chứa ký tự đặc biệt');
-        }
-
+        if (!reName.test(fullName)) errs.push('Họ và tên không được chứa ký tự đặc biệt');
         var phone = document.getElementById('txtPhone').value.trim();
-        if (!/^\d{10}$/.test(phone)) {
-            errs.push('Số điện thoại phải gồm đúng 10 chữ số');
-        }
-        if (!/^0/.test(phone)) {
-            errs.push('Số điện thoại phải bắt đầu bằng số 0');
-        }
-
+        if (!/^\d{10}$/.test(phone)) errs.push('Số điện thoại phải gồm đúng 10 chữ số');
+        if (!/^0/.test(phone)) errs.push('Số điện thoại phải bắt đầu bằng số 0');
         var address = document.getElementById('txtAddress').value.trim();
         var reAddress = /^[\p{L}\d\s,.\-\/]+$/u;
-        if (!reAddress.test(address)) {
-            errs.push('Địa chỉ nhận hàng không được chứa ký tự đặc biệt');
-        }
+        if (!reAddress.test(address)) errs.push('Địa chỉ nhận hàng không được chứa ký tự đặc biệt');
 
-        if (errs.length) {
-            showToast('Vui lòng kiểm tra:\n• ' + errs.join('\n• '), 'danger');
-            return false;
-        }
-        // ==========================================
+        if (errs.length) { showToast('Vui lòng kiểm tra:\n• ' + errs.join('\n• '), 'danger'); return false; }
         return true;
     }
 </script>
 
-<!-- Combo + dữ liệu (giữ nguyên chức năng) -->
+<!-- Combo + dữ liệu (giữ nguyên) -->
 <script>
     (function () {
         const DATA_BASE = '<%= ResolveClientUrl("~/assets/vn-admin") %>';

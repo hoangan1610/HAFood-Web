@@ -1,6 +1,7 @@
 ﻿using System;
+using System.Linq;                  // Skip/Take + Enumerable.Range
 using System.Threading.Tasks;
-using System.Web; // để dùng HttpCacheability
+using System.Web;
 using HAFoodWeb.Services;
 
 namespace HAFoodWeb.UserAddress
@@ -8,6 +9,21 @@ namespace HAFoodWeb.UserAddress
     public partial class UserAddressList : System.Web.UI.Page
     {
         private readonly IAddressService _service = new AddressService();
+
+        private const int PageSize = 4;
+
+        protected int CurrentPage
+        {
+            get
+            {
+                if (ViewState["CurrentPage"] == null) return 1;
+                return (int)ViewState["CurrentPage"];
+            }
+            set
+            {
+                ViewState["CurrentPage"] = value;
+            }
+        }
 
         protected async void Page_Load(object sender, EventArgs e)
         {
@@ -18,21 +34,61 @@ namespace HAFoodWeb.UserAddress
             }
 
             if (!IsPostBack)
+            {
+                CurrentPage = 1;
                 await BindAsync();
+            }
         }
 
         private async Task BindAsync()
         {
             var token = Request?.Cookies["AuthToken"]?.Value;
 
-            // ✅ Chỉ lấy địa chỉ đang active để không hiện item đã soft-delete
             var items = await _service.GetMyAddressesAsync(token, onlyActive: true);
 
-            phEmpty.Visible = items == null || items.Count == 0;
-            rptAddresses.DataSource = items;
-            rptAddresses.DataBind();
+            if (items == null || items.Count == 0)
+            {
+                phEmpty.Visible = true;
+                pnlList.Visible = false;
+                if (pnlPagination != null) pnlPagination.Visible = false;
+            }
+            else
+            {
+                phEmpty.Visible = false;
+                pnlList.Visible = true;
 
-            // ✅ Chống cache trang danh sách
+                int totalCount = items.Count;
+                int totalPages = Math.Max(1, (int)Math.Ceiling((double)totalCount / PageSize));
+
+                if (CurrentPage < 1) CurrentPage = 1;
+                if (CurrentPage > totalPages) CurrentPage = totalPages;
+
+                var pagedItems = items
+                    .Skip((CurrentPage - 1) * PageSize)
+                    .Take(PageSize)
+                    .ToList();
+
+                rptAddresses.DataSource = pagedItems;
+                rptAddresses.DataBind();
+
+                if (pnlPagination != null)
+                {
+                    if (totalPages > 1)
+                    {
+                        rpPaging.DataSource = Enumerable.Range(1, totalPages);
+                        rpPaging.DataBind();
+                        pnlPagination.Visible = true;
+
+                        btnPrev.Enabled = CurrentPage > 1;
+                        btnNext.Enabled = CurrentPage < totalPages;
+                    }
+                    else
+                    {
+                        pnlPagination.Visible = false;
+                    }
+                }
+            }
+
             Response.Cache.SetCacheability(HttpCacheability.NoCache);
             Response.Cache.SetNoStore();
             Response.Cache.SetExpires(DateTime.UtcNow.AddMinutes(-1));
@@ -51,9 +107,37 @@ namespace HAFoodWeb.UserAddress
                 }
                 catch
                 {
-                    // TODO: hiển thị thông báo nếu cần
+                    // TODO: log / hiển thị nếu cần
                 }
             }
+        }
+
+        // ====== Phân trang ======
+        protected async void rpPaging_ItemCommand(object source, System.Web.UI.WebControls.RepeaterCommandEventArgs e)
+        {
+            if (e.CommandName == "ChangePage")
+            {
+                if (int.TryParse(e.CommandArgument?.ToString(), out int newPage))
+                {
+                    CurrentPage = newPage;
+                    await BindAsync();
+                }
+            }
+        }
+
+        protected async void btnPrev_Click(object sender, EventArgs e)
+        {
+            if (CurrentPage > 1)
+            {
+                CurrentPage -= 1;
+                await BindAsync();
+            }
+        }
+
+        protected async void btnNext_Click(object sender, EventArgs e)
+        {
+            CurrentPage += 1;
+            await BindAsync();
         }
     }
 }

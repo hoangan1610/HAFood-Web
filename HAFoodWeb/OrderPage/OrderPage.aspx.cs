@@ -1,6 +1,7 @@
 ﻿using HAFoodWeb.Models;
 using HAFoodWeb.Services;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
@@ -15,7 +16,7 @@ namespace HAFoodWeb
     {
         private readonly IOrderService _orderService = new OrderService();
 
-        private const int PageSize = 4;
+        private const int PageSize = 2;
 
         protected int CurrentPage
         {
@@ -90,7 +91,8 @@ namespace HAFoodWeb
                 int totalPages = Math.Max(1, (int)Math.Ceiling((double)result.totalCount / PageSize));
                 if (totalPages > 1)
                 {
-                    rpPaging.DataSource = Enumerable.Range(1, totalPages);
+                    // danh sách số trang + dấu null (ellipsis)
+                    rpPaging.DataSource = BuildPageList(totalPages, page);
                     rpPaging.DataBind();
                     pnlPagination.Visible = true;
                 }
@@ -112,25 +114,97 @@ namespace HAFoodWeb
             }
         }
 
+        /// <summary>
+        /// Xây danh sách trang dạng:
+        ///  - nếu tổng trang <= 9: 1..N
+        ///  - nếu > 9:
+        ///    + đầu danh sách (current <= 4): 1 2 3 4 ... N-2 N-1 N
+        ///    + cuối danh sách (current >= N-3): 1 2 ... N-3 N-2 N-1 N
+        ///    + ở giữa: 1 2 ... (c-1) c (c+1) ... N-1 N
+        /// </summary>
+        private List<int?> BuildPageList(int totalPages, int currentPage)
+        {
+            var pages = new List<int?>();
+
+            if (totalPages <= 9)
+            {
+                for (int i = 1; i <= totalPages; i++)
+                    pages.Add(i);
+                return pages;
+            }
+
+            if (currentPage <= 4)
+            {
+                // 1 2 3 4 ... n-2 n-1 n
+                pages.Add(1);
+                pages.Add(2);
+                pages.Add(3);
+                pages.Add(4);
+                pages.Add(null);
+                pages.Add(totalPages - 2);
+                pages.Add(totalPages - 1);
+                pages.Add(totalPages);
+            }
+            else if (currentPage >= totalPages - 3)
+            {
+                // 1 2 ... n-3 n-2 n-1 n
+                pages.Add(1);
+                pages.Add(2);
+                pages.Add(null);
+                pages.Add(totalPages - 3);
+                pages.Add(totalPages - 2);
+                pages.Add(totalPages - 1);
+                pages.Add(totalPages);
+            }
+            else
+            {
+                // 1 2 ... c-1 c c+1 ... n-1 n
+                pages.Add(1);
+                pages.Add(2);
+                pages.Add(null);
+                pages.Add(currentPage - 1);
+                pages.Add(currentPage);
+                pages.Add(currentPage + 1);
+                pages.Add(null);
+                pages.Add(totalPages - 1);
+                pages.Add(totalPages);
+            }
+
+            return pages;
+        }
+
+        // helper cho aspx
+        protected bool IsEllipsis(object dataItem)
+        {
+            return dataItem == null || dataItem == DBNull.Value;
+        }
+
+        protected string GetPageButtonCss(object dataItem)
+        {
+            if (IsEllipsis(dataItem))
+                return "btn btn-sm btn-outline-secondary";
+
+            int page = Convert.ToInt32(dataItem);
+            return page == CurrentPage
+                ? "btn btn-sm btn-page-active"
+                : "btn btn-sm btn-outline-secondary";
+        }
+
         protected void rpOrders_ItemDataBound(object sender, RepeaterItemEventArgs e)
         {
             if (e.Item.ItemType == ListItemType.Item || e.Item.ItemType == ListItemType.AlternatingItem)
             {
                 var order = (OrderHeaderDto)e.Item.DataItem;
 
-                // Badge trạng thái
                 var badge = (HtmlGenericControl)e.Item.FindControl("statusBadge");
                 if (badge != null)
                 {
                     badge.InnerText = GetStatusText(order.status);
                     badge.Attributes["class"] = $"status-badge status-{order.status}";
                 }
-
-                // Không cần gán litPayment vì markup render BuildPaymentText(...) trực tiếp
             }
         }
 
-        // === Mapping phương thức thanh toán (gộp tại chỗ) ===
         private static string GetPaymentMethodLabel(string paymentProvider, int? paymentMethod, string paymentStatus)
         {
             if (!string.IsNullOrWhiteSpace(paymentStatus) &&
@@ -160,7 +234,6 @@ namespace HAFoodWeb
             return string.Empty;
         }
 
-        // Dùng trong markup
         protected string BuildPaymentText(OrderHeaderDto h)
         {
             var label = GetPaymentMethodLabel(h.payment_Provider, h.payment_Method, h.payment_Status);

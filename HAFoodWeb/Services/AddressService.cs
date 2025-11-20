@@ -18,9 +18,13 @@ namespace HAFoodWeb.Services
     {
         private readonly string _apiBase = ConfigurationManager.AppSettings["ApiBaseUrl"]?.TrimEnd('/');
 
-        private void AttachAuthHeader(HttpRequestMessage req)
+        private void AttachAuthHeader(HttpRequestMessage req, string tokenFromParam = null)
         {
-            var token = System.Web.HttpContext.Current?.Request?.Cookies["AuthToken"]?.Value;
+            // Ưu tiên token được truyền vào; nếu không có thì lấy từ cookie.
+            var token = !string.IsNullOrWhiteSpace(tokenFromParam)
+                        ? tokenFromParam
+                        : System.Web.HttpContext.Current?.Request?.Cookies["AuthToken"]?.Value;
+
             if (!string.IsNullOrEmpty(token))
                 req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
         }
@@ -34,102 +38,133 @@ namespace HAFoodWeb.Services
         public async Task<IReadOnlyList<AddressDto>> GetMyAddressesAsync(string token, bool onlyActive = true)
         {
             var url = $"{_apiBase}/api/addresses/me?onlyActive={(onlyActive ? "true" : "false")}";
-            var req = new HttpRequestMessage(HttpMethod.Get, url);
-            AttachAuthHeader(req);
-
-            var resp = await HttpJson.Client.SendAsync(req);
-            var json = await resp.Content.ReadAsStringAsync();
-
-            if (!resp.IsSuccessStatusCode)
+            using (var req = new HttpRequestMessage(HttpMethod.Get, url))
             {
-                Debug.WriteLine($"GET {url} FAILED: {(int)resp.StatusCode}\n{json}");
-                return Array.Empty<AddressDto>();
-            }
+                AttachAuthHeader(req, token);
 
-            var env = JsonConvert.DeserializeObject<ApiEnvelope<List<AddressDto>>>(json);
-            return env?.data ?? new List<AddressDto>();
+                var resp = await HttpJson.Client.SendAsync(req).ConfigureAwait(false);
+                using (resp)
+                {
+                    var json = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+                    if (!resp.IsSuccessStatusCode)
+                    {
+                        Debug.WriteLine($"GET {url} FAILED: {(int)resp.StatusCode}\n{json}");
+                        return Array.Empty<AddressDto>();
+                    }
+
+                    var env = JsonConvert.DeserializeObject<ApiEnvelope<List<AddressDto>>>(json);
+                    return env?.data ?? new List<AddressDto>();
+                }
+            }
         }
 
         public async Task<AddressDto> CreateAddressAsync(string token, AddressCreateRequest request)
         {
             var url = $"{_apiBase}/api/addresses";
-            var content = new StringContent(JsonConvert.SerializeObject(request, _jsonSettings), Encoding.UTF8, "application/json");
-            var req = new HttpRequestMessage(HttpMethod.Post, url) { Content = content };
-            AttachAuthHeader(req);
 
-            var resp = await HttpJson.Client.SendAsync(req);
-            var json = await resp.Content.ReadAsStringAsync();
+            // Lưu payload riêng để log khi cần (tránh đọc từ content đã dispose)
+            var payload = JsonConvert.SerializeObject(request, _jsonSettings);
 
-            if (!resp.IsSuccessStatusCode)
+            using (var req = new HttpRequestMessage(HttpMethod.Post, url))
             {
-                Debug.WriteLine($"POST {url} FAILED\nBody:{await content.ReadAsStringAsync()}\nResp:{json}");
-                return null;
-            }
+                req.Content = new StringContent(payload, Encoding.UTF8, "application/json");
+                AttachAuthHeader(req, token);
 
-            var env = JsonConvert.DeserializeObject<ApiEnvelope<AddressDto>>(json);
-            return env?.data;
+                var resp = await HttpJson.Client.SendAsync(req).ConfigureAwait(false);
+                using (resp)
+                {
+                    var json = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+                    if (!resp.IsSuccessStatusCode)
+                    {
+                        Debug.WriteLine($"POST {url} FAILED\nStatus:{(int)resp.StatusCode}\nBody:{payload}\nResp:{json}");
+                        return null;
+                    }
+
+                    var env = JsonConvert.DeserializeObject<ApiEnvelope<AddressDto>>(json);
+                    return env?.data;
+                }
+            }
         }
 
         public async Task<AddressDto> UpdateAddressAsync(string token, long id, AddressUpdateRequest request)
         {
             var url = $"{_apiBase}/api/addresses/{id}";
-            var content = new StringContent(JsonConvert.SerializeObject(request, _jsonSettings), Encoding.UTF8, "application/json");
-            var req = new HttpRequestMessage(HttpMethod.Put, url) { Content = content };
-            AttachAuthHeader(req);
+            var payload = JsonConvert.SerializeObject(request, _jsonSettings);
 
-            var resp = await HttpJson.Client.SendAsync(req);
-            var json = await resp.Content.ReadAsStringAsync();
-
-            if (!resp.IsSuccessStatusCode)
+            using (var req = new HttpRequestMessage(HttpMethod.Put, url))
             {
-                Debug.WriteLine($"PUT {url} FAILED\nBody:{await content.ReadAsStringAsync()}\nResp:{json}");
-                return null;
-            }
+                req.Content = new StringContent(payload, Encoding.UTF8, "application/json");
+                AttachAuthHeader(req, token);
 
-            var env = JsonConvert.DeserializeObject<ApiEnvelope<AddressDto>>(json);
-            return env?.data;
+                var resp = await HttpJson.Client.SendAsync(req).ConfigureAwait(false);
+                using (resp)
+                {
+                    var json = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+                    if (!resp.IsSuccessStatusCode)
+                    {
+                        Debug.WriteLine($"PUT {url} FAILED\nStatus:{(int)resp.StatusCode}\nBody:{payload}\nResp:{json}");
+                        return null;
+                    }
+
+                    var env = JsonConvert.DeserializeObject<ApiEnvelope<AddressDto>>(json);
+                    return env?.data;
+                }
+            }
         }
 
         public async Task<bool> DeleteAddressAsync(string token, long id)
         {
             var url = $"{_apiBase}/api/addresses/{id}";
-            var req = new HttpRequestMessage(HttpMethod.Delete, url);
-            AttachAuthHeader(req);
-
-            var resp = await HttpJson.Client.SendAsync(req);
-            var json = await resp.Content.ReadAsStringAsync();
-
-            if (!resp.IsSuccessStatusCode)
+            using (var req = new HttpRequestMessage(HttpMethod.Delete, url))
             {
-                Debug.WriteLine($"DELETE {url} FAILED\n{json}");
-                return false;
-            }
+                AttachAuthHeader(req, token);
 
-            return true;
+                var resp = await HttpJson.Client.SendAsync(req).ConfigureAwait(false);
+                using (resp)
+                {
+                    var json = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+                    if (!resp.IsSuccessStatusCode)
+                    {
+                        Debug.WriteLine($"DELETE {url} FAILED: {(int)resp.StatusCode}\n{json}");
+                        return false;
+                    }
+
+                    return true;
+                }
+            }
         }
 
         public async Task<AddressDto> SetDefaultAsync(string token, long id)
         {
             var url = $"{_apiBase}/api/addresses/{id}/default";
-            var req = new HttpRequestMessage(HttpMethod.Put, url);
-            AttachAuthHeader(req);
-
-            var resp = await HttpJson.Client.SendAsync(req);
-            var json = await resp.Content.ReadAsStringAsync();
-
-            if (!resp.IsSuccessStatusCode)
+            using (var req = new HttpRequestMessage(HttpMethod.Put, url))
             {
-                Debug.WriteLine($"PUT {url} FAILED\n{json}");
-                return null;
-            }
+                AttachAuthHeader(req, token);
 
-            var env = JsonConvert.DeserializeObject<ApiEnvelope<AddressDto>>(json);
-            return env?.data;
+                var resp = await HttpJson.Client.SendAsync(req).ConfigureAwait(false);
+                using (resp)
+                {
+                    var json = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+                    if (!resp.IsSuccessStatusCode)
+                    {
+                        Debug.WriteLine($"PUT {url} FAILED: {(int)resp.StatusCode}\n{json}");
+                        return null;
+                    }
+
+                    var env = JsonConvert.DeserializeObject<ApiEnvelope<AddressDto>>(json);
+                    return env?.data;
+                }
+            }
         }
 
         public async Task<AddressDto> GetMyAddressByIdAsync(string token, long id)
         {
-            var list = await GetMyAddressesAsync(token, onlyActive: false);
+            var list = await GetMyAddressesAsync(token, onlyActive: false).ConfigureAwait(false);
             return list?.FirstOrDefault(a => a.id == id);
         }
     }
