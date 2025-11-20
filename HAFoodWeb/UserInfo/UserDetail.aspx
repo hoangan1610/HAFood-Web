@@ -15,44 +15,24 @@
         :root{
             --haf-primary:#ff7b32;
             --haf-border:#e5e7eb;
-            --haf-bg:#ffffff;          /* 🔧 NỀN TRẮNG của trang ngoài */
             --haf-text-main:#111827;
             --haf-text-muted:#6b7280;
         }
         *{box-sizing:border-box}
-        html { scrollbar-gutter: stable; } /* ✅ Giữ chỗ cho scrollbar để không “nhảy” layout khi khóa cuộn */
-        body{
-            margin:0;
+        html{scrollbar-gutter:stable}
+        html,body{
+            margin:0; min-height:100vh;
             font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
-            background:var(--haf-bg);
-            color:var(--haf-text-main);
+            background:#ffffff !important; color:var(--haf-text-main);
         }
-        /* ✅ Khi khóa cuộn trang ngoài (hover vào iframe) */
-        html.host-lock-scroll, body.host-lock-scroll {
-            overflow: hidden;
-            overscroll-behavior: contain;
-        }
-        /* ✅ Bù lại độ rộng scrollbar bị ẩn để không lệch layout */
-        body.host-lock-scroll { padding-right: var(--sbw, 0px); }
 
-        /* ====== Bố cục full-page ====== */
-        .page{
-            max-width:1280px;
-            margin:24px auto;
-            padding:0 16px
-        }
-        .user-grid{
-            display:grid;
-            grid-template-columns:260px 1fr; /* 🔧 Muốn rộng/hẹp sidebar đổi 260px */
-            gap:0;
-            align-items:start;
-            min-height:72vh;
-        }
+        .page{ max-width:1280px; margin:24px auto; padding:0 16px; }
+        .user-grid{ display:grid; grid-template-columns:260px 1fr; gap:0; align-items:start; min-height:80vh; }
 
         .sidebar{
             border-right:1px solid var(--haf-border);
             padding:20px 18px 22px 0;
-            display:flex;flex-direction:column;gap:16px;background:transparent;
+            display:flex; flex-direction:column; gap:16px;
         }
         .sidebar-header{display:flex;align-items:center;gap:12px;margin-bottom:4px;padding-right:18px}
         .sidebar-avatar{
@@ -73,37 +53,45 @@
             font-size:14px;border:1px solid transparent;background:transparent;
         }
         .menu-item i{font-size:17px;margin-right:8px}
-        .menu-item.active{background:rgba(255,123,50,.1);border-color:rgba(255,123,50,.6);color:#e8631d;box-shadow:0 10px 16px rgba(15,23,42,.08)}
-        .menu-item:hover{background:#f9fafb;border-color:var(--haf-border)}
-        .menu-item.logout{margin-top:auto;background:#fff;border-color:var(--haf-border);color:#b91c1c}
+        .menu-item.active{
+            background:rgba(255,123,50,.1); border-color:rgba(255,123,50,.6); color:#e8631d;
+            box-shadow:0 10px 16px rgba(15,23,42,.08)
+        }
+        .menu-item:hover{background:#f9fafb;border-color:#e5e7eb}
+        .menu-item.logout{margin-top:auto;background:#fff;border:1px solid #e5e7eb;color:#b91c1c}
         .menu-item.logout i{color:#b91c1c}
         .menu-item.logout:hover{background:#fef2f2;border-color:#fecaca}
 
-        /* ====== Content ====== */
-        .content-area{padding:0 0 0 24px;background:transparent}
+        .content-area{padding:0 0 0 24px}
 
-        /* Iframe: ẩn scrollbar UI + fallback chiều cao + nền trắng */
+        /* Iframe: KHÓA MỘT CHIỀU CAO CỐ ĐỊNH – KHÔNG TỰ GIÃN */
         .content-frame{
-            width:100%;
-            border:0;
-            display:block;
-            background:#ffffff;         /* 🔧 NỀN KHUNG NỘI DUNG: trắng */
-            height:64vh;                /* 🔧 Fallback CHIỀU CAO (giảm nhẹ). Có JS tính lại theo viewport phía dưới */
-            overflow:auto;              /* Cho phép khung tự cuộn khi nội dung cao hơn */
-            scrollbar-width:none;       /* Ẩn thanh cuộn UI (Firefox) */
-            -ms-overflow-style:none;    /* Ẩn thanh cuộn UI (IE/Legacy Edge) */
+            width:100%; border:0; display:block; background:#ffffff;
+            height:2000px;          /* Fallback CSS: 2000px */
+            min-height:2000px;      /* Ngừa flash khi JS chưa chạy */
         }
-        .content-frame::-webkit-scrollbar{width:0;height:0} /* Ẩn thanh cuộn UI (Chrome/Edge/WebKit) */
 
         @media (max-width:992px){
             .user-grid{grid-template-columns:1fr}
-            .sidebar{border-right:none;border-bottom:1px solid var(--haf-border);padding:16px 0 14px}
+            .sidebar{border-right:none;border-bottom:1px solid #e5e7eb;padding:16px 0 14px}
             .menu-list{flex-direction:row;flex-wrap:nowrap;overflow-x:auto;padding-bottom:4px;gap:8px}
             .menu-item{white-space:nowrap;font-size:13px;padding:7px 10px}
             .menu-item.logout{margin-top:0;margin-left:auto}
             .content-area{padding-left:0}
         }
     </style>
+
+    <!-- Chặn mọi thông điệp đổi chiều cao từ trang con -->
+    <script>
+        (function () {
+            window.addEventListener('message', function (ev) {
+                var d = ev && ev.data;
+                if (d && d.type === 'haf-embed-height') {
+                    ev.stopImmediatePropagation && ev.stopImmediatePropagation();
+                }
+            }, true);
+        })();
+    </script>
 </head>
 <body>
 <form id="form1" runat="server">
@@ -137,6 +125,7 @@
             </aside>
 
             <main class="content-area">
+                <!-- Luôn kèm ?embed=1 -->
                 <iframe id="contentFrame" class="content-frame" src="../UserInfo/UserProfile.aspx?embed=1" title="Nội dung tài khoản"></iframe>
             </main>
         </div>
@@ -158,85 +147,31 @@
             catch { return u + (u.indexOf('?') >= 0 ? '&' : '?') + 'embed=1'; }
         }
 
-        /* ====== THAM SỐ CHIỀU CAO (dễ chỉnh) ======
-           HEIGHT_EXTRA_PX : cộng thêm (px) để khung dài hơn một chút.
-           MIN_H_PX        : chiều cao tối thiểu.
-           BOTTOM_GAP_PX   : khoảng cách chừa đáy để tránh dính footer. */
-        const HEIGHT_EXTRA_PX = 40;   // 🔧 tăng/giảm “độ dài” khung
-        const MIN_H_PX = 520;         // 🔧 min-height
-        const BOTTOM_GAP_PX = 12;     // 🔧 chừa đáy
+        /* KHÓA 1 CHIỀU CAO CỐ ĐỊNH – KHÔNG ĐO */
+        (function lockFixedHeight() {
+            const FIXED_FRAME_HEIGHT = 980;  // chỉnh tại đây nếu bạn muốn
+            frame.style.height = FIXED_FRAME_HEIGHT + 'px';
+            frame.style.minHeight = FIXED_FRAME_HEIGHT + 'px';
+        })();
 
-        /* Tính chiều cao khung theo viewport – không đo nội dung để tránh “nở” */
-        function sizeToViewport() {
-            const rect = frame.getBoundingClientRect();
-            const space = Math.max(
-                MIN_H_PX,
-                Math.floor(window.innerHeight - rect.top - BOTTOM_GAP_PX + HEIGHT_EXTRA_PX)
-            );
-            frame.style.height = space + 'px';
-        }
-
-        /* Dọn nền + ẨN SCROLLBARS trong trang con và ép nền trắng */
-        function beautifyAndHideScrollbars() {
+        // Tiêm CSS trắng tuyệt đối cho trang con (phòng trang nào quên embed=1)
+        function injectWhite(iframe) {
             try {
-                const doc = frame.contentDocument || frame.contentWindow.document;
-                const head = doc.head || doc.getElementsByTagName('head')[0];
-                if (!head) return;
-
-                const id = '__haf_hide_scrollbars_and_clean';
-                if (!doc.getElementById(id)) {
-                    const st = doc.createElement('style');
-                    st.id = id;
-                    st.textContent = `
-                      /* Ẩn thanh cuộn UI trong toàn bộ trang con nhưng vẫn cuộn được */
-                      * { scrollbar-width: none !important; -ms-overflow-style: none !important; }
-                      *::-webkit-scrollbar { width: 0 !important; height: 0 !important; }
-
-                      /* Không cho cuộn “chaining” ra ngoài */
-                      html, body { overscroll-behavior-y: contain !important; }
-
-                      /* Gỡ hero/breadcrumb/gradient và ép nền trắng */
-                      .page-hero,.hero,.section-hero,.account-hero,.breadcrumb,[data-breadcrumb],.banner,.page-banner{display:none !important}
-                      html,body{
-                        background:#ffffff !important;
-                        background-image:none !important;
-                      }
-                      body,main,#main,.page,.container,.container-fluid,.wrapper,.layout,.content,.content-area,.account-page,.account-layout,.account-wrapper{
-                        background-image:none !important;
-                      }
-                    `;
-                    head.appendChild(st);
-                }
-            } catch (e) { }
+                const d = iframe.contentDocument || iframe.contentWindow.document;
+                if (!d) return;
+                const head = d.head || d.getElementsByTagName('head')[0];
+                if (!head || d.getElementById('__haf_force_white')) return;
+                const st = d.createElement('style');
+                st.id = '__haf_force_white';
+                st.textContent = `
+                html,body{background:#ffffff !important;background-image:none !important;min-height:auto !important;}
+            `;
+                head.appendChild(st);
+            } catch { }
         }
+        frame.addEventListener('load', function () { injectWhite(frame); });
 
-        /* ====== Khóa/Mở cuộn TRANG NGOÀI khi trỏ chuột vào/ra iframe ====== */
-        function getScrollbarWidth() {
-            return window.innerWidth - document.documentElement.clientWidth;
-        }
-        function lockOuterScroll() {
-            const sbw = getScrollbarWidth();                       // đo trước khi khóa
-            document.documentElement.style.setProperty('--sbw', sbw + 'px');
-            document.body.style.setProperty('--sbw', sbw + 'px');
-            document.documentElement.classList.add('host-lock-scroll');
-            document.body.classList.add('host-lock-scroll');
-        }
-        function unlockOuterScroll() {
-            document.documentElement.classList.remove('host-lock-scroll');
-            document.body.classList.remove('host-lock-scroll');
-            document.documentElement.style.removeProperty('--sbw');
-            document.body.style.removeProperty('--sbw');
-        }
-
-        /* Gắn sự kiện cho iframe */
-        ['mouseenter', 'pointerenter', 'focus', 'touchstart'].forEach(ev => {
-            frame.addEventListener(ev, lockOuterScroll, { passive: true });
-        });
-        ['mouseleave', 'pointerleave', 'blur', 'touchend', 'touchcancel'].forEach(ev => {
-            frame.addEventListener(ev, unlockOuterScroll, { passive: true });
-        });
-
-        // click menu -> đổi src + set chiều cao
+        // Chuyển tab: chỉ thay src (luôn kèm embed=1), KHÔNG đổi chiều cao
         menuItems.forEach(it => {
             it.addEventListener('click', e => {
                 const url = it.dataset?.url;
@@ -245,11 +180,10 @@
                 menuItems.forEach(i => i.classList.remove('active'));
                 it.classList.add('active');
                 frame.src = withEmbed(url);
-                sizeToViewport(); // giữ ổn định theo viewport
             }, false);
         });
 
-        // nhận ?tab= từ query
+        // Hỗ trợ ?tab=... nhưng không đổi height
         try {
             const params = new URLSearchParams(location.search);
             const tab = (params.get('tab') || '').toLowerCase();
@@ -257,27 +191,22 @@
                 const orderId = params.get('orderId') || params.get('id');
                 mProfile && mProfile.classList.remove('active');
                 mOrders && mOrders.classList.add('active');
-                const u = orderId ? '../OrderPage/OrderDetail.aspx?id=' + encodeURIComponent(orderId)
+                const u = orderId
+                    ? '../OrderPage/OrderDetail.aspx?id=' + encodeURIComponent(orderId)
                     : (mOrders.dataset.url || '../OrderPage/OrderPage.aspx');
                 frame.src = withEmbed(u);
             } else if (tab === 'addresses') {
                 const addressId = params.get('addressId') || params.get('id');
                 mProfile && mProfile.classList.remove('active');
                 mAddresses && mAddresses.classList.add('active');
-                const u = addressId ? '../UserAddress/UpdateUserAddress.aspx?id=' + encodeURIComponent(addressId)
+                const u = addressId
+                    ? '../UserAddress/UpdateUserAddress.aspx?id=' + encodeURIComponent(addressId)
                     : (mAddresses.dataset.url || '../UserAddress/UserAddressList.aspx');
                 frame.src = withEmbed(u);
             }
         } catch { }
-
-        frame.addEventListener('load', function () {
-            beautifyAndHideScrollbars();
-            sizeToViewport();
-        });
-
-        window.addEventListener('load', sizeToViewport);
-        window.addEventListener('resize', sizeToViewport);
     })();
 </script>
+
 </body>
 </html>

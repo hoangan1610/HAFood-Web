@@ -11,12 +11,16 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>HAFood</title>
 
-  <meta name="api-base" content="<%: System.Configuration.ConfigurationManager.AppSettings["ApiBaseUrl"] ?? "" %>" />
+<meta name="api-base" content="<%: System.Configuration.ConfigurationManager.AppSettings["ApiBaseUrl"] ?? "" %>" />
+
   <script>
       window.__API_BASE = (document.querySelector('meta[name="api-base"]')?.content || '').replace(/\/+$/, '');
   </script>
+
   <!-- Bootstrap -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <!-- Bootstrap Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet" />
 
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -25,57 +29,190 @@
   <link href="https://fonts.googleapis.com/css2?family=Noto+Serif:ital,wght@0,400;0,700;1,400;1,700&display=swap&subset=latin,vietnamese" rel="stylesheet">
 
   <style>
+    :root{
+      --haf-primary:#2aa33b;
+      --haf-primary-soft:#ecfdf3;
+      --haf-accent:#f97316;
+      --haf-accent-soft:#fff7ed;
+      --haf-bg:#fffaf3;
+      --haf-card-bg:#ffffff;
+      --haf-radius-lg:24px;
+      --haf-radius-md:18px;
+      --haf-shadow-soft:0 18px 45px rgba(15,23,42,.08);
+      --haf-shadow-subtle:0 10px 30px rgba(15,23,42,.06);
+    }
+
+    body{
+      line-height:1.6;
+      background:radial-gradient(circle at top,#fff7e6 0,#fffaf3 40%,#ffffff 100%);
+      color:#111827;
+    }
+
     /* ==== Featured category cards ==== */
-    .cat-card{background:#fff;border:1px solid #eee;transition:transform .15s ease}
-    .cat-card:hover{transform:translateY(-3px)}
-    .cat-img{max-height:120px;object-fit:contain}
-    .cat-name{font-weight:700;font-size:1.05rem;color:#2aa33b}
+    .cat-card{
+      background:var(--haf-card-bg);
+      border:1px solid #e5e7eb;
+      border-radius:var(--haf-radius-md);
+      transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+      box-shadow:var(--haf-shadow-subtle);
+    }
+    .cat-card:hover{
+      transform:translateY(-4px);
+      border-color:#c4ddc7;
+      box-shadow:var(--haf-shadow-soft);
+    }
+    .cat-img{
+      max-height:120px;
+      object-fit:contain;
+      transition:transform .18s ease;
+    }
+    .cat-card:hover .cat-img{
+      transform:translateY(-2px) scale(1.02);
+    }
+    .cat-name{
+      font-weight:700;
+      font-size:1.05rem;
+      color:var(--haf-primary);
+    }
 
     /* ==== Product cards ==== */
-    .text-truncate-2{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-    .price-now{color:#ff3b30;font-weight:700}
-    .price-old{text-decoration:line-through;color:#888;margin-left:.5rem}
-    .badge-off{position:absolute;top:.5rem;right:.5rem;background:#ffe08a;color:#333;padding:.35rem .5rem;border-radius:.35rem;font-weight:700;display:none}
+    .text-truncate-2{
+      display:-webkit-box;
+      -webkit-line-clamp:2;
+      -webkit-box-orient:vertical;
+      overflow:hidden
+    }
+    .price-now{
+      color:#ef4444;
+      font-weight:700
+    }
+    .price-old{
+      text-decoration:line-through;
+      color:#9ca3af;
+      margin-left:.5rem
+    }
+    .badge-off{
+      position:absolute;
+      top:.5rem;
+      right:.5rem;
+      background:linear-gradient(135deg,#f97316,#facc15);
+      color:#111827;
+      padding:.35rem .6rem;
+      border-radius:.6rem;
+      font-weight:700;
+      font-size:.75rem;
+      display:none;
+      box-shadow:0 4px 12px rgba(249,115,22,.25);
+    }
     .of-contain{object-fit:contain}
 
     /* ==== Horizontal shelf (Mới về) ==== */
-    .shelf{display:flex;gap:1rem;overflow:auto;padding-bottom:.5rem;scroll-snap-type:x mandatory}
+    .shelf{
+      display:flex;
+      gap:1rem;
+      overflow:auto;
+      padding-bottom:.75rem;
+      scroll-snap-type:x mandatory
+    }
     .shelf::-webkit-scrollbar{height:8px}
-    .shelf::-webkit-scrollbar-thumb{background:#ddd;border-radius:100px}
+    .shelf::-webkit-scrollbar-thumb{background:#d1d5db;border-radius:100px}
     .shelf-item{min-width:220px;scroll-snap-align:start}
     @media (min-width:576px){ .shelf-item{min-width:240px} }
     @media (min-width:992px){ .shelf-item{min-width:260px} }
 
     /* Card polish */
-    .product-card{transition:transform .15s ease, box-shadow .15s ease}
-    .product-card:hover{transform:translateY(-3px);box-shadow:0 .5rem 1rem rgba(0,0,0,.06)}
+    .product-card{
+      transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+      border-radius:var(--haf-radius-lg);
+      border:1px solid #e5e7eb;
+      background:var(--haf-card-bg);
+      box-shadow:var(--haf-shadow-subtle);
+      overflow:hidden;
+    }
+    .product-card:hover{
+      transform:translateY(-4px);
+      box-shadow:var(--haf-shadow-soft);
+      border-color:#c4ddc7;
+    }
 
     /* ==== SERVICES (Welcome to HAFood) ==== */
-    .services-wrap{background:#faf8f2}
+    .services-wrap{
+      position:relative;
+      background:radial-gradient(circle at top left,#fff1d8 0,#faf8f2 45%,#f4fbf5 100%);
+      overflow:hidden;
+    }
+    .services-wrap::before,
+    .services-wrap::after{
+      content:"";
+      position:absolute;
+      border-radius:999px;
+      filter:blur(40px);
+      opacity:.8;
+      pointer-events:none;
+    }
+    .services-wrap::before{
+      width:260px;height:260px;
+      background:rgba(250,204,21,.45);
+      top:-80px;right:-40px;
+    }
+    .services-wrap::after{
+      width:220px;height:220px;
+      background:rgba(16,185,129,.35);
+      bottom:-70px;left:-40px;
+    }
+    .services-wrap > .container{position:relative;z-index:1;}
+
     .services-wrap .eyebrow{
-      font-family:'Great Vibes',cursive;color:#2aa33b;font-size:1.8rem;line-height:1;margin-bottom:.25rem
+      font-family:'Great Vibes',cursive;
+      color:var(--haf-primary);
+      font-size:1.8rem;
+      line-height:1;
+      margin-bottom:.25rem
     }
     .services-wrap .headline{
       font-family:"Georgia","Noto Serif","Times New Roman",Times,serif;
-      font-size:2rem;font-weight:700;font-style:italic; color:#000;
+      font-size:2.1rem;
+      font-weight:700;
+      font-style:italic;
+      color:#111827;
     }
 
-    .service-item{padding:1.25rem;border-radius:1.25rem;text-align:center;background:transparent}
+    .service-item{
+      padding:1.35rem 1.25rem;
+      border-radius:1.5rem;
+      text-align:center;
+      background:rgba(255,255,255,.9);
+      border:1px solid rgba(255,255,255,.6);
+      box-shadow:var(--haf-shadow-subtle);
+      transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease, background .18s ease;
+    }
+    .service-item:hover{
+      transform:translateY(-4px);
+      border-color:rgba(148,163,184,.6);
+      box-shadow:var(--haf-shadow-soft);
+      background:#ffffff;
+    }
 
     .service-title{
       font-family:"Georgia","Noto Serif","Times New Roman",Times,serif;
-      font-weight:700;margin:.25rem 0 .5rem;cursor:pointer;color:#2aa33b
+      font-weight:700;
+      margin:.35rem 0 .45rem;
+      cursor:pointer;
+      color:var(--haf-primary);
+      font-size:1.05rem
     }
     .service-desc{
       font-family:"Georgia","Noto Serif","Times New Roman",Times,serif;
-      color:#6b7280
+      color:#6b7280;
+      font-size:.9rem
     }
 
     .service-icon{
-      width:150px;height:150px;border-radius:999px;margin:0 auto 16px;
+      width:140px;height:140px;border-radius:999px;margin:0 auto 16px;
       display:flex;align-items:center;justify-content:center;
       perspective:600px;
       font-family:"Georgia","Noto Serif","Times New Roman",Times,serif;
+      box-shadow:0 12px 30px rgba(148,163,184,.45);
     }
     .service-icon *{
       font-family:"Georgia","Noto Serif","Times New Roman",Times,serif !important
@@ -94,19 +231,69 @@
 
     /* ==== SECTION TITLES ==== */
     .sec-title{
-      text-align:center;color:#000;
+      text-align:center;
+      color:#0f172a;
       font-family:"Georgia","Noto Serif","Times New Roman",Times,serif;
-      font-weight:700;font-style:italic;margin:0;
+      font-weight:700;
+      font-style:italic;
+      margin:0;
+      letter-spacing:.03em;
+      position:relative;
+    }
+    .sec-title::after{
+      content:"";
+      display:block;
+      width:72px;
+      height:3px;
+      border-radius:999px;
+      margin:.45rem auto 0;
+      background:linear-gradient(90deg,var(--haf-primary),var(--haf-accent));
+    }
+
+    .home-section-header{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:.75rem;
     }
 
     /* ==== Product card tweaks ==== */
-    .product-card .ratio{background:#FFF4E5 !important}
-    .shelf .ratio{background:#FFF4E5 !important}
+    .product-card .ratio,
+    .shelf .ratio{
+      background:var(--haf-accent-soft) !important
+    }
     .product-name{
       font-family:"Georgia","Noto Serif","Times New Roman",Times,serif;
-      font-weight:700;font-size:1.12rem;
+      font-weight:700;
+      font-size:1.05rem;
     }
-    .product-price{ font-family:"Georgia","Times New Roman",Times,serif; }
+    .product-price{
+      font-family:"Georgia","Times New Roman",Times,serif;
+      font-size:.95rem;
+    }
+
+    /* Flash sale chips – ẨN mặc định; chỉ hiện khi có dữ liệu (class .is-live) */
+    .product-price .js-countdown,
+    .product-price .js-remaining{
+      display:none;
+    }
+    .product-price .js-countdown.is-live,
+    .product-price .js-remaining.is-live{
+      display:inline-flex;
+      align-items:center;gap:.35rem;
+      padding:.18rem .55rem;border-radius:999px;margin-left:.5rem;margin-top:.25rem;
+      font-size:.8rem;line-height:1.2;border:1px solid transparent;
+    }
+    .product-price .js-countdown.is-live{
+      background:#ffe4e6;border-color:#fecaca;color:#b91c1c !important;
+    }
+    .product-price .js-remaining.is-live{
+      background:#f3f4f6;border-color:#e5e7eb;color:#374151 !important;
+    }
+
+    /* Optional progress bar cho flash sale */
+    .fs-progress{position:relative;height:8px;border-radius:999px;background:#f1f5f9;overflow:hidden;margin-top:.5rem}
+    .fs-progress__bar{position:absolute;left:0;top:0;height:100%;width:0;background:linear-gradient(90deg,#f97316,#facc15);}
 
     :lang(vi) {
       font-family: "Noto Serif", "Times New Roman", Times, serif;
@@ -122,12 +309,23 @@
       font-family: "Noto Serif", "Times New Roman", Times, serif !important;
     }
 
-    body { line-height: 1.55; }
     .sec-title, .service-title, .product-name { line-height: 1.35; }
 
+    /* section wrapper cards for homepage blocks (dùng nếu thêm class home-section sau này) */
+    .home-section{
+      background:rgba(255,255,255,.95);
+      border-radius:var(--haf-radius-lg);
+      padding:2.25rem 1.75rem;
+      box-shadow:var(--haf-shadow-subtle);
+    }
+    @media (min-width:768px){
+      .home-section{padding:2.5rem 2.5rem;}
+    }
+    .home-section + .home-section{
+      margin-top:2.5rem;
+    }
 
     /* ==== VÒNG QUAY POPUP ==== */
-    /* Toàn bộ popup dùng cùng font với header */
     .haf-spin-panel,
     .haf-spin-panel .spin-card,
     .haf-spin-panel .spin-title,
@@ -142,7 +340,6 @@
       font-family: "Noto Serif", "Times New Roman", Times, serif;
     }
 
-    /* Giữ style riêng cho tiêu đề nếu muốn */
     .spin-title{
       font-weight:700;
       font-style:italic;
@@ -153,7 +350,7 @@
     .haf-spin-launcher{
       position: fixed;
       right: 30px;
-      bottom: 150px; /* nằm trên nút back-to-top và trên chat */
+      bottom: 150px;
       display: inline-flex;
       align-items: center;
       gap: 8px;
@@ -168,13 +365,18 @@
       box-shadow: 0 10px 24px rgba(0,0,0,.25);
       z-index: 1001;
       font-size: 14px;
+      animation:haf-pulse 2.8s ease-in-out infinite;
     }
     .haf-spin-launcher:hover{
       filter: brightness(.95);
       transform: translateY(-1px);
     }
 
-    /* Panel nhỏ lại, cao hơn một chút để cảm giác dọc hơn */
+    @keyframes haf-pulse{
+      0%,100%{transform:translateY(0) scale(1);}
+      50%{transform:translateY(-2px) scale(1.02);}
+    }
+
     .haf-spin-panel{
       position: fixed;
       left: 50%;
@@ -194,16 +396,15 @@
       transition: opacity .18s ease, transform .18s ease, visibility .18s ease;
     }
 
-    /* body KHÔNG cuộn nữa */
     .haf-spin-body{
       padding: 12px 16px 20px;
       overflow-y: hidden;
       display: flex;
       align-items: center;
       justify-content: center;
+      background: radial-gradient(circle at top,#fff7e6 0,#ffffff 45%,#e5f3ff 100%);
     }
 
-    /* thẻ chính */
     .spin-card{
       width: 100%;
       max-width: 480px;
@@ -284,7 +485,6 @@
       image-rendering: auto;
     }
 
-    /* Hết lượt quay: làm mờ nhẹ + giảm opacity + khóa click */
     .screen-3.is-out-of-turns {
       filter: blur(1.5px) grayscale(.1);
       opacity: 0.45;
@@ -306,29 +506,27 @@
     }
 
     .spin-checkin-row{
-  width:100%;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:8px;
-}
+      width:100%;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:8px;
+    }
 
-.spin-checkin-hint{
-  flex:1;
-  text-align:left;
-}
+    .spin-checkin-hint{
+      flex:1;
+      text-align:left;
+    }
 
-@media (max-width: 480px){
-  .spin-checkin-row{
-    flex-direction:column;
-    align-items:flex-start;
-  }
-  .spin-checkin-hint{
-    font-size:.8rem;
-  }
-}
-
-
+    @media (max-width: 480px){
+      .spin-checkin-row{
+        flex-direction:column;
+        align-items:flex-start;
+      }
+      .spin-checkin-hint{
+        font-size:.8rem;
+      }
+    }
   </style>
 </head>
 
@@ -425,7 +623,8 @@
       <asp:Repeater ID="rpNew" runat="server">
         <ItemTemplate>
           <div class="shelf-item">
-            <div class="card product-card shadow-sm h-100 js-product-card">
+            <!-- THÊM data-product-id + đổi nút thành Mua ngay -->
+            <div class="card product-card shadow-sm h-100 js-product-card" data-product-id="<%# Eval("Id") %>">
               <a href='<%# Eval("Id", ResolveUrl("~/product/Product.aspx?id={0}")) %>' class="text-decoration-none">
                 <div class="ratio ratio-4x3 position-relative">
                   <img src="<%# Eval("ImageUrl") %>" loading="lazy"
@@ -457,8 +656,8 @@
                   </asp:Repeater>
                 </select>
 
-                <a class="btn btn-warning btn-sm mt-auto w-100"
-                   href='<%# Eval("Id", ResolveUrl("~/product/Product.aspx?id={0}")) %>'>Mua</a>
+                <!-- NÚT MUA NGAY -->
+                <button type="button" class="btn btn-warning btn-sm mt-auto w-100 js-buy-now">Mua ngay</button>
               </div>
             </div>
           </div>
@@ -475,7 +674,8 @@
       <HeaderTemplate><div class="row gx-3 gy-4"></HeaderTemplate>
       <ItemTemplate>
         <div class="col-12 col-sm-6 col-lg-3">
-          <div class="card product-card h-100 shadow-sm d-flex js-product-card">
+          <!-- THÊM data-product-id -->
+          <div class="card product-card h-100 shadow-sm d-flex js-product-card" data-product-id="<%# Eval("Id") %>">
             <a href='<%# Eval("Id", ResolveUrl("~/product/Product.aspx?id={0}")) %>' class="text-decoration-none">
               <div class="ratio ratio-4x3 position-relative">
                 <img src="<%# Eval("ImageUrl") %>" loading="lazy"
@@ -509,9 +709,10 @@
 
               <div class="d-flex align-items-center gap-2 mt-auto">
                 <label class="me-2">SL</label>
-                <input type="number" class="form-control form-control-sm" style="width:90px" value="1" min="1" />
-                <a class="btn btn-warning btn-sm ms-auto"
-                   href='<%# Eval("Id", ResolveUrl("~/product/Product.aspx?id={0}")) %>'>Mua</a>
+                <!-- THÊM class js-qty-input -->
+                <input type="number" class="form-control form-control-sm js-qty-input" style="width:90px" value="1" min="1" />
+                <!-- NÚT MUA NGAY -->
+                <button type="button" class="btn btn-warning btn-sm ms-auto js-buy-now">Mua ngay</button>
               </div>
             </div>
           </div>
@@ -534,13 +735,8 @@
     </div>
     <div class="haf-spin-body">
       <div class="spin-card">
-        <!-- Không dùng h2 nữa để nhường chỗ cho bánh xe -->
-      <%--  <p class="spin-sub mt-1">
-          Đăng nhập và quay để nhận ưu đãi cho đơn hàng HAFood của bạn.
-        </p>--%>
 
-        <!-- NÚT ĐIỂM DANH -->
-             <!-- NÚT ĐIỂM DANH + GỢI Ý -->
+        <!-- NÚT ĐIỂM DANH + GỢI Ý -->
         <div class="spin-checkin-row mb-2">
           <button type="button"
                   id="btnCheckin"
@@ -557,7 +753,6 @@
 
         <p id="spin_turns_label" class="small text-secondary mb-2"></p>
 
-      
         <!-- MÀN HÌNH VÒNG QUAY -->
         <div class="screen-3">
           <canvas id="mycanvas" width="500" height="500"></canvas>
@@ -581,7 +776,6 @@
               id="name_result_spin"
               style="color:#2600ff"></h3>
 
-          <!-- Thông điệp chi tiết -->
           <p id="spin_result_message" class="mt-2 mb-2 text-muted"></p>
 
           <button type="button"
@@ -625,42 +819,115 @@
     });
   </script>
 
-  <!-- Flash sale JS tách file -->
+  <!-- Flash sale JS tách file (cập nhật text cho countdown/remaining) -->
   <script src="/assets/js/flashsale.js?v=1"></script>
 
   <!-- CreateJS cho Vòng quay -->
   <script src="https://code.createjs.com/1.0.0/easeljs.min.js"></script>
   <script src="https://code.createjs.com/1.0.0/tweenjs.min.js"></script>
 
+  <!-- ====== ENHANCE PRODUCT CARD + FLASH SALE ====== -->
   <script>
-    // ====== TOGGLE POPUP VÒNG QUAY ======
-    (function () {
-      const launcher = document.getElementById('hafSpinLauncher');
-      const panel = document.getElementById('hafSpinPanel');
-      const closeBtn = document.getElementById('hafSpinClose');
+    (function(){
+      // Parse số tiền VN từ chuỗi "36.000 đ"
+      function hafParseVnMoney(txt){
+        if(!txt) return NaN;
+        const n = String(txt).replace(/[^\d]/g,'');
+        return n ? Number(n) : NaN;
+      }
 
-      function setSpinOpen(isOpen) {
-        if (!panel) return;
-        panel.classList.toggle('is-open', isOpen);
-        panel.setAttribute('aria-hidden', isOpen ? 'false' : 'true');
-        if (isOpen) {
-          const btn = document.getElementById('btn_spin');
-          btn && btn.focus();
+      // Chuẩn hoá text để biết có dữ liệu thật không
+      function normalizeChipText(s){
+        return (s||'').replace(/[\s\u00A0\-–—:]/g,'').trim();
+      }
+      // Chỉ hiện khi có dữ liệu
+      function toggleChipLive(el){
+        if(!el) return;
+        const has = normalizeChipText(el.textContent).length > 0;
+        if(has){
+          el.classList.add('is-live');
+          el.style.display = '';
+        }else{
+          el.classList.remove('is-live');
+          el.style.display = 'none';
         }
       }
 
-      launcher && launcher.addEventListener('click', () => {
-        const opened = panel.classList.contains('is-open');
-        setSpinOpen(!opened);
-      });
-      closeBtn && closeBtn.addEventListener('click', () => setSpinOpen(false));
+      function enhanceOneCard(card){
+        const priceNowEl = card.querySelector('.js-price-now');
+        const priceOldEl = card.querySelector('.js-price-old');
+        const badgeOff   = card.querySelector('.js-badge-off');
+        const countdown  = card.querySelector('.js-countdown');
+        const remaining  = card.querySelector('.js-remaining');
+        const priceBox   = card.querySelector('.product-price');
 
-      document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') setSpinOpen(false);
+        // 1) Tự tính % giảm để hiển thị badge (nếu có dữ liệu)
+        try{
+          if (badgeOff && priceNowEl){
+            const nowAttr = card.getAttribute('data-price-now');
+            const oldAttr = card.getAttribute('data-price-old');
+            let now = nowAttr ? Number(nowAttr) : hafParseVnMoney(priceNowEl.textContent || priceNowEl.innerText);
+            let old = oldAttr ? Number(oldAttr) : hafParseVnMoney(priceOldEl && (priceOldEl.textContent || priceOldEl.innerText));
+
+            if (!isNaN(now) && !isNaN(old) && old > now){
+              const pct = Math.max(1, Math.round((1 - now/old) * 100));
+              badgeOff.textContent = '-' + pct + '%';
+              badgeOff.style.display = 'block';
+            }
+          }
+        }catch(e){}
+
+        // 2) Chip flash sale: chỉ bật khi có dữ liệu
+        toggleChipLive(countdown);
+        toggleChipLive(remaining);
+
+        // 3) Progress bar nếu có data-left & data-total
+        if (priceBox){
+          const left = Number(card.getAttribute('data-left'));
+          const total = Number(card.getAttribute('data-total'));
+          if (!isNaN(left) && !isNaN(total) && total > 0){
+            let wrap = priceBox.querySelector('.fs-progress');
+            const sold = Math.max(0, Math.min(100, Math.round(((total - left)/total)*100)));
+            if (!wrap){
+              wrap = document.createElement('div');
+              wrap.className = 'fs-progress';
+              const bar = document.createElement('div');
+              bar.className = 'fs-progress__bar';
+              wrap.appendChild(bar);
+              priceBox.appendChild(wrap);
+            }
+            const bar = wrap.querySelector('.fs-progress__bar');
+            if (bar) bar.style.width = sold + '%';
+          }
+        }
+      }
+
+      function enhanceAllCards(){
+        document.querySelectorAll('.js-product-card').forEach(enhanceOneCard);
+      }
+
+      document.addEventListener('DOMContentLoaded', function(){
+        enhanceAllCards();
+        // chạy lại sau khi flashsale.js có thể đã đổ dữ liệu
+        setTimeout(enhanceAllCards, 1200);
+
+        // Theo dõi thay đổi trong vùng giá để cập nhật lại badge/progress/chips
+        const obs = new MutationObserver(function(mutations){
+          const touched = new Set();
+          mutations.forEach(m => {
+            const card = (m.target && m.target.closest) ? m.target.closest('.js-product-card') : null;
+            if (card) touched.add(card);
+          });
+          touched.forEach(enhanceOneCard);
+        });
+        document.querySelectorAll('.js-product-card .product-price').forEach(box=>{
+          obs.observe(box, {subtree:true, characterData:true, childList:true});
+        });
       });
     })();
   </script>
 
+  <!-- ====== VÒNG QUAY – LOGIC ====== -->
   <script>
     var iconLayer;
     var baseAngles = [];
@@ -670,393 +937,392 @@
     var stage, imgRotation, imgCoverRota, centerRota;
     var item_random_file = "item-random";
 
-      var remainingSpins = null;
-      var hasLogin = true;
-      var hasCheckedInToday = false;
-
+    var remainingSpins = null;
+    var hasLogin = true;
+    var hasCheckedInToday = false;
 
     var linkImg = "<%= ResolveUrl("~/assets/spin/") %>";
 
-    var imgContainRota = new Image();
-    var imgCenterRota = new Image();
-    imgContainRota.src = linkImg + "Vong-quay-nen.png";
-    imgCenterRota.src = linkImg + "kim-vong-quay.png";
+      var imgContainRota = new Image();
+      var imgCenterRota = new Image();
+      imgContainRota.src = linkImg + "Vong-quay-nen.png";
+      imgCenterRota.src = linkImg + "kim-vong-quay.png";
 
-    var spinning = false;
-    var spinningContinuous = false;
-    var spinSpeed = 720;
-    var totalRota = 5;
-    var timeRota = 4000;
+      var spinning = false;
+      var spinningContinuous = false;
+      var spinSpeed = 720;
+      var totalRota = 5;
+      var timeRota = 4000;
 
-    function refreshSpinButtonByTurns() {
-      var btn = document.getElementById("btn_spin");
-      if (!btn) return;
+      function refreshSpinButtonByTurns() {
+          var btn = document.getElementById("btn_spin");
+          if (!btn) return;
 
-      if (spinning) return;
+          if (spinning) return;
 
-      if (!hasLogin) {
-        btn.classList.add("disabled");
-        btn.style.pointerEvents = "none";
-        btn.textContent = "Đăng nhập để quay";
-        return;
+          if (!hasLogin) {
+              btn.classList.add("disabled");
+              btn.style.pointerEvents = "none";
+              btn.textContent = "Đăng nhập để quay";
+              return;
+          }
+
+          if (remainingSpins == null) {
+              btn.classList.add("disabled");
+              btn.style.pointerEvents = "none";
+              btn.textContent = "Đang kiểm tra...";
+              return;
+          }
+
+          if (remainingSpins <= 0) {
+              btn.classList.add("disabled");
+              btn.style.pointerEvents = "none";
+              btn.textContent = "Hết lượt quay";
+          } else {
+              btn.classList.remove("disabled");
+              btn.style.pointerEvents = "";
+              btn.textContent = "Bấm để quay";
+          }
       }
 
-      if (remainingSpins == null) {
-        btn.classList.add("disabled");
-        btn.style.pointerEvents = "none";
-        btn.textContent = "Đang kiểm tra...";
-        return;
+      function updateSpinTurnsLabel() {
+          var el = document.getElementById("spin_turns_label");
+          if (!el) return;
+
+          if (!hasLogin) {
+              el.textContent = "Vui lòng đăng nhập để sử dụng vòng quay.";
+              refreshSpinButtonByTurns();
+              refreshSpinVisualState();
+              return;
+          }
+
+          if (remainingSpins == null) {
+              el.textContent = "Đang kiểm tra lượt quay...";
+              refreshSpinButtonByTurns();
+              refreshSpinVisualState();
+              return;
+          }
+
+          if (remainingSpins > 0) {
+              el.textContent = "Bạn còn " + remainingSpins + " lượt quay.";
+          } else {
+              el.textContent = "Bạn đã sử dụng hết lượt quay.";
+          }
+
+          refreshSpinButtonByTurns();
+          refreshSpinVisualState();
       }
 
-      if (remainingSpins <= 0) {
-        btn.classList.add("disabled");
-        btn.style.pointerEvents = "none";
-        btn.textContent = "Hết lượt quay";
-      } else {
-        btn.classList.remove("disabled");
-        btn.style.pointerEvents = "";
-        btn.textContent = "Bấm để quay";
-      }
-    }
+      function refreshSpinVisualState() {
+          var s3 = document.querySelector('.screen-3');
+          if (!s3) return;
 
-    function updateSpinTurnsLabel() {
-      var el = document.getElementById("spin_turns_label");
-      if (!el) return;
-
-      if (!hasLogin) {
-        el.textContent = "Vui lòng đăng nhập để sử dụng vòng quay.";
-        refreshSpinButtonByTurns();
-        refreshSpinVisualState();
-        return;
+          if (!hasLogin || (remainingSpins != null && remainingSpins <= 0)) {
+              s3.classList.add("is-out-of-turns");
+          } else {
+              s3.classList.remove("is-out-of-turns");
+          }
       }
 
-      if (remainingSpins == null) {
-        el.textContent = "Đang kiểm tra lượt quay...";
-        refreshSpinButtonByTurns();
-        refreshSpinVisualState();
-        return;
+      function setSpinButtonState(isSpinning) {
+          var btn = document.getElementById("btn_spin");
+          if (!btn) return;
+
+          if (isSpinning) {
+              spinning = true;
+              btn.classList.add("disabled");
+              btn.style.pointerEvents = "none";
+              btn.textContent = "Đang quay...";
+          } else {
+              spinning = false;
+              refreshSpinButtonByTurns();
+          }
       }
 
-      if (remainingSpins > 0) {
-        el.textContent = "Bạn còn " + remainingSpins + " lượt quay.";
-      } else {
-        el.textContent = "Bạn đã sử dụng hết lượt quay.";
+      function init() {
+          stage = new createjs.Stage("mycanvas");
+          stage.snapToPixelEnabled = true;
+
+          createjs.Touch.enable(stage);
+          stage.enableMouseOver();
+
+          imgCoverRota = new createjs.Container();
+          stage.addChild(imgCoverRota);
+
+          imgRotation = new createjs.Container();
+          imgCoverRota.addChild(imgRotation);
+
+          iconLayer = new createjs.Container();
+          imgCoverRota.addChild(iconLayer);
+
+          var toLoad = 2;
+          function onLoadedImg() {
+              toLoad--;
+              if (toLoad === 0 && totalItem > 0) {
+                  buildWheel();
+              }
+          }
+          if (imgContainRota.complete) onLoadedImg(); else imgContainRota.onload = onLoadedImg;
+          if (imgCenterRota.complete) onLoadedImg(); else imgCenterRota.onload = onLoadedImg;
+
+          createjs.Ticker.framerate = 60;
+          createjs.Ticker.on("tick", function (evt) {
+              if (spinningContinuous && imgRotation) {
+                  imgRotation.rotation += spinSpeed * (evt.delta / 1000);
+              }
+              updateAllIconsPosition();
+              stage.update(evt);
+          });
+
+          window.addEventListener('resize', handleResize);
       }
 
-      refreshSpinButtonByTurns();
-      refreshSpinVisualState();
-    }
+      const SLICE_COLORS = [
+          "rgba(255, 255, 255, 0.18)",
+          "rgba(255, 190, 120, 0.35)"
+      ];
 
-    function refreshSpinVisualState() {
-      var s3 = document.querySelector('.screen-3');
-      if (!s3) return;
+      function buildWheel() {
+          imgRotation.removeAllChildren();
 
-      if (!hasLogin || (remainingSpins != null && remainingSpins <= 0)) {
-        s3.classList.add("is-out-of-turns");
-      } else {
-        s3.classList.remove("is-out-of-turns");
-      }
-    }
+          imgCoverRota.removeAllChildren();
+          imgCoverRota.addChild(imgRotation);
+          imgCoverRota.addChild(iconLayer);
 
-    function setSpinButtonState(isSpinning) {
-      var btn = document.getElementById("btn_spin");
-      if (!btn) return;
+          iconLayer.removeAllChildren();
+          baseAngles = [];
 
-      if (isSpinning) {
-        spinning = true;
-        btn.classList.add("disabled");
-        btn.style.pointerEvents = "none";
-        btn.textContent = "Đang quay...";
-      } else {
-        spinning = false;
-        refreshSpinButtonByTurns();
-      }
-    }
+          var baseSize = imgContainRota.width;
+          stage.canvas.width = baseSize;
+          stage.canvas.height = baseSize;
 
-    function init() {
-      stage = new createjs.Stage("mycanvas");
-      stage.snapToPixelEnabled = true;
+          imgCoverRota.x = baseSize / 2;
+          imgCoverRota.y = baseSize / 2;
 
-      createjs.Touch.enable(stage);
-      stage.enableMouseOver();
+          imgCoverRota.scaleX = 1;
+          imgCoverRota.scaleY = 1;
 
-      imgCoverRota = new createjs.Container();
-      stage.addChild(imgCoverRota);
+          var wheel = new createjs.Bitmap(imgContainRota);
+          wheel.regX = imgContainRota.width / 2;
+          wheel.regY = imgContainRota.height / 2;
+          imgRotation.addChild(wheel);
 
-      imgRotation = new createjs.Container();
-      imgCoverRota.addChild(imgRotation);
+          var wheelRadius = imgContainRota.width / 2;
+          var sliceOuter = wheelRadius - 4;
 
-      iconLayer = new createjs.Container();
-      imgCoverRota.addChild(iconLayer);
+          for (let i = 0; i < totalItem; i++) {
+              var startDeg = degItem * i;
+              var endDeg = startDeg + degItem;
 
-      var toLoad = 2;
-      function onLoadedImg() {
-        toLoad--;
-        if (toLoad === 0 && totalItem > 0) {
-          buildWheel();
-        }
-      }
-      if (imgContainRota.complete) onLoadedImg(); else imgContainRota.onload = onLoadedImg;
-      if (imgCenterRota.complete) onLoadedImg(); else imgCenterRota.onload = onLoadedImg;
+              var startRadArc = (startDeg - 90) * Math.PI / 180;
+              var endRadArc = (endDeg - 90) * Math.PI / 180;
 
-      createjs.Ticker.framerate = 60;
-      createjs.Ticker.on("tick", function (evt) {
-        if (spinningContinuous && imgRotation) {
-          imgRotation.rotation += spinSpeed * (evt.delta / 1000);
-        }
-        updateAllIconsPosition();
-        stage.update(evt);
-      });
+              var slice = new createjs.Shape();
+              var g = slice.graphics;
 
-      window.addEventListener('resize', handleResize);
-    }
+              var color = SLICE_COLORS[i % SLICE_COLORS.length];
 
-    const SLICE_COLORS = [
-      "rgba(255, 255, 255, 0.18)",
-      "rgba(255, 190, 120, 0.35)"
-    ];
+              g.beginFill(color);
+              g.moveTo(0, 0);
+              g.lineTo(
+                  Math.cos(startRadArc) * sliceOuter,
+                  Math.sin(startRadArc) * sliceOuter
+              );
+              g.arc(0, 0, sliceOuter, startRadArc, endRadArc);
+              g.closePath();
+              g.endFill();
 
-    function buildWheel() {
-      imgRotation.removeAllChildren();
+              imgRotation.addChild(slice);
+          }
 
-      imgCoverRota.removeAllChildren();
-      imgCoverRota.addChild(imgRotation);
-      imgCoverRota.addChild(iconLayer);
+          for (let i = 0; i < totalItem; i++) {
+              const angleDeg = degItem * i + degItem / 2;
+              baseAngles[i] = angleDeg;
 
-      iconLayer.removeAllChildren();
-      baseAngles = [];
+              let img = new Image();
+              img.src = linkImg + item_random_file + "/" + arrItem[i].src + ".png";
 
-      var baseSize = imgContainRota.width;
-      stage.canvas.width = baseSize;
-      stage.canvas.height = baseSize;
+              img.onload = function () {
+                  let bmp = new createjs.Bitmap(img);
+                  bmp.regX = img.width / 2;
+                  bmp.regY = img.height / 2;
 
-      imgCoverRota.x = baseSize / 2;
-      imgCoverRota.y = baseSize / 2;
+                  bmp.__slotIndex = i;
 
-      imgCoverRota.scaleX = 1;
-      imgCoverRota.scaleY = 1;
+                  const maxW = 72, maxH = 104;
+                  const scale = Math.min(1, maxW / img.width, maxH / img.height);
+                  bmp.scaleX = bmp.scaleY = scale;
 
-      var wheel = new createjs.Bitmap(imgContainRota);
-      wheel.regX = imgContainRota.width / 2;
-      wheel.regY = imgContainRota.height / 2;
-      imgRotation.addChild(wheel);
+                  iconLayer.addChild(bmp);
+                  updateSingleIconPosition(bmp);
+                  stage.update();
+              };
+          }
 
-      var wheelRadius = imgContainRota.width / 2;
-      var sliceOuter = wheelRadius - 4;
+          centerRota = new createjs.Bitmap(imgCenterRota);
+          centerRota.regX = imgCenterRota.width / 2;
+          centerRota.regY = imgCenterRota.height / 2;
+          centerRota.scaleX = 0.5;
+          centerRota.scaleY = 0.5;
+          centerRota.x = 0;
+          centerRota.y = 0;
+          imgCoverRota.addChild(centerRota);
 
-      for (let i = 0; i < totalItem; i++) {
-        var startDeg = degItem * i;
-        var endDeg = startDeg + degItem;
-
-        var startRadArc = (startDeg - 90) * Math.PI / 180;
-        var endRadArc = (endDeg - 90) * Math.PI / 180;
-
-        var slice = new createjs.Shape();
-        var g = slice.graphics;
-
-        var color = SLICE_COLORS[i % SLICE_COLORS.length];
-
-        g.beginFill(color);
-        g.moveTo(0, 0);
-        g.lineTo(
-          Math.cos(startRadArc) * sliceOuter,
-          Math.sin(startRadArc) * sliceOuter
-        );
-        g.arc(0, 0, sliceOuter, startRadArc, endRadArc);
-        g.closePath();
-        g.endFill();
-
-        imgRotation.addChild(slice);
-      }
-
-      for (let i = 0; i < totalItem; i++) {
-        const angleDeg = degItem * i + degItem / 2;
-        baseAngles[i] = angleDeg;
-
-        let img = new Image();
-        img.src = linkImg + item_random_file + "/" + arrItem[i].src + ".png";
-
-        img.onload = function () {
-          let bmp = new createjs.Bitmap(img);
-          bmp.regX = img.width / 2;
-          bmp.regY = img.height / 2;
-
-          bmp.__slotIndex = i;
-
-          const maxW = 72, maxH = 104;
-          const scale = Math.min(1, maxW / img.width, maxH / img.height);
-          bmp.scaleX = bmp.scaleY = scale;
-
-          iconLayer.addChild(bmp);
-          updateSingleIconPosition(bmp);
           stage.update();
-        };
+          handleResize();
       }
 
-      centerRota = new createjs.Bitmap(imgCenterRota);
-      centerRota.regX = imgCenterRota.width / 2;
-      centerRota.regY = imgCenterRota.height / 2;
-      centerRota.scaleX = 0.5;
-      centerRota.scaleY = 0.5;
-      centerRota.x = 0;
-      centerRota.y = 0;
-      imgCoverRota.addChild(centerRota);
+      function updateSingleIconPosition(bmp) {
+          if (!bmp || bmp.__slotIndex == null) return;
+          if (!imgContainRota || !imgContainRota.complete) return;
 
-      stage.update();
-      handleResize();
-    }
+          var wheelRadius = imgContainRota.width / 2;
+          var r = wheelRadius - ICON_OFFSET;
 
-    function updateSingleIconPosition(bmp) {
-      if (!bmp || bmp.__slotIndex == null) return;
-      if (!imgContainRota || !imgContainRota.complete) return;
+          var slotIndex = bmp.__slotIndex;
+          var baseAngle = baseAngles[slotIndex] || 0;
 
-      var wheelRadius = imgContainRota.width / 2;
-      var r = wheelRadius - ICON_OFFSET;
+          var currentWheelDeg = imgRotation ? imgRotation.rotation : 0;
+          var angleDeg = baseAngle + currentWheelDeg;
+          var angleRad = angleDeg * Math.PI / 180;
 
-      var slotIndex = bmp.__slotIndex;
-      var baseAngle = baseAngles[slotIndex] || 0;
+          bmp.x = Math.sin(angleRad) * r;
+          bmp.y = -Math.cos(angleRad) * r;
 
-      var currentWheelDeg = imgRotation ? imgRotation.rotation : 0;
-      var angleDeg = baseAngle + currentWheelDeg;
-      var angleRad = angleDeg * Math.PI / 180;
-
-      bmp.x = Math.sin(angleRad) * r;
-      bmp.y = -Math.cos(angleRad) * r;
-
-      bmp.rotation = 0;
-    }
-
-    function updateAllIconsPosition() {
-      if (!iconLayer) return;
-      for (let i = 0; i < iconLayer.numChildren; i++) {
-        updateSingleIconPosition(iconLayer.getChildAt(i));
+          bmp.rotation = 0;
       }
-    }
 
-    function handleResize() {
-      if (!stage || !imgCoverRota || !imgContainRota.complete) return;
-
-      var canvas = stage.canvas;
-      var baseSize = imgContainRota.width || 500;
-      var host = document.querySelector('.screen-3');
-
-      var hostWidth = host ? host.clientWidth : window.innerWidth;
-      var maxByWidth = Math.max(220, hostWidth - 24);
-
-      var viewportH = window.innerHeight || document.documentElement.clientHeight || 600;
-      var panelMaxH = viewportH * 0.9;
-      var reservedTopBottom = 220;   // đã chỉnh cho bánh xe to nhưng không tràn
-      var maxByHeight = Math.max(220, panelMaxH - reservedTopBottom);
-
-      var maxLogical = baseSize;
-
-      var size = Math.min(maxLogical, maxByWidth, maxByHeight);
-      size = Math.max(220, size);
-
-      canvas.width = size;
-      canvas.height = size;
-
-      imgCoverRota.x = size / 2;
-      imgCoverRota.y = size / 2;
-
-      var scale = size / baseSize;
-      imgCoverRota.scaleX = scale;
-      imgCoverRota.scaleY = scale;
-
-      stage.update();
-    }
-
-    function stopWithResult(indexItem) {
-      if (!spinning) return;
-      spinningContinuous = false;
-
-      var resultAngle = 360 - (degItem * indexItem + degItem / 2);
-
-      var current = imgRotation.rotation;
-      var curNorm = ((current % 360) + 360) % 360;
-
-      var delta = (resultAngle - curNorm + 360) % 360;
-      var target = current + totalRota * 360 + delta;
-
-      createjs.Tween.removeTweens(imgRotation);
-      createjs.Tween.get(imgRotation, { override: true })
-        .to({ rotation: target }, timeRota, createjs.Ease.getPowOut(3))
-        .call(function () { endRota(indexItem); });
-    }
-
-    function setSpinResultVisual(itemResult) {
-      var imgEl = document.getElementById('img_result_spin');
-      if (imgEl) {
-        imgEl.src = linkImg + item_random_file + "/" + itemResult.src + ".png";
+      function updateAllIconsPosition() {
+          if (!iconLayer) return;
+          for (let i = 0; i < iconLayer.numChildren; i++) {
+              updateSingleIconPosition(iconLayer.getChildAt(i));
+          }
       }
-      var nameEl = document.getElementById('name_result_spin');
-      if (nameEl) {
-        nameEl.textContent = itemResult.name || '';
+
+      function handleResize() {
+          if (!stage || !imgCoverRota || !imgContainRota.complete) return;
+
+          var canvas = stage.canvas;
+          var baseSize = imgContainRota.width || 500;
+          var host = document.querySelector('.screen-3');
+
+          var hostWidth = host ? host.clientWidth : window.innerWidth;
+          var maxByWidth = Math.max(220, hostWidth - 24);
+
+          var viewportH = window.innerHeight || document.documentElement.clientHeight || 600;
+          var panelMaxH = viewportH * 0.9;
+          var reservedTopBottom = 220;
+          var maxByHeight = Math.max(220, panelMaxH - reservedTopBottom);
+
+          var maxLogical = baseSize;
+
+          var size = Math.min(maxLogical, maxByWidth, maxByHeight);
+          size = Math.max(220, size);
+
+          canvas.width = size;
+          canvas.height = size;
+
+          imgCoverRota.x = size / 2;
+          imgCoverRota.y = size / 2;
+
+          var scale = size / baseSize;
+          imgCoverRota.scaleX = scale;
+          imgCoverRota.scaleY = scale;
+
+          stage.update();
       }
-    }
 
-    function setSpinMessage(msg) {
-      var el = document.getElementById('spin_result_message');
-      if (!el) return;
-      if (!msg) {
-        el.textContent = '';
-        el.style.display = 'none';
-      } else {
-        el.textContent = msg;
-        el.style.display = '';
+      function stopWithResult(indexItem) {
+          if (!spinning) return;
+          spinningContinuous = false;
+
+          var resultAngle = 360 - (degItem * indexItem + degItem / 2);
+
+          var current = imgRotation.rotation;
+          var curNorm = ((current % 360) + 360) % 360;
+
+          var delta = (resultAngle - curNorm + 360) % 360;
+          var target = current + totalRota * 360 + delta;
+
+          createjs.Tween.removeTweens(imgRotation);
+          createjs.Tween.get(imgRotation, { override: true })
+              .to({ rotation: target }, timeRota, createjs.Ease.getPowOut(3))
+              .call(function () { endRota(indexItem); });
       }
-    }
 
-    function endRota(indexItem) {
-      spinning = false;
-      spinningContinuous = false;
-      pointerEffectStop();
-      setSpinButtonState(false);
+      function setSpinResultVisual(itemResult) {
+          var imgEl = document.getElementById('img_result_spin');
+          if (imgEl) {
+              imgEl.src = linkImg + item_random_file + "/" + itemResult.src + ".png";
+          }
+          var nameEl = document.getElementById('name_result_spin');
+          if (nameEl) {
+              nameEl.textContent = itemResult.name || '';
+          }
+      }
 
-      var itemResult = arrItem[indexItem];
-      setSpinResultVisual(itemResult);
+      function setSpinMessage(msg) {
+          var el = document.getElementById('spin_result_message');
+          if (!el) return;
+          if (!msg) {
+              el.textContent = '';
+              el.style.display = 'none';
+          } else {
+              el.textContent = msg;
+              el.style.display = '';
+          }
+      }
 
-      setTimeout(function () {
-        var screen3 = document.querySelector('.screen-3');
-        var screen4 = document.querySelector('.screen-4');
-        if (screen3 && screen4) {
-          screen3.style.display = 'none';
-          screen4.style.display = '';
-        }
-      }, 800);
-    }
+      function endRota(indexItem) {
+          spinning = false;
+          spinningContinuous = false;
+          pointerEffectStop();
+          setSpinButtonState(false);
 
-    function startPointerShake() {
-      if (!centerRota) return;
-      createjs.Tween.removeTweens(centerRota);
-      createjs.Tween.get(centerRota, { loop: true })
-        .to({ rotation: -4 }, 120, createjs.Ease.sineInOut)
-        .to({ rotation: 4 }, 240, createjs.Ease.sineInOut)
-        .to({ rotation: 0 }, 120, createjs.Ease.sineInOut);
-    }
-    function pointerEffectStop() {
-      if (!centerRota) return;
-      createjs.Tween.removeTweens(centerRota);
-      createjs.Tween.get(centerRota).to({ rotation: 0 }, 60, createjs.Ease.quadInOut);
-    }
+          var itemResult = arrItem[indexItem];
+          setSpinResultVisual(itemResult);
 
-    function getRandomInt(min, max) {
-      min = Math.ceil(min);
-      max = Math.floor(max);
-      return Math.floor(Math.random() * (max - min + 1)) + min;
-    }
+          setTimeout(function () {
+              var screen3 = document.querySelector('.screen-3');
+              var screen4 = document.querySelector('.screen-4');
+              if (screen3 && screen4) {
+                  screen3.style.display = 'none';
+                  screen4.style.display = '';
+              }
+          }, 800);
+      }
 
-    function formatVnMoney(v) {
-      v = Number(v) || 0;
-      return v.toLocaleString("vi-VN") + " ₫";
-    }
+      function startPointerShake() {
+          if (!centerRota) return;
+          createjs.Tween.removeTweens(centerRota);
+          createjs.Tween.get(centerRota, { loop: true })
+              .to({ rotation: -4 }, 120, createjs.Ease.sineInOut)
+              .to({ rotation: 4 }, 240, createjs.Ease.sineInOut)
+              .to({ rotation: 0 }, 120, createjs.Ease.sineInOut);
+      }
+      function pointerEffectStop() {
+          if (!centerRota) return;
+          createjs.Tween.removeTweens(centerRota);
+          createjs.Tween.get(centerRota).to({ rotation: 0 }, 60, createjs.Ease.quadInOut);
+      }
+
+      function getRandomInt(min, max) {
+          min = Math.ceil(min);
+          max = Math.floor(max);
+          return Math.floor(Math.random() * (max - min + 1)) + min;
+      }
+
+      function formatVnMoney(v) {
+          v = Number(v) || 0;
+          return v.toLocaleString("vi-VN") + " ₫";
+      }
+
       function refreshCheckinUi() {
           var btn = document.getElementById('btnCheckin');
           var hint = document.getElementById('checkin_hint');
           if (!btn) return;
 
           if (!hasLogin) {
-              // chưa login: hiện nút nhưng sẽ báo lỗi khi bấm
               btn.disabled = false;
               btn.classList.remove('btn-success');
               btn.classList.add('btn-outline-success');
@@ -1066,14 +1332,12 @@
           }
 
           if (hasCheckedInToday) {
-              // đã điểm danh: khoá nút + ẩn hướng dẫn
               btn.disabled = true;
               btn.classList.remove('btn-outline-success');
               btn.classList.add('btn-success');
               btn.textContent = '✅ Đã điểm danh hôm nay';
               if (hint) hint.style.display = 'none';
           } else {
-              // chưa điểm danh: cho bấm + hiện hướng dẫn
               btn.disabled = false;
               btn.classList.remove('btn-success');
               btn.classList.add('btn-outline-success');
@@ -1082,13 +1346,10 @@
           }
       }
 
-    // ====== TÍCH HỢP API – SPIN_PROXY & CHECKIN ======
       // ====== TÍCH HỢP API – SPIN_PROXY & CHECKIN ======
       const SPIN_PROXY = '<%= ResolveUrl("~/Proxy/SpinProxy.ashx") %>';
       const API_BASE = (window.__API_BASE || '').replace(/\/+$/, '') || window.location.origin;
-      // Gọi checkin thông qua SpinProxy để server gắn Bearer token
       const CHECKIN_URL = SPIN_PROXY + '?action=checkin';
-
 
       var arrItem = [];
       var totalItem = 0;
@@ -1372,7 +1633,7 @@
                       };
                   }
 
-                  // ✅ Thành công: chỉ cần đánh dấu đã điểm danh & refresh UI
+                  // ✅ Thành công
                   hasCheckedInToday = true;
                   refreshCheckinUi();
 
@@ -1380,10 +1641,10 @@
                   getAvailableSpinTurn().catch(function () { });
 
                   // Không set statusEl success nữa
-                  var statusEl = document.getElementById('checkin_status');
-                  if (statusEl) {
-                      statusEl.textContent = '';           // xoá bất kỳ text cũ
-                      statusEl.classList.remove('text-success', 'text-danger');
+                  var statusEl2 = document.getElementById('checkin_status');
+                  if (statusEl2) {
+                      statusEl2.textContent = '';
+                      statusEl2.classList.remove('text-success', 'text-danger');
                   }
               })
               .catch(err => {
@@ -1397,11 +1658,11 @@
                       refreshCheckinUi();
                   }
 
-                  var statusEl = document.getElementById('checkin_status');
-                  if (statusEl) {
-                      statusEl.textContent = msg;
-                      statusEl.classList.remove('text-success');
-                      statusEl.classList.add('text-danger');
+                  var statusEl3 = document.getElementById('checkin_status');
+                  if (statusEl3) {
+                      statusEl3.textContent = msg;
+                      statusEl3.classList.remove('text-success');
+                      statusEl3.classList.add('text-danger');
                   } else {
                       alert(msg);
                   }
@@ -1434,14 +1695,14 @@
                   // Đã login
                   hasLogin = true;
 
-                  // ✅ ĐÚNG KEY: has_Checked_In_Today
+                  // ✅ Đúng key: has_Checked_In_Today
                   hasCheckedInToday = !!(
                       data.has_Checked_In_Today ??
                       data.hasCheckedInToday ??
                       data.has_checked_in_today
                   );
 
-                  // ✅ ĐÚNG KEY: remaining_Spins
+                  // ✅ Đúng key: remaining_Spins
                   if (typeof data.remaining_Spins === 'number') {
                       remainingSpins = data.remaining_Spins;
                   } else if (typeof data.remainingSpins === 'number') {
@@ -1453,21 +1714,45 @@
                   // Cập nhật UI lượt quay + trạng thái nút
                   updateSpinTurnsLabel();
                   refreshCheckinUi();
-
-                  // ⛔ Không ghi gì vào checkin_status ở đây nữa
               })
               .catch(err => {
                   console.error('status error', err);
               });
       }
 
+      // ====== TOGGLE POPUP VÒNG QUAY ======
+      (function () {
+          const launcher = document.getElementById('hafSpinLauncher');
+          const panel = document.getElementById('hafSpinPanel');
+          const closeBtn = document.getElementById('hafSpinClose');
 
+          function setSpinOpen(isOpen) {
+              if (!panel) return;
+              panel.classList.toggle('is-open', isOpen);
+              panel.setAttribute('aria-hidden', isOpen ? 'false' : 'true');
+              if (isOpen) {
+                  const btn = document.getElementById('btn_spin');
+                  btn && btn.focus();
+              }
+          }
 
+          launcher && launcher.addEventListener('click', () => {
+              const opened = panel.classList.contains('is-open');
+              setSpinOpen(!opened);
+          });
+          closeBtn && closeBtn.addEventListener('click', () => setSpinOpen(false));
+
+          document.addEventListener('keydown', (e) => {
+              if (e.key === 'Escape') setSpinOpen(false);
+          });
+      })();
+
+      // ====== BOOT ======
       window.addEventListener('DOMContentLoaded', function () {
           init();
           loadSpinConfig();
 
-          // 🔁 Lấy status tổng hợp: đã điểm danh chưa + còn bao nhiêu lượt
+          // Lấy status tổng hợp: đã điểm danh chưa + còn bao nhiêu lượt
           fetchGamStatus();
 
           var btnCheckin = document.getElementById('btnCheckin');
@@ -1478,6 +1763,60 @@
           refreshCheckinUi();
       });
   </script>
+
+  <!-- ====== MUA NGAY (HomePage) – dùng chung API như Product.aspx ====== -->
+  <script>
+    // Dùng lại Cart API & CartPage URL như Product.aspx
+    window.CART_API = window.CART_API ?? '<%= ResolveUrl("~/Ajax/Cart.ashx") %>';
+    window.CART_PAGE_URL = window.CART_PAGE_URL ?? '<%= ResolveUrl("~/CartPage/CartPage.aspx") %>';
+
+      async function buyNowFromCard(btn) {
+          try {
+              const card = btn.closest('.js-product-card');
+              const productId = parseInt(card?.dataset.productId || '0', 10);
+              const variantSelect = card?.querySelector('.js-variant-select');
+              const variantId = parseInt(variantSelect?.value || '0', 10);
+              const qtyInput = card?.querySelector('.js-qty-input') || card?.querySelector('input[type="number"]');
+              const qty = Math.max(1, parseInt(qtyInput?.value || '1', 10));
+
+              if (!productId || !variantId) {
+                  alert('Vui lòng chọn phân loại trước khi mua.');
+                  return;
+              }
+
+              const r = await fetch(`${window.CART_API}?action=add`, {
+                  method: 'POST',
+                  headers: {
+                      'Content-Type': 'application/json; charset=utf-8',
+                      'Accept': 'application/json'
+                  },
+                  credentials: 'include',
+                  cache: 'no-store',
+                  body: JSON.stringify({ productId, variantId, qty })
+              });
+
+              if (!r.ok) throw new Error('HTTP ' + r.status);
+              const j = await r.json();
+              if (!j?.ok) throw new Error(j?.message || 'Add failed');
+
+              // ✅ chuyển tới CartPage
+              location.href = window.CART_PAGE_URL || '/CartPage/CartPage.aspx';
+          } catch (err) {
+              console.error('BuyNow failed:', err);
+              alert('Có lỗi xảy ra khi thêm vào giỏ. Vui lòng thử lại.');
+          }
+      }
+
+      document.addEventListener('DOMContentLoaded', function () {
+          document.querySelectorAll('.js-buy-now').forEach(btn => {
+              btn.addEventListener('click', function (e) {
+                  e.preventDefault();
+                  buyNowFromCard(btn);
+              });
+          });
+      });
+  </script>
+
 </form>
 </body>
 </html>
