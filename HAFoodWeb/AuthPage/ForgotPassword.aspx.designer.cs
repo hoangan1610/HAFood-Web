@@ -24,15 +24,6 @@ namespace HAFoodWeb.AuthPage
         protected global::System.Web.UI.HtmlControls.HtmlForm formForgot;
 
         /// <summary>
-        /// lblMessage control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.Label lblMessage;
-
-        /// <summary>
         /// txtEmail control.
         /// </summary>
         /// <remarks>
@@ -42,6 +33,15 @@ namespace HAFoodWeb.AuthPage
         protected global::System.Web.UI.WebControls.TextBox txtEmail;
 
         /// <summary>
+        /// lblMessage control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Label lblMessage;
+
+        /// <summary>
         /// btnConfirmEmail control.
         /// </summary>
         /// <remarks>
@@ -49,5 +49,23 @@ namespace HAFoodWeb.AuthPage
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
         protected global::System.Web.UI.WebControls.Button btnConfirmEmail;
+
+        /// <summary>
+        /// lnkBackLogin control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.HyperLink lnkBackLogin;
+
+        /// <summary>
+        /// lnkToHome control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.HyperLink lnkToHome;
     }
 }
