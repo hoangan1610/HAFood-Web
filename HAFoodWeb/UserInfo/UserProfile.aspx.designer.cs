@@ -33,6 +33,15 @@ namespace HAFoodWeb
         protected global::System.Web.UI.WebControls.Image imgAvatar;
 
         /// <summary>
+        /// lblMemberPoints control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Label lblMemberPoints;
+
+        /// <summary>
         /// lblFullName control.
         /// </summary>
         /// <remarks>

@@ -604,7 +604,6 @@
     </Compile>
     <Compile Include="UserInfo\UserProfile.aspx.cs">
       <DependentUpon>UserProfile.aspx</DependentUpon>
-      <SubType>ASPXCodeBehind</SubType>
     </Compile>
     <Compile Include="UserInfo\UserProfile.aspx.designer.cs">
       <DependentUpon>UserProfile.aspx</DependentUpon>
