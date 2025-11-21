@@ -1678,7 +1678,7 @@
               credentials: 'include',
               cache: 'no-store'
           })
-              .then(r => {
+              .then(async r => {
                   if (r.status === 401) {
                       // chưa login
                       hasLogin = false;
@@ -1687,7 +1687,20 @@
                       refreshCheckinUi();
                       return null;
                   }
-                  return r.json();
+
+                  if (!r.ok) {
+                      // 404, 500,... thì chỉ log, không parse JSON
+                      const txt = await r.text().catch(() => '');
+                      console.warn('status http error', r.status, txt);
+                      return null;
+                  }
+
+                  try {
+                      return await r.json();
+                  } catch (e) {
+                      console.warn('status parse error', e);
+                      return null;
+                  }
               })
               .then(data => {
                   if (!data) return;
@@ -1695,14 +1708,14 @@
                   // Đã login
                   hasLogin = true;
 
-                  // ✅ Đúng key: has_Checked_In_Today
+                  // has_Checked_In_Today
                   hasCheckedInToday = !!(
                       data.has_Checked_In_Today ??
                       data.hasCheckedInToday ??
                       data.has_checked_in_today
                   );
 
-                  // ✅ Đúng key: remaining_Spins
+                  // remaining_Spins
                   if (typeof data.remaining_Spins === 'number') {
                       remainingSpins = data.remaining_Spins;
                   } else if (typeof data.remainingSpins === 'number') {
@@ -1711,7 +1724,6 @@
                       remainingSpins = data.remaining_spins;
                   }
 
-                  // Cập nhật UI lượt quay + trạng thái nút
                   updateSpinTurnsLabel();
                   refreshCheckinUi();
               })
@@ -1719,6 +1731,7 @@
                   console.error('status error', err);
               });
       }
+
 
       // ====== TOGGLE POPUP VÒNG QUAY ======
       (function () {
