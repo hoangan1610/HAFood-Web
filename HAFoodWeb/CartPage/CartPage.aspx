@@ -8,87 +8,148 @@
 <%@ Register Src="~/CartPage/CartItem.ascx" TagPrefix="uc" TagName="CartItem" %>
 <%@ Register Src="~/CartPage/CartVouchers.ascx" TagPrefix="uc" TagName="CartVouchers" %>
 
-
 <!DOCTYPE html>
 <html lang="vi">
 <head runat="server">
     <title>Giỏ hàng - HAFood</title>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
-    <style>
-        :root{ --border:#e9ecef; --muted:#666; --bg:#f8f9fa; --pill:#ef5350; --radius:10px; }
-        body{font-family:'Poppins',sans-serif;background:var(--bg);margin:0}
-        .page{max-width:1280px;margin:24px auto;padding:0 16px}
-        .page-grid{display:grid;grid-template-columns: 2fr 1fr;gap:16px;align-items:start}
-        @media (max-width: 992px){.page-grid{grid-template-columns:1fr}}
-        .cart-box{background:#fff;border-radius:var(--radius);box-shadow:0 4px 10px rgba(0,0,0,.05)}
-        .cart-header{display:grid;grid-template-columns: 40px 120px 1fr 120px 160px 120px 60px;gap:12px;align-items:center;padding:14px 16px;border-bottom:2px solid #e9ecef}
-        .cart-header > div:nth-child(3){ text-align:left; padding-left:20px; }
-        .cart-header > div:nth-child(4),
-        .cart-header > div:nth-child(5),
-        .cart-header > div:nth-child(6),
-        .cart-header > div:nth-child(7){ text-align:center; }
-        .cart-list{padding:0 8px 8px}
-        .total-row{padding:16px;border-top:2px solid var(--border);display:flex;gap:8px;justify-content:flex-end;font-weight:700;align-items:center}
 
-        .panel{background:#fff;border-radius:var(--radius);box-shadow:0 4px 10px rgba(0,0,0,.05)}
-        .panel-title{padding:14px 16px;border-bottom:2px solid var(--border);font-weight:700;display:flex;align-items:center;gap:8px}
+    <!-- Font + Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
+
+    <style>
+        :root{
+          --border:#e9ecef;
+          --muted:#667085;
+          --bg:#fff8f1;
+          --pill:#ef5350;
+          --radius:14px;
+          --surface:#ffffff;
+          --shadow:0 12px 30px rgba(16,24,40,.08);
+          --brand:#ff7a00;
+          --brand-600:#ff6a00;
+          --brand-700:#e36000;
+        }
+        *{box-sizing:border-box}
+        body{
+          font-family:'Poppins',system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+          background:radial-gradient(1200px 600px at -10% -20%,#ffe6cf 0%,#fff3e6 38%,#fff 68%) fixed;
+          margin:0;
+          color:#111827;
+        }
+        .page{max-width:1280px;margin:24px auto;padding:0 16px}
+        .page-grid{display:grid;grid-template-columns:2fr 1fr;gap:20px;align-items:start}
+        @media (max-width: 992px){.page-grid{grid-template-columns:1fr}}
+
+        .cart-box,.panel,.summary{
+          background:var(--surface);
+          border-radius:var(--radius);
+          box-shadow:var(--shadow);
+          border:1px solid rgba(16,24,40,.06);
+        }
+
+        /* Header bảng hàng */
+        .cart-header{
+          display:grid;
+          grid-template-columns:40px 120px 1fr 120px 160px 120px 60px;
+          gap:12px;align-items:center;
+          padding:14px 16px;
+          background:linear-gradient(180deg,#fffaf4 0%,#fff 100%);
+          border-bottom:1px solid var(--border);
+          border-radius:var(--radius) var(--radius) 0 0;
+          font-weight:700;
+          color:#374151;
+        }
+        .cart-header>div:nth-child(3){text-align:left;padding-left:20px}
+        .cart-header>div:nth-child(4),
+        .cart-header>div:nth-child(5),
+        .cart-header>div:nth-child(6),
+        .cart-header>div:nth-child(7){text-align:center}
+
+        .cart-list{padding:8px 8px 12px}
+
+        /* Hàng tổng tiền + nút xoá tất cả */
+        .total-row{
+          padding:16px;
+          border-top:1px dashed var(--border);
+          background:#fffaf4;
+          display:flex;gap:10px;justify-content:flex-end;align-items:center;
+          font-weight:800;color:#111827;
+          border-radius:0 0 var(--radius) var(--radius);
+        }
+
+        /* Panel chung (địa chỉ, form) */
+        .panel-title{
+          padding:14px 16px;border-bottom:1px solid var(--border);
+          font-weight:700;display:flex;align-items:center;gap:8px;
+          background:linear-gradient(180deg,#fffaf4 0%,#fff 100%);
+          border-radius:var(--radius) var(--radius) 0 0;
+        }
         .panel-body{padding:16px}
         .form-row{display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
         .form-row label{font-weight:600}
         .form-row .req::before{content:'* ';color:#e53935}
-        .form-control{width:100%;height:40px;border:1px solid var(--border);border-radius:8px;padding:0 12px;font-family:inherit}
+        .form-control{
+          width:100%;height:42px;border:1px solid var(--border);border-radius:10px;padding:0 12px;font:inherit;
+          transition:border-color .15s ease, box-shadow .15s ease;
+        }
+        .form-control:focus{outline:none;border-color:#ffd199;box-shadow:0 0 0 .16rem rgba(255,193,7,.25)}
         .fv{margin-top:4px;color:#dc3545;font-size:13px}
 
-        .summary{background:#fff;border-radius:var(--radius);margin-top:16px;box-shadow:0 4px 10px rgba(0,0,0,.05)}
-        .summary-row{display:flex;justify-content:space-between;padding:10px 16px;border-bottom:1px dashed var(--border)}
+        /* Tóm tắt thanh toán */
+        .summary{margin-top:16px;position:sticky;top:16px}
+        .summary-row{
+          display:flex;justify-content:space-between;align-items:center;
+          padding:10px 16px;border-bottom:1px dashed var(--border);color:#374151
+        }
         .summary-row:last-child{border-bottom:none}
-        .grand{color:#e53935;font-size:20px;font-weight:800;text-align:center;padding:16px}
-        .btn-primary{display:block;width:100%;height:48px;border:none;border-radius:999px;font-weight:700;cursor:pointer;background:#ff7a00;color:#fff}
+        .grand{
+          color:#e53935;font-size:20px;font-weight:800;text-align:center;padding:16px;
+          background:#fff6f6;border-top:1px solid #fde2e2;border-bottom-left-radius:var(--radius);border-bottom-right-radius:var(--radius)
+        }
+
+        /* Nút chính */
+        .btn-primary{
+          display:block;width:100%;height:48px;border:none;border-radius:999px;font-weight:700;cursor:pointer;
+          background:linear-gradient(135deg,var(--brand),var(--brand-600));color:#fff;
+          box-shadow:0 14px 30px rgba(255,122,0,.25);
+          transition:transform .15s ease, box-shadow .15s ease, background .2s ease;
+        }
+        .btn-primary:hover{transform:translateY(-1px);box-shadow:0 18px 36px rgba(255,122,0,.32);background:linear-gradient(135deg,var(--brand-600),var(--brand-700))}
+        .btn-primary:active{transform:translateY(0);box-shadow:0 10px 22px rgba(255,122,0,.2)}
 
         /* ===== NÚT XÓA TẤT CẢ ===== */
         .btn-clear-all{
-          display:inline-flex;
-          align-items:center;
-          gap:6px;
-          padding:0 14px;
-          height:32px;
-          border-radius:999px;
-          border:1px solid #ef4444;
-          background:#fff;
-          color:#b91c1c;
-          font-size:14px;
-          font-weight:600;
-          cursor:pointer;
-          margin-right:auto;
+          display:inline-flex;align-items:center;gap:6px;padding:0 14px;height:34px;border-radius:999px;
+          border:1px solid #ef4444;background:#fff;color:#b91c1c;font-size:14px;font-weight:700;cursor:pointer;margin-right:auto;
+          transition:background .15s ease, transform .15s ease, box-shadow .15s ease;
         }
-        .btn-clear-all i{ font-size:16px; }
-        .btn-clear-all:hover{
-          background:#fee2e2;
-        }
-        .btn-clear-all:disabled{
-          opacity:0.6;
-          cursor:not-allowed;
-          border-color:#e5e7eb;
-          background:#f9fafb;
-          color:#9ca3af;
-        }
-        .btn-clear-all:disabled:hover{
-          background:#f9fafb;
-        }
+        .btn-clear-all i{font-size:16px}
+        .btn-clear-all:hover{background:#fee2e2;transform:translateY(-1px);box-shadow:0 8px 18px rgba(185,28,28,.15)}
+        .btn-clear-all:disabled{opacity:.6;cursor:not-allowed;border-color:#e5e7eb;background:#f9fafb;color:#9ca3af;transform:none;box-shadow:none}
 
+        /* Chips/nhãn nhỏ */
         .pill{background:var(--pill);color:#fff;border-radius:999px;padding:4px 10px;font-size:12px}
-        .alert{margin:12px 0 0 0;padding:10px 12px;border-radius:10px;background:#ffe6e9;color:#9f2a37;border:1px solid #f5c2c7}
+
+        /* Alert tổng hợp validator */
+        .alert{margin:12px 0 0 0;padding:10px 12px;border-radius:12px;background:#ffe6e9;color:#9f2a37;border:1px solid #f5c2c7}
         .invisible-input{position:absolute;left:-9999px;top:auto;width:1px;height:1px;opacity:0;pointer-events:none}
 
         /* ==== Combo searchable ==== */
         .combo{position:relative}
-        .combo-input{display:flex;align-items:center;height:40px;border:1px solid var(--border);border-radius:8px;background:#fff;padding:0 10px;cursor:text}
+        .combo-input{
+          display:flex;align-items:center;height:42px;border:1px solid var(--border);border-radius:10px;background:#fff;padding:0 10px;cursor:text;
+          transition:border-color .15s ease, box-shadow .15s ease;
+        }
+        .combo-input:focus-within{border-color:#ffd199;box-shadow:0 0 0 .16rem rgba(255,193,7,.25)}
         .combo-text{flex:1 1 auto;border:none;outline:none;height:100%;font:inherit}
         .combo-caret{margin-left:8px}
-        .combo-menu{position:absolute;left:0;right:0;top:calc(100% + 4px);background:#fff;border:1px solid var(--border);
-                    border-radius:8px;box-shadow:0 6px 16px rgba(0,0,0,.08);max-height:320px;overflow:auto;display:none;z-index:1000}
+        .combo-menu{
+          position:absolute;left:0;right:0;top:calc(100% + 4px);background:#fff;border:1px solid var(--border);
+          border-radius:10px;box-shadow:0 12px 26px rgba(16,24,40,.12);max-height:320px;overflow:auto;display:none;z-index:1000
+        }
         .combo.open .combo-menu{display:block}
         .combo-item{padding:8px 10px;cursor:pointer}
         .combo-item:hover{background:#f5f5f5}
@@ -96,8 +157,11 @@
         /* ===== Address session ===== */
         .addr-session{margin-bottom:12px}
         .addr-link{display:block;width:100%;text-decoration:none;color:inherit;background:transparent;border:0;padding:0;cursor:pointer}
-        .addr-card{display:flex;gap:12px;align-items:center;background:#fff;border:1px solid var(--border);
-                   border-radius:12px;padding:12px;text-align:left}
+        .addr-card{
+          display:flex;gap:12px;align-items:center;background:#fff;border:1px solid var(--border);
+          border-radius:12px;padding:12px;text-align:left;transition:border-color .15s ease, box-shadow .15s ease, transform .15s ease
+        }
+        .addr-card:hover{border-color:#ffd9b3;box-shadow:0 12px 26px rgba(255,122,0,.15);transform:translateY(-1px)}
         .addr-icon{color:#ff7a45;font-size:20px;line-height:1}
         .addr-main{flex:1 1 auto}
         .addr-name{font-weight:700}
@@ -107,142 +171,74 @@
 
         /* ===== Popup địa chỉ ===== */
         .modal-backdrop{
-          position:fixed; inset:0;
-          background: rgba(0,0,0,.38) !important;
-          -webkit-backdrop-filter: none !important;
-          backdrop-filter: none !important;
-          display:none; z-index:2000;
+          position:fixed;inset:0;background:rgba(0,0,0,.38)!important;display:none;z-index:2000
         }
-        .modal{
-          position:fixed; inset:0;
-          display:none; align-items:center; justify-content:center;
-          z-index:2001;
-        }
-        .modal.open, .modal-backdrop.open{ display:flex; }
+        .modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:2001}
+        .modal.open,.modal-backdrop.open{display:flex}
         .modal-card{
-          width:min(1000px,96vw);
-          height:min(680px,92vh);
-          background:#fff; border-radius:16px;
-          box-shadow:0 20px 50px rgba(0,0,0,.25);
-          display:flex; flex-direction:column; overflow:hidden;
+          width:min(1000px,96vw);height:min(680px,92vh);background:#fff;border-radius:18px;
+          box-shadow:0 24px 60px rgba(0,0,0,.28);display:flex;flex-direction:column;overflow:hidden;border:1px solid rgba(16,24,40,.06)
         }
-        .modal-head{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--border)}
+        .modal-head{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border);background:#fffaf4}
         .modal-title{font-weight:700}
         .modal-close{background:transparent;border:0;font-size:22px;cursor:pointer;line-height:1}
         .modal-body{flex:1 1 auto}
         .modal-body iframe{width:100%;height:100%;border:0}
 
-        /* ===== Popup xác nhận xóa (dùng chung cho cả xóa 1 & xóa tất cả) ===== */
-        #confirmModalBk,
-        #confirmAllModalBk{
-          position:fixed;
-          inset:0;
-          background: rgba(0,0,0,.38);
-          display:none;
-          z-index:2100;
+        /* ===== Popup xác nhận xóa (dùng chung) ===== */
+        #confirmModalBk,#confirmAllModalBk{
+          position:fixed;inset:0;background:rgba(0,0,0,.38);display:none;z-index:2100
         }
-
-        #confirmModal,
-        #confirmAllModal{
-          position:fixed;
-          inset:0;
-          display:none;
-          align-items:center;
-          justify-content:center;
-          z-index:2101;
+        #confirmModal,#confirmAllModal{
+          position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:2101
         }
-
-        #confirmModal.open,
-        #confirmModalBk.open,
-        #confirmAllModal.open,
-        #confirmAllModalBk.open{
-          display:flex;
-        }
-
+        #confirmModal.open,#confirmModalBk.open,#confirmAllModal.open,#confirmAllModalBk.open{display:flex}
         .confirm-card{
-          width:min(520px,92vw);
-          background:#fff; border-radius:16px;
-          box-shadow:0 20px 50px rgba(0,0,0,.25);
-          overflow:hidden; display:flex; flex-direction:column;
+          width:min(520px,92vw);background:#fff;border-radius:16px;box-shadow:0 24px 60px rgba(0,0,0,.28);
+          overflow:hidden;display:flex;flex-direction:column;border:1px solid rgba(16,24,40,.06)
         }
-        .confirm-head{position:relative;display:flex;align-items:center;justify-content:center;padding:10px 14px;border-bottom:1px solid var(--border)}
+        .confirm-head{position:relative;display:flex;align-items:center;justify-content:center;padding:12px 16px;border-bottom:1px solid var(--border);background:#fffaf4}
         .confirm-title{font-weight:700;text-align:center;width:100%}
-        .confirm-close{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:transparent;border:0;font-size:22px;cursor:pointer;line-height:1}
+        .confirm-close{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:transparent;border:0;font-size:22px;cursor:pointer;line-height:1}
         .confirm-body{padding:18px}
-        .confirm-body .confirm-question{margin:0 0 16px 0;font-weight:600;text-align:center}
-        .confirm-actions{
-          display:flex;
-          justify-content:space-between;
-          padding-top:8px;
-          gap:10px;
-        }
-        .btn-confirm{
-          display:inline-flex;align-items:center;justify-content:center;
-          min-width:120px;height:40px;border-radius:999px;padding:0 16px;font-weight:700;cursor:pointer;
-        }
-        .btn-confirm-primary{background:#ff7a00;color:#fff;border:none}
+        .confirm-body .confirm-question{margin:0 0 16px 0;font-weight:600;text-align:center;color:#111827}
+        .confirm-actions{display:flex;justify-content:space-between;padding-top:8px;gap:10px}
+        .btn-confirm{display:inline-flex;align-items:center;justify-content:center;min-width:120px;height:40px;border-radius:999px;padding:0 16px;font-weight:700;cursor:pointer}
+        .btn-confirm-primary{background:linear-gradient(135deg,var(--brand),var(--brand-600));color:#fff;border:none}
+        .btn-confirm-primary:hover{background:linear-gradient(135deg,var(--brand-600),var(--brand-700))}
         .btn-confirm-secondary{background:#fff;color:#111;border:1px solid var(--border)}
+        .btn-confirm-secondary:hover{background:#f9fafb}
 
-        /* ===== Toast (xanh lá) ===== */
-        .toast-stack{
-          position:fixed; right:16px; top:16px; z-index:2300;
-          display:flex; flex-direction:column; gap:10px;
-        }
+        /* ===== Toast ===== */
+        .toast-stack{position:fixed;right:16px;top:16px;z-index:2300;display:flex;flex-direction:column;gap:10px}
         .toast{
-          min-width:320px;
-          max-width:560px;
-          border-radius:14px;
-          padding:14px 18px;
-          box-shadow:0 8px 20px rgba(0,0,0,.12);
-          border:1px solid var(--border);
-          background:#fff; color:#111; font-weight:600;
-          font-size:15.5px;
-          display:flex; align-items:flex-start; gap:10px;
-          opacity:0; transform:translateY(-8px);
+          width:fit-content;
+          min-width:min(260px,92vw);
+          max-width:min(560px,92vw);
+          border-radius:14px;padding:14px 18px;box-shadow:0 8px 20px rgba(0,0,0,.12);
+          border:1px solid var(--border);background:#fff;color:#111;font-weight:600;font-size:15.5px;
+          display:flex;align-items:flex-start;gap:10px;opacity:0;transform:translateY(-8px);
           transition:opacity .18s ease, transform .18s ease;
+          word-break:break-word;
         }
-        .toast.show{ opacity:1; transform:translateY(0); }
-        .toast-success{
-          background:#22c55e !important;
-          border-color:#16a34a !important;
-          color:#fff !important;
-        }
-        .toast-success .toast-icon{ color:#fff !important; }
-        .toast-text{ display:inline-block; }
+        .toast.show{opacity:1;transform:translateY(0)}
+        .toast-success{background:#22c55e !important;border-color:#16a34a !important;color:#fff !important}
+        .toast-success .toast-icon{color:#fff !important}
+        .toast-text{flex:1;white-space:normal}
+        @media (max-width:575.98px){.toast-stack{right:10px;left:10px}}
 
-        /* ===== HARD READONLY cho input/combo ===== */
-        .form-control[readonly],
-        .form-control.readonly,
-        .form-control[aria-readonly="true"]{
-          background:#f3f4f6 !important;
-          color:#6b7280 !important;
-          pointer-events:none;
-          user-select:none;
-          caret-color:transparent;
+        /* ===== HARD READONLY ===== */
+        .form-control[readonly],.form-control.readonly,.form-control[aria-readonly="true"]{
+          background:#f3f4f6!important;color:#6b7280!important;pointer-events:none;user-select:none;caret-color:transparent
         }
-        .form-control[readonly]:focus,
-        .form-control.readonly:focus,
-        .form-control[aria-readonly="true"]:focus{
-          outline:none !important;
-          box-shadow:none !important;
-          border-color:var(--border) !important;
+        .form-control[readonly]:focus,.form-control.readonly:focus,.form-control[aria-readonly="true"]focus{
+          outline:none!important;box-shadow:none!important;border-color:var(--border)!important
         }
-        .combo.readonly{ pointer-events:none; }
-        .combo.readonly .combo-input{
-          background:#f3f4f6 !important;
-          color:#6b7280 !important;
-          border-color:var(--border) !important;
-        }
-        .combo.readonly .combo-input:focus-within{
-          outline:none !important;
-          box-shadow:none !important;
-          border-color:var(--border) !important;
-        }
-        .combo.readonly .combo-text{
-          background:transparent !important;
-          color:#6b7280 !important;
-        }
-        .combo.readonly .combo-caret{ display:none !important; }
+        .combo.readonly{pointer-events:none}
+        .combo.readonly .combo-input{background:#f3f4f6!important;color:#6b7280!important;border-color:var(--border)!important}
+        .combo.readonly .combo-input:focus-within{outline:none!important;box-shadow:none!important;border-color:var(--border)!important}
+        .combo.readonly .combo-text{background:transparent!important;color:#6b7280!important}
+        .combo.readonly .combo-caret{display:none!important}
     </style>
 </head>
 
@@ -268,8 +264,6 @@
     <asp:HiddenField ID="hidPromoCodeSelected" runat="server" />
     <asp:HiddenField ID="hidPromoDiscount" runat="server" />
     <asp:HiddenField ID="hidPromoMetaJson" runat="server" />
-
-
 
     <div class="page">
         <div class="page-grid">
@@ -408,7 +402,7 @@
                     </div>
                 </div>
 
-                <!-- Voucher UI (đã làm xong ở các file khác) -->
+                <!-- Voucher UI -->
                 <uc:CartVouchers ID="CartVouchers1" runat="server" />
 
                 <asp:UpdatePanel ID="updSummary" runat="server" UpdateMode="Conditional">
@@ -416,23 +410,23 @@
                         <div class="summary">
                             <div class="summary-row"><span>Tổng số sản phẩm:</span><asp:Label ID="lblSumItems" runat="server" Text="0" /></div>
                             <div class="summary-row">
-    <span>Trọng lượng hàng:</span>
-    <asp:Label ID="lblTotalWeight" runat="server" Text="0" />
-    <%-- NEW: mirror tổng trọng lượng (gram) --%>
-    <asp:HiddenField ID="hidTotalWeightGram" runat="server" />
-</div>
+                                <span>Trọng lượng hàng:</span>
+                                <asp:Label ID="lblTotalWeight" runat="server" Text="0" />
+                                <%-- mirror tổng trọng lượng (gram) --%>
+                                <asp:HiddenField ID="hidTotalWeightGram" runat="server" />
+                            </div>
 
                             <div class="summary-row"><span>Tổng tiền hàng:</span><asp:Label ID="lblSubtotal" runat="server" Text="0 ₫" /></div>
-                           <div class="summary-row">
-    <span>Phí vận chuyển:</span>
-    <asp:Label ID="lblShipping" runat="server" Text="0 ₫" />
-    <%-- NEW: mirror shipping cho server --%>
-    <asp:HiddenField ID="hidShippingFee" runat="server" />
-</div>
-<div class="summary-row">
-    <span>VAT (8%):</span>
-    <asp:Label ID="lblVat" runat="server" Text="0 ₫" />
-</div>
+                            <div class="summary-row">
+                                <span>Phí vận chuyển:</span>
+                                <asp:Label ID="lblShipping" runat="server" Text="0 ₫" />
+                                <%-- mirror shipping cho server --%>
+                                <asp:HiddenField ID="hidShippingFee" runat="server" />
+                            </div>
+                            <div class="summary-row">
+                                <span>VAT (8%):</span>
+                                <asp:Label ID="lblVat" runat="server" Text="0 ₫" />
+                            </div>
 
                             <div class="summary-row"><span>Giảm khuyến mãi:</span><asp:Label ID="lblDiscount" runat="server" Text="0 ₫" /></div>
                             <div class="grand">Tổng thanh toán: <asp:Label ID="lblGrandTotal" runat="server" Text="0 ₫" /></div>
@@ -508,7 +502,6 @@
         // Giá trị mặc định là 1 nếu chưa set nơi khác
         window.CHANNEL = (typeof window.CHANNEL !== 'undefined') ? window.CHANNEL : 1;
     </script>
-
 
     <!-- Phone validator -->
     <script>
@@ -682,23 +675,19 @@
                 whenReady() { return provincesReady.then(() => wardsReady); }
             };
 
-            // ⭐⭐ AUTO MAP CHO ĐỊA CHỈ MẶC ĐỊNH TỪ SERVER ⭐⭐
-            // Nếu server đã bơm sẵn tên Tỉnh/Thành + Xã/Phường nhưng code đang rỗng,
-            // thì map lại sang code ngay khi load xong data, rồi gọi quote ship.
+            // ⭐⭐ AUTO MAP CHO ĐỊA CHỈ MẶC ĐỊNH ⭐⭐
             (function autoMapInitialAddress() {
                 const needMap =
                     (hidCityName.value && !hidCityCode.value) ||
                     (hidWardName.value && !hidWardCode.value);
 
-                if (!needMap) return; // đã có code rồi thì thôi
+                if (!needMap) return;
 
                 window.cityWardAPI.setByNames(hidCityName.value, hidWardName.value)
                     .then(function () {
-                        // Sau khi có code, nếu hàm quote ship đã tồn tại thì gọi luôn
                         if (typeof window.haQuoteShipping === 'function') {
                             window.haQuoteShipping();
                         } else {
-                            // phòng trường hợp script ship load chậm hơn
                             setTimeout(function () {
                                 if (typeof window.haQuoteShipping === 'function') {
                                     window.haQuoteShipping();
@@ -743,7 +732,6 @@
             }
             function bumpBadge(delta) { writeBadge(readBadge() + (parseInt(delta || 0, 10) || 0)); }
 
-            // ===== NEW: Xuất global helpers để dùng thống nhất
             if (typeof window.setCartBadge !== 'function') {
                 window.setCartBadge = writeBadge;
             }
@@ -799,7 +787,7 @@
 
                 const vat = Math.round(subtotal * 0.08);
 
-                // 🔹 NEW: lấy ship từ hidden (do quoteShipping bơm vào)
+                // NEW: lấy ship từ hidden
                 var hidShip = document.getElementById('<%= hidShippingFee.ClientID %>');
                 var ship = 0;
                 if (hidShip && hidShip.value) {
@@ -812,18 +800,18 @@
                 const lblVat = document.getElementById('<%= lblVat.ClientID %>');
                 const lblShipping = document.getElementById('<%= lblShipping.ClientID %>');
                 const lblGrand = document.getElementById('<%= lblGrandTotal.ClientID %>');
-    const lblTotal = document.getElementById('<%= lblTotal.ClientID %>');
-    const lblSumItems = document.getElementById('<%= lblSumItems.ClientID %>');
+                const lblTotal = document.getElementById('<%= lblTotal.ClientID %>');
+                const lblSumItems = document.getElementById('<%= lblSumItems.ClientID %>');
 
-    if (lblSubtotal) lblSubtotal.textContent = fmt(subtotal);
-    if (lblVat) lblVat.textContent = fmt(vat);
-    if (lblShipping) lblShipping.textContent = fmt(ship);
-    if (lblGrand) lblGrand.textContent = fmt(grand);
-    if (lblTotal) lblTotal.textContent = fmt(subtotal);
-    if (lblSumItems) lblSumItems.textContent = String(sumItems);
+                if (lblSubtotal) lblSubtotal.textContent = fmt(subtotal);
+                if (lblVat) lblVat.textContent = fmt(vat);
+                if (lblShipping) lblShipping.textContent = fmt(ship);
+                if (lblGrand) lblGrand.textContent = fmt(grand);
+                if (lblTotal) lblTotal.textContent = fmt(subtotal);
+                if (lblSumItems) lblSumItems.textContent = String(sumItems);
 
-    // ✅ update "Trọng lượng hàng:" (label + hidden)
-    var lblWeight = document.getElementById('<%= lblTotalWeight.ClientID %>');
+                // cập nhật trọng lượng
+                var lblWeight = document.getElementById('<%= lblTotalWeight.ClientID %>');
                 var hidWeight = document.getElementById('<%= hidTotalWeightGram.ClientID %>');
                 if (lblWeight) {
                     lblWeight.textContent =
@@ -834,10 +822,9 @@
                 }
             }
 
-
             window.__cartAfterMutate = () => { recalcTotals(); updateSelectAllUI(); syncSelectedHidden(); };
 
-            /* ===== HARD-LOCK UI các trường địa chỉ (combo + 3 input) ===== */
+            /* HARD-LOCK UI các trường địa chỉ */
             function lockAddressUI() {
                 try {
                     const city = document.getElementById('cmbCity');
@@ -857,20 +844,20 @@
                         '<%= txtAddress.ClientID %>',
                         '<%= txtPhone.ClientID %>',
                         '<%= txtReceiver.ClientID %>'
-                    ].forEach(id=>{
+                    ].forEach(id => {
                         const el = document.getElementById(id);
-                        if(el){
-                            el.setAttribute('readonly','readonly');
-                            el.setAttribute('aria-readonly','true');
-                            el.setAttribute('tabindex','-1');
+                        if (el) {
+                            el.setAttribute('readonly', 'readonly');
+                            el.setAttribute('aria-readonly', 'true');
+                            el.setAttribute('tabindex', '-1');
                             el.classList.add('readonly');
                             el.blur();
                         }
                     });
-                }catch(e){ console.error(e); }
+                } catch (e) { console.error(e); }
             }
 
-            /* ===== POPUP địa chỉ ===== */
+            /* POPUP địa chỉ */
             const modal = document.getElementById('addrModal');
             const backdrop = document.getElementById('addrModalBk');
             const iframe = document.getElementById('addrFrame');
@@ -926,12 +913,12 @@
 
             function applyAddressToUI(dto) {
                 const pnlHas = document.getElementById('<%= pnlAddrSession.ClientID %>');
-                            const pnlNone = document.getElementById('<%= pnlNoAddr.ClientID %>');
-                            if (pnlHas) pnlHas.style.display = 'block';
-                            if (pnlNone) pnlNone.style.display = 'none';
+                const pnlNone = document.getElementById('<%= pnlNoAddr.ClientID %>');
+                if (pnlHas) pnlHas.style.display = 'block';
+                if (pnlNone) pnlNone.style.display = 'none';
 
-                            const nameEl = document.getElementById('<%= lblAddrName.ClientID %>');
-                            const phoneEl = document.getElementById('<%= lblAddrPhone.ClientID %>');
+                const nameEl = document.getElementById('<%= lblAddrName.ClientID %>');
+                const phoneEl = document.getElementById('<%= lblAddrPhone.ClientID %>');
                 const detailEl = document.getElementById('<%= lblAddrDetail.ClientID %>');
 
                 if (nameEl)   nameEl.textContent   = dto.fullName || '';
@@ -946,7 +933,6 @@
                 const cityName = extractCity(dto.fullAddress || '');
                 const wardName = extractWard(dto.fullAddress || '');
 
-                // Map lại City/Ward sang code rồi quote ship
                 if (window.cityWardAPI && window.cityWardAPI.setByNames) {
                     return window.cityWardAPI.setByNames(cityName, wardName)
                         .then(function () {
@@ -957,14 +943,12 @@
                         .finally(lockAddressUI);
                 }
 
-                // Fallback: không có cityWardAPI thì vẫn lock + quote
                 lockAddressUI();
                 if (typeof window.haQuoteShipping === 'function') {
                     window.haQuoteShipping();
                 }
                 return Promise.resolve();
             }
-
 
             function parseStreet(full) {
                 const parts = (full || '').split(',').map(s => s.trim()).filter(Boolean);
@@ -983,7 +967,7 @@
                 return '';
             }
 
-            /* ===== INIT ===== */
+            /* INIT */
             window.addEventListener('DOMContentLoaded', () => {
                 const hasItems = document.querySelectorAll('.cart-item').length > 0;
                 if (pnlEmptyEl) pnlEmptyEl.style.display = hasItems ? 'none' : 'block';
@@ -996,7 +980,7 @@
                     document.querySelectorAll('.cart-item input[type="checkbox"]').forEach(cb => cb.checked = true);
                 }
                 recalcTotals(); updateSelectAllUI(); syncSelectedHidden();
-                lockAddressUI(); // khóa ngay khi vào trang
+                lockAddressUI();
 
                 const clearBtn = document.getElementById('btnClearAll');
                 if (clearBtn) {
@@ -1006,7 +990,7 @@
                 try { window.refreshCartCount(); } catch { }
             });
 
-            /* ===== Helpers giỏ hàng ===== */
+            /* Helpers giỏ hàng */
             function withAuthQuery(url) {
                 const ch = (() => {
                     const wch = window.CHANNEL;
@@ -1039,7 +1023,7 @@
                 }
             }
 
-            /* ===== Toast (success only) ===== */
+            /* Toast (success only) */
             const toastStack = document.getElementById('toastStack');
             function showToastSuccess(message) {
                 if (!toastStack) return;
@@ -1069,7 +1053,7 @@
                 div.addEventListener('click', () => { clearTimeout(timer); close(); });
             }
 
-            /* ===== Xóa dòng ===== */
+            /* Xóa dòng */
             async function deleteLine(row, lineId, silent) {
                 try {
                     const qtyBefore = Number(row.querySelector('.qty-num')?.textContent.trim() || '1') || 1;
@@ -1120,7 +1104,7 @@
                 }
             }
 
-            /* ===== Popup xác nhận xóa (mới) - XÓA 1 SẢN PHẨM ===== */
+            /* Popup xác nhận xóa 1 sản phẩm */
             const cModal = document.getElementById('confirmModal');
             const cBackdrop = document.getElementById('confirmModalBk');
             const cBtnClose = document.getElementById('confirmCloseBtn');
@@ -1152,7 +1136,7 @@
                 closeConfirm();
             });
 
-            /* ===== Popup xác nhận xóa TẤT CẢ ===== */
+            /* Popup xác nhận xóa TẤT CẢ */
             const caModal = document.getElementById('confirmAllModal');
             const caBackdrop = document.getElementById('confirmAllModalBk');
             const caBtnClose = document.getElementById('confirmAllCloseBtn');
@@ -1196,7 +1180,7 @@
                 closeConfirmAll();
             });
 
-            /* ===== Events: chọn checkbox & Select All ===== */
+            /* Events: chọn checkbox & Select All */
             document.addEventListener('change', (e) => {
                 if (e.target.matches('.cart-item input[type="checkbox"]')) {
                     recalcTotals(); updateSelectAllUI(); syncSelectedHidden();
@@ -1209,7 +1193,7 @@
                 }
             });
 
-            /* ===== Events: Tăng / Giảm / Xóa ===== */
+            /* Events: Tăng / Giảm / Xóa */
             document.addEventListener('click', async (e) => {
                 const inc = e.target.closest('.qty-btn[data-inc]');
                 const dec = e.target.closest('.qty-btn[data-dec]');
@@ -1291,96 +1275,86 @@
             return true;
         }
     </script>
+
+    <!-- Shipping quote hook -->
     <script>
         (function () {
-            // Lấy API base từ hidden
             var apiBaseEl = document.getElementById('<%= hidApiBase.ClientID %>');
-        var apiBase = (apiBaseEl && apiBaseEl.value || '').trim().replace(/\/+$/, '');
+            var apiBase = (apiBaseEl && apiBaseEl.value || '').trim().replace(/\/+$/, '');
 
-        function parseMoney(text) {
-            var s = (text || '').replace(/[^\d\-]/g, '');
-            var n = parseInt(s, 10);
-            return Number.isFinite(n) ? n : 0;
-        }
-
-        async function quoteShipping() {
-            if (!apiBase) return;
-
-            var cityCode = (document.getElementById('<%= txtCityCode.ClientID %>')?.value || '').trim();
-            var wardCode = (document.getElementById('<%= txtWardCode.ClientID %>')?.value || '').trim();
-
-            // Chưa chọn đủ Tỉnh/Thành + Xã/Phường -> coi như chưa tính ship
-            if (!cityCode || !wardCode) {
-                var lblShip = document.getElementById('<%= lblShipping.ClientID %>');
-    if (lblShip) lblShip.textContent = '0 ₫';
-
-                var hidShip0 = document.getElementById('<%= hidShippingFee.ClientID %>');
-                if (hidShip0) hidShip0.value = '0';
-
-                if (window.haRequoteVoucherTotals) {
-                    window.haRequoteVoucherTotals();
-                }
-                return;
+            function parseMoney(text) {
+                var s = (text || '').replace(/[^\d\-]/g, '');
+                var n = parseInt(s, 10);
+                return Number.isFinite(n) ? n : 0;
             }
 
+            async function quoteShipping() {
+                if (!apiBase) return;
 
-            var lblSubtotal = document.getElementById('<%= lblSubtotal.ClientID %>');
-            var lblWeight = document.getElementById('<%= lblTotalWeight.ClientID %>');
-            var subtotal = parseMoney(lblSubtotal ? lblSubtotal.textContent : '0');
+                var cityCode = (document.getElementById('<%= txtCityCode.ClientID %>')?.value || '').trim();
+                var wardCode = (document.getElementById('<%= txtWardCode.ClientID %>')?.value || '').trim();
 
-            // lblTotalWeight đang dạng "1.200 g" → bóc số
-            var totalWeightGram = parseMoney(lblWeight ? lblWeight.textContent : '0');
+                if (!cityCode || !wardCode) {
+                    var lblShip = document.getElementById('<%= lblShipping.ClientID %>');
+                    if (lblShip) lblShip.textContent = '0 ₫';
 
-            var payload = {
-                cityCode: cityCode,
-                wardCode: wardCode,
-                subtotal: subtotal,
-                totalWeightGram: totalWeightGram,
-                channel: 1
-            };
+                    var hidShip0 = document.getElementById('<%= hidShippingFee.ClientID %>');
+                    if (hidShip0) hidShip0.value = '0';
 
-            try {
-                var resp = await fetch(apiBase + '/api/shipping/quote', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    credentials: 'include',
-                    body: JSON.stringify(payload)
-                });
-
-                if (!resp.ok) throw new Error('HTTP ' + resp.status);
-                var json = await resp.json();
-
-                var fee = Number(json.shippingFee || json.shipping_fee || 0) || 0;
-
-                // 🔹 NEW: lưu vào hidden để server đọc
-                var hidShip = document.getElementById('<%= hidShippingFee.ClientID %>');
-                if (hidShip) {
-                    hidShip.value = String(fee);
+                    if (window.haRequoteVoucherTotals) {
+                        window.haRequoteVoucherTotals();
+                    }
+                    return;
                 }
 
-                var lblShip2 = document.getElementById('<%= lblShipping.ClientID %>');
-                if (lblShip2) {
-                    lblShip2.textContent = fee.toLocaleString('vi-VN') + ' ₫';
-                }
+                var lblSubtotal = document.getElementById('<%= lblSubtotal.ClientID %>');
+                var lblWeight = document.getElementById('<%= lblTotalWeight.ClientID %>');
+                var subtotal = parseMoney(lblSubtotal ? lblSubtotal.textContent : '0');
+                var totalWeightGram = parseMoney(lblWeight ? lblWeight.textContent : '0');
 
-                // 🔹 (optional) cập nhật luôn GrandTotal local (nếu không muốn phụ thuộc voucher)
-                var lblSubtotal2 = document.getElementById('<%= lblSubtotal.ClientID %>');
-var lblVat2 = document.getElementById('<%= lblVat.ClientID %>');
-                var lblGrand = document.getElementById('<%= lblGrandTotal.ClientID %>');
+                var payload = {
+                    cityCode: cityCode,
+                    wardCode: wardCode,
+                    subtotal: subtotal,
+                    totalWeightGram: totalWeightGram,
+                    channel: 1
+                };
 
-                var subtotal2 = parseMoney(lblSubtotal2 ? lblSubtotal2.textContent : '0');
-                var vat2 = Math.round(subtotal2 * 0.08);
-                if (lblVat2) lblVat2.textContent = vat2.toLocaleString('vi-VN') + ' ₫';
-                if (lblGrand) lblGrand.textContent = (subtotal2 + vat2 + fee).toLocaleString('vi-VN') + ' ₫';
+                try {
+                    var resp = await fetch(apiBase + '/api/shipping/quote', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        credentials: 'include',
+                        body: JSON.stringify(payload)
+                    });
 
-                // Gọi lại voucher để tổng tiền sync (nếu có KM)
-                if (window.haRequoteVoucherTotals) {
-                    window.haRequoteVoucherTotals();
-                }
+                    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+                    var json = await resp.json();
 
-            } catch (e) {
-                console.error('quoteShipping error', e);
-                var lblShip3 = document.getElementById('<%= lblShipping.ClientID %>');
+                    var fee = Number(json.shippingFee || json.shipping_fee || 0) || 0;
+
+                    var hidShip = document.getElementById('<%= hidShippingFee.ClientID %>');
+                    if (hidShip) { hidShip.value = String(fee); }
+
+                    var lblShip2 = document.getElementById('<%= lblShipping.ClientID %>');
+                    if (lblShip2) { lblShip2.textContent = fee.toLocaleString('vi-VN') + ' ₫'; }
+
+                    var lblSubtotal2 = document.getElementById('<%= lblSubtotal.ClientID %>');
+                    var lblVat2 = document.getElementById('<%= lblVat.ClientID %>');
+                    var lblGrand = document.getElementById('<%= lblGrandTotal.ClientID %>');
+
+                    var subtotal2 = parseMoney(lblSubtotal2 ? lblSubtotal2.textContent : '0');
+                    var vat2 = Math.round(subtotal2 * 0.08);
+                    if (lblVat2) lblVat2.textContent = vat2.toLocaleString('vi-VN') + ' ₫';
+                    if (lblGrand) lblGrand.textContent = (subtotal2 + vat2 + fee).toLocaleString('vi-VN') + ' ₫';
+
+                    if (window.haRequoteVoucherTotals) {
+                        window.haRequoteVoucherTotals();
+                    }
+
+                } catch (e) {
+                    console.error('quoteShipping error', e);
+                    var lblShip3 = document.getElementById('<%= lblShipping.ClientID %>');
                     if (lblShip3) lblShip3.textContent = '0 ₫';
 
                     if (window.haRequoteVoucherTotals) {
@@ -1389,10 +1363,8 @@ var lblVat2 = document.getElementById('<%= lblVat.ClientID %>');
                 }
             }
 
-            // Expose cho chỗ khác nếu cần
             window.haQuoteShipping = quoteShipping;
 
-            // Gọi khi page load
             if (document.readyState === 'complete' || document.readyState === 'interactive') {
                 setTimeout(quoteShipping, 0);
             } else {
@@ -1401,19 +1373,12 @@ var lblVat2 = document.getElementById('<%= lblVat.ClientID %>');
                 });
             }
 
-            // Gọi lại khi user đổi Tỉnh/Thành hoặc Xã/Phường (combochange là event trong createCombo)
             document.getElementById('cmbCity')?.addEventListener('combochange', function () {
                 quoteShipping();
             });
             document.getElementById('cmbWard')?.addEventListener('combochange', function () {
                 quoteShipping();
             });
-
-            // Nếu sau này anh có postback bằng UpdatePanel, có thể hook thêm:
-            // if (window.Sys && Sys.WebForms && Sys.WebForms.PageRequestManager) {
-            //     var prm = Sys.WebForms.PageRequestManager.getInstance();
-            //     prm.add_endRequest(function() { quoteShipping(); });
-            // }
         })();
     </script>
 

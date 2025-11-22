@@ -8,6 +8,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet" />
 
     <style>
+        :root{
+            --border:#e5e7eb;
+        }
         * { box-sizing: border-box; }
 
         body {
@@ -99,6 +102,17 @@
             transition: all 0.2s ease;
         }
 
+        }
+
+        .input-control {
+            width: 100%;
+            padding: 11px 14px;
+            border-radius: 999px;
+            border: 1px solid #dde2e7;
+            font-size: 14px;
+            transition: all 0.2s ease;
+        }
+
         .input-control:focus {
             outline: none;
             border-color: #ff7a1a;
@@ -137,6 +151,7 @@
         }
 
         .message {
+            display: none;
             text-align: left;
             font-size: 13px;
             margin-top: 8px;
@@ -167,13 +182,151 @@
             color: #ff6600;
             transform: translateY(-1px);
         }
+
+        /* === TOAST CUSTOM === */
+        .toast-stack{
+            position:fixed;
+            right:16px;
+            top:16px;
+            z-index:2300;
+            display:flex;
+            flex-direction:column;
+            gap:10px;
+        }
+        .toast{
+            width: auto;
+            max-width: min(480px, calc(100vw - 32px)); 
+            border-radius:14px;
+            padding:14px 18px;
+            box-shadow:0 8px 20px rgba(0,0,0,.12);
+            border:1px solid var(--border);
+            background:#fff;
+            color:#111;
+            font-weight:600;
+            font-size:15.5px;
+            display:flex;
+            align-items:flex-start;
+            gap:10px;
+            word-break: break-word;
+            white-space: normal;
+            opacity:0;
+            transform:translateY(-8px);
+            transition:opacity .18s ease, transform .18s ease;
+        }
+
+        .toast.show{
+            opacity:1;
+            transform:translateY(0);
+        }
+        .toast-success{
+            background:#22c55e !important;
+            border-color:#16a34a !important;
+            color:#fff !important;
+        }
+        .toast-error{
+            background:#ef4444 !important;
+            border-color:#b91c1c !important;
+            color:#fff !important;
+        }
+        .toast-text{
+            display:inline-block;
+            flex:1;
+        }
+        .toast-close{
+            cursor:pointer;
+            font-size:18px;
+            line-height:1;
+            margin-left:8px;
+            opacity:.85;
+        }
+        .toast-close:hover{
+            opacity:1;
+        }
     </style>
+
+    <script type="text/javascript">
+        // Tạo toast custom trong trang, không dùng Bootstrap Toast, không dùng alert
+        function showToast(message, type) {
+            try {
+                var stack = document.getElementById('toastStack');
+                if (!stack) {
+                    stack = document.createElement('div');
+                    stack.id = 'toastStack';
+                    stack.className = 'toast-stack';
+                    document.body.appendChild(stack);
+                }
+
+                var toast = document.createElement('div');
+                toast.className = 'toast';
+
+                if (type === 'success') {
+                    toast.classList.add('toast-success');
+                } else if (type === 'error') {
+                    toast.classList.add('toast-error');
+                }
+
+                var text = document.createElement('div');
+                text.className = 'toast-text';
+                text.innerHTML = message;
+
+                var close = document.createElement('div');
+                close.className = 'toast-close';
+                close.innerHTML = '&times;';
+                close.onclick = function () {
+                    hideToast(toast);
+                };
+
+                toast.appendChild(text);
+                toast.appendChild(close);
+                stack.appendChild(toast);
+
+                // delay 1 tí để CSS transition chạy
+                setTimeout(function () {
+                    toast.classList.add('show');
+                }, 10);
+
+                // auto hide sau 3.5s
+                setTimeout(function () {
+                    hideToast(toast);
+                }, 3500);
+            } catch (e) {
+                console.error('showToast error', e);
+            }
+        }
+
+        function hideToast(toast) {
+            if (!toast) return;
+            toast.classList.remove('show');
+            setTimeout(function () {
+                if (toast && toast.parentNode) {
+                    toast.parentNode.removeChild(toast);
+                }
+            }, 200);
+        }
+    </script>
 </head>
 <body>
     <form id="formForgot" runat="server">
         <div class="auth-wrapper">
             <div class="container-forgot">
                 <div class="logo-circle">HAFood</div>
+
+                <h2>Quên mật khẩu</h2>
+                <p class="subtitle">
+                    Nhập địa chỉ email bạn đã đăng ký. Chúng tôi sẽ gửi mã xác thực để giúp bạn đặt lại mật khẩu.
+                </p>
+
+                <div class="input-group-custom">
+                    <label class="input-label" for="txtEmail">Email</label>
+                    <asp:TextBox ID="txtEmail" runat="server"
+                        CssClass="input-control"
+                        Placeholder="Nhập email của bạn"
+                        TextMode="Email"></asp:TextBox>
+                </div>
+
+                <!-- Label cũ (ẩn) -->
+                <asp:Label ID="lblMessage" runat="server" CssClass="message"></asp:Label>
+
 
                 <h2>Quên mật khẩu</h2>
                 <p class="subtitle">
@@ -209,6 +362,9 @@
                 </div>
             </div>
         </div>
+
+        <!-- Toast container (stack) -->
+        <div id="toastStack" class="toast-stack"></div>
     </form>
 </body>
 </html>

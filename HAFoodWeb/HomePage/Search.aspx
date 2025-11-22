@@ -22,6 +22,8 @@
     :root{
       --card-radius: 1rem;
       --soft-shadow: 0 10px 30px rgba(0,0,0,.08);
+      --brand: #ffc107;
+      --brand-hover:#e0ac05;
       --brand: #ffc107;      
       --brand-hover:#e0ac05;  
       --price:#ff3b30;
@@ -29,6 +31,12 @@
       --bg-soft:#f8f9fb;
     }
 
+    *{ box-sizing:border-box; }
+
+    body{
+      margin:0;
+      background:#fff6e9; /* nền kem */
+      font-family:'Poppins', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     *{
       box-sizing:border-box;
     }
@@ -50,6 +58,14 @@
     .text-truncate-1{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
     .search-shell{
+      border-radius:1.25rem;
+      background:#ffffff;
+      box-shadow:0 18px 45px rgba(0,0,0,.10);
+      padding:1.25rem 1.25rem 1.5rem;
+      margin-top:1.5rem;
+      margin-bottom:2rem;
+      position:relative;
+      overflow:hidden;
       border-radius: 1.25rem;
       background:#ffffff;
       box-shadow: 0 18px 45px rgba(0,0,0,.10);
@@ -63,6 +79,7 @@
     .search-header{
       position:relative;
       z-index:1;
+      margin-bottom:.75rem;
       margin-bottom: .75rem;
       padding-bottom:.5rem;
       border-bottom:1px dashed #f1f3f5;
@@ -93,6 +110,27 @@
 
     /* Sticky toolbar */
     .result-toolbar{
+      position:sticky;
+      top:0;
+      z-index:40;
+      background:rgba(255,255,255,.96);
+      border-radius:.85rem;
+      border:1px solid #f1f3f5;
+      padding:.55rem .9rem;
+      box-shadow:0 8px 20px rgba(0,0,0,.06);
+      backdrop-filter:blur(6px);
+      margin-bottom:1rem;
+    }
+
+    /* NHÓM SẮP XẾP */
+    .sort-group{
+      display:flex;
+      align-items:center;
+      gap:.5rem;
+      white-space:nowrap;            /* luôn 1 dòng */
+    }
+    .sort-label{
+      white-space:nowrap;            /* “Sắp xếp” không xuống dòng */
       position: sticky;
       top: 0;
       z-index: 40;
@@ -104,11 +142,23 @@
       backdrop-filter: blur(6px);
       margin-bottom: 1rem;
     }
+    .sort-select{
+      min-width:160px;
+      height:36px;
+      border-radius:999px;
+      text-align:center;             /* Safari/Edge fallback */
+      text-align-last:center;        /* Chrome/Edge */
+      -moz-text-align-last:center;   /* Firefox */
+      padding-left:.75rem;
+      padding-right:2rem;
+    }
+    .sort-select option{ text-align:center; } /* khi mở dropdown */
 
     .product-card{
       border:0;
       border-radius:var(--card-radius);
       overflow:hidden;
+      background:#ffffff;            /* card trắng, không ám cam */
       background:#ffffff;
       box-shadow:var(--soft-shadow);
       height:100%;
@@ -116,11 +166,12 @@
       border:1px solid rgba(0,0,0,.02);
       position:relative;
     }
-
     .product-card:hover{
       transform:translateY(-3px);
       box-shadow:0 16px 36px rgba(0,0,0,.14);
     }
+    .product-card .card-body{ padding:.75rem .9rem .95rem; }
+    .product-card h6{ margin-bottom:.35rem; line-height:1.35; font-size:.95rem; font-weight:600; }
 
     .product-card .card-body{
       padding:.75rem .9rem .95rem;
@@ -136,6 +187,35 @@
       background:#ffffff;
       border-bottom:1px solid #f1f3f5;
     }
+    .product-thumb img{ padding:.6rem; }
+
+    .badge-soft{
+      display:inline-flex; align-items:center; gap:.25rem;
+      padding:.15rem .5rem; border-radius:999px; font-size:.7rem;
+      background:#f1f3f5; color:#6c757d;
+    }
+
+    .price-now{ color:var(--price); font-weight:800; letter-spacing:.2px; display:inline-block; margin-bottom:.1rem; font-size:.95rem; }
+    .price-sub{ color:#6c757d; font-size:.8rem; }
+
+    .product-meta{ font-size:.78rem; color:#868e96; }
+
+    /* Suggest */
+    .suggest-box{
+      position:absolute; z-index:100; background:#fff; border:1px solid #ddd;
+      border-radius:.75rem; overflow:hidden; max-height:260px; overflow:auto;
+      box-shadow:0 12px 28px rgba(0,0,0,.12);
+    }
+    .suggest-item{ padding:.5rem .75rem; cursor:pointer; font-size:.9rem; }
+    .suggest-item:hover{ background:#f8f9fa; }
+
+    /* Sidebar */
+    .cat-card{ border-radius:1rem; box-shadow:var(--soft-shadow); border:0; background:#ffffff; }
+    .cat-card .card-header{ background:#fff7ec; border-bottom:1px solid #ffe1c2; border-radius:1rem 1rem 0 0 !important; padding:.7rem .95rem; }
+    .cat-card .card-header h5{ margin:0; font-size:1rem; font-weight:600; color:#e66000; }
+    .cat-card .card-body{ padding:.85rem .95rem 1rem; font-size:.9rem; }
+
+    .filter-section-title{ font-size:.9rem; font-weight:600; color:#343a40; margin-bottom:.5rem; margin-top:.75rem; }
     .product-thumb img{
       padding:.6rem;
     }
@@ -229,6 +309,26 @@
 
     /* Chips */
     .chip{
+      display:inline-flex; align-items:center; gap:.35rem; padding:.3rem .7rem;
+      border-radius:2rem; background:#fff7ec; border:1px solid rgba(255,102,0,.2);
+      font-size:.82rem; color:#e66000;
+    }
+    .chip .x{ cursor:pointer; opacity:.75; font-size:.9rem; }
+    .chip .x:hover{ opacity:1; }
+
+    /* Form controls */
+    .form-select.form-select-sm{
+      height:36px; padding-top:.35rem; padding-bottom:.35rem;
+      border-radius:999px; border-color:#dee2e6; font-size:.82rem;
+    }
+    .form-control{ border-radius:.75rem; border-color:#dee2e6; font-size:.9rem; }
+    .form-control:focus{ border-color:var(--brand); box-shadow:0 0 0 .16rem rgba(255,193,7,.25); }
+
+    .qty{ width:72px; height:36px; text-align:center; border-radius:999px; font-size:.85rem; }
+
+    .btn-buy{ height:36px; border-radius:.9rem; font-weight:600; font-size:.82rem; padding-inline:1rem; }
+
+    /* Nút Mua & Áp dụng màu vàng, không viền vàng ngoài */
       display:inline-flex;
       align-items:center;
       gap:.35rem;
@@ -292,6 +392,7 @@
       font-weight:600 !important;
       box-shadow:none !important;
     }
+    .btn-warning:hover,
     .btn-warning:hover{
       background-color:#e0ac05 !important;
       border-color:#e0ac05 !important;
@@ -302,6 +403,26 @@
     .btn-warning:focus{
       background-color:#e0ac05 !important;
       border-color:#e0ac05 !important;
+      color:#212529 !important;
+      box-shadow:none !important;
+    }
+
+    .btn-clear{ --bs-btn-padding-y:.35rem; --bs-btn-padding-x:.9rem; --bs-btn-border-radius:2rem; font-size:.8rem; }
+    .btn-outline-secondary{ border-radius:999px; }
+
+    #active-filters{ position:relative; z-index:1; }
+
+    .offcanvas{ border-radius:1.5rem 1.5rem 0 0; }
+    .offcanvas-title{ font-weight:600; }
+
+    @media (max-width: 991.98px){
+      .sidebar-col{ display:none; }
+      .search-shell{ box-shadow:none; padding-inline:0; background:transparent; }
+      .result-toolbar{ border-radius:.9rem; }
+    }
+    @media (max-width: 575.98px){
+      .search-title{ font-size:1.1rem; }
+      .search-shell{ margin-top:.75rem; }
       box-shadow:none !important;
     }
 
@@ -405,6 +526,9 @@
           </button>
 
           <!-- Sort -->
+          <div class="sort-group">
+            <label class="small text-muted sort-label d-none d-sm-inline">Sắp xếp</label>
+            <select id="ddlSortTop" class="form-select form-select-sm sort-select" onchange="applyFilters()">
           <div class="d-flex align-items-center gap-2">
             <label class="small text-muted d-none d-sm-inline">Sắp xếp</label>
             <select id="ddlSortTop" class="form-select form-select-sm" onchange="applyFilters()">
@@ -479,6 +603,19 @@
                 <div class="form-check"><input class="form-check-input" type="checkbox" name="w_1000_5000" id="w4" <%= Request["w_1000_5000"]=="on"?"checked":"" %> /><label class="form-check-label" for="w4">1kg–5kg</label></div>
                 <div class="form-check"><input class="form-check-input" type="checkbox" name="w_5000" id="w5" <%= Request["w_5000"]=="on"?"checked":"" %> /><label class="form-check-label" for="w5">Trên 5kg</label></div>
               </div>
+
+              <!-- Stock -->
+              <div class="form-check mb-3">
+                <input class="form-check-input" type="checkbox" id="inStock" name="only_in_stock"
+                       <%= (Request["only_in_stock"]=="true") ? "checked" : "" %> />
+                <label class="form-check-label" for="inStock">Chỉ còn hàng</label>
+              </div>
+
+              <input type="hidden" name="category_id" value="<%= Server.HtmlEncode(Request["category_id"] ?? "") %>" />
+
+              <!-- Actions -->
+              <div class="d-flex gap-2 mt-3">
+                <button type="button" class="btn btn-outline-secondary btn-clear" id="btnClearAll">Xóa tất cả</button>
 
               <!-- Stock -->
               <div class="form-check mb-3">
@@ -611,7 +748,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   <script>
-  /* ==== COMPAT: tự đổi catId -> category_id (nếu link cũ còn cache) ==== */
+  /* ==== COMPAT: tự đổi catId -> category_id ==== */
   (function () {
       var url = new URL(window.location.href);
       var p = url.searchParams;
@@ -650,9 +787,7 @@
       }, 250);
 
       input?.addEventListener('input', doSuggest);
-      /* Enter ở ô Từ khóa: apply luôn */
       input?.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); applyFilters(); } });
-      /* Click ra ngoài: ẩn gợi ý */
       document.addEventListener('click', (e) => { if (!box.contains(e.target) && e.target !== input) box.classList.add('d-none'); });
 
       /* ===== Price dual range + inputs ===== */
@@ -694,7 +829,6 @@
       function readVal(sel) { const el = document.querySelector(sel); return el ? (el.value || '').trim() : ''; }
       function isCheckedByName(name) { const el = document.querySelector(`[name="${name}"]`); return !!(el && el.checked); }
 
-      /* Build URL từ UI */
       function buildSearchParamsFromUI() {
           const p = new URLSearchParams();
           const q = readVal('#txtQ'); if (q) p.set('q', q);
@@ -716,7 +850,6 @@
           return p;
       }
 
-      /* Áp dụng (desktop) */
       function applyFilters(page) {
           const p = buildSearchParamsFromUI();
           p.set('page', page || 1);
