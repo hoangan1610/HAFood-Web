@@ -136,6 +136,97 @@
             display: none;
         }
 
+        .card-reset::before {
+            content: "";
+            position: absolute;
+            top: -80px;
+            right: -80px;
+            width: 160px;
+            height: 160px;
+            background: rgba(255, 143, 66, 0.18);
+            border-radius: 50%;
+        }
+
+        .reset-header {
+            position: relative;
+            z-index: 1;
+            margin-bottom: 18px;
+            text-align: center;
+        }
+
+        /* Logo HAFood dùng chung */
+        .logo-circle {
+            width: 110px;
+            height: 110px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #ff6600, #ff9a3c);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            font-size: 22px;
+            box-shadow: 0 12px 26px rgba(255, 102, 0, 0.4);
+            margin: 0 auto 16px;
+        }
+
+        .card-reset h2 {
+            margin: 0;
+            font-size: 22px;
+            color: #222;
+            font-weight: 600;
+        }
+
+        .reset-subtitle {
+            margin-top: 6px;
+            font-size: 14px;
+            color: #6c757d;
+        }
+
+        .form-group {
+            margin-bottom: 14px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 14px;
+            color: #444;
+            margin-bottom: 6px;
+            font-weight: 500;
+        }
+
+        .input-control {
+            width: 100%;
+            padding: 11px 14px;
+            border-radius: 999px;
+            border: 1px solid #dde2e7;
+            font-size: 14px;
+            box-sizing: border-box;
+            transition: all 0.2s ease;
+        }
+
+        .input-control:focus {
+            outline: none;
+            border-color: #ff7a1a;
+            box-shadow: 0 0 0 3px rgba(255, 122, 26, 0.18);
+        }
+
+        .password-hint {
+            font-size: 12px;
+            color: #868e96;
+            margin-top: 4px;
+        }
+
+        .error-label {
+            display: block;
+            font-size: 13px;
+            color: #c0392b;
+            margin-top: 4px;
+        }
+
         .aspNetButton {
             width: 100%;
             padding: 11px;
@@ -175,6 +266,10 @@
             margin-bottom: 4px;
             position: relative;
             z-index: 1;
+        }
+
+        #lblSuccess {
+            color: #16a085;
         }
 
         .back-link {
