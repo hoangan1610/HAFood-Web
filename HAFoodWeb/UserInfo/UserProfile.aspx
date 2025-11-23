@@ -157,6 +157,13 @@
             font-size: 12px;
         }
 
+        /* dòng hiển thị điểm thành viên */
+        .profile-memberpoints {
+            font-size: 13px;
+            color: var(--haf-text-muted);
+            margin-top: 4px;
+        }
+
         .profile-divider {
             height: 1px;
             background-color: var(--haf-border);
@@ -239,7 +246,6 @@
             text-align: center;
             margin-left: auto;
             margin-right: auto;
-            
         }
 
         .aspNetButton:hover:not(:disabled) {
@@ -298,6 +304,17 @@
             }
         }
     </style>
+
+    <%-- 🔽 Nếu đang chạy trong iframe với ?embed=1 thì ép nền trắng, bỏ gradient --%>
+    <% if (Request["embed"] == "1") { %>
+    <style>
+        html, body {
+            background: #ffffff !important;
+            background-image: none !important;
+        }
+    </style>
+    <% } %>
+
 </head>
 
 <body>
@@ -326,6 +343,9 @@
                                 <i class="fa-solid fa-user-check"></i> Tài khoản HAFood
                             </div>
                         </div>
+
+                        <!-- DÒNG ĐIỂM THÀNH VIÊN -->
+                        <asp:Label ID="lblMemberPoints" runat="server" CssClass="profile-memberpoints" />
                     </div>
                 </div>
 

@@ -10,13 +10,12 @@ namespace HAFoodWeb.AuthPage
     {
         protected string Email;
         private UserBLL userBLL;
-        private int? otpId; // lưu otpId nếu có
+        private int? otpId;
 
         protected void Page_Load(object sender, EventArgs e)
         {
             userBLL = new UserBLL();
 
-            // Lấy dữ liệu từ Session và QueryString (fallback) cho email
             string sessionEmail = Session["ResetEmail"] as string;
             string queryEmail = Request.QueryString["email"];
 
@@ -27,7 +26,6 @@ namespace HAFoodWeb.AuthPage
             else
                 Email = null;
 
-            // Lấy otpId từ Session hoặc QueryString và lưu vào biến cục bộ + Session
             object s = Session["OtpId"] ?? Session["otpId"] ?? Session["OTPId"];
             if (s != null && int.TryParse(s.ToString(), out int parsedSessionOtp))
             {
@@ -51,7 +49,7 @@ namespace HAFoodWeb.AuthPage
             else
             {
                 lblEmailInfo.Text = "";
-                lblError.Text = "⚠️ Không xác định được email. Vui lòng thử lại.";
+                ShowToast("⚠️ Không xác định được email. Vui lòng thử lại.", "error");
                 btnVerifyOtp.Enabled = false;
                 btnResendOtp.Enabled = false;
                 return;
@@ -65,6 +63,17 @@ namespace HAFoodWeb.AuthPage
             }
         }
 
+        private void ShowToast(string message, string type)
+        {
+            string safeMessage = (message ?? string.Empty)
+                .Replace("'", "\\'")
+                .Replace("\r", " ")
+                .Replace("\n", " ");
+            string safeType = type == "success" ? "success" : "error";
+            string script = $"showToast('{safeMessage}', '{safeType}');";
+            ClientScript.RegisterStartupScript(this.GetType(), Guid.NewGuid().ToString(), script, true);
+        }
+
         protected async Task VerifyOtpAsync()
         {
             lblError.Text = "";
@@ -74,13 +83,13 @@ namespace HAFoodWeb.AuthPage
 
             if (string.IsNullOrEmpty(otpCode))
             {
-                lblError.Text = "Vui lòng nhập mã OTP.";
+                ShowToast("Vui lòng nhập mã OTP.", "error");
                 return;
             }
 
             if (string.IsNullOrEmpty(Email))
             {
-                lblError.Text = "Không xác định được email. Vui lòng quay lại bước quên mật khẩu.";
+                ShowToast("Không xác định được email. Vui lòng quay lại bước quên mật khẩu.", "error");
                 return;
             }
 
@@ -104,7 +113,7 @@ namespace HAFoodWeb.AuthPage
                         Session["OtpId"] = otpId.Value;
                     }
 
-                    lblSuccess.Text = "✅ Xác thực thành công! Chuyển đến trang đặt lại mật khẩu...";
+                    ShowToast("✅ Xác thực thành công! Chuyển đến trang đặt lại mật khẩu...", "success");
 
                     string redirectUrl = otpId.HasValue
                         ? $"~/AuthPage/ResetPassword.aspx?otpId={otpId.Value}"
@@ -115,12 +124,12 @@ namespace HAFoodWeb.AuthPage
                 }
                 else
                 {
-                    lblError.Text = "❌ OTP không hợp lệ hoặc đã hết hạn. Vui lòng thử lại.";
+                    ShowToast("❌ OTP không hợp lệ hoặc đã hết hạn. Vui lòng thử lại.", "error");
                 }
             }
             catch
             {
-                lblError.Text = "❌ Có lỗi xảy ra trong quá trình xác thực. Vui lòng thử lại.";
+                ShowToast("❌ Có lỗi xảy ra trong quá trình xác thực. Vui lòng thử lại.", "error");
             }
         }
 
@@ -132,7 +141,7 @@ namespace HAFoodWeb.AuthPage
             }
             catch
             {
-                lblError.Text = "❌ Có lỗi xảy ra. Vui lòng thử lại.";
+                ShowToast("❌ Có lỗi xảy ra. Vui lòng thử lại.", "error");
             }
         }
 
@@ -143,7 +152,7 @@ namespace HAFoodWeb.AuthPage
 
             if (string.IsNullOrEmpty(Email))
             {
-                lblError.Text = "Không xác định được email. Vui lòng quay lại bước quên mật khẩu.";
+                ShowToast("Không xác định được email. Vui lòng quay lại bước quên mật khẩu.", "error");
                 return;
             }
 
@@ -158,13 +167,13 @@ namespace HAFoodWeb.AuthPage
 
             if (result)
             {
-                lblSuccess.Text = "✅ Mã OTP mới đã được gửi đến email của bạn.";
+                ShowToast("✅ Mã OTP mới đã được gửi đến email của bạn.", "success");
                 btnResendOtp.Enabled = false;
                 ClientScript.RegisterStartupScript(this.GetType(), "startTimer", "startResendCountdown();", true);
             }
             else
             {
-                lblError.Text = "❌ Gửi lại OTP thất bại. Vui lòng thử lại sau.";
+                ShowToast("❌ Gửi lại OTP thất bại. Vui lòng thử lại sau.", "error");
             }
         }
 
@@ -176,7 +185,7 @@ namespace HAFoodWeb.AuthPage
             }
             catch
             {
-                lblError.Text = "❌ Có lỗi xảy ra. Vui lòng thử lại.";
+                ShowToast("❌ Có lỗi xảy ra. Vui lòng thử lại.", "error");
             }
         }
     }

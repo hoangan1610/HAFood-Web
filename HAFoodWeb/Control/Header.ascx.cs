@@ -5,6 +5,7 @@ using System.Web;
 using System.Web.Script.Services;
 using System.Web.Services;
 using System.Web.UI;
+using System.Web.UI.WebControls; // [NOTIFY] RepeaterCommandEventArgs
 
 namespace HAFoodWeb.Control
 {
@@ -14,7 +15,6 @@ namespace HAFoodWeb.Control
         {
             if (!IsPostBack) DataBind();
 
-            // Xác định trạng thái đăng nhập để hiện đúng dropdown + set hidden field
             var token = Request?.Cookies["AuthToken"]?.Value;
             var isAuth = !string.IsNullOrEmpty(token);
 
@@ -22,20 +22,26 @@ namespace HAFoodWeb.Control
             if (authDropdown != null) authDropdown.Visible = isAuth;
             if (hfIsAuth != null) hfIsAuth.Value = isAuth ? "1" : "0";
 
-            // Chỉ còn đồng bộ device + giỏ (không còn bind danh mục/sản phẩm)
             try
             {
                 Page.RegisterAsyncTask(new PageAsyncTask(async () =>
                 {
                     await EnsureDeviceAndCartAsync().ConfigureAwait(false);
+
+                    // [NOTIFY] load thông báo
+                    await LoadNotificationsAsync().ConfigureAwait(false);
                 }));
             }
             catch (InvalidOperationException)
             {
-                // Fallback khi không dùng được async task (ví dụ trong lifecycle đặc biệt)
+                // Fallback khi không dùng được async task
                 EnsureDeviceAndCartAsync().GetAwaiter().GetResult();
+                LoadNotificationsAsync().GetAwaiter().GetResult();
             }
-            catch { /* nuốt lỗi an toàn cho header */ }
+            catch
+            {
+                // nuốt lỗi an toàn
+            }
         }
 
         private async Task EnsureDeviceAndCartAsync()
@@ -59,7 +65,7 @@ namespace HAFoodWeb.Control
 
                 await LoadCartCountAsync().ConfigureAwait(false);
             }
-            catch { /* tránh làm vỡ header nếu có lỗi nhỏ */ }
+            catch { }
         }
 
         private async Task LoadCartCountAsync()
@@ -78,7 +84,7 @@ namespace HAFoodWeb.Control
                 {
                     cartCountBadge.Visible = true;
                     cartCountBadge.InnerText = (count < 0 ? 0 : count).ToString();
-                    cartCountBadge.Attributes["style"] = "display:flex;"; // luôn hiển thị
+                    cartCountBadge.Attributes["style"] = "display:flex;";
                 }
             }
             catch
@@ -92,7 +98,87 @@ namespace HAFoodWeb.Control
             }
         }
 
-        // WebMethod tiện lợi nếu bạn cần gọi từ client (không phụ thuộc vào .ashx)
+        // [NOTIFY] load danh sách thông báo mới nhất 
+        private async Task LoadNotificationsAsync()
+        {
+            try
+            {
+                var token = Request?.Cookies["AuthToken"]?.Value;
+
+                if (string.IsNullOrEmpty(token))
+                {
+                    if (notifyDot != null) notifyDot.Visible = false;
+                    if (lblNotifyEmpty != null)
+                    {
+                        lblNotifyEmpty.Visible = true;
+                        lblNotifyEmpty.Text = "Hãy đăng nhập để xem thông báo.";
+                    }
+                    if (rptNotifications != null)
+                    {
+                        rptNotifications.DataSource = null;
+                        rptNotifications.DataBind();
+                    }
+                    return;
+                }
+
+                var notifyService = new NotificationService();
+                var latest = await notifyService.GetLatestAsync(token, 10).ConfigureAwait(false);
+
+                if (latest != null && latest.items != null && latest.items.Count > 0)
+                {
+                    if (rptNotifications != null)
+                    {
+                        rptNotifications.DataSource = latest.items;
+                        rptNotifications.DataBind();
+                    }
+
+                    if (lblNotifyEmpty != null)
+                    {
+                        lblNotifyEmpty.Visible = false;
+                        lblNotifyEmpty.Text = string.Empty;
+                    }
+
+                    if (notifyDot != null)
+                    {
+                        notifyDot.Visible = latest.totalUnread > 0;
+                    }
+                }
+                else
+                {
+                    if (rptNotifications != null)
+                    {
+                        rptNotifications.DataSource = null;
+                        rptNotifications.DataBind();
+                    }
+
+                    if (lblNotifyEmpty != null)
+                    {
+                        lblNotifyEmpty.Visible = true;
+                        lblNotifyEmpty.Text = "Hiện không có thông báo nào.";
+                    }
+
+                    if (notifyDot != null)
+                    {
+                        notifyDot.Visible = false;
+                    }
+                }
+            }
+            catch
+            {
+                try
+                {
+                    if (notifyDot != null) notifyDot.Visible = false;
+                    if (lblNotifyEmpty != null)
+                    {
+                        lblNotifyEmpty.Visible = true;
+                        lblNotifyEmpty.Text = "Không thể tải thông báo.";
+                    }
+                }
+                catch { }
+            }
+        }
+
+        // WebMethod tiện lợi nếu bạn cần gọi từ client
         [WebMethod]
         [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
         public static int GetCartCount()
@@ -114,6 +200,51 @@ namespace HAFoodWeb.Control
             {
                 return 0;
             }
+        }
+
+        // [NOTIFY] click 1 item -> đánh dấu đã đọc
+        protected async void rptNotifications_ItemCommand(object source, RepeaterCommandEventArgs e)
+        {
+            if (e.CommandName != "MarkRead") return;
+
+            try
+            {
+                var token = Request?.Cookies["AuthToken"]?.Value;
+                if (string.IsNullOrEmpty(token)) return;
+
+                if (long.TryParse(Convert.ToString(e.CommandArgument), out var id))
+                {
+                    var notifyService = new NotificationService();
+                    try
+                    {
+                        await notifyService.MarkAsReadAsync(token, id).ConfigureAwait(false);
+                    }
+                    catch { }
+                }
+
+                await LoadNotificationsAsync().ConfigureAwait(false);
+            }
+            catch { }
+        }
+
+        // [NOTIFY] nút "Đánh dấu tất cả đã đọc"
+        protected async void btnMarkAllRead_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                var token = Request?.Cookies["AuthToken"]?.Value;
+                if (string.IsNullOrEmpty(token)) return;
+
+                var notifyService = new NotificationService();
+                try
+                {
+                    await notifyService.MarkAllAsReadAsync(token).ConfigureAwait(false);
+                }
+                catch { }
+
+                await LoadNotificationsAsync().ConfigureAwait(false);
+            }
+            catch { }
         }
 
         protected async void btnLogout_Click(object sender, EventArgs e)

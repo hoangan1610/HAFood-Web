@@ -7,11 +7,11 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace HAFoodWeb
+namespace HAFoodWeb.NotificationPage
 {
 
 
-    public partial class UserProfile
+    public partial class NotificationPage
     {
 
         /// <summary>
@@ -24,66 +24,66 @@ namespace HAFoodWeb
         protected global::System.Web.UI.HtmlControls.HtmlForm form1;
 
         /// <summary>
-        /// imgAvatar control.
+        /// Header1 control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Image imgAvatar;
+        protected global::HAFoodWeb.Control.Header Header1;
 
         /// <summary>
-        /// lblMemberPoints control.
+        /// lblSummary control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Label lblMemberPoints;
+        protected global::System.Web.UI.WebControls.Label lblSummary;
 
         /// <summary>
-        /// lblFullName control.
+        /// pnlNoData control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Label lblFullName;
+        protected global::System.Web.UI.WebControls.Panel pnlNoData;
 
         /// <summary>
-        /// lblEmail control.
+        /// rptAllNotifications control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Label lblEmail;
+        protected global::System.Web.UI.WebControls.Repeater rptAllNotifications;
 
         /// <summary>
-        /// lblPhone control.
+        /// pnlPager control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Label lblPhone;
+        protected global::System.Web.UI.WebControls.Panel pnlPager;
 
         /// <summary>
-        /// btnEdit control.
+        /// litPager control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Button btnEdit;
+        protected global::System.Web.UI.WebControls.Literal litPager;
 
         /// <summary>
-        /// btnChangePassword control.
+        /// Footer1 control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Button btnChangePassword;
+        protected global::HAFoodWeb.Control.Footer Footer1;
     }
 }
