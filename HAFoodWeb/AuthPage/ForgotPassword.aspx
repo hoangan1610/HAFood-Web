@@ -4,6 +4,7 @@
 <html>
 <head runat="server">
     <title>Quên mật khẩu - HAFood</title>
+
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet" />
 
@@ -91,17 +92,6 @@
             font-weight: 500;
             margin-bottom: 6px;
             color: #495057;
-        }
-
-        .input-control {
-            width: 100%;
-            padding: 11px 14px;
-            border-radius: 999px;
-            border: 1px solid #dde2e7;
-            font-size: 14px;
-            transition: all 0.2s ease;
-        }
-
         }
 
         .input-control {
@@ -245,7 +235,7 @@
     </style>
 
     <script type="text/javascript">
-        // Tạo toast custom trong trang, không dùng Bootstrap Toast, không dùng alert
+        // Tạo toast custom trong trang, không dùng alert
         function showToast(message, type) {
             try {
                 var stack = document.getElementById('toastStack');
@@ -280,12 +270,10 @@
                 toast.appendChild(close);
                 stack.appendChild(toast);
 
-                // delay 1 tí để CSS transition chạy
                 setTimeout(function () {
                     toast.classList.add('show');
                 }, 10);
 
-                // auto hide sau 3.5s
                 setTimeout(function () {
                     hideToast(toast);
                 }, 3500);
@@ -324,24 +312,8 @@
                         TextMode="Email"></asp:TextBox>
                 </div>
 
-                <!-- Label cũ (ẩn) -->
+                <!-- Label hiển thị lỗi / thành công (mặc định ẩn bằng CSS) -->
                 <asp:Label ID="lblMessage" runat="server" CssClass="message"></asp:Label>
-
-
-                <h2>Quên mật khẩu</h2>
-                <p class="subtitle">
-                    Nhập địa chỉ email bạn đã đăng ký. Chúng tôi sẽ gửi mã xác thực để giúp bạn đặt lại mật khẩu.
-                </p>
-
-                <div class="input-group-custom">
-                    <label class="input-label" for="txtEmail">Email</label>
-                    <asp:TextBox ID="txtEmail" runat="server"
-                        CssClass="input-control"
-                        Placeholder="Nhập email của bạn"
-                        TextMode="Email"></asp:TextBox>
-                </div>
-
-                <asp:Label ID="lblMessage" runat="server" CssClass="message error"></asp:Label>
 
                 <div class="helper-text">
                     Hãy kiểm tra cả hộp thư quảng cáo / spam nếu bạn không thấy email trong vài phút.

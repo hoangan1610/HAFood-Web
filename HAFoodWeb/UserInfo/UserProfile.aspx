@@ -304,6 +304,17 @@
             }
         }
     </style>
+
+    <%-- 🔽 Nếu đang chạy trong iframe với ?embed=1 thì ép nền trắng, bỏ gradient --%>
+    <% if (Request["embed"] == "1") { %>
+    <style>
+        html, body {
+            background: #ffffff !important;
+            background-image: none !important;
+        }
+    </style>
+    <% } %>
+
 </head>
 
 <body>

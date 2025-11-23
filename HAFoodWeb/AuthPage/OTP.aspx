@@ -98,7 +98,6 @@
         #lblError, #lblSuccess { display: none; }
         #lblError { color: #e03131; }
         #lblSuccess { color: #2f9e44; }
-        #lblEmailInfo { color: #555; }
 
         .otp-inputs {
             display: flex;
