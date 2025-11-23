@@ -58,6 +58,7 @@
             margin-bottom: 18px;
         }
 
+        /* Logo HAFood dùng chung */
         .logo-circle {
             width: 110px;
             height: 110px;
@@ -95,6 +96,8 @@
 
         #lblEmailInfo { color: #555; }
         #lblError, #lblSuccess { display: none; }
+        #lblError { color: #e03131; }
+        #lblSuccess { color: #2f9e44; }
 
         .otp-inputs {
             display: flex;

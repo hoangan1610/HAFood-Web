@@ -60,6 +60,7 @@
             text-align: center;
         }
 
+        /* Logo HAFood dùng chung */
         .logo-circle {
             width: 110px;
             height: 110px;
@@ -126,14 +127,10 @@
         }
 
         .error-label {
-            display: none;
+            display: block;
             font-size: 13px;
             color: #c0392b;
             margin-top: 4px;
-        }
-
-        #lblSuccess {
-            display: none;
         }
 
         .aspNetButton {
@@ -177,6 +174,10 @@
             z-index: 1;
         }
 
+        #lblSuccess {
+            color: #16a085;
+        }
+
         .back-link {
             position: relative;
             z-index: 1;
@@ -206,7 +207,7 @@
             flex-direction:column;
             gap:10px;
         }
-         .toast{
+        .toast{
              width: auto;
              max-width: min(480px, calc(100vw - 32px)); 
              border-radius:14px;

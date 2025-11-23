@@ -142,6 +142,17 @@
 
         .message {
             display: none;
+            text-align: left;
+            font-size: 13px;
+            margin-top: 8px;
+        }
+
+        .message.error {
+            color: #e03131;
+        }
+
+        .message.success {
+            color: #2f9e44;
         }
 
         .footer-links {
@@ -224,7 +235,7 @@
     </style>
 
     <script type="text/javascript">
-        // Tạo toast custom trong trang, không dùng Bootstrap Toast, không dùng alert
+        // Tạo toast custom trong trang, không dùng alert
         function showToast(message, type) {
             try {
                 var stack = document.getElementById('toastStack');
@@ -259,12 +270,10 @@
                 toast.appendChild(close);
                 stack.appendChild(toast);
 
-                // delay 1 tí để CSS transition chạy
                 setTimeout(function () {
                     toast.classList.add('show');
                 }, 10);
 
-                // auto hide sau 3.5s
                 setTimeout(function () {
                     hideToast(toast);
                 }, 3500);
@@ -303,7 +312,7 @@
                         TextMode="Email"></asp:TextBox>
                 </div>
 
-                <!-- Label cũ (ẩn) -->
+                <!-- Label hiển thị lỗi / thành công (mặc định ẩn bằng CSS) -->
                 <asp:Label ID="lblMessage" runat="server" CssClass="message"></asp:Label>
 
                 <div class="helper-text">
