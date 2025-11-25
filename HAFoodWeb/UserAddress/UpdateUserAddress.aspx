@@ -5,8 +5,9 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head runat="server">
+    
+    <title>Sửa địa chỉ - HAFood</title>
     <meta charset="utf-8" />
-    <title>Sửa địa chỉ</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
 
     <!-- Bootstrap + Icons -->

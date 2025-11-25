@@ -3,7 +3,11 @@
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head runat="server">
+
     <title>Khôi phục mật khẩu - HAFood</title>
+
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet" />
@@ -60,7 +64,6 @@
             text-align: center;
         }
 
-        /* Logo HAFood dùng chung */
         .logo-circle {
             width: 110px;
             height: 110px;
@@ -127,10 +130,14 @@
         }
 
         .error-label {
-            display: block;
+            display: none;
             font-size: 13px;
             color: #c0392b;
             margin-top: 4px;
+        }
+
+        #lblSuccess {
+            display: none;
         }
 
         .aspNetButton {
@@ -174,10 +181,6 @@
             z-index: 1;
         }
 
-        #lblSuccess {
-            color: #16a085;
-        }
-
         .back-link {
             position: relative;
             z-index: 1;
@@ -207,7 +210,7 @@
             flex-direction:column;
             gap:10px;
         }
-        .toast{
+         .toast{
              width: auto;
              max-width: min(480px, calc(100vw - 32px)); 
              border-radius:14px;

@@ -12,7 +12,7 @@
     --ha-accent: #28a745;
     --ha-border: #E5E7EB;
     --ha-shadow: 0 .75rem 2rem rgba(0,0,0,.12);
-    --border: #E5E7EB; /* [NOTIFY] dùng cho toast */
+    --border: #E5E7EB; /* [NOTIFY] dùng cho toast (giờ không dùng nữa nhưng giữ biến cho đồng bộ) */
   }
 
   /* Header dưới z-index của chatbot (chat = 1002) */
@@ -203,26 +203,26 @@
     box-shadow:0 0 0 2px rgba(255,255,255,.6);
   }
 
-  /* [NOTIFY] dropdown thông báo – nằm dưới icon, hướng sang phải */
-  .notify-dropdown{
-    position:absolute;
-    top:115%;
-    left:0;
-    right:auto;
-    margin-left:0;
-    background:#fff;
-    border-radius:14px;
-    box-shadow:0 18px 45px rgba(15,23,42,.15);
-    padding:8px 0 0;
-    display:none;
-    flex-direction:column;
-    width:320px;
-    max-width:min(360px, 95vw);
-    max-height:360px;
-    overflow-y:auto;
-    z-index:1001;
-    border:1px solid #e5e7eb;
-  }
+  /* [NOTIFY] dropdown thông báo  */
+   .notify-dropdown{
+     position:absolute;
+     top:150%;
+     right:0;
+     left:auto;
+     margin-left:0;
+     background:#fff;
+     border-radius:14px;
+     box-shadow:0 18px 45px rgba(15,23,42,.15);
+     padding:8px 0 0;
+     display:none;
+     flex-direction:column;
+     width:320px;
+     max-width:min(360px, 95vw);
+     max-height:360px;
+     overflow-y:auto;
+     z-index:1001;
+     border:1px solid #e5e7eb;
+   }
 
   /* Header: nền trắng, chữ to hơn */
   .notify-header{
@@ -350,70 +350,10 @@
     }
   }
 
-  /* [NOTIFY] Toast styles */
- .toast-stack{
-     position:fixed;
-     right:16px;
-     top:16px;
-     z-index:2300;
-     display:flex;
-     flex-direction:column;
-     gap:10px;
- }
- .toast{
-     width: auto;
-     max-width: min(480px, calc(100vw - 32px)); 
-     border-radius:14px;
-     padding:14px 18px;
-     box-shadow:0 8px 20px rgba(0,0,0,.12);
-     border:1px solid var(--border);
-     background:#fff;
-     color:#111;
-     font-weight:600;
-     font-size:15.5px;
-     display:flex;
-     align-items:flex-start;
-     gap:10px;
-     word-break: break-word;
-     white-space: normal;
-     opacity:0;
-     transform:translateY(-8px);
-     transition:opacity .18s ease, transform .18s ease;
- }
-
- .toast.show{
-     opacity:1;
-     transform:translateY(0);
- }
- .toast-success{
-     background:#22c55e !important;
-     border-color:#16a34a !important;
-     color:#fff !important;
- }
- .toast-error{
-     background:#ef4444 !important;
-     border-color:#b91c1c !important;
-     color:#fff !important;
- }
- .toast-text{
-     display:inline-block;
-     flex:1;
- }
- .toast-close{
-     cursor:pointer;
-     font-size:18px;
-     line-height:1;
-     margin-left:8px;
-     opacity:.85;
- }
- .toast-close:hover{
-     opacity:1;
- }
-
   /* Dropdown người dùng */
   .user-dropdown{
     position:absolute;
-    top:110%;
+    top:150%;
     right:0;
     background:#fff;
     border-radius:10px;
@@ -666,9 +606,6 @@
   </nav>
 </div>
 
-<!-- [NOTIFY] Toast container -->
-<div id="toastStack" class="toast-stack"></div>
-
 <!-- SCRIPT CART -->
 <script>
     (function () {
@@ -765,56 +702,8 @@
     })();
 </script>
 
-<!-- SCRIPT HEADER (search + user + notify + toast) -->
+<!-- SCRIPT HEADER (search + user + notify) -->
 <script>
-    // [NOTIFY] Hàm hiển thị toast
-    (function () {
-        window.showToast = function (message, type) {
-            try {
-                var stack = document.getElementById('toastStack');
-                if (!stack) {
-                    stack = document.createElement('div');
-                    stack.id = 'toastStack';
-                    stack.className = 'toast-stack';
-                    document.body.appendChild(stack);
-                }
-
-                var toast = document.createElement('div');
-                toast.className = 'toast';
-                if (type === 'success') toast.classList.add('toast-success');
-                else if (type === 'error') toast.classList.add('toast-error');
-
-                toast.innerHTML =
-                    '<span class="toast-text"></span>' +
-                    '<span class="toast-close" aria-label="Đóng">&times;</span>';
-
-                toast.querySelector('.toast-text').textContent = message || '';
-
-                var closeBtn = toast.querySelector('.toast-close');
-                var remove = function () {
-                    toast.classList.remove('show');
-                    setTimeout(function () {
-                        if (toast.parentNode === stack) {
-                            stack.removeChild(toast);
-                        }
-                    }, 180);
-                };
-
-                closeBtn.addEventListener('click', remove);
-
-                stack.appendChild(toast);
-
-                requestAnimationFrame(function () {
-                    toast.classList.add('show');
-                });
-
-                setTimeout(remove, 4000);
-            } catch (e) {
-                console.error('Toast error', e);
-            }
-        };
-    })();
-
     // ===== Header UI behaviors (tìm kiếm + user dropdown + thông báo) =====
     document.addEventListener('DOMContentLoaded', function () {
         const headerRoot = document.getElementById('headerRoot');
@@ -843,6 +732,11 @@
         const notifyWrapper = document.getElementById('notifyWrapper');
         const notifyDropdown = document.getElementById('<%= notifyDropdown.ClientID %>');
 
+        // Ẩn hẳn icon thông báo + dropdown khi chưa đăng nhập
+        if (!isAuth && notifyWrapper) {
+            notifyWrapper.style.display = 'none';
+        }
+
         const hideUser = () => {
             if (guestDD) guestDD.style.display = 'none';
             if (authDD) authDD.style.display = 'none';
@@ -870,9 +764,7 @@
         notifyIcon?.addEventListener('click', e => {
             e.stopPropagation();
             if (!isAuth) {
-                if (window.showToast) {
-                    window.showToast('Vui lòng đăng nhập để xem thông báo.', 'error');
-                }
+                // Không làm gì khi chưa đăng nhập (icon đã ẩn bằng JS ở trên)
                 return;
             }
             const isVisible = notifyDropdown && window.getComputedStyle(notifyDropdown).display !== 'none';
