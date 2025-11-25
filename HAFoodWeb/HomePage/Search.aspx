@@ -471,6 +471,9 @@
             <FooterTemplate></div></FooterTemplate>
           </asp:Repeater>
 
+
+              <!-- Empty state -->
+  <asp:Literal ID="ltEmpty" runat="server" />
           <!-- Pager -->
           <div class="d-flex justify-content-center mt-4">
             <nav aria-label="page">
@@ -488,15 +491,28 @@
       <h5 class="offcanvas-title" id="offcanvasFiltersLabel">Bộ lọc sản phẩm</h5>
       <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
     </div>
-    <div class="offcanvas-body">
-      <div class="mb-3 position-relative">
-        <label class="form-label">Từ khóa</label>
-        <input id="m_q" type="text" class="form-control" autocomplete="off" />
-      </div>
-      <div class="mb-3">
-        <label class="form-label">Thương hiệu</label>
-        <input id="m_brand" type="text" class="form-control" />
-      </div>
+   <div class="offcanvas-body">
+  <div class="mb-3 position-relative">
+    <label class="form-label">Từ khóa</label>
+    <input id="m_q" type="text" class="form-control" autocomplete="off" />
+  </div>
+
+  <div class="mb-3">
+    <label class="form-label">Thương hiệu</label>
+    <input id="m_brand" type="text" class="form-control" />
+  </div>
+
+  <!-- Sort (mobile) -->
+  <div class="mb-3">
+    <label class="form-label">Sắp xếp</label>
+    <select id="m_sort" class="form-select">
+      <option value="updated_at:desc">Mới nhất</option>
+      <option value="price:asc">Giá tăng dần</option>
+      <option value="price:desc">Giá giảm dần</option>
+      <option value="name:asc">Tên A–Z</option>
+      <option value="name:desc">Tên Z–A</option>
+    </select>
+  </div>
       <div class="mb-3">
         <label class="form-label d-block">Khoảng giá (đ)</label>
         <div class="d-flex gap-2">
@@ -570,21 +586,41 @@
   document.addEventListener('click', (e) => { if (!box.contains(e.target) && e.target !== input) box.classList.add('d-none'); });
 
   /* ===== Price dual range + inputs ===== */
-  const fmtVnd = n => '₫' + (+n || 0).toLocaleString('vi-VN');
-  const minEl = document.getElementById('rangeMin'), maxEl = document.getElementById('rangeMax');
-  const hMin = document.getElementById('minPrice'), hMax = document.getElementById('maxPrice');
-  const inMin = document.getElementById('minPriceInput'), inMax = document.getElementById('maxPriceInput');
-  const lblMin = document.getElementById('priceMinLabel'), lblMax = document.getElementById('priceMaxLabel');
+      const fmtVnd = n => '₫' + (Number(n) || 0).toLocaleString('vi-VN');
+      const minEl = document.getElementById('rangeMin'), maxEl = document.getElementById('rangeMax');
+      const hMin = document.getElementById('minPrice'), hMax = document.getElementById('maxPrice');
+      const inMin = document.getElementById('minPriceInput'), inMax = document.getElementById('maxPriceInput');
+      const lblMin = document.getElementById('priceMinLabel'), lblMax = document.getElementById('priceMaxLabel');
 
-  (function initPrice() {
-      const qs = new URLSearchParams(location.search);
-      const m = +(qs.get('min_price') || 10000), x = +(qs.get('max_price') || 1000000);
-      [minEl, maxEl].forEach(el => el && (el.min = 10000, el.max = 1000000, el.step = 1000));
-      if (minEl) minEl.value = m; if (maxEl) maxEl.value = x;
-      if (hMin) hMin.value = m; if (hMax) hMax.value = x;
-      if (inMin) inMin.value = m; if (inMax) inMax.value = x;
-      lblMin.textContent = fmtVnd(m); lblMax.textContent = fmtVnd(x);
-  })();
+      function safeNum(val, fallback) {
+          const n = Number(val);
+          return Number.isFinite(n) ? n : fallback;
+      }
+
+      (function initPrice() {
+          const qs = new URLSearchParams(location.search);
+          const m = safeNum(qs.get('min_price'), 10000);
+          const x = safeNum(qs.get('max_price'), 1000000);
+
+          [minEl, maxEl].forEach(el => {
+              if (el) {
+                  el.min = 10000;
+                  el.max = 1000000;
+                  el.step = 1000;
+              }
+          });
+
+          if (minEl) minEl.value = m;
+          if (maxEl) maxEl.value = x;
+          if (hMin) hMin.value = m;
+          if (hMax) hMax.value = x;
+          if (inMin) inMin.value = m;
+          if (inMax) inMax.value = x;
+
+          if (lblMin) lblMin.textContent = fmtVnd(m);
+          if (lblMax) lblMax.textContent = fmtVnd(x);
+      })();
+
   function syncRange() {
       let a = +minEl.value, b = +maxEl.value;
       if (a > b) { const t = a; a = b; b = t; minEl.value = a; maxEl.value = b; }
@@ -690,17 +726,38 @@
   })();
 
   /* Offcanvas (mobile) */
-  const oc = document.getElementById('offcanvasFilters');
-  oc?.addEventListener('show.bs.offcanvas', () => {
-      const qs = new URLSearchParams(location.search);
-      const setChk = (id, key) => { const el = document.getElementById(id); if (el) el.checked = qs.has(key); };
-      document.getElementById('m_q').value = qs.get('q') || '';
-      document.getElementById('m_brand').value = qs.get('brand') || '';
-      document.getElementById('m_min').value = qs.get('min_price') || '';
-      document.getElementById('m_max').value = qs.get('max_price') || '';
-      setChk('m_w1', 'w_100_250'); setChk('m_w2', 'w_250_500'); setChk('m_w3', 'w_500_1000'); setChk('m_w4', 'w_1000_5000'); setChk('m_w5', 'w_5000');
-      document.getElementById('m_inStock').checked = (qs.get('only_in_stock') === 'true');
-  });
+      const oc = document.getElementById('offcanvasFilters');
+      oc?.addEventListener('show.bs.offcanvas', () => {
+          const qs = new URLSearchParams(location.search);
+          const setChk = (id, key) => {
+              const el = document.getElementById(id);
+              if (el) el.checked = qs.has(key);
+          };
+
+          const getEl = id => document.getElementById(id);
+
+          const qVal = qs.get('q') || '';
+          const brand = qs.get('brand') || '';
+          const minVal = qs.get('min_price') || '';
+          const maxVal = qs.get('max_price') || '';
+          const sortVal = qs.get('sort') || 'updated_at:desc';
+
+          if (getEl('m_q')) getEl('m_q').value = qVal;
+          if (getEl('m_brand')) getEl('m_brand').value = brand;
+          if (getEl('m_min')) getEl('m_min').value = minVal;
+          if (getEl('m_max')) getEl('m_max').value = maxVal;
+          if (getEl('m_sort')) getEl('m_sort').value = sortVal;
+
+          setChk('m_w1', 'w_100_250');
+          setChk('m_w2', 'w_250_500');
+          setChk('m_w3', 'w_500_1000');
+          setChk('m_w4', 'w_1000_5000');
+          setChk('m_w5', 'w_5000');
+
+          const inStock = getEl('m_inStock');
+          if (inStock) inStock.checked = (qs.get('only_in_stock') === 'true');
+      });
+
 
   function resetMobileFilters() {
       ['m_q', 'm_brand', 'm_min', 'm_max'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
@@ -718,6 +775,8 @@
       if (g('m_brand')) p.set('brand', g('m_brand'));
       if (g('m_min')) p.set('min_price', g('m_min'));
       if (g('m_max')) p.set('max_price', g('m_max'));
+
+      if (g('m_sort')) p.set('sort', g('m_sort'));
       if (c('m_w1')) p.set('w_100_250', 'on');
       if (c('m_w2')) p.set('w_250_500', 'on');
       if (c('m_w3')) p.set('w_500_1000', 'on');

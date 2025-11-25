@@ -199,14 +199,73 @@ namespace HAFoodWeb
             var req = ReadRequest();
 
             var list = await _search.SearchListAsync(req);
-            var cards = await _search.BuildCardsAsync(req);
+            var cards = await _search.BuildCardsAsync(req, list);
 
             ltTotal.Text = string.Format("{0:n0} sản phẩm", list.TotalCount);
+
+            // EMPTY STATE
+            if (list.TotalCount == 0)
+            {
+                rpProducts.Visible = false;
+                ltPager.Text = string.Empty;
+
+                ltEmpty.Text = @"
+<div class='text-center py-5'>
+  <p class='mb-2 fw-semibold'>Không tìm thấy sản phẩm phù hợp</p>
+  <p class='text-muted mb-3 small'>
+    Bạn thử xoá bớt bộ lọc hoặc đổi từ khoá tìm kiếm nhé.
+  </p>
+  <button type='button' class='btn btn-outline-secondary btn-sm' onclick='clearAllFilters()'>
+    Xoá tất cả bộ lọc
+  </button>
+</div>";
+
+                // DEBUG URL API
+                if (!string.IsNullOrEmpty(_search.LastListUrl))
+                {
+                    var debugUrl0 = _search.LastListUrl
+                        .Replace("\\", "\\\\")
+                        .Replace("'", "\\'")
+                        .Replace(Environment.NewLine, "");
+
+                    ClientScript.RegisterStartupScript(
+                        this.GetType(),
+                        "searchDebug",
+                        $"console.log('SearchApiUrl = \"{debugUrl0}\"');",
+                        true
+                    );
+                }
+
+                return;
+            }
+
+            // Có dữ liệu thì bind bình thường
+            rpProducts.Visible = true;
+            ltEmpty.Text = string.Empty;
+
             rpProducts.DataSource = cards;
             rpProducts.DataBind();
 
             ltPager.Text = BuildPager(req.Page, req.PageSize, list.TotalCount);
+
+            // DEBUG URL API
+            if (!string.IsNullOrEmpty(_search.LastListUrl))
+            {
+                var debugUrl = _search.LastListUrl
+                    .Replace("\\", "\\\\")
+                    .Replace("'", "\\'")
+                    .Replace(Environment.NewLine, "");
+
+                ClientScript.RegisterStartupScript(
+                    this.GetType(),
+                    "searchDebug",
+                    $"console.log('SearchApiUrl = \"{debugUrl}\"');",
+                    true
+                );
+            }
         }
+
+
 
         private string BuildPager(int page, int pageSize, int total)
         {
