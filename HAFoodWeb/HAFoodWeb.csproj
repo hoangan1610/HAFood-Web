@@ -221,6 +221,7 @@
     <Content Include="images\slide2.jpg" />
     <Content Include="images\vnpay.jpg" />
     <Content Include="images\zalopay.jpg" />
+    <Content Include="NotificationPage\NotificationPage.aspx" />
     <Content Include="OrderPage\OrderDetail.aspx" />
     <Content Include="OrderPage\OrderPage.aspx" />
     <Content Include="Product\Product.aspx" />
@@ -496,6 +497,7 @@
     <Compile Include="Models\CategoryTreeDto.cs" />
     <Compile Include="Models\ChatDto.cs" />
     <Compile Include="Models\CheckoutDraft.cs" />
+    <Compile Include="Models\NotificationDto.cs" />
     <Compile Include="Models\OrderDetailDto.cs" />
     <Compile Include="Models\OrderHeaderDto.cs" />
     <Compile Include="Models\OrderItemDto.cs" />
@@ -503,6 +505,13 @@
     <Compile Include="Models\ProductCardVM.cs" />
     <Compile Include="Models\ProductDtos.cs" />
     <Compile Include="Models\UserDto.cs" />
+    <Compile Include="NotificationPage\NotificationPage.aspx.cs">
+      <DependentUpon>NotificationPage.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="NotificationPage\NotificationPage.aspx.designer.cs">
+      <DependentUpon>NotificationPage.aspx</DependentUpon>
+    </Compile>
     <Compile Include="OrderPage\OrderDetail.aspx.cs">
       <DependentUpon>OrderDetail.aspx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>
@@ -541,6 +550,7 @@
     <Compile Include="Services\IAddressService.cs" />
     <Compile Include="Services\ICartService.cs" />
     <Compile Include="Services\IChatService.cs" />
+    <Compile Include="Services\INotificationService.cs" />
     <Compile Include="Services\IOrderService.cs" />
     <Compile Include="Services\IProductDetailService.cs" />
     <Compile Include="Services\ISearchService.cs" />
@@ -548,6 +558,7 @@
     <Compile Include="Services\DeviceTracker.cs" />
     <Compile Include="Services\ICategoryService.cs" />
     <Compile Include="Services\IProductCardService.cs" />
+    <Compile Include="Services\NotificationService.cs" />
     <Compile Include="Services\OrderService.cs" />
     <Compile Include="Services\ProductCardService.cs" />
     <Compile Include="Services\ProductDetailService.cs" />
@@ -604,7 +615,6 @@
     </Compile>
     <Compile Include="UserInfo\UserProfile.aspx.cs">
       <DependentUpon>UserProfile.aspx</DependentUpon>
-      <SubType>ASPXCodeBehind</SubType>
     </Compile>
     <Compile Include="UserInfo\UserProfile.aspx.designer.cs">
       <DependentUpon>UserProfile.aspx</DependentUpon>

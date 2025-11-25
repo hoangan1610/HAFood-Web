@@ -42,6 +42,60 @@ namespace HAFoodWeb.Control
         protected global::System.Web.UI.WebControls.HiddenField hfIsAuth;
 
         /// <summary>
+        /// notifyDot control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.HtmlControls.HtmlGenericControl notifyDot;
+
+        /// <summary>
+        /// notifyDropdown control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.HtmlControls.HtmlGenericControl notifyDropdown;
+
+        /// <summary>
+        /// btnMarkAllRead control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.LinkButton btnMarkAllRead;
+
+        /// <summary>
+        /// lblNotifyEmpty control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Label lblNotifyEmpty;
+
+        /// <summary>
+        /// rptNotifications control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Repeater rptNotifications;
+
+        /// <summary>
+        /// lnkAllNotifications control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.HyperLink lnkAllNotifications;
+
+        /// <summary>
         /// guestDropdown control.
         /// </summary>
         /// <remarks>
