@@ -3,7 +3,12 @@
 <!DOCTYPE html>
 <html>
 <head runat="server">
+    
     <title>Quên mật khẩu - HAFood</title>
+
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet" />
 
@@ -58,7 +63,6 @@
             margin-bottom: 18px;
         }
 
-        /* Logo HAFood dùng chung */
         .logo-circle {
             width: 110px;
             height: 110px;
@@ -96,8 +100,6 @@
 
         #lblEmailInfo { color: #555; }
         #lblError, #lblSuccess { display: none; }
-        #lblError { color: red; }
-        #lblSuccess { color: green; }
 
         .otp-inputs {
             display: flex;
@@ -137,7 +139,6 @@
             font-weight: 600;
             cursor: pointer;
             box-shadow: 0 14px 30px rgba(40, 167, 69, 0.3);
-            transition: background-color 0.3s ease, transform 0.2s, box-shadow 0.3s ease;
         }
 
         .aspNetButton:disabled {

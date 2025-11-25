@@ -7,6 +7,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head runat="server">
     <title>Thông báo của bạn - HAFood</title>
+    
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
 
@@ -31,13 +32,13 @@
             min-height:100vh;
             display:flex;
             flex-direction:column;
-            background:#ffffff; /* trắng toàn trang */
+            background:#ffffff; 
         }
 
         .hf-notify-main{
             flex:1;
             padding:28px 0 40px;
-            background:#ffffff;          /* bỏ gradient, chỉ màu trắng */
+            background:#ffffff;          
         }
 
         .hf-notify-container{
@@ -53,7 +54,6 @@
             margin-bottom:24px;
         }
 
-        /* Nhãn tiêu đề giống hình (icon + text trong pill) */
         .hf-section-label{
             display:inline-flex;
             align-items:center;

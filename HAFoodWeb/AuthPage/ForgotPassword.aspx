@@ -5,6 +5,9 @@
 <head runat="server">
     <title>Quên mật khẩu - HAFood</title>
 
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet" />
 
@@ -142,17 +145,6 @@
 
         .message {
             display: none;
-            text-align: left;
-            font-size: 13px;
-            margin-top: 8px;
-        }
-
-        .message.error {
-            color: #e03131;
-        }
-
-        .message.success {
-            color: #2f9e44;
         }
 
         .footer-links {
@@ -235,7 +227,7 @@
     </style>
 
     <script type="text/javascript">
-        // Tạo toast custom trong trang, không dùng alert
+        // Tạo toast custom trong trang, không dùng Bootstrap Toast, không dùng alert
         function showToast(message, type) {
             try {
                 var stack = document.getElementById('toastStack');
@@ -270,10 +262,12 @@
                 toast.appendChild(close);
                 stack.appendChild(toast);
 
+                // delay 1 tí để CSS transition chạy
                 setTimeout(function () {
                     toast.classList.add('show');
                 }, 10);
 
+                // auto hide sau 3.5s
                 setTimeout(function () {
                     hideToast(toast);
                 }, 3500);
@@ -312,7 +306,7 @@
                         TextMode="Email"></asp:TextBox>
                 </div>
 
-                <!-- Label hiển thị lỗi / thành công (mặc định ẩn bằng CSS) -->
+                <!-- Label cũ (ẩn) -->
                 <asp:Label ID="lblMessage" runat="server" CssClass="message"></asp:Label>
 
                 <div class="helper-text">
