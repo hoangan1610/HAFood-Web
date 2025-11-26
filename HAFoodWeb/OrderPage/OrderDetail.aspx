@@ -16,7 +16,6 @@
       background: radial-gradient(circle at top left, #ffe8cc 0, #f8f9fa 40%, #e9ecef 100%);
       min-height: 100vh;
     }
-
     .order-detail-page { max-width: 1080px; }
 
     .page-header-row{ margin-bottom: 0.75rem; }
@@ -31,8 +30,7 @@
     .title-badge i{ font-size:.9rem; }
 
     .btn-back {
-      border-radius: 999px;
-      display: inline-flex; align-items: center; gap: .35rem;
+      border-radius: 999px; display: inline-flex; align-items: center; gap: .35rem;
       font-weight: 500; padding-inline: 0.9rem; padding-block: 0.35rem;
       border:1px solid #dee2e6; background:#f8f9fa; color:#495057; text-decoration:none; font-size:.88rem;
     }
@@ -102,42 +100,16 @@
     }
   </style>
 
-  <%-- EMBED: nén & nền TRẮNG, KHÔNG cuộn riêng --%>
+  <%-- EMBED MODE: chỉ ép nền trắng, KHÔNG thu nhỏ layout --%>
   <% if ("1".Equals(Request["embed"])) { %>
     <style>
-      html,body{ height:auto; }
-      html{ font-size:13px; }
       html, body {
+        height:auto;
         overflow: visible !important;
         background:#ffffff !important;
         background-image:none !important;
         min-height:auto !important;
       }
-      .order-detail-page{
-        max-width:100% !important;
-        padding-top:2px !important;
-        padding-bottom:2px !important;
-        height:auto;
-        overflow:visible;
-      }
-      .page-header-row{ margin:4px 0 6px !important; }
-      .title-badge{ font-size:.7rem; padding:.2rem .5rem; margin-bottom:.2rem; }
-      .page-header-title{ font-size:1.05rem; }
-      .page-header-sub{ font-size:.78rem; }
-      .btn-back{ font-size:.8rem; padding:.25rem .7rem; }
-
-      .card-order{ padding:.6rem .75rem; border-radius:.8rem; box-shadow:none; }
-      .section-title{ font-size:.9rem; margin-bottom:.4rem; }
-      .header-badge{ font-size:.7rem; padding:.2rem .5rem; }
-      .order-code{ font-size:.95rem; }
-      .order-meta-label,.order-meta-value,.meta-small{ font-size:.8rem; }
-      .item-row{ padding:6px 0; }
-      .img-thumb{ width:60px; height:60px; }
-      .summary-badge{ font-size:.7rem; padding:.18rem .5rem; margin-bottom:.3rem; }
-      .summary-line{ padding:3px 0; font-size:.86rem; }
-      .summary-line.total{ font-size:.94rem; }
-
-      .embed-items-scroll{ max-height:none; overflow:visible; }
     </style>
   <% } %>
 </head>
@@ -171,12 +143,24 @@
 
             <div class="row g-2 mt-2">
               <div class="col-md-6">
-                <div class="order-meta-row d-flex"><div class="order-meta-label">Người nhận</div><div class="order-meta-value ms-2"><span id="litShipName" runat="server"></span></div></div>
-                <div class="order-meta-row d-flex"><div class="order-meta-label">Số điện thoại</div><div class="order-meta-value ms-2"><span id="litShipPhone" runat="server"></span></div></div>
+                <div class="order-meta-row d-flex">
+                  <div class="order-meta-label">Người nhận</div>
+                  <div class="order-meta-value ms-2"><span id="litShipName" runat="server"></span></div>
+                </div>
+                <div class="order-meta-row d-flex">
+                  <div class="order-meta-label">Số điện thoại</div>
+                  <div class="order-meta-value ms-2"><span id="litShipPhone" runat="server"></span></div>
+                </div>
               </div>
               <div class="col-md-6">
-                <div class="order-meta-row d-flex"><div class="order-meta-label">Địa chỉ</div><div class="order-meta-value ms-2"><span id="litShipAddress" runat="server"></span></div></div>
-                <div class="order-meta-row d-flex"><div class="order-meta-label">Ghi chú</div><div class="order-meta-value ms-2"><span id="litNote" runat="server"></span></div></div>
+                <div class="order-meta-row d-flex">
+                  <div class="order-meta-label">Địa chỉ</div>
+                  <div class="order-meta-value ms-2"><span id="litShipAddress" runat="server"></span></div>
+                </div>
+                <div class="order-meta-row d-flex">
+                  <div class="order-meta-label">Ghi chú</div>
+                  <div class="order-meta-value ms-2"><span id="litNote" runat="server"></span></div>
+                </div>
               </div>
             </div>
 
@@ -194,14 +178,24 @@
               <asp:Repeater ID="rpItems" runat="server">
                 <ItemTemplate>
                   <div class="d-flex item-row align-items-center">
-                    <img src='<%# Eval("image_Variant") ?? Eval("image_Product") ?? "/images/product-default.png" %>' class="img-thumb me-3" onerror="this.src='/images/product-default.png';" />
+                    <img src='<%# Eval("image_Variant") ?? Eval("image_Product") ?? "/images/product-default.png" %>'
+                         class="img-thumb me-3"
+                         onerror="this.src='/images/product-default.png';" />
                     <div class="flex-grow-1">
                       <div class="item-name"><%# Eval("product_Name") ?? Eval("name_Variant") %></div>
-                      <div class="meta-small"><span class="me-2">Mã: <%# Eval("sku") %></span><span>• Số lượng: <strong><%# Eval("quantity") %></strong></span></div>
+                      <div class="meta-small">
+                        <span class="me-2">Mã: <%# Eval("sku") %></span>
+                        <span>• Số lượng: <strong><%# Eval("quantity") %></strong></span>
+                      </div>
                     </div>
                     <div class="text-end">
-                      <div class="price-main"><%# string.Format(new System.Globalization.CultureInfo("vi-VN"), "{0:#,0}đ", Eval("line_Subtotal")) %></div>
-                      <div class="meta-small price-sub">Đơn giá: <%# string.Format(new System.Globalization.CultureInfo("vi-VN"), "{0:#,0}đ", Eval("price_Variant")) %></div>
+                      <div class="price-main">
+                        <%# string.Format(new System.Globalization.CultureInfo("vi-VN"), "{0:#,0}đ", Eval("line_Subtotal")) %>
+                      </div>
+                      <div class="meta-small price-sub">
+                        Đơn giá:
+                        <%# string.Format(new System.Globalization.CultureInfo("vi-VN"), "{0:#,0}đ", Eval("price_Variant")) %>
+                      </div>
                     </div>
                   </div>
                 </ItemTemplate>
@@ -213,12 +207,33 @@
         <div class="col-lg-4">
           <asp:Panel ID="pnlSummary" runat="server" Visible="false" CssClass="card-order">
             <div class="summary-badge"><i class="bi bi-clipboard-data"></i> Tóm tắt thanh toán</div>
-            <div class="summary-line"><div class="label">Thành tiền</div><div class="value"><asp:Literal ID="litSubtotal" runat="server" /></div></div>
-            <div class="summary-line"><div class="label">Giảm giá</div><div class="value text-success"><asp:Literal ID="litDiscount" runat="server" /></div></div>
-            <div class="summary-line"><div class="label">Phí vận chuyển</div><div class="value"><asp:Literal ID="litShipping" runat="server" /></div></div>
-            <div class="summary-line"><div class="label">VAT</div><div class="value"><asp:Literal ID="litVat" runat="server" /></div></div>
+
+            <div class="summary-line">
+              <div class="label">Thành tiền</div>
+              <div class="value"><asp:Literal ID="litSubtotal" runat="server" /></div>
+            </div>
+
+            <div class="summary-line">
+              <div class="label">Giảm giá</div>
+              <div class="value text-success"><asp:Literal ID="litDiscount" runat="server" /></div>
+            </div>
+
+            <div class="summary-line">
+              <div class="label">Phí vận chuyển</div>
+              <div class="value"><asp:Literal ID="litShipping" runat="server" /></div>
+            </div>
+
+            <div class="summary-line">
+              <div class="label">VAT</div>
+              <div class="value"><asp:Literal ID="litVat" runat="server" /></div>
+            </div>
+
             <hr class="my-2" />
-            <div class="summary-line total"><div class="label">Tổng thanh toán</div><div class="value"><asp:Literal ID="litPayTotal" runat="server" /></div></div>
+
+            <div class="summary-line total">
+              <div class="label">Tổng thanh toán</div>
+              <div class="value"><asp:Literal ID="litPayTotal" runat="server" /></div>
+            </div>
           </asp:Panel>
         </div>
       </div>
@@ -231,11 +246,16 @@
     (function () {
       var isEmbed = /[?&]embed=1\b/.test(location.search);
       var backLink = document.getElementById('<%= lnkBack.ClientID %>');
-          if (isEmbed && backLink) {
-              try { var u = new URL(backLink.href, location.origin); u.searchParams.set('embed', '1'); backLink.href = u.pathname + u.search + u.hash; }
-              catch { backLink.href = backLink.href + (backLink.href.indexOf('?') >= 0 ? '&' : '?') + 'embed=1'; }
-          }
-      })();
+      if (isEmbed && backLink) {
+        try {
+          var u = new URL(backLink.href, location.origin);
+          u.searchParams.set('embed', '1');
+          backLink.href = u.pathname + u.search + u.hash;
+        } catch {
+          backLink.href = backLink.href + (backLink.href.indexOf('?') >= 0 ? '&' : '?') + 'embed=1';
+        }
+      }
+    })();
   </script>
 </body>
 </html>

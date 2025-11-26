@@ -332,8 +332,8 @@
         <!-- Bộ lọc -->
         <div class="filter-bar mt-2">
           <asp:Button ID="btnAll" runat="server" CssClass="btn btn-outline-dark btn-sm active" Text="Tất cả" CommandArgument="all" OnClick="btnFilter_Click" />
-          <asp:Button ID="btnPending" runat="server" CssClass="btn btn-outline-dark btn-sm" Text="Chờ xác nhận" CommandArgument="0" OnClick="btnFilter_Click" />
-          <asp:Button ID="btnConfirmed" runat="server" CssClass="btn btn-outline-dark btn-sm" Text="Đã xác nhận" CommandArgument="1" OnClick="btnFilter_Click" />
+          <asp:Button ID="btnPending" runat="server" CssClass="btn btn-outline-dark btn-sm" Text="Đã được tạo" CommandArgument="0" OnClick="btnFilter_Click" />
+          <asp:Button ID="btnConfirmed" runat="server" CssClass="btn btn-outline-dark btn-sm" Text="Xác nhận" CommandArgument="1" OnClick="btnFilter_Click" />
           <asp:Button ID="btnShipping" runat="server" CssClass="btn btn-outline-dark btn-sm" Text="Đang giao" CommandArgument="2" OnClick="btnFilter_Click" />
           <asp:Button ID="btnDelivered" runat="server" CssClass="btn btn-outline-dark btn-sm" Text="Đã giao" CommandArgument="3" OnClick="btnFilter_Click" />
           <asp:Button ID="btnCanceled" runat="server" CssClass="btn btn-outline-dark btn-sm" Text="Đã hủy" CommandArgument="4" OnClick="btnFilter_Click" />
