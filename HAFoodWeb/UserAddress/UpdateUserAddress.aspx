@@ -5,8 +5,9 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head runat="server">
+    
+    <title>Sửa địa chỉ - HAFood</title>
     <meta charset="utf-8" />
-    <title>Sửa địa chỉ</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
 
     <!-- Bootstrap + Icons -->
@@ -117,6 +118,84 @@
         .toast-error{ background:#ef4444 !important; border-color:#dc2626 !important; color:#fff !important; }
         .toast-error .toast-icon, .toast-success .toast-icon{ color:#fff !important; }
 
+        /* === Popup xác nhận xóa địa chỉ (giống hình) === */
+        .haf-delete-modal .modal-dialog {
+            max-width: 440px;
+        }
+
+        .haf-delete-modal .modal-content {
+            border-radius: 14px;
+            border: none;
+            box-shadow: 0 16px 40px rgba(15, 23, 42, 0.25);
+        }
+
+        .haf-delete-modal .modal-header {
+            padding: 14px 20px 10px;
+            border-bottom: 1px solid #f1f1f1;
+            justify-content: center;
+            position: relative;
+        }
+
+        .haf-delete-modal .modal-title {
+            font-size: 16px;
+            font-weight: 700; /* đậm hơn */
+            margin: 0;
+        }
+
+        .haf-delete-modal .modal-header .btn-close {
+            position: absolute;
+            right: 18px;
+            top: 50%;
+            transform: translateY(-50%);
+            opacity: .7;
+        }
+
+        .haf-delete-modal .modal-body {
+            padding: 18px 24px 8px;
+            text-align: center;
+            font-size: 14px;
+            color: #111827;
+        }
+
+        .haf-delete-modal .modal-body-text {
+            font-weight: 700; /* chữ câu hỏi in đậm */
+            margin: 0;
+        }
+
+        .haf-delete-modal .modal-footer {
+            border-top: none;
+            padding: 10px 20px 18px;
+            justify-content: space-between; /* Hủy trái, Xác nhận phải */
+        }
+
+        .haf-btn-cancel {
+            min-width: 110px;
+            border-radius: 999px;
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            color: #111827;
+            font-weight: 500;
+        }
+
+        .haf-btn-cancel:hover {
+            background: #f3f4f6;
+            color: #111827;
+        }
+
+        .haf-btn-confirm {
+            min-width: 110px;
+            border-radius: 999px;
+            background: var(--accent);
+            border: none;
+            color: #ffffff;
+            font-weight: 600;
+        }
+
+        .haf-btn-confirm:hover {
+            background: #ff6a2c;
+            color: #ffffff;
+        }
+
         @media (max-width: 575.98px){
             .page-header{ margin:12px 0 8px !important; padding:0 16px !important; }
             .header-grid{ grid-template-columns: 1fr; }
@@ -218,13 +297,29 @@
         </div>
     </div>
 
-    <div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-labelledby="confirmDeleteLabel" aria-hidden="true">
-      <div class="modal-dialog modal-dialog-centered"><div class="modal-content">
-        <div class="modal-header"><h5 class="modal-title" id="confirmDeleteLabel">Xóa địa chỉ?</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button></div>
-        <div class="modal-body">Bạn có chắc chắn muốn xóa địa chỉ này? Thao tác không thể hoàn tác.</div>
-        <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-          <button type="button" class="btn btn-danger" onclick="document.getElementById('<%= btnDelete.ClientID %>').click();">Xóa</button></div>
-      </div></div>
+    <!-- POPUP XÓA ĐỊA CHỈ -->
+    <div class="modal fade haf-delete-modal" id="confirmDeleteModal" tabindex="-1"
+         aria-labelledby="confirmDeleteLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title w-100 text-center" id="confirmDeleteLabel">Xóa địa chỉ</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="modal-body-text">Bạn có muốn xóa địa chỉ không?</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn haf-btn-cancel" data-bs-dismiss="modal">
+                        Hủy
+                    </button>
+                    <button type="button" class="btn haf-btn-confirm"
+                            onclick="document.getElementById('<%= btnDelete.ClientID %>').click();">
+                        Xác nhận
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <div class="toast-stack" id="toastStack" aria-live="polite"></div>

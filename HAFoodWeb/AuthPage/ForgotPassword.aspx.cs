@@ -15,52 +15,69 @@ namespace HAFoodWeb.AuthPage
             userBLL = new UserBLL();
         }
 
+        /// <summary>
+        /// Gọi JS showToast(message, type) – type: "success" hoặc "error"
+        /// </summary>
+        private void ShowToast(string message, string type)
+        {
+            string safeMessage = (message ?? string.Empty)
+                .Replace("'", "\\'")
+                .Replace("\r", " ")
+                .Replace("\n", " ");
+            string safeType = (type == "success") ? "success" : "error";
+
+            string script = $"showToast('{safeMessage}', '{safeType}');";
+            ClientScript.RegisterStartupScript(
+                this.GetType(),
+                Guid.NewGuid().ToString(),   // key unique để không bị đè
+                script,
+                true
+            );
+        }
+
         protected async void btnConfirmEmail_Click(object sender, EventArgs e)
         {
             try
             {
                 string email = txtEmail.Text.Trim();
-                lblMessage.Text = ""; // reset message
-                bool isValid = true;
+                lblMessage.Text = ""; // giữ compat nhưng không dùng nữa
 
-                // 1️⃣ Kiểm tra email rỗng
                 if (string.IsNullOrEmpty(email))
                 {
-                    lblMessage.Text = "Vui lòng nhập email.";
-                    isValid = false;
-                }
-                // 2️⃣ Kiểm tra định dạng email
-                else if (!Regex.IsMatch(email, @"^[^@\s]+@[^@\s]+\.[^@\s]+$"))
-                {
-                    lblMessage.Text = "Email không hợp lệ.";
-                    isValid = false;
-                }
-
-                if (!isValid)
+                    ShowToast("Vui lòng nhập email.", "error");
                     return;
+                }
 
-                // Gọi API: giờ trả otpId nếu thành công, null nếu thất bại
+                if (!Regex.IsMatch(email, @"^[^@\s]+@[^@\s]+\.[^@\s]+$"))
+                {
+                    ShowToast("Email không hợp lệ.", "error");
+                    return;
+                }
+
                 int? otpId = await userBLL.ForgotPasswordViaApi(email);
 
                 if (otpId.HasValue)
                 {
-                    // Lưu email và otpId vào Session để dùng cho các bước sau
+                    // Email tồn tại → lưu session + thông báo thành công
                     Session["ResetEmail"] = email;
                     Session["OtpId"] = otpId.Value;
 
-                    // Redirect kèm query string làm fallback
+                    ShowToast("Xác thực thành công", "success");
+
+                    // Redirect sang OTPForgotPassword sau 1 giây để user kịp thấy toast
                     string url = $"~/AuthPage/OTPForgotPassword.aspx?email={Server.UrlEncode(email)}&otpId={otpId.Value}";
-                    Response.Redirect(url, false);
-                    Context.ApplicationInstance.CompleteRequest();
+                    string script = $"setTimeout(function(){{ window.location = '{ResolveUrl(url)}'; }}, 1000);";
+                    ClientScript.RegisterStartupScript(this.GetType(), "redirectOtpForgot", script, true);
                 }
                 else
                 {
-                    lblMessage.Text = "Email không tồn tại hoặc có lỗi xảy ra. Vui lòng thử lại.";
+                    // Email không tồn tại
+                    ShowToast("Email không tồn tại", "error");
                 }
             }
             catch (Exception)
             {
-                lblMessage.Text = "Có lỗi xảy ra. Vui lòng thử lại.";
+                ShowToast("Có lỗi xảy ra. Vui lòng thử lại.", "error");
             }
         }
     }

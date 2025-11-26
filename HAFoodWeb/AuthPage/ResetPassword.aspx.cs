@@ -9,7 +9,7 @@ namespace HAFoodWeb.AuthPage
     public partial class ResetPassword : Page
     {
         private UserBLL userBLL;
-        private int? otpId = null; // otpId cần thiết cho API
+        private int? otpId = null;
 
         protected void Page_Load(object sender, EventArgs e)
         {
@@ -20,7 +20,6 @@ namespace HAFoodWeb.AuthPage
                 lblInfo.Text = "Vui lòng nhập mật khẩu mới";
             }
 
-            // Lấy otpId từ Session hoặc QueryString
             object s = Session["OtpId"] ?? Session["otpId"] ?? Session["OTPId"];
             if (s != null && int.TryParse(s.ToString(), out int parsedSessionOtp))
             {
@@ -37,6 +36,17 @@ namespace HAFoodWeb.AuthPage
             }
         }
 
+        private void ShowToast(string message, string type)
+        {
+            string safeMessage = (message ?? string.Empty)
+                .Replace("'", "\\'")
+                .Replace("\r", " ")
+                .Replace("\n", " ");
+            string safeType = type == "success" ? "success" : "error";
+            string script = $"showToast('{safeMessage}', '{safeType}');";
+            ClientScript.RegisterStartupScript(this.GetType(), Guid.NewGuid().ToString(), script, true);
+        }
+
         protected void btnConfirm_Click(object sender, EventArgs e)
         {
             Page.RegisterAsyncTask(new PageAsyncTask(async ct =>
@@ -51,7 +61,6 @@ namespace HAFoodWeb.AuthPage
             string newPass = txtNewPassword.Text?.Trim() ?? "";
             string confirmPass = txtConfirmPassword.Text?.Trim() ?? "";
 
-            // Reset lỗi trước mỗi lần kiểm tra
             lblNewPasswordError.Text = "";
             lblConfirmPasswordError.Text = "";
             lblSuccess.Text = "";
@@ -60,23 +69,23 @@ namespace HAFoodWeb.AuthPage
 
             if (string.IsNullOrEmpty(newPass))
             {
-                lblNewPasswordError.Text = "Vui lòng nhập mật khẩu mới.";
+                ShowToast("Vui lòng nhập mật khẩu mới.", "error");
                 hasError = true;
             }
             else if (newPass.Length < 8)
             {
-                lblNewPasswordError.Text = "Mật khẩu phải có ít nhất 8 ký tự.";
+                ShowToast("Mật khẩu phải có ít nhất 8 ký tự.", "error");
                 hasError = true;
             }
 
             if (string.IsNullOrEmpty(confirmPass))
             {
-                lblConfirmPasswordError.Text = "Vui lòng nhập lại mật khẩu xác nhận.";
+                ShowToast("Vui lòng nhập lại mật khẩu xác nhận.", "error");
                 hasError = true;
             }
             else if (newPass != confirmPass)
             {
-                lblConfirmPasswordError.Text = "Mật khẩu xác nhận không khớp.";
+                ShowToast("Mật khẩu xác nhận không khớp.", "error");
                 hasError = true;
             }
 
@@ -87,18 +96,18 @@ namespace HAFoodWeb.AuthPage
                 bool success = await userBLL.ResetPasswordConfirmViaApi(otpId.Value, newPass);
                 if (success)
                 {
-                    lblSuccess.Text = "✅ Bạn đã đổi mật khẩu thành công. Đang chuyển hướng...";
+                    ShowToast("✅ Bạn đã đổi mật khẩu thành công. Đang chuyển hướng...", "success");
                     string script = "setTimeout(function(){ window.location = 'Login.aspx'; }, 2000);";
                     ClientScript.RegisterStartupScript(this.GetType(), "redirectLogin", script, true);
                 }
                 else
                 {
-                    lblNewPasswordError.Text = "Đổi mật khẩu thất bại. Vui lòng thử lại.";
+                    ShowToast("Đổi mật khẩu thất bại. Vui lòng thử lại.", "error");
                 }
             }
             catch
             {
-                lblNewPasswordError.Text = "Có lỗi xảy ra. Vui lòng thử lại sau.";
+                ShowToast("Có lỗi xảy ra. Vui lòng thử lại sau.", "error");
             }
         }
     }
