@@ -76,7 +76,15 @@ namespace HAFoodWeb.Services
 
         public async Task<IList<ProductCardVM>> BuildCardsAsync(ProductSearchRequest req)
         {
+            // Giữ để tương thích, nhưng code mới (Search.aspx) sẽ dùng overload có list
             var list = await SearchListAsync(req);
+            return await BuildCardsAsync(req, list);
+        }
+
+        public async Task<IList<ProductCardVM>> BuildCardsAsync(
+            ProductSearchRequest req,
+            PagedResult<ProductListItemDto> list)
+        {
             if (list == null || list.Items == null || list.Items.Count == 0)
                 return new List<ProductCardVM>();
 
@@ -102,11 +110,19 @@ namespace HAFoodWeb.Services
                 string img = (d != null && d.Variants != null)
                     ? d.Variants.FirstOrDefault(v => !string.IsNullOrWhiteSpace(v.Image))?.Image
                     : null;
+
                 if (string.IsNullOrWhiteSpace(img))
-                    img = (!string.IsNullOrWhiteSpace(d?.Image_Product) &&
-                           d.Image_Product.StartsWith("http", StringComparison.OrdinalIgnoreCase))
-                          ? d.Image_Product
-                          : "/images/product-default.png";
+                {
+                    if (!string.IsNullOrWhiteSpace(d?.Image_Product) &&
+                        d.Image_Product.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+                    {
+                        img = d.Image_Product;
+                    }
+                    else
+                    {
+                        img = "/images/product-default.png";
+                    }
+                }
 
                 // Dropdown biến thể
                 var opts = new List<VariantOptionVM>();
@@ -120,10 +136,16 @@ namespace HAFoodWeb.Services
                     }
                 }
 
-                // Giá min-max
-                string priceHtml = (li.Min_Retail_Price == li.Max_Retail_Price)
-                    ? $"<span class='price-now'>{FormatVnd(li.Min_Retail_Price)}</span>"
-                    : $"<span class='price-now'>{FormatVnd(li.Min_Retail_Price)} - {FormatVnd(li.Max_Retail_Price)}</span>";
+                // Giá min-max (dùng Min/Max từ list để nhất quán)
+                string priceHtml;
+                if (li.Min_Retail_Price == li.Max_Retail_Price)
+                {
+                    priceHtml = $"<span class='price-now'>{FormatVnd(li.Min_Retail_Price)}</span>";
+                }
+                else
+                {
+                    priceHtml = $"<span class='price-now'>{FormatVnd(li.Min_Retail_Price)} - {FormatVnd(li.Max_Retail_Price)}</span>";
+                }
 
                 cards.Add(new ProductCardVM
                 {
@@ -140,6 +162,7 @@ namespace HAFoodWeb.Services
 
             return cards;
         }
+
 
         // ------------ Helpers ------------
         private async Task<ProductDetailDto> GetProductDetailAsync(long id)
