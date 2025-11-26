@@ -18,27 +18,32 @@ namespace HAFoodWeb
         {
             if (!IsPostBack)
             {
-                if (!long.TryParse(Request.QueryString["id"], out long id) || id <= 0)
-                {
-                    litDebug.Text = "<pre>❌ Id không hợp lệ.</pre>";
-                    litDebug.Visible = true;
-                    return;
-                }
-
                 // đảm bảo output UTF-8
                 Response.ContentEncoding = Encoding.UTF8;
                 Response.Charset = "utf-8";
 
-                await LoadOrderDetailAsync(id);
+                // Nhận cả id hoặc code qua ?id= / ?code=
+                var raw = Request.QueryString["code"];
+                if (string.IsNullOrWhiteSpace(raw))
+                    raw = Request.QueryString["id"]; // vẫn giữ backward-compat
+
+                if (string.IsNullOrWhiteSpace(raw))
+                {
+                    litDebug.Text = "<pre>❌ Thiếu tham số mã/ID đơn hàng.</pre>";
+                    litDebug.Visible = true;
+                    return;
+                }
+
+                await LoadOrderDetailSmartAsync(raw.Trim());
             }
         }
 
-        private async Task LoadOrderDetailAsync(long id)
+        private async Task LoadOrderDetailSmartAsync(string codeOrId)
         {
             try
             {
-                Debug.WriteLine($"📦 Gọi API lấy chi tiết đơn hàng id={id}");
-                var detail = await _orderService.GetOrderDetailAsync(id);
+                Debug.WriteLine($"📦 Gọi API lấy chi tiết đơn hàng smart key={codeOrId}");
+                var detail = await _orderService.GetOrderDetailSmartAsync(codeOrId);
 
                 if (detail == null || detail.header == null)
                 {
@@ -57,7 +62,7 @@ namespace HAFoodWeb
                 litShipAddress.InnerText = Decode(h.ship_Full_Address ?? "");
                 litNote.InnerText = Decode(h.note ?? "");
 
-                // ===== PHƯƠNG THỨC & TRẠNG THÁI THANH TOÁN =====
+                // Thanh toán
                 string paymentText = "";
                 if (!string.IsNullOrWhiteSpace(h.payment_Provider))
                 {
@@ -66,12 +71,9 @@ namespace HAFoodWeb
 
                     if (provider == "VNPAY")
                     {
-                        if (status == "pending")
-                            paymentText = "VNPAY – Đang chờ thanh toán";
-                        else if (status == "paid")
-                            paymentText = "VNPAY – Đã thanh toán";
-                        else
-                            paymentText = "VNPAY";
+                        if (status == "pending") paymentText = "VNPAY – Đang chờ thanh toán";
+                        else if (status == "paid") paymentText = "VNPAY – Đã thanh toán";
+                        else paymentText = "VNPAY";
                     }
                     else
                     {
@@ -82,15 +84,9 @@ namespace HAFoodWeb
                 {
                     switch (h.payment_Method.Value)
                     {
-                        case 1:
-                            paymentText = "Thanh toán khi nhận hàng"; 
-                            break;
-                        case 2:
-                            paymentText = "Chuyển khoản ngân hàng";
-                            break;
-                        default:
-                            paymentText = "COD"; 
-                            break;
+                        case 1: paymentText = "Thanh toán khi nhận hàng"; break;
+                        case 2: paymentText = "Chuyển khoản ngân hàng"; break;
+                        default: paymentText = "COD"; break;
                     }
                 }
                 else
@@ -98,15 +94,8 @@ namespace HAFoodWeb
                     paymentText = "COD";
                 }
 
-                if (!string.IsNullOrWhiteSpace(paymentText))
-                {
-                    litPayment.InnerText = paymentText;
-                    pnlPayment.Visible = true;
-                }
-                else
-                {
-                    pnlPayment.Visible = false;
-                }
+                pnlPayment.Visible = !string.IsNullOrWhiteSpace(paymentText);
+                if (pnlPayment.Visible) litPayment.InnerText = paymentText;
 
                 // Trạng thái đơn
                 litStatus.InnerText = GetStatusText(h.status);
@@ -135,7 +124,7 @@ namespace HAFoodWeb
             }
             catch (Exception ex)
             {
-                Debug.WriteLine("❌ LoadOrderDetailAsync error: " + ex);
+                Debug.WriteLine("❌ LoadOrderDetailSmartAsync error: " + ex);
                 litDebug.Text = "<pre>" + Server.HtmlEncode(ex.ToString()) + "</pre>";
                 litDebug.Visible = true;
             }
@@ -145,8 +134,8 @@ namespace HAFoodWeb
         {
             switch (status)
             {
-                case 0: return "Chờ xác nhận";
-                case 1: return "Đã xác nhận";
+                case 0: return "Đã được tạo ";
+                case 1: return "Xác nhận";
                 case 2: return "Đang giao";
                 case 3: return "Đã giao";
                 case 4: return "Đã hủy";
