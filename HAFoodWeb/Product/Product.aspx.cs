@@ -80,7 +80,7 @@ namespace HAFoodWeb
             rpThumbs.DataSource = gallery.Select(x => new { Url = x }).ToList();
             rpThumbs.DataBind();
 
-            // dropdown + giá initial (min–max)
+            // dropdown + giá initial
             decimal min = decimal.MaxValue, max = 0;
             var opts = new List<Tuple<long, string, VariantDto>>();
             foreach (var v in d.Variants ?? new List<VariantDto>())
@@ -108,7 +108,7 @@ namespace HAFoodWeb
 
         private async Task BindRelatedAsync()
         {
-            var cards = await _cardService.GetRecommendedCardsAsync(8);
+            var cards = await _cardService.GetRecommendedCardsAsync(8).ConfigureAwait(false);
             rpRelated.DataSource = cards;
             rpRelated.DataBind();
         }
@@ -126,13 +126,11 @@ namespace HAFoodWeb
                 if (!long.TryParse(ddlVariant.SelectedValue, out var variantId)) return;
                 if (!int.TryParse(Request.Form["qty"], out var quantity) || quantity <= 0) return;
 
-                // Lấy snapshot biến thể từ hidden
                 var serializer = new JavaScriptSerializer();
                 var variants = serializer.Deserialize<List<Dictionary<string, object>>>(hVariantsJson.Value ?? "[]");
                 var variantInfo = variants.FirstOrDefault(v => v.ContainsKey("id") && Convert.ToInt64(v["id"]) == variantId);
                 if (variantInfo == null) return;
 
-                // ❗GUARD: HẾT HÀNG -> THÔNG BÁO & THOÁT
                 try
                 {
                     var stockVal = variantInfo.ContainsKey("stock") ? Convert.ToInt32(variantInfo["stock"]) : 0;
@@ -143,7 +141,7 @@ namespace HAFoodWeb
                         return;
                     }
                 }
-                catch { /* ignore parse errors */ }
+                catch { }
 
                 var req = new CartAddRequest
                 {
@@ -159,7 +157,7 @@ namespace HAFoodWeb
                 var tracker = new DeviceTracker(Request, Response);
                 string deviceUuid = tracker.GetOrCreateDeviceUuid();
 
-                var res = await _cartService.AddCartItemAsync(deviceUuid, req);
+                var res = await _cartService.AddCartItemAsync(deviceUuid, req).ConfigureAwait(false);
                 if (res?.items != null)
                 {
                     ScriptManager.RegisterStartupScript(this, GetType(), "OnAddCartOk",
