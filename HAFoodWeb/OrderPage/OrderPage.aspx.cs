@@ -305,8 +305,8 @@ namespace HAFoodWeb
         {
             switch (status)
             {
-                case 0: return "Chờ xác nhận";
-                case 1: return "Đã xác nhận";
+                case 0: return "Đã được tạo";
+                case 1: return "Xác nhận";
                 case 2: return "Đang giao";
                 case 3: return "Đã giao";
                 case 4: return "Đã hủy";
