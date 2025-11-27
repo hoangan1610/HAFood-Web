@@ -1,6 +1,6 @@
 ﻿<%@ Control Language="C#" AutoEventWireup="true" CodeBehind="Header.ascx.cs" Inherits="HAFoodWeb.Control.Header"  %>
 
-<!-- CSS -->
+<!-- CSS & fonts -->
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -12,10 +12,9 @@
     --ha-accent: #28a745;
     --ha-border: #E5E7EB;
     --ha-shadow: 0 .75rem 2rem rgba(0,0,0,.12);
-    --border: #E5E7EB; /* [NOTIFY] dùng cho toast (giờ không dùng nữa nhưng giữ biến cho đồng bộ) */
+    --border: #E5E7EB;
   }
 
-  /* Header dưới z-index của chatbot (chat = 1002) */
   .ha-header-wrap {
     background: linear-gradient(135deg, var(--ha-cream) 0%, #ffe5c3 100%);
     padding: 16px 0;
@@ -35,11 +34,10 @@
     box-shadow: 0 2px 12px rgba(0,0,0,.06);
     position: relative;
     z-index: 901;
-
-    display:flex;
-    align-items:center;
-    gap:16px;
-    justify-content:space-between;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    justify-content: space-between;
   }
 
   .navbar,
@@ -49,10 +47,10 @@
   }
 
   .navbar-brand{
-    display:flex;
-    align-items:center;
-    justify-content:flex-start;
-    gap:10px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 10px;
   }
 
   .navbar-brand img,
@@ -61,36 +59,35 @@
     width: 72px;
     border-radius: 50%;
     border: 2px solid var(--ha-accent);
-    background:#fff;
+    background: #fff;
     padding: 4px;
     object-fit: cover;
     box-shadow: 0 6px 18px rgba(40,167,69,0.18);
   }
 
   .brand-text{
-    display:flex;
-    flex-direction:column;
-    align-items:flex-start;
-    line-height:1.2;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    line-height: 1.2;
   }
 
   .brand-title{
-    font-size:20px;
-    font-weight:700;
-    letter-spacing:.04em;
-    text-transform:uppercase;
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: .04em;
+    text-transform: uppercase;
   }
 
   .brand-tagline{
-    margin-top:2px;
-    font-size:11px;
-    font-weight:500;
-    letter-spacing:.12em;
-    text-transform:uppercase;
-    color:#6b7280;
+    margin-top: 2px;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: #6b7280;
   }
 
-  /* Search: nằm giữa, giới hạn max width để cân với logo + icon */
   .ha-search{
     flex: 1 1 0;
     max-width: 620px;
@@ -100,395 +97,390 @@
   }
 
   .search-box{
-    background:#fff;
-    border-radius:16px;
-    padding:10px 16px;
-    width:100%;
-    display:flex;
-    align-items:center;
-    gap:10px;
+    background: #fff;
+    border-radius: 16px;
+    padding: 10px 16px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 10px;
     box-shadow: 0 4px 16px rgba(0,0,0,0.06);
-    border:2px solid var(--ha-accent);
+    border: 2px solid var(--ha-accent);
     transition: box-shadow .2s, transform .1s;
   }
+
   .search-box:focus-within{
     box-shadow: 0 8px 24px rgba(40,167,69,0.18);
     transform: translateY(-1px);
   }
+
   .search-box input{
-    flex:1;
-    border:0;
-    outline:0;
-    font-size:16px;
-    background:transparent;
-  }
-  .search-box i{
-    font-size:20px;
-    color:var(--ha-accent);
-    cursor:pointer;
+    flex: 1;
+    border: 0;
+    outline: 0;
+    font-size: 16px;
+    background: transparent;
   }
 
-  /* Gợi ý */
+  .search-box i{
+    font-size: 20px;
+    color: var(--ha-accent);
+    cursor: pointer;
+  }
+
   .hf-suggest{
-    position:absolute;
-    left:0;
-    right:0;
-    top:calc(100% + 8px);
-    background:#fff;
-    border:1px solid var(--ha-border);
-    border-radius:12px;
-    box-shadow:0 .5rem 1rem rgba(0,0,0,.08);
-    max-height:280px;
-    overflow:auto;
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: calc(100% + 8px);
+    background: #fff;
+    border: 1px solid var(--ha-border);
+    border-radius: 12px;
+    box-shadow: 0 .5rem 1rem rgba(0,0,0,.08);
+    max-height: 280px;
+    overflow: auto;
     z-index: 1001;
   }
+
   .hf-suggest-item{
-    padding:.5rem .75rem;
-    cursor:pointer;
+    padding: .5rem .75rem;
+    cursor: pointer;
   }
+
   .hf-suggest-item:hover,
   .hf-suggest-item.active{
-    background:#f8f9fa;
+    background: #f8f9fa;
   }
-  .hf-hide{ display:none !important; }
 
-  /* Icons bên phải */
+  .hf-hide{
+    display: none !important;
+  }
+
   .nav-icons{
-    display:flex;
-    align-items:center;
-    gap:30px;
-    margin-left:16px;
+    display: flex;
+    align-items: center;
+    gap: 30px;
+    margin-left: 16px;
   }
 
   .nav-icons i{
-    font-size:20px;
-    color:var(--ha-ink);
-    cursor:pointer;
-    transition:color .2s, background-color .2s, transform .1s;
-    position:relative;
-
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
-    width:38px;
-    height:38px;
-    border-radius:999px;
-    background:#f3f4f6;
+    font-size: 20px;
+    color: var(--ha-ink);
+    cursor: pointer;
+    transition: color .2s, background-color .2s, transform .1s;
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 999px;
+    background: #f3f4f6;
   }
 
   .nav-icons i:hover{
-    color:var(--ha-accent);
-    background:rgba(40,167,69,0.08);
-    transform:translateY(-1px);
+    color: var(--ha-accent);
+    background: rgba(40,167,69,0.08);
+    transform: translateY(-1px);
   }
 
-  /* Notification */
   .notify-wrapper{
-    position:relative;
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
   }
 
   .notify-dot{
-    position:absolute;
-    top:4px;
-    right:4px;
-    width:10px;
-    height:10px;
-    border-radius:50%;
-    background:#ef4444; /* đỏ */
-    border:2px solid #ffffff;
-    display:flex;
-    box-shadow:0 0 0 2px rgba(255,255,255,.6);
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #ef4444;
+    border: 2px solid #ffffff;
+    display: flex;
+    box-shadow: 0 0 0 2px rgba(255,255,255,.6);
   }
 
-  /* [NOTIFY] dropdown thông báo  */
-   .notify-dropdown{
-     position:absolute;
-     top:150%;
-     right:0;
-     left:auto;
-     margin-left:0;
-     background:#fff;
-     border-radius:14px;
-     box-shadow:0 18px 45px rgba(15,23,42,.15);
-     padding:8px 0 0;
-     display:none;
-     flex-direction:column;
-     width:320px;
-     max-width:min(360px, 95vw);
-     max-height:360px;
-     overflow-y:auto;
-     z-index:1001;
-     border:1px solid #e5e7eb;
-   }
+  /* Dropdown thông báo: header + footer cố định, list cuộn độc lập */
+  .notify-dropdown{
+    position: absolute;
+    top: 150%;
+    right: 0;
+    left: auto;
+    margin-left: 0;
+    background: #fff;
+    border-radius: 14px;
+    box-shadow: 0 18px 45px rgba(15,23,42,.15);
+    padding: 0;
+    display: none;
+    flex-direction: column;
+    width: 320px;
+    max-width: min(360px, 95vw);
+    max-height: 360px;
+    z-index: 1001;
+    border: 1px solid #e5e7eb;
+  }
 
-  /* Header: nền trắng, chữ to hơn */
   .notify-header{
-    padding:12px 18px;
-    font-weight:600;
-    border-bottom:1px solid #f3f4f6;
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    font-size:15px;
-    background:#ffffff;
+    padding: 12px 18px;
+    font-weight: 600;
+    border-bottom: 1px solid #f3f4f6;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 15px;
+    background: #ffffff;
+    flex: 0 0 auto;
   }
 
   .notify-header span:first-child{
-    color:#111827;
-    font-size:15px;
-    font-weight:700;
+    color: #111827;
+    font-size: 15px;
+    font-weight: 700;
   }
 
   .notify-header a,
   .notify-header button{
-    font-size:15px;
-    font-weight:600;
-    color:var(--ha-accent);
-    text-decoration:none;
-    background:none;
-    border:0;
-    padding:0;
-    cursor:pointer;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--ha-accent);
+    text-decoration: none;
+    background: none;
+    border: 0;
+    padding: 0;
+    cursor: pointer;
   }
 
   .notify-header a:hover,
   .notify-header button:hover{
-    text-decoration:underline;
+    text-decoration: underline;
   }
 
   .notify-items{
-    max-height:280px;
-    overflow-y:auto;
+    flex: 1 1 auto;
+    overflow-y: auto;
   }
 
   .notify-item{
-    padding:10px 16px;
-    font-size:14px;
-    cursor:pointer;
-    text-align:left;
-    border-bottom:1px solid #f3f4f6;
-    display:block;
-    text-decoration:none;
-    color:#111827;
-    background-color:#fff;
-    transition:background .15s ease, border-color .15s ease;
+    padding: 10px 16px;
+    font-size: 14px;
+    cursor: pointer;
+    text-align: left;
+    border-bottom: 1px solid #f3f4f6;
+    display: block;
+    text-decoration: none;
+    color: #111827;
+    background-color: #fff;
+    transition: background .15s ease, border-color .15s ease;
   }
 
   .notify-item:last-child{
-    border-bottom:none;
+    border-bottom: none;
   }
 
   .notify-item.unread{
-    background:#f0fdf4;
-    border-left:3px solid var(--ha-accent);
-    padding-left:13px; /* 16 - 3 để không xô nội dung */
+    background: #f0fdf4;
+    border-left: 3px solid var(--ha-accent);
+    padding-left: 13px;
   }
 
   .notify-item:hover{
-    background:#f9fafb;
+    background: #f9fafb;
   }
 
   .notify-item-title{
-    margin-bottom:2px;
-    font-weight:600;
+    margin-bottom: 2px;
+    font-weight: 600;
   }
 
   .notify-item-body{
-    font-size:13px;
-    color:#6b7280;
+    font-size: 13px;
+    color: #6b7280;
   }
 
   .notify-item-time{
-    font-size:11px;
-    color:#9ca3af;
-    margin-top:4px;
+    font-size: 11px;
+    color: #9ca3af;
+    margin-top: 4px;
   }
 
   .notify-empty{
-    padding:12px 16px 14px;
-    font-size:13px;
-    color:#6b7280;
+    padding: 12px 16px 14px;
+    font-size: 13px;
+    color: #6b7280;
   }
 
-  /* Footer: Xem tất cả căn giữa, chữ đen đậm, nền trắng */
   .notify-footer{
-    border-top:1px solid #f3f4f6;
-    padding:10px 16px;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    background:#ffffff;
-    margin-top:4px;
-    border-radius:0 0 14px 14px;
+    border-top: 1px solid #f3f4f6;
+    padding: 10px 16px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #ffffff;
+    border-radius: 0 0 14px 14px;
+    flex: 0 0 auto;
   }
 
   .notify-footer button,
   .notify-footer a{
-    border:none;
-    background:none;
-    padding:4px 8px;
-    font-size:15px;
-    font-weight:700;
-    cursor:pointer;
-    color:#111827;
-    text-decoration:none;
+    border: none;
+    background: none;
+    padding: 4px 8px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    color: #111827;
+    text-decoration: none;
   }
 
   .notify-footer button:hover,
   .notify-footer a:hover{
-    text-decoration:underline;
+    text-decoration: underline;
   }
 
   @media (max-width: 576px){
     .notify-dropdown{
-      left:auto;
-      right:0;
-      width:min(320px, 90vw);
+      left: auto;
+      right: 0;
+      width: min(320px, 90vw);
     }
   }
 
-  /* Dropdown người dùng */
   .user-dropdown{
-    position:absolute;
-    top:150%;
-    right:0;
-    background:#fff;
-    border-radius:10px;
-    box-shadow:0 4px 15px rgba(0,0,0,0.1);
-    padding:10px 0;
-    display:none;
-    flex-direction:column;
-    width:220px;
+    position: absolute;
+    top: 150%;
+    right: 0;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    padding: 10px 0;
+    display: none;
+    flex-direction: column;
+    width: 220px;
     z-index: 1001;
   }
 
   .user-dropdown a,
   .user-dropdown asp\:LinkButton{
-    text-decoration:none;
-    color:#333;
-    padding:10px 20px;
-    font-size:16px;
-    transition:background .3s, color .3s;
-    display:block;
-    text-align:left;
+    text-decoration: none;
+    color: #333;
+    padding: 10px 20px;
+    font-size: 16px;
+    transition: background .3s, color .3s;
+    display: block;
+    text-align: left;
   }
 
   .user-dropdown a:hover,
   .user-dropdown asp\:LinkButton:hover{
-    background:#f4f4f4;
-    color:var(--ha-accent);
+    background: #f4f4f4;
+    color: var(--ha-accent);
   }
 
-  /* Cart badge (luôn hiện) */
   .cart-link{
-    position:relative;
-    display:inline-block;
-  }
-
-  .cart-link #cartIcon{
-    /* icon giỏ tròn đồng bộ với icon khác */
+    position: relative;
+    display: inline-block;
   }
 
   .cart-badge{
-    position:absolute;
-    top:-6px;
-    right:-6px;
-    background:#000;
-    color:#fff;
-    font-size:12px;
-    font-weight:700;
-    border-radius:50%;
-    width:20px;
-    height:20px;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    line-height:1;
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    background: #000;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
   }
 
-  /* Responsive */
   @media (max-width: 992px){
     .ha-header-wrap{
       padding: 12px 0;
     }
 
     .navbar{
-      margin:0 12px;
-      padding:10px 14px;
-      border-radius:24px;
-      flex-direction:column;
-      align-items:stretch;
-      gap:12px;
+      margin: 0 12px;
+      padding: 10px 14px;
+      border-radius: 24px;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 12px;
     }
 
     .navbar-brand{
-      justify-content:center;
+      justify-content: center;
     }
 
     .navbar-brand img,
     .brand-logo-img{
-      height:64px;
-      width:64px;
+      height: 64px;
+      width: 64px;
     }
 
     .brand-title{
-      font-size:18px;
+      font-size: 18px;
     }
 
     .brand-tagline{
-      font-size:10px;
+      font-size: 10px;
     }
 
     .ha-search{
-      order:3;
-      max-width:none;
-      width:100%;
+      order: 3;
+      max-width: none;
+      width: 100%;
     }
 
     .nav-icons{
-      order:2;
-      justify-content:flex-end;
+      order: 2;
+      justify-content: flex-end;
     }
   }
 
   @media (max-width: 576px){
     .navbar{
-      margin:0 8px;
-      padding:8px 10px;
+      margin: 0 8px;
+      padding: 8px 10px;
     }
 
     .nav-icons{
-      gap:6px;
+      gap: 6px;
     }
 
     .nav-icons i{
-      width:34px;
-      height:34px;
-      font-size:18px;
+      width: 34px;
+      height: 34px;
+      font-size: 18px;
     }
 
     .search-box{
-      padding:8px 12px;
+      padding: 8px 12px;
     }
 
     .search-box input{
-      font-size:14px;
+      font-size: 14px;
     }
 
     .navbar-brand{
-      flex-direction:column;
-      text-align:center;
+      flex-direction: column;
+      text-align: center;
     }
 
     .brand-text{
-      align-items:center;
+      align-items: center;
     }
 
     .brand-tagline{
-      display:none; /* để header gọn hơn trên màn nhỏ */
+      display: none;
     }
   }
 </style>
@@ -514,12 +506,11 @@
     </div>
 
     <!-- ICONS -->
-    <div class="nav-icons d-flex align-items-center ms-auto"
-         id="headerRoot"
-         data-guestid='<%= guestDropdown.ClientID %>'
-         data-authid='<%= authDropdown.ClientID %>'>
-
-      <%--<i class="bi bi-search" id="openSearch" title="Tìm kiếm"></i>--%>
+    <div
+      class="nav-icons d-flex align-items-center ms-auto"
+      id="headerRoot"
+      data-guestid='<%= guestDropdown.ClientID %>'
+      data-authid='<%= authDropdown.ClientID %>'>
 
       <asp:HiddenField ID="hfIsAuth" runat="server" />
 
@@ -528,41 +519,48 @@
         <i class="bi bi-bell" id="notifyIcon" title="Thông báo"></i>
         <span class="notify-dot" id="notifyDot" runat="server"></span>
 
-        <!-- [NOTIFY] dropdown danh sách thông báo -->
+        <!-- [NOTIFY] dropdown -->
         <div class="notify-dropdown" id="notifyDropdown" runat="server" aria-label="Thông báo mới">
+          <!-- Header -->
           <div class="notify-header">
             <span>Thông báo</span>
-            <asp:LinkButton ID="btnMarkAllRead" runat="server"
-                            CssClass="text-decoration-none small"
-                            OnClick="btnMarkAllRead_Click">
+            <asp:LinkButton
+              ID="btnMarkAllRead"
+              runat="server"
+              CssClass="text-decoration-none small"
+              OnClick="btnMarkAllRead_Click">
               Đánh dấu tất cả đã đọc
             </asp:LinkButton>
           </div>
 
-          <asp:Label ID="lblNotifyEmpty" runat="server" CssClass="notify-empty" Visible="false"></asp:Label>
+          <!-- Danh sách cuộn -->
+          <div class="notify-items">
+            <asp:Label ID="lblNotifyEmpty" runat="server" CssClass="notify-empty" Visible="false"></asp:Label>
 
-          <asp:Repeater ID="rptNotifications" runat="server" OnItemCommand="rptNotifications_ItemCommand">
-            <ItemTemplate>
-              <asp:LinkButton runat="server"
-                              CommandName="MarkRead"
-                              CommandArgument='<%# Eval("id") %>'
-                              CssClass='<%# "notify-item " + (!(bool)Eval("isRead") ? "unread" : "") %>'>
-                <div class="notify-item-title"><%# Eval("title") %></div>
-                <div class="notify-item-body"><%# Eval("body") %></div>
-                <div class="notify-item-time">
-                  <%# Eval("createdAt", "{0:dd/MM/yyyy HH:mm}") %>
-                </div>
-              </asp:LinkButton>
-            </ItemTemplate>
-          </asp:Repeater>
+            <asp:Repeater ID="rptNotifications" runat="server" OnItemCommand="rptNotifications_ItemCommand">
+              <ItemTemplate>
+                <asp:LinkButton
+                  runat="server"
+                  CommandName="Open"
+                  CommandArgument='<%# BuildNotifyCommandArg(Container.DataItem) %>'
+                  CssClass='<%# "notify-item " + (!(bool)Eval("isRead") ? "unread" : "") %>'>
+                  <div class="notify-item-title"><%# Eval("title") %></div>
+                  <div class="notify-item-body"><%# Eval("body") %></div>
+                  <div class="notify-item-time"><%# Eval("createdAt", "{0:dd/MM/yyyy HH:mm}") %></div>
+                </asp:LinkButton>
+              </ItemTemplate>
+            </asp:Repeater>
+          </div>
 
-          <!-- [NOTIFY] Footer: Xem tất cả -->
+          <!-- Footer cố định -->
           <div class="notify-footer">
-            <asp:HyperLink ID="lnkAllNotifications" runat="server"
-                           NavigateUrl="~/NotificationPage/NotificationPage.aspx">
-                Xem tất cả
+            <asp:HyperLink
+              ID="lnkAllNotifications"
+              runat="server"
+              NavigateUrl="~/NotificationPage/NotificationPage.aspx">
+              Xem tất cả
             </asp:HyperLink>
-        </div>
+          </div>
         </div>
         <!-- [END NOTIFY] dropdown -->
       </div>
@@ -608,272 +606,268 @@
 
 <!-- SCRIPT CART -->
 <script>
-    (function () {
-        // Dùng chung trên toàn site
-        window.CART_API = window.CART_API || '<%= ResolveUrl("~/Ajax/Cart.ashx") %>';
+  (function () {
+    window.CART_API = window.CART_API || '<%= ResolveUrl("~/Ajax/Cart.ashx") %>';
 
-        let __cartCount = 0;
+    let __cartCount = 0;
 
-        // Cập nhật badge
-        window.setCartBadge = function (n) {
-            const b = document.querySelector('[data-cart-badge="true"]');
-            if (!b) return;
-            const v = Math.max(0, parseInt(n ?? 0, 10) || 0);
-            __cartCount = v;
-            b.textContent = String(v);
-            b.style.display = 'flex';
-        };
+    window.setCartBadge = function (n) {
+      const b = document.querySelector('[data-cart-badge="true"]');
+      if (!b) return;
+      const v = Math.max(0, parseInt(n ?? 0, 10) || 0);
+      __cartCount = v;
+      b.textContent = String(v);
+      b.style.display = 'flex';
+    };
 
-        window.getCartBadgeCount = function () {
-            return __cartCount;
-        };
+    window.getCartBadgeCount = function () {
+      return __cartCount;
+    };
 
-        // Lấy count thực từ server
-        window.refreshCartCount = async function () {
-            try {
-                const url = `${window.CART_API}?action=count&t=${Date.now()}`;
-                const r = await fetch(url, {
-                    method: 'GET',
-                    credentials: 'include',
-                    cache: 'no-store'
-                });
-                if (!r.ok) throw new Error('HTTP ' + r.status);
-                const j = await r.json();
-                const c = Number(j && (j.count ?? j.item_Count));
-                if (Number.isFinite(c)) {
-                    window.setCartBadge(c);
-                }
-            } catch (e) {
-                console.error('Lỗi làm mới số lượng giỏ hàng', e);
-            }
-        };
-
-        // Cho CartPage gọi thẳng
-        window.cartSyncNow = () => window.refreshCartCount();
-
-        // ====== EVENT OPTIMISTIC ======
-
-        window.addEventListener('cart:add', function (e) {
-            const delta = Number(e.detail?.delta ?? 1);
-            if (!Number.isFinite(delta)) return;
-            const current = window.getCartBadgeCount();
-            window.setCartBadge(current + delta);
+    window.refreshCartCount = async function () {
+      try {
+        const url = `${window.CART_API}?action=count&t=${Date.now()}`;
+        const r = await fetch(url, {
+          method: 'GET',
+          credentials: 'include',
+          cache: 'no-store'
         });
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        const j = await r.json();
+        const c = Number(j && (j.count ?? j.item_Count));
+        if (Number.isFinite(c)) window.setCartBadge(c);
+      } catch (e) {
+        console.error('Lỗi làm mới số lượng giỏ hàng', e);
+      }
+    };
 
-        window.addEventListener('cart:revert', function (e) {
-            const delta = Number(e.detail?.delta ?? 1);
-            if (!Number.isFinite(delta)) return;
-            const current = window.getCartBadgeCount();
-            window.setCartBadge(Math.max(0, current - delta));
-        });
+    window.cartSyncNow = () => window.refreshCartCount();
 
-        window.addEventListener('cart:set', function (e) {
-            const c = Number(e.detail?.count);
-            if (Number.isFinite(c)) {
-                window.setCartBadge(c);
-            }
-        });
+    window.addEventListener('cart:add', function (e) {
+      const delta = Number(e.detail?.delta ?? 1);
+      if (!Number.isFinite(delta)) return;
+      const current = window.getCartBadgeCount();
+      window.setCartBadge(current + delta);
+    });
 
-        window.addEventListener('DOMContentLoaded', function () {
-            try {
-                const b = document.querySelector('[data-cart-badge="true"]');
-                if (b) {
-                    const initial = parseInt(b.textContent || '0', 10);
-                    if (Number.isFinite(initial)) {
-                        __cartCount = initial;
-                    }
-                }
-                window.refreshCartCount();
-            } catch { }
-        });
+    window.addEventListener('cart:revert', function (e) {
+      const delta = Number(e.detail?.delta ?? 1);
+      if (!Number.isFinite(delta)) return;
+      const current = window.getCartBadgeCount();
+      window.setCartBadge(Math.max(0, current - delta));
+    });
 
-        document.addEventListener('visibilitychange', function () {
-            if (document.visibilityState === 'visible') {
-                window.refreshCartCount();
-            }
-        });
+    window.addEventListener('cart:set', function (e) {
+      const c = Number(e.detail?.count);
+      if (Number.isFinite(c)) window.setCartBadge(c);
+    });
 
-        if (window.Sys && Sys.WebForms && Sys.WebForms.PageRequestManager) {
-            try {
-                var prm = Sys.WebForms.PageRequestManager.getInstance();
-                prm.add_endRequest(function () { window.refreshCartCount(); });
-            } catch { }
+    window.addEventListener('DOMContentLoaded', function () {
+      try {
+        const b = document.querySelector('[data-cart-badge="true"]');
+        if (b) {
+          const initial = parseInt(b.textContent || '0', 10);
+          if (Number.isFinite(initial)) __cartCount = initial;
         }
-    })();
+        window.refreshCartCount();
+      } catch { }
+    });
+
+    document.addEventListener('visibilitychange', function () {
+      if (document.visibilityState === 'visible') window.refreshCartCount();
+    });
+
+    if (window.Sys && Sys.WebForms && Sys.WebForms.PageRequestManager) {
+      try {
+        var prm = Sys.WebForms.PageRequestManager.getInstance();
+        prm.add_endRequest(function () { window.refreshCartCount(); });
+      } catch { }
+    }
+  })();
 </script>
 
 <!-- SCRIPT HEADER (search + user + notify) -->
 <script>
-    // ===== Header UI behaviors (tìm kiếm + user dropdown + thông báo) =====
-    document.addEventListener('DOMContentLoaded', function () {
-        const headerRoot = document.getElementById('headerRoot');
-        const guestId = headerRoot?.dataset.guestid;
-        const authId = headerRoot?.dataset.authid;
+  document.addEventListener('DOMContentLoaded', function () {
+    const headerRoot = document.getElementById('headerRoot');
+    const guestId = headerRoot?.dataset.guestid;
+    const authId = headerRoot?.dataset.authid;
 
-        const guestDD = guestId ? document.getElementById(guestId) : null;
-        const authDD = authId ? document.getElementById(authId) : null;
+    const guestDD = guestId ? document.getElementById(guestId) : null;
+    const authDD = authId ? document.getElementById(authId) : null;
 
-        const userIcon = document.getElementById('userIcon');
-        const openBtn = document.getElementById('openSearch');
+    const userIcon = document.getElementById('userIcon');
+    const openBtn = document.getElementById('openSearch');
 
-        const input = document.getElementById('headerSearch');
-        const btn = document.getElementById('headerSearchBtn');
-        const box = document.getElementById('hfSuggest');
-        const searchWrap = document.getElementById('searchInline');
+    const input = document.getElementById('headerSearch');
+    const btn = document.getElementById('headerSearchBtn');
+    const box = document.getElementById('hfSuggest');
+    const searchWrap = document.getElementById('searchInline');
 
-        const suggestUrl = '<%= ResolveUrl("~/Proxy/Suggest.ashx") %>';
-        const searchUrl  = '<%= ResolveUrl("~/HomePage/Search.aspx") %>';
+    const suggestUrl = '<%= ResolveUrl("~/Proxy/Suggest.ashx") %>';
+    const searchUrl  = '<%= ResolveUrl("~/HomePage/Search.aspx") %>';
 
-        const hfAuth = document.getElementById('<%= hfIsAuth.ClientID %>');
-        const isAuth = hfAuth && hfAuth.value === '1';
+    const hfAuth = document.getElementById('<%= hfIsAuth.ClientID %>');
+    const isAuth = hfAuth && hfAuth.value === '1';
 
-        // [NOTIFY] tham chiếu icon + dropdown thông báo
-        const notifyIcon = document.getElementById('notifyIcon');
-        const notifyWrapper = document.getElementById('notifyWrapper');
-        const notifyDropdown = document.getElementById('<%= notifyDropdown.ClientID %>');
+    // [NOTIFY]
+    const notifyIcon = document.getElementById('notifyIcon');
+    const notifyWrapper = document.getElementById('notifyWrapper');
+    const notifyDropdown = document.getElementById('<%= notifyDropdown.ClientID %>');
 
-        // Ẩn hẳn icon thông báo + dropdown khi chưa đăng nhập
-        if (!isAuth && notifyWrapper) {
-            notifyWrapper.style.display = 'none';
+    if (!isAuth && notifyWrapper) {
+      notifyWrapper.style.display = 'none';
+    }
+
+    const hideUser = () => {
+      if (guestDD) guestDD.style.display = 'none';
+      if (authDD) authDD.style.display = 'none';
+    };
+
+    const hideSuggest = () => {
+      box?.classList.add('hf-hide');
+    };
+
+    const hideNotify = () => {
+      if (notifyDropdown) notifyDropdown.style.display = 'none';
+    };
+
+    userIcon?.addEventListener('click', e => {
+      e.stopPropagation();
+      if (isAuth) {
+        window.location.href = '<%= ResolveUrl("~/UserInfo/UserDetail.aspx") %>';
+            return;
         }
-
-        const hideUser = () => {
-            if (guestDD) guestDD.style.display = 'none';
-            if (authDD) authDD.style.display = 'none';
-        };
-        const hideSuggest = () => { box?.classList.add('hf-hide'); };
-
-        const hideNotify = () => {
-            if (notifyDropdown) notifyDropdown.style.display = 'none';
-        };
-
-        userIcon?.addEventListener('click', e => {
-            e.stopPropagation();
-            if (isAuth) {
-                window.location.href = '<%= ResolveUrl("~/UserInfo/UserDetail.aspx") %>';
-                return;
-            }
-            const willShow = !(guestDD && window.getComputedStyle(guestDD).display !== 'none');
-            hideSuggest();
-            hideNotify(); // [NOTIFY]
-            if (willShow && guestDD) guestDD.style.display = 'flex';
-            else if (guestDD) guestDD.style.display = 'none';
-        });
-
-        // [NOTIFY] click icon chuông
-        notifyIcon?.addEventListener('click', e => {
-            e.stopPropagation();
-            if (!isAuth) {
-                // Không làm gì khi chưa đăng nhập (icon đã ẩn bằng JS ở trên)
-                return;
-            }
-            const isVisible = notifyDropdown && window.getComputedStyle(notifyDropdown).display !== 'none';
-            hideUser();
-            hideSuggest();
-            if (notifyDropdown) {
-                notifyDropdown.style.display = isVisible ? 'none' : 'flex';
-            }
-        });
-
-        notifyWrapper?.addEventListener('click', e => e.stopPropagation());
-
-        openBtn?.addEventListener('click', e => {
-            e.stopPropagation();
-            input?.focus();
-        });
-
-        document.addEventListener('click', e => {
-            if (!(searchWrap?.contains(e.target) || openBtn?.contains(e.target))) {
-                hideSuggest();
-            }
-            if (!userIcon?.contains(e.target) && !guestDD?.contains(e.target) && !authDD?.contains(e.target)) hideUser();
-
-            // [NOTIFY] click ra ngoài ẩn dropdown
-            if (!notifyWrapper?.contains(e.target)) hideNotify();
-        });
-
-        searchWrap?.addEventListener('click', e => e.stopPropagation());
-        input?.addEventListener('click', e => e.stopPropagation());
-        input?.addEventListener('focus', e => e.stopPropagation());
-        box?.addEventListener('click', e => e.stopPropagation());
-
-        const debounce = (fn, ms) => {
-            let t;
-            return (...a) => {
-                clearTimeout(t);
-                t = setTimeout(() => fn(...a), ms);
-            };
-        };
-        let ctrl = null;
-
-        function render(items) {
-            if (!box) return;
-            if (!items || !items.length) {
-                box.classList.add('hf-hide');
-                box.innerHTML = '';
-                return;
-            }
-            box.innerHTML = items.map((s, i) =>
-                `<div class="hf-suggest-item${i === 0 ? ' active' : ''}" data-v="${s}">${s}</div>`
-            ).join('');
-            box.classList.remove('hf-hide');
-            box.querySelectorAll('.hf-suggest-item').forEach(el => {
-                el.addEventListener('click', () => gotoSearch(el.dataset.v || ''));
-            });
+        const willShow = !(guestDD && window.getComputedStyle(guestDD).display !== 'none');
+        hideSuggest();
+        hideNotify();
+        if (willShow && guestDD) {
+            guestDD.style.display = 'flex';
+        } else if (guestDD) {
+            guestDD.style.display = 'none';
         }
-
-        const doSuggest = debounce(async () => {
-            const q = (input?.value || '').trim();
-            if (q.length < 2) { render([]); return; }
-            try {
-                ctrl?.abort(); ctrl = new AbortController();
-                const r = await fetch(`${suggestUrl}?q=${encodeURIComponent(q)}`);
-                if (!r.ok) { render([]); return; }
-                const d = await r.json();
-                render(d.items || []);
-            } catch { render([]); }
-        }, 220);
-
-        function gotoSearch(q) {
-            q = (q || '').trim();
-            const url = q ? `${searchUrl}?q=${encodeURIComponent(q)}` : `${searchUrl}`;
-            window.location.href = url;
-        }
-
-        input?.addEventListener('input', doSuggest);
-        input?.addEventListener('keydown', e => {
-            const isOpen = box && !box.classList.contains('hf-hide');
-            if (!isOpen) {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    gotoSearch(input.value);
-                }
-                return;
-            }
-            const items = Array.from(box.querySelectorAll('.hf-suggest-item'));
-            if (!items.length) return;
-            let idx = items.findIndex(x => x.classList.contains('active'));
-
-            if (e.key === 'ArrowDown') {
-                e.preventDefault();
-                idx = (idx + 1) <= items.length - 1 ? (idx + 1) : 0;
-                items.forEach(x => x.classList.remove('active'));
-                items[idx].classList.add('active');
-                input.value = items[idx].dataset.v;
-            } else if (e.key === 'ArrowUp') {
-                e.preventDefault();
-                idx = (idx - 1) >= 0 ? (idx - 1) : (items.length - 1);
-                items.forEach(x => x.classList.remove('active'));
-                items[idx].classList.add('active');
-                input.value = items[idx].dataset.v;
-            } else if (e.key === 'Enter') {
-                e.preventDefault();
-                gotoSearch(input.value);
-            } else if (e.key === 'Escape') {
-                hideSuggest();
-            }
-        });
-
-        btn?.addEventListener('click', () => gotoSearch(input?.value));
     });
+
+      notifyIcon?.addEventListener('click', e => {
+          e.stopPropagation();
+          if (!isAuth) return;
+          const isVisible = notifyDropdown && window.getComputedStyle(notifyDropdown).display !== 'none';
+          hideUser();
+          hideSuggest();
+          if (notifyDropdown) {
+              notifyDropdown.style.display = isVisible ? 'none' : 'flex';
+          }
+      });
+
+      notifyWrapper?.addEventListener('click', e => e.stopPropagation());
+
+      openBtn?.addEventListener('click', e => {
+          e.stopPropagation();
+          input?.focus();
+      });
+
+      document.addEventListener('click', e => {
+          if (!(searchWrap?.contains(e.target) || openBtn?.contains(e.target))) {
+              hideSuggest();
+          }
+          if (!userIcon?.contains(e.target) && !guestDD?.contains(e.target) && !authDD?.contains(e.target)) {
+              hideUser();
+          }
+          if (!notifyWrapper?.contains(e.target)) {
+              hideNotify();
+          }
+      });
+
+      searchWrap?.addEventListener('click', e => e.stopPropagation());
+      input?.addEventListener('click', e => e.stopPropagation());
+      input?.addEventListener('focus', e => e.stopPropagation());
+      box?.addEventListener('click', e => e.stopPropagation());
+
+      const debounce = (fn, ms) => {
+          let t;
+          return (...a) => {
+              clearTimeout(t);
+              t = setTimeout(() => fn(...a), ms);
+          };
+      };
+
+      function render(items) {
+          if (!box) return;
+          if (!items || !items.length) {
+              box.classList.add('hf-hide');
+              box.innerHTML = '';
+              return;
+          }
+          box.innerHTML = items
+              .map((s, i) => `<div class="hf-suggest-item${i === 0 ? ' active' : ''}" data-v="${s}">${s}</div>`)
+              .join('');
+          box.classList.remove('hf-hide');
+          box.querySelectorAll('.hf-suggest-item').forEach(el => {
+              el.addEventListener('click', () => gotoSearch(el.dataset.v || ''));
+          });
+      }
+
+      const doSuggest = debounce(async () => {
+          const q = (input?.value || '').trim();
+          if (q.length < 2) {
+              render([]);
+              return;
+          }
+          try {
+              const r = await fetch(`${suggestUrl}?q=${encodeURIComponent(q)}`);
+              if (!r.ok) {
+                  render([]);
+                  return;
+              }
+              const d = await r.json();
+              render(d.items || []);
+          } catch {
+              render([]);
+          }
+      }, 220);
+
+      function gotoSearch(q) {
+          q = (q || '').trim();
+          const url = q ? `${searchUrl}?q=${encodeURIComponent(q)}` : `${searchUrl}`;
+          window.location.href = url;
+      }
+
+      input?.addEventListener('input', doSuggest);
+
+      input?.addEventListener('keydown', e => {
+          const isOpen = box && !box.classList.contains('hf-hide');
+          if (!isOpen) {
+              if (e.key === 'Enter') {
+                  e.preventDefault();
+                  gotoSearch(input.value);
+              }
+              return;
+          }
+
+          const items = Array.from(box.querySelectorAll('.hf-suggest-item'));
+          if (!items.length) return;
+          let idx = items.findIndex(x => x.classList.contains('active'));
+
+          if (e.key === 'ArrowDown') {
+              e.preventDefault();
+              idx = (idx + 1) <= items.length - 1 ? (idx + 1) : 0;
+              items.forEach(x => x.classList.remove('active'));
+              items[idx].classList.add('active');
+              input.value = items[idx].dataset.v;
+          } else if (e.key === 'ArrowUp') {
+              e.preventDefault();
+              idx = (idx - 1) >= 0 ? (idx - 1) : (items.length - 1);
+              items.forEach(x => x.classList.remove('active'));
+              items[idx].classList.add('active');
+              input.value = items[idx].dataset.v;
+          } else if (e.key === 'Enter') {
+              e.preventDefault();
+              gotoSearch(input.value);
+          } else if (e.key === 'Escape') {
+              hideSuggest();
+          }
+      });
+
+      btn?.addEventListener('click', () => gotoSearch(input?.value));
+  });
 </script>

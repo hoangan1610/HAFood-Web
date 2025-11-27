@@ -304,11 +304,22 @@
       font-size:.9rem;
       white-space:pre-wrap;
     }
-    .ha-star-filled{
-      color:#fbbf24;
+    .ha-star-filled{ color:#fbbf24; }
+    .ha-star-empty{ color:#e5e7eb; }
+    .ha-review-empty{ font-size:.9rem; color:var(--ha-muted); }
+
+    /* Highlight khi focus review qua ?review=... */
+    .ha-review-card { position: relative; }
+    .ha-review-card.review-highlight{
+      outline: 2px solid #0d6efd;
+      box-shadow: 0 0 0 4px rgba(13,110,253,.18);
+      background:#fffef7;
+      animation: pulseFocus 1.1s ease-out 2;
     }
-    .ha-star-empty{
-      color:#e5e7eb;
+    @keyframes pulseFocus{
+      0%{ box-shadow:0 0 0 0 rgba(13,110,253,.35); }
+      70%{ box-shadow:0 0 0 14px rgba(13,110,253,0); }
+      100%{ box-shadow:0 0 0 0 rgba(13,110,253,0); }
     }
     .ha-review-empty{
       font-size:.9rem;
@@ -717,10 +728,7 @@
 
               const r = await fetch(`${window.CART_API}?action=add`, {
                   method: 'POST',
-                  headers: {
-                      'Content-Type': 'application/json; charset=utf-8',
-                      'Accept': 'application/json'
-                  },
+                  headers: { 'Content-Type': 'application/json; charset=utf-8', 'Accept': 'application/json' },
                   credentials: 'include',
                   cache: 'no-store',
                   body: JSON.stringify({ productId, variantId, qty })
@@ -731,7 +739,6 @@
               if (!j?.ok) throw new Error(j?.message || 'Add failed');
 
               window.onAddToCartSuccess(qty);
-
           } catch (err) {
               window.dispatchEvent(new CustomEvent('cart:revert', { detail: { delta: qty } }));
               console.error('AddToCart failed:', err);
@@ -740,10 +747,7 @@
 
       window.buyNowAsync = async function () {
           const stockLeft = getSelectedVariantStock();
-          if (stockLeft <= 0) {
-              showToast('Sản phẩm hiện tại đang hết hàng, xin quý khách vui lòng chọn sản phẩm khác');
-              return;
-          }
+          if (stockLeft <= 0) { showToast('Sản phẩm hiện tại đang hết hàng, xin quý khách vui lòng chọn sản phẩm khác'); return; }
 
           const qty = Math.max(1, parseInt(document.getElementById('qty')?.value || '1', 10));
 
@@ -753,10 +757,7 @@
 
               const r = await fetch(`${window.CART_API}?action=add`, {
                   method: 'POST',
-                  headers: {
-                      'Content-Type': 'application/json; charset=utf-8',
-                      'Accept': 'application/json'
-                  },
+                  headers: { 'Content-Type': 'application/json; charset=utf-8', 'Accept': 'application/json' },
                   credentials: 'include',
                   cache: 'no-store',
                   body: JSON.stringify({ productId, variantId, qty })
@@ -784,16 +785,10 @@
           window.__addToCartBound = true;
           document.addEventListener('DOMContentLoaded', () => {
               const btn = document.getElementById('<%= btnAddToCart.ClientID %>');
-              if (btn) btn.addEventListener('click', e => {
-                  e.preventDefault();
-                  window.addToCartOptimistic();
-              });
+              if (btn) btn.addEventListener('click', e => { e.preventDefault(); window.addToCartOptimistic(); });
 
               const btnBuy = document.getElementById('btnBuy');
-              if (btnBuy) btnBuy.addEventListener('click', e => {
-                  e.preventDefault();
-                  window.buyNowAsync();
-              });
+              if (btnBuy) btnBuy.addEventListener('click', e => { e.preventDefault(); window.buyNowAsync(); });
           });
       })();
 
