@@ -204,7 +204,7 @@
     box-shadow: 0 0 0 2px rgba(255,255,255,.6);
   }
 
-  /* Dropdown thông báo: header + footer cố định, list cuộn độc lập */
+  /* Dropdown thông báo */
   .notify-dropdown{
     position: absolute;
     top: 150%;
@@ -483,6 +483,46 @@
       display: none;
     }
   }
+
+  /* ===== Toast thông báo góc phải ===== */
+  .ha-toast-container{
+    position: fixed;
+    top: 12px;
+    right: 12px;
+    z-index: 1200;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    pointer-events: none;
+  }
+
+  .ha-toast{
+    min-width: 220px;
+    max-width: 320px;
+    background:#111827;
+    color:#f9fafb;
+    border-radius: 999px;
+    padding: 8px 14px;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    opacity: 0;
+    transform: translateY(-6px);
+    transition: opacity .2s ease, transform .2s ease;
+    box-shadow: 0 10px 25px rgba(15,23,42,.35);
+    pointer-events: auto;
+  }
+
+  .ha-toast-show{
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .ha-toast i{
+    font-size: 16px;
+    color:#22c55e;
+  }
 </style>
 
 <div class="ha-header-wrap">
@@ -513,11 +553,14 @@
       data-authid='<%= authDropdown.ClientID %>'>
 
       <asp:HiddenField ID="hfIsAuth" runat="server" />
+      <!-- NEW: hidden lưu unread ban đầu -->
+      <asp:HiddenField ID="hfNotifyUnread" runat="server" />
 
       <!-- Notification -->
       <div class="position-relative notify-wrapper" id="notifyWrapper">
         <i class="bi bi-bell" id="notifyIcon" title="Thông báo"></i>
-        <span class="notify-dot" id="notifyDot" runat="server"></span>
+        <%-- DOT chỉ là HTML, không runat="server" --%>
+        <span class="notify-dot" id="notifyDot"></span>
 
         <!-- [NOTIFY] dropdown -->
         <div class="notify-dropdown" id="notifyDropdown" runat="server" aria-label="Thông báo mới">
@@ -534,7 +577,7 @@
           </div>
 
           <!-- Danh sách cuộn -->
-          <div class="notify-items">
+          <div class="notify-items" id="notifyItems">
             <asp:Label ID="lblNotifyEmpty" runat="server" CssClass="notify-empty" Visible="false"></asp:Label>
 
             <asp:Repeater ID="rptNotifications" runat="server" OnItemCommand="rptNotifications_ItemCommand">
@@ -604,89 +647,92 @@
   </nav>
 </div>
 
+<!-- Âm thanh notify -->
+<audio id="notifySound" preload="auto" src="<%= ResolveUrl("~/assets/sounds/notify-1.mp3") %>"></audio>
+
 <!-- SCRIPT CART -->
 <script>
-  (function () {
-    window.CART_API = window.CART_API || '<%= ResolveUrl("~/Ajax/Cart.ashx") %>';
+    (function () {
+        window.CART_API = window.CART_API || '<%= ResolveUrl("~/Ajax/Cart.ashx") %>';
 
-    let __cartCount = 0;
+        let __cartCount = 0;
 
-    window.setCartBadge = function (n) {
-      const b = document.querySelector('[data-cart-badge="true"]');
-      if (!b) return;
-      const v = Math.max(0, parseInt(n ?? 0, 10) || 0);
-      __cartCount = v;
-      b.textContent = String(v);
-      b.style.display = 'flex';
-    };
+        window.setCartBadge = function (n) {
+            const b = document.querySelector('[data-cart-badge="true"]');
+            if (!b) return;
+            const v = Math.max(0, parseInt(n ?? 0, 10) || 0);
+            __cartCount = v;
+            b.textContent = String(v);
+            b.style.display = 'flex';
+        };
 
-    window.getCartBadgeCount = function () {
-      return __cartCount;
-    };
+        window.getCartBadgeCount = function () {
+            return __cartCount;
+        };
 
-    window.refreshCartCount = async function () {
-      try {
-        const url = `${window.CART_API}?action=count&t=${Date.now()}`;
-        const r = await fetch(url, {
-          method: 'GET',
-          credentials: 'include',
-          cache: 'no-store'
+        window.refreshCartCount = async function () {
+            try {
+                const url = `${window.CART_API}?action=count&t=${Date.now()}`;
+                const r = await fetch(url, {
+                    method: 'GET',
+                    credentials: 'include',
+                    cache: 'no-store'
+                });
+                if (!r.ok) throw new Error('HTTP ' + r.status);
+                const j = await r.json();
+                const c = Number(j && (j.count ?? j.item_Count));
+                if (Number.isFinite(c)) window.setCartBadge(c);
+            } catch (e) {
+                console.error('Lỗi làm mới số lượng giỏ hàng', e);
+            }
+        };
+
+        window.cartSyncNow = () => window.refreshCartCount();
+
+        window.addEventListener('cart:add', function (e) {
+            const delta = Number(e.detail?.delta ?? 1);
+            if (!Number.isFinite(delta)) return;
+            const current = window.getCartBadgeCount();
+            window.setCartBadge(current + delta);
         });
-        if (!r.ok) throw new Error('HTTP ' + r.status);
-        const j = await r.json();
-        const c = Number(j && (j.count ?? j.item_Count));
-        if (Number.isFinite(c)) window.setCartBadge(c);
-      } catch (e) {
-        console.error('Lỗi làm mới số lượng giỏ hàng', e);
-      }
-    };
 
-    window.cartSyncNow = () => window.refreshCartCount();
+        window.addEventListener('cart:revert', function (e) {
+            const delta = Number(e.detail?.delta ?? 1);
+            if (!Number.isFinite(delta)) return;
+            const current = window.getCartBadgeCount();
+            window.setCartBadge(Math.max(0, current - delta));
+        });
 
-    window.addEventListener('cart:add', function (e) {
-      const delta = Number(e.detail?.delta ?? 1);
-      if (!Number.isFinite(delta)) return;
-      const current = window.getCartBadgeCount();
-      window.setCartBadge(current + delta);
-    });
+        window.addEventListener('cart:set', function (e) {
+            const c = Number(e.detail?.count);
+            if (Number.isFinite(c)) window.setCartBadge(c);
+        });
 
-    window.addEventListener('cart:revert', function (e) {
-      const delta = Number(e.detail?.delta ?? 1);
-      if (!Number.isFinite(delta)) return;
-      const current = window.getCartBadgeCount();
-      window.setCartBadge(Math.max(0, current - delta));
-    });
+        window.addEventListener('DOMContentLoaded', function () {
+            try {
+                const b = document.querySelector('[data-cart-badge="true"]');
+                if (b) {
+                    const initial = parseInt(b.textContent || '0', 10);
+                    if (Number.isFinite(initial)) __cartCount = initial;
+                }
+                window.refreshCartCount();
+            } catch { }
+        });
 
-    window.addEventListener('cart:set', function (e) {
-      const c = Number(e.detail?.count);
-      if (Number.isFinite(c)) window.setCartBadge(c);
-    });
+        document.addEventListener('visibilitychange', function () {
+            if (document.visibilityState === 'visible') window.refreshCartCount();
+        });
 
-    window.addEventListener('DOMContentLoaded', function () {
-      try {
-        const b = document.querySelector('[data-cart-badge="true"]');
-        if (b) {
-          const initial = parseInt(b.textContent || '0', 10);
-          if (Number.isFinite(initial)) __cartCount = initial;
+        if (window.Sys && Sys.WebForms && Sys.WebForms.PageRequestManager) {
+            try {
+                var prm = Sys.WebForms.PageRequestManager.getInstance();
+                prm.add_endRequest(function () { window.refreshCartCount(); });
+            } catch { }
         }
-        window.refreshCartCount();
-      } catch { }
-    });
-
-    document.addEventListener('visibilitychange', function () {
-      if (document.visibilityState === 'visible') window.refreshCartCount();
-    });
-
-    if (window.Sys && Sys.WebForms && Sys.WebForms.PageRequestManager) {
-      try {
-        var prm = Sys.WebForms.PageRequestManager.getInstance();
-        prm.add_endRequest(function () { window.refreshCartCount(); });
-      } catch { }
-    }
-  })();
+    })();
 </script>
 
-<!-- SCRIPT HEADER (search + user + notify) -->
+<!-- SCRIPT HEADER (search + user + notify + SSE) -->
 <script>
   document.addEventListener('DOMContentLoaded', function () {
     const headerRoot = document.getElementById('headerRoot');
@@ -708,15 +754,191 @@
     const searchUrl  = '<%= ResolveUrl("~/HomePage/Search.aspx") %>';
 
     const hfAuth = document.getElementById('<%= hfIsAuth.ClientID %>');
+    const hfUnread = document.getElementById('<%= hfNotifyUnread.ClientID %>');
     const isAuth = hfAuth && hfAuth.value === '1';
 
     // [NOTIFY]
     const notifyIcon = document.getElementById('notifyIcon');
     const notifyWrapper = document.getElementById('notifyWrapper');
     const notifyDropdown = document.getElementById('<%= notifyDropdown.ClientID %>');
+    const notifyDot = document.getElementById('notifyDot');
+    const notifyItems = document.getElementById('notifyItems');
 
+    // SSE + list + mark-read URL
+    const notifySseUrl  = '<%= ResolveUrl("~/Proxy/NotificationStream.ashx") %>';
+    const notifyListUrl = '<%= ResolveUrl("~/Proxy/NotificationList.ashx") %>';
+    const notifyMarkUrl = '<%= ResolveUrl("~/Proxy/NotificationMarkRead.ashx") %>';
+
+    let notifyEs = null;
+    let lastUnread = null;
+
+    // Ẩn notify hoàn toàn với khách
     if (!isAuth && notifyWrapper) {
       notifyWrapper.style.display = 'none';
+    }
+
+    function updateNotifyDot(unread) {
+      if (!notifyDot) return;
+      const v = Number(unread) || 0;
+      notifyDot.style.display = v > 0 ? 'flex' : 'none';
+    }
+
+    function playNotifySound() {
+      try {
+        const audio = document.getElementById('notifySound');
+        if (!audio) return;
+        audio.currentTime = 0;
+        audio.play().catch(function(){});
+      } catch { }
+    }
+
+    function showNotifyToast(unread) {
+      const count = Number(unread) || 0;
+      if (count <= 0) return;
+
+      const msg = count === 1
+        ? 'Bạn có 1 thông báo mới'
+        : `Bạn có ${count} thông báo mới`;
+
+      let container = document.querySelector('.ha-toast-container');
+      if (!container) {
+        container = document.createElement('div');
+        container.className = 'ha-toast-container';
+        document.body.appendChild(container);
+      }
+
+      const toast = document.createElement('div');
+      toast.className = 'ha-toast';
+      toast.innerHTML =
+        '<i class="bi bi-bell-fill"></i>' +
+        '<span>' + msg + '</span>';
+
+      container.appendChild(toast);
+
+      requestAnimationFrame(function() {
+        toast.classList.add('ha-toast-show');
+      });
+
+      setTimeout(function () {
+        toast.classList.remove('ha-toast-show');
+        setTimeout(function () {
+          toast.remove();
+          if (!container.hasChildNodes()) {
+            container.remove();
+          }
+        }, 200);
+      }, 4000);
+    }
+
+    // Load HTML list từ NotificationList.ashx
+    async function reloadNotifyList() {
+      if (!isAuth || !notifyItems) return;
+      try {
+        notifyItems.innerHTML = '<div class="notify-empty">Đang tải...</div>';
+        const r = await fetch(notifyListUrl, {
+          method: 'GET',
+          credentials: 'include',
+          cache: 'no-store'
+        });
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        const html = await r.text();
+        notifyItems.innerHTML = html;
+      } catch (e) {
+        console.warn('[notify] load list error:', e);
+        notifyItems.innerHTML = '<div class="notify-empty">Không tải được thông báo.</div>';
+      }
+    }
+
+    // 🔴 Bắt click vào item trong dropdown để mark-read (và vẫn cho phép chuyển trang)
+    if (notifyItems) {
+      notifyItems.addEventListener('click', function (e) {
+        const item = e.target.closest('.notify-item');
+        if (!item) return;
+
+        const id = item.getAttribute('data-id');
+        if (!id) return;
+
+        // Fire-and-forget: gọi handler đánh dấu đã đọc
+        try {
+          fetch(`${notifyMarkUrl}?id=${encodeURIComponent(id)}`, {
+            method: 'POST',
+            credentials: 'include',
+            cache: 'no-store'
+          }).catch(() => {});
+        } catch { }
+
+        // Update UI local
+        item.classList.remove('unread');
+
+        // Nếu không còn item nào unread -> tắt dot đỏ
+        const anyUnread = notifyItems.querySelector('.notify-item.unread');
+        if (!anyUnread && notifyDot) {
+          notifyDot.style.display = 'none';
+        }
+      });
+    }
+
+    function startNotifySse() {
+      if (!isAuth) {
+        updateNotifyDot(0);
+        return;
+      }
+
+      // Init lastUnread từ server (hidden field)
+      if (hfUnread && hfUnread.value !== '') {
+        const init = Number(hfUnread.value || 0);
+        if (Number.isFinite(init)) {
+          lastUnread = init;
+          updateNotifyDot(init);
+        }
+      }
+
+      if (typeof EventSource === 'undefined') {
+        console.warn('[notify] EventSource không hỗ trợ.');
+        return;
+      }
+
+      try {
+        notifyEs = new EventSource(notifySseUrl);
+        let firstEvent = (lastUnread === null);
+
+        notifyEs.addEventListener('open', function () {
+          console.info('[notify] SSE connected.');
+        });
+
+        notifyEs.addEventListener('notifications.badge', function (ev) {
+          try {
+            const data = JSON.parse(ev.data);
+            const unread = Number(data.totalUnread || 0);
+
+            if (firstEvent) {
+              firstEvent = false;
+              lastUnread = unread;
+              updateNotifyDot(unread);
+              return;
+            }
+
+            if (lastUnread == null || unread !== lastUnread) {
+              const increased = lastUnread != null && unread > lastUnread;
+              lastUnread = unread;
+              updateNotifyDot(unread);
+
+              if (increased) {
+                playNotifySound();
+                showNotifyToast(unread);
+              }
+            }
+          } catch (e) {
+            console.warn('[notify] parse SSE data error', e);
+          }
+        });
+
+        notifyEs.addEventListener('error', function (ev) {
+          console.warn('[notify] SSE error:', ev);
+        });
+      } catch (e) {
+        console.warn('[notify] startNotifySse error:', e);
+      }
     }
 
     const hideUser = () => {
@@ -754,8 +976,14 @@
           const isVisible = notifyDropdown && window.getComputedStyle(notifyDropdown).display !== 'none';
           hideUser();
           hideSuggest();
-          if (notifyDropdown) {
-              notifyDropdown.style.display = isVisible ? 'none' : 'flex';
+          if (!notifyDropdown) return;
+
+          if (isVisible) {
+              notifyDropdown.style.display = 'none';
+          } else {
+              notifyDropdown.style.display = 'flex';
+              // mỗi lần mở chuông → reload list từ server
+              reloadNotifyList();
           }
       });
 
@@ -869,5 +1097,12 @@
       });
 
       btn?.addEventListener('click', () => gotoSearch(input?.value));
+
+      // Khởi động SSE thông báo
+      if (isAuth) {
+          startNotifySse();
+      } else if (notifyDot) {
+          notifyDot.style.display = 'none';
+      }
   });
 </script>

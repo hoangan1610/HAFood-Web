@@ -292,6 +292,10 @@
     <Content Include="assets\vn-admin\wards\vinh-long.json" />
     <Content Include="Proxy\ChatProxy.ashx" />
     <Content Include="Proxy\SpinProxy.ashx" />
+    <Content Include="Proxy\NotificationList.ashx" />
+    <Content Include="Proxy\NotificationStream.ashx" />
+    <Content Include="Proxy\NotificationMarkRead.ashx" />
+    <Content Include="Proxy\NotificationGo.ashx" />
     <None Include="Scripts\jquery-3.7.0.intellisense.js" />
     <Content Include="Scripts\jquery-3.7.0.js" />
     <Content Include="Scripts\jquery-3.7.0.min.js" />
@@ -536,6 +540,18 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Proxy\ChatProxy.ashx.cs">
       <DependentUpon>ChatProxy.ashx</DependentUpon>
+    </Compile>
+    <Compile Include="Proxy\NotificationGo.ashx.cs">
+      <DependentUpon>NotificationGo.ashx</DependentUpon>
+    </Compile>
+    <Compile Include="Proxy\NotificationList.ashx.cs">
+      <DependentUpon>NotificationList.ashx</DependentUpon>
+    </Compile>
+    <Compile Include="Proxy\NotificationMarkRead.ashx.cs">
+      <DependentUpon>NotificationMarkRead.ashx</DependentUpon>
+    </Compile>
+    <Compile Include="Proxy\NotificationStream.ashx.cs">
+      <DependentUpon>NotificationStream.ashx</DependentUpon>
     </Compile>
     <Compile Include="Proxy\SpinProxy.ashx.cs">
       <DependentUpon>SpinProxy.ashx</DependentUpon>

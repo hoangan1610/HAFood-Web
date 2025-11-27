@@ -1,4 +1,5 @@
-﻿using HAFoodWeb.Services;
+﻿using HAFoodWeb.Models;
+using HAFoodWeb.Services;
 using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
@@ -107,9 +108,20 @@ namespace HAFoodWeb.Control
 
                 if (string.IsNullOrEmpty(token))
                 {
-                    if (notifyDot != null) notifyDot.Visible = false;
-                    if (lblNotifyEmpty != null) { lblNotifyEmpty.Visible = true; lblNotifyEmpty.Text = "Hãy đăng nhập để xem thông báo."; }
-                    if (rptNotifications != null) { rptNotifications.DataSource = null; rptNotifications.DataBind(); }
+                    if (lblNotifyEmpty != null)
+                    {
+                        lblNotifyEmpty.Visible = true;
+                        lblNotifyEmpty.Text = "Hãy đăng nhập để xem thông báo.";
+                    }
+                    if (rptNotifications != null)
+                    {
+                        rptNotifications.DataSource = null;
+                        rptNotifications.DataBind();
+                    }
+                    if (hfNotifyUnread != null)
+                    {
+                        hfNotifyUnread.Value = "0";
+                    }
                     return;
                 }
 
@@ -118,25 +130,52 @@ namespace HAFoodWeb.Control
 
                 if (latest != null && latest.items != null && latest.items.Count > 0)
                 {
-                    rptNotifications.DataSource = latest.items;
-                    rptNotifications.DataBind();
-                    if (lblNotifyEmpty != null) { lblNotifyEmpty.Visible = false; lblNotifyEmpty.Text = string.Empty; }
-                    if (notifyDot != null) notifyDot.Visible = latest.totalUnread > 0;
+                    if (rptNotifications != null)
+                    {
+                        rptNotifications.DataSource = latest.items;
+                        rptNotifications.DataBind();
+                    }
+                    if (lblNotifyEmpty != null)
+                    {
+                        lblNotifyEmpty.Visible = false;
+                        lblNotifyEmpty.Text = string.Empty;
+                    }
+                    if (hfNotifyUnread != null)
+                    {
+                        hfNotifyUnread.Value = latest.totalUnread.ToString();
+                    }
                 }
                 else
                 {
-                    rptNotifications.DataSource = null;
-                    rptNotifications.DataBind();
-                    if (lblNotifyEmpty != null) { lblNotifyEmpty.Visible = true; lblNotifyEmpty.Text = "Hiện không có thông báo nào."; }
-                    if (notifyDot != null) notifyDot.Visible = false;
+                    if (rptNotifications != null)
+                    {
+                        rptNotifications.DataSource = null;
+                        rptNotifications.DataBind();
+                    }
+                    if (lblNotifyEmpty != null)
+                    {
+                        lblNotifyEmpty.Visible = true;
+                        lblNotifyEmpty.Text = "Hiện không có thông báo nào.";
+                    }
+                    if (hfNotifyUnread != null)
+                    {
+                        hfNotifyUnread.Value = "0";
+                    }
                 }
             }
             catch
             {
                 try
                 {
-                    if (notifyDot != null) notifyDot.Visible = false;
-                    if (lblNotifyEmpty != null) { lblNotifyEmpty.Visible = true; lblNotifyEmpty.Text = "Không thể tải thông báo."; }
+                    if (lblNotifyEmpty != null)
+                    {
+                        lblNotifyEmpty.Visible = true;
+                        lblNotifyEmpty.Text = "Không thể tải thông báo.";
+                    }
+                    if (hfNotifyUnread != null)
+                    {
+                        hfNotifyUnread.Value = "0";
+                    }
                 }
                 catch { }
             }
@@ -207,11 +246,7 @@ namespace HAFoodWeb.Control
         private static string TrimPunct(string s)
             => (s ?? "").Trim(' ', '.', ',', ';', ':', '#', ']', '[', ')', '(', '!', '?', '"', '\'');
 
-        // ========= CommandArgument builder (ưu tiên product_Id + review_Id) =========
-        //
-        // Dùng trong ItemTemplate để đóng gói CommandArgument:
-        //  - Chỉ product:          "notifyId|target=product;pid=10015"
-        //  - Product + review:     "notifyId|target=review;pid=10015;rid=5012"
+        // ========= CommandArgument builder =========
 
         protected string BuildNotifyCommandArg(object dataItem)
         {
@@ -219,7 +254,6 @@ namespace HAFoodWeb.Control
             {
                 string idStr = SafeEval(dataItem, "id") ?? "0";
 
-                // Ưu tiên product_Id từ payload/thân
                 long pid = GetLong(
                     dataItem,
                     "product_Id", "productId",
@@ -227,7 +261,6 @@ namespace HAFoodWeb.Control
                     "data.product_Id", "data.productId"
                 );
 
-                // cố gắng lấy thêm review_Id nếu có (thông báo về đánh giá)
                 long reviewId = GetLong(
                     dataItem,
                     "review_Id", "reviewId",
@@ -243,7 +276,6 @@ namespace HAFoodWeb.Control
                 if (pid > 0)
                     return $"{idStr}|target=product;pid={pid}";
 
-                // Legacy: nếu không có product_Id, vẫn đóng gói order code (nếu có)
                 var title = SafeEval(dataItem, "title");
                 var body = SafeEval(dataItem, "body");
 
@@ -284,7 +316,7 @@ namespace HAFoodWeb.Control
             catch { return 0; }
         }
 
-        // ========= Click thông báo: ưu tiên điều hướng theo product_Id (+ review_Id nếu có) =========
+        // ========= Click thông báo =========
 
         protected async void rptNotifications_ItemCommand(object source, RepeaterCommandEventArgs e)
         {
@@ -302,19 +334,16 @@ namespace HAFoodWeb.Control
                 var parts = arg.Split('|');
                 if (parts.Length > 0) long.TryParse(parts[0], out notifyId);
 
-                // Đánh dấu đã đọc
                 if (notifyId > 0)
                 {
                     var notifyService = new NotificationService();
                     try { await notifyService.MarkAsReadAsync(token, notifyId).ConfigureAwait(false); } catch { }
                 }
 
-                // Payload sau dấu '|'
                 if (parts.Length > 1)
                 {
                     var payload = parts[1];
 
-                    // Điều hướng theo target=...; giữ tương thích product cũ
                     if (payload.StartsWith("target=", StringComparison.OrdinalIgnoreCase))
                     {
                         var map = ParseKv(payload);
@@ -329,7 +358,6 @@ namespace HAFoodWeb.Control
                             {
                                 var url = $"~/Product/Product.aspx?id={productId}";
 
-                                // Nếu có thêm rid (review_Id) thì gắn ?review=
                                 if (map.TryGetValue("rid", out var ridStr) &&
                                     long.TryParse(ridStr, out var reviewId) &&
                                     reviewId > 0)
@@ -345,7 +373,6 @@ namespace HAFoodWeb.Control
                     }
                     else
                     {
-                        // Legacy: order code
                         orderCode = payload;
                     }
                 }

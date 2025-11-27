@@ -32,19 +32,36 @@ namespace HAFoodWeb.Services
             catch { return null; }
         }
 
+        // ---- THÊM: wrapper sync dùng cho SSE ----
+        public NotificationLatestResultDto GetLatest(string token, int take = 10)
+        {
+            // rất quan trọng: .ConfigureAwait(false) bên trong GetLatestAsync
+            return GetLatestAsync(token, take)
+                .ConfigureAwait(false)
+                .GetAwaiter()
+                .GetResult();
+        }
+
         public async Task<NotificationLatestResultDto> GetLatestAsync(string token, int take = 10)
         {
+            if (string.IsNullOrEmpty(_apiBase))
+            {
+                System.Diagnostics.Debug.WriteLine("[Notifications.Latest] ApiBaseUrl is null/empty");
+                return null;
+            }
+
             var url = $"{_apiBase}/api/notifications/latest?take={take}";
 
             try
             {
                 using (var client = new HttpClient())
                 {
+                    client.Timeout = TimeSpan.FromSeconds(5);
                     client.DefaultRequestHeaders.Authorization =
                         new AuthenticationHeaderValue("Bearer", token);
 
-                    var response = await client.GetAsync(url);
-                    var json = await response.Content.ReadAsStringAsync();
+                    var response = await client.GetAsync(url).ConfigureAwait(false);
+                    var json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
 
                     if (!response.IsSuccessStatusCode)
                     {
@@ -85,11 +102,12 @@ namespace HAFoodWeb.Services
             {
                 using (var client = new HttpClient())
                 {
+                    client.Timeout = TimeSpan.FromSeconds(10);
                     client.DefaultRequestHeaders.Authorization =
                         new AuthenticationHeaderValue("Bearer", token);
 
-                    var response = await client.GetAsync(url);
-                    var json = await response.Content.ReadAsStringAsync();
+                    var response = await client.GetAsync(url).ConfigureAwait(false);
+                    var json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
 
                     if (!response.IsSuccessStatusCode)
                     {
@@ -116,12 +134,12 @@ namespace HAFoodWeb.Services
             {
                 using (var client = new HttpClient())
                 {
+                    client.Timeout = TimeSpan.FromSeconds(5);
                     client.DefaultRequestHeaders.Authorization =
                         new AuthenticationHeaderValue("Bearer", token);
 
-                    // API không cần body
-                    var response = await client.PostAsync(url, null);
-                    var json = await response.Content.ReadAsStringAsync();
+                    var response = await client.PostAsync(url, null).ConfigureAwait(false);
+                    var json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
 
                     if (!response.IsSuccessStatusCode)
                     {
@@ -136,7 +154,6 @@ namespace HAFoodWeb.Services
                         };
                     }
 
-                    // Server trả { success, data, message } – mình map vào ApiBaseResponse
                     var ok = SafeDeserialize<ApiBaseResponse>(json) ?? new ApiBaseResponse
                     {
                         Success = true,
@@ -164,11 +181,12 @@ namespace HAFoodWeb.Services
             {
                 using (var client = new HttpClient())
                 {
+                    client.Timeout = TimeSpan.FromSeconds(5);
                     client.DefaultRequestHeaders.Authorization =
                         new AuthenticationHeaderValue("Bearer", token);
 
-                    var response = await client.PostAsync(url, null);
-                    var json = await response.Content.ReadAsStringAsync();
+                    var response = await client.PostAsync(url, null).ConfigureAwait(false);
+                    var json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
 
                     if (!response.IsSuccessStatusCode)
                     {
