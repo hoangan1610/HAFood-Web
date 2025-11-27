@@ -159,7 +159,7 @@ namespace HAFoodWeb.NotificationPage
             return 0L;
         }
 
-        // Link ưu tiên sang trang Product theo product_Id (bỏ review_Id)
+        // Link ưu tiên sang trang Product theo product_Id; nếu có review_Id thì thêm ?review=
         protected string BuildNotificationUrl(object dataItem)
         {
             try
@@ -171,8 +171,23 @@ namespace HAFoodWeb.NotificationPage
                     "data.product_Id", "data.productId"
                 );
 
+                // cố gắng lấy thêm review_Id nếu có (notification về review)
+                long reviewId = GetLong(
+                    dataItem,
+                    "review_Id", "reviewId",
+                    "payload.review_Id", "payload.reviewId",
+                    "data.review_Id", "data.reviewId"
+                );
+
                 if (pid > 0)
-                    return ResolveUrl($"~/Product/Product.aspx?id={pid}");
+                {
+                    var url = $"~/Product/Product.aspx?id={pid}";
+                    if (reviewId > 0)
+                    {
+                        url += "&review=" + reviewId;
+                    }
+                    return ResolveUrl(url);
+                }
 
                 // Legacy: nếu có mã đơn thì về tab orders
                 string title = Convert.ToString(DataBinder.Eval(dataItem, "title"));
