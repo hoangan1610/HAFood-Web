@@ -10,7 +10,7 @@ namespace HAFoodWeb.UserAddress
     {
         private readonly IAddressService _service = new AddressService();
 
-        private const int PageSize = 4;
+        private const int PageSize = 6;
 
         protected int CurrentPage
         {

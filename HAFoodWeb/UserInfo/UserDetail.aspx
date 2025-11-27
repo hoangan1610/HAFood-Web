@@ -151,7 +151,7 @@
 
         /* KHÓA 1 CHIỀU CAO CỐ ĐỊNH – KHÔNG ĐO */
         (function lockFixedHeight() {
-            const FIXED_FRAME_HEIGHT = 980;  // chỉnh tại đây nếu bạn muốn
+            const FIXED_FRAME_HEIGHT = 1100;  // chỉnh tại đây nếu bạn muốn
             frame.style.height = FIXED_FRAME_HEIGHT + 'px';
             frame.style.minHeight = FIXED_FRAME_HEIGHT + 'px';
         })();

@@ -3,6 +3,7 @@ using HAFoodWeb.Services;
 using System;
 using System.Diagnostics;
 using System.Globalization;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Web;
 using System.Web.UI;
@@ -14,18 +15,20 @@ namespace HAFoodWeb
     {
         private readonly IOrderService _orderService = new OrderService();
 
+        // Cho phép dùng ở .aspx để biết đơn đủ điều kiện review hay chưa
+        public bool CanReview { get; private set; } = false;
+
         protected async void Page_Load(object sender, EventArgs e)
         {
             if (!IsPostBack)
             {
-                // đảm bảo output UTF-8
                 Response.ContentEncoding = Encoding.UTF8;
                 Response.Charset = "utf-8";
 
-                // Nhận cả id hoặc code qua ?id= / ?code=
+                // nhận ?code= hoặc ?id=
                 var raw = Request.QueryString["code"];
                 if (string.IsNullOrWhiteSpace(raw))
-                    raw = Request.QueryString["id"]; // vẫn giữ backward-compat
+                    raw = Request.QueryString["id"];
 
                 if (string.IsNullOrWhiteSpace(raw))
                 {
@@ -100,16 +103,30 @@ namespace HAFoodWeb
                 // Trạng thái đơn
                 litStatus.InnerText = GetStatusText(h.status);
 
+                // Quyết định quyền review theo đơn
+                CanReview = (h.status == 3);
+                hCanReview.Value = CanReview ? "1" : "0";
+                hOrderId.Value = (h.id > 0 ? h.id.ToString() : "0");
+
                 // Items
                 if (detail.items != null && detail.items.Count > 0)
                 {
                     rpItems.DataSource = detail.items;
                     rpItems.DataBind();
                     pnlItems.Visible = true;
+
+                    // Lưu product/variant đầu tiên để dùng eligibility + gửi review theo ĐƠN
+                    var first = detail.items.FirstOrDefault();
+                    hFirstProductId.Value = (first?.product_Id ?? 0).ToString();
+                    hFirstVariantId.Value = (first?.variant_Id ?? 0).ToString();
+                    hOrderCode.Value = Decode(h.order_Code ?? $"#{h.id}");
                 }
                 else
                 {
                     pnlItems.Visible = false;
+                    hFirstProductId.Value = "0";
+                    hFirstVariantId.Value = "0";
+                    hOrderCode.Value = Decode(h.order_Code ?? $"#{h.id}");
                 }
 
                 // Summary
@@ -121,6 +138,9 @@ namespace HAFoodWeb
 
                 pnlHeader.Visible = true;
                 pnlSummary.Visible = true;
+
+                // Luôn hiển thị khung review (nút / chip sẽ do JS quyết định)
+                pnlOrderReview.Visible = true;
             }
             catch (Exception ex)
             {

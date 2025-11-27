@@ -217,9 +217,9 @@
     padding: 0;
     display: none;
     flex-direction: column;
-    width: 320px;
+    width: 360px;
     max-width: min(360px, 95vw);
-    max-height: 360px;
+    max-height: 400px;
     z-index: 1001;
     border: 1px solid #e5e7eb;
   }

@@ -207,10 +207,11 @@ namespace HAFoodWeb.Control
         private static string TrimPunct(string s)
             => (s ?? "").Trim(' ', '.', ',', ';', ':', '#', ']', '[', ')', '(', '!', '?', '"', '\'');
 
-        // ========= CommandArgument builder (ưu tiên product_Id) =========
-
+        // ========= CommandArgument builder (ưu tiên product_Id + review_Id) =========
+        //
         // Dùng trong ItemTemplate để đóng gói CommandArgument:
-        // "notifyId|target=product;pid=10015"
+        //  - Chỉ product:          "notifyId|target=product;pid=10015"
+        //  - Product + review:     "notifyId|target=review;pid=10015;rid=5012"
 
         protected string BuildNotifyCommandArg(object dataItem)
         {
@@ -225,6 +226,19 @@ namespace HAFoodWeb.Control
                     "payload.product_Id", "payload.productId",
                     "data.product_Id", "data.productId"
                 );
+
+                // cố gắng lấy thêm review_Id nếu có (thông báo về đánh giá)
+                long reviewId = GetLong(
+                    dataItem,
+                    "review_Id", "reviewId",
+                    "payload.review_Id", "payload.reviewId",
+                    "data.review_Id", "data.reviewId"
+                );
+
+                if (pid > 0 && reviewId > 0)
+                {
+                    return $"{idStr}|target=review;pid={pid};rid={reviewId}";
+                }
 
                 if (pid > 0)
                     return $"{idStr}|target=product;pid={pid}";
@@ -270,7 +284,7 @@ namespace HAFoodWeb.Control
             catch { return 0; }
         }
 
-        // ========= Click thông báo: chỉ điều hướng theo product_Id =========
+        // ========= Click thông báo: ưu tiên điều hướng theo product_Id (+ review_Id nếu có) =========
 
         protected async void rptNotifications_ItemCommand(object source, RepeaterCommandEventArgs e)
         {
@@ -300,20 +314,33 @@ namespace HAFoodWeb.Control
                 {
                     var payload = parts[1];
 
-                    // ✅ Chỉ điều hướng theo product_Id
+                    // Điều hướng theo target=...; giữ tương thích product cũ
                     if (payload.StartsWith("target=", StringComparison.OrdinalIgnoreCase))
                     {
                         var map = ParseKv(payload);
+
                         if (map.TryGetValue("target", out var target) &&
-                            string.Equals(target, "product", StringComparison.OrdinalIgnoreCase) &&
-                            map.TryGetValue("pid", out var pid) &&
-                            long.TryParse(pid, out var productId) &&
-                            productId > 0)
+                            (string.Equals(target, "product", StringComparison.OrdinalIgnoreCase) ||
+                             string.Equals(target, "review", StringComparison.OrdinalIgnoreCase)))
                         {
-                            var url = ResolveUrl($"~/Product/Product.aspx?id={productId}");
-                            Response.Redirect(url, false);
-                            Context.ApplicationInstance.CompleteRequest();
-                            return;
+                            if (map.TryGetValue("pid", out var pidStr) &&
+                                long.TryParse(pidStr, out var productId) &&
+                                productId > 0)
+                            {
+                                var url = $"~/Product/Product.aspx?id={productId}";
+
+                                // Nếu có thêm rid (review_Id) thì gắn ?review=
+                                if (map.TryGetValue("rid", out var ridStr) &&
+                                    long.TryParse(ridStr, out var reviewId) &&
+                                    reviewId > 0)
+                                {
+                                    url += "&review=" + reviewId;
+                                }
+
+                                Response.Redirect(ResolveUrl(url), false);
+                                Context.ApplicationInstance.CompleteRequest();
+                                return;
+                            }
                         }
                     }
                     else
