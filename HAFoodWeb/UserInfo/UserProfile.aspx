@@ -347,8 +347,14 @@
                             </div>
                         </div>
 
-                        <!-- DÒNG ĐIỂM THÀNH VIÊN -->
-                        <asp:Label ID="lblMemberPoints" runat="server" CssClass="profile-memberpoints" />
+                       <div class="profile-memberpoints">
+    <asp:Label ID="lblMemberPoints" runat="server" />
+    <a href='<%= ResolveUrl("~/UserInfo/Loyalty.aspx") %>'
+       style="margin-left:8px;font-size:13px;color:#ff7b32;text-decoration:none;font-weight:600;">
+        Xem ưu đãi &amp; đổi điểm &rsaquo;
+    </a>
+</div>
+
                     </div>
                 </div>
 

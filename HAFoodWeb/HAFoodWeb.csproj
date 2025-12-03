@@ -221,6 +221,7 @@
     <Content Include="images\slide2.jpg" />
     <Content Include="images\vnpay.jpg" />
     <Content Include="images\zalopay.jpg" />
+    <Content Include="MissionPage\MissionPage.aspx" />
     <Content Include="NotificationPage\NotificationPage.aspx" />
     <Content Include="OrderPage\OrderDetail.aspx" />
     <Content Include="OrderPage\OrderPage.aspx" />
@@ -329,6 +330,7 @@
     <Content Include="UserAddress\UpdateUserAddress.aspx" />
     <Content Include="UserAddress\UserAddressList.aspx" />
     <Content Include="UserInfo\ChangePassword.aspx" />
+    <Content Include="UserInfo\Loyalty.aspx" />
     <Content Include="UserInfo\UserDetail.aspx" />
     <Content Include="UserInfo\UserProfile.aspx" />
     <Content Include="UserInfo\UserProfileEdit.aspx" />
@@ -493,6 +495,10 @@
     </Compile>
     <Compile Include="Infrastructure\AppCache.cs" />
     <Compile Include="Infrastructure\HttpJson.cs" />
+    <Compile Include="MissionPage\MissionPage.aspx.cs">
+      <DependentUpon>MissionPage.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
     <Compile Include="Models\AddressDto.cs" />
     <Compile Include="Models\CartHeaderDto.cs" />
     <Compile Include="Models\CartItemDto.cs" />
@@ -621,6 +627,12 @@
     </Compile>
     <Compile Include="UserInfo\ChangePassword.aspx.designer.cs">
       <DependentUpon>ChangePassword.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="UserInfo\Loyalty.aspx.cs">
+      <DependentUpon>Loyalty.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="UserInfo\Loyalty.aspx.designer.cs">
+      <DependentUpon>Loyalty.aspx</DependentUpon>
     </Compile>
     <Compile Include="UserInfo\UserDetail.aspx.cs">
       <DependentUpon>UserDetail.aspx</DependentUpon>

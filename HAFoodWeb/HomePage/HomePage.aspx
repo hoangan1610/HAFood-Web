@@ -527,6 +527,84 @@
         font-size:.8rem;
       }
     }
+
+        /* ==== MISSION SECTION ==== */
+    .mission-section .mission-card{
+      border-radius:16px;
+      border:1px solid #e5e7eb;
+      padding:12px 14px;
+      margin-bottom:10px;
+      background:#ffffff;
+      box-shadow:var(--haf-shadow-subtle);
+      display:flex;
+      flex-direction:column;
+      gap:4px;
+    }
+    .mission-section .mission-header{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:.5rem;
+      margin-bottom:2px;
+    }
+    .mission-section .mission-title{
+      font-weight:600;
+      font-size:.95rem;
+    }
+    .mission-section .mission-status{
+      font-size:.75rem;
+      padding:2px 8px;
+      border-radius:999px;
+      white-space:nowrap;
+    }
+    .mission-section .mission-status.available{
+      background:#ecfdf3;
+      color:#15803d;
+    }
+    .mission-section .mission-status.completed{
+      background:#eff6ff;
+      color:#1d4ed8;
+    }
+    .mission-section .mission-status.maxed{
+      background:#f3f4f6;
+      color:#4b5563;
+    }
+    .mission-section .mission-desc{
+      font-size:.85rem;
+      color:#4b5563;
+    }
+    .mission-section .mission-reward{
+      font-size:.85rem;
+      color:#16a34a;
+      display:flex;
+      align-items:center;
+      gap:.35rem;
+    }
+    .mission-section .mission-meta{
+      font-size:.78rem;
+      color:#9ca3af;
+    }
+        /* ==== MISSION PROGRESS (milestone) ==== */
+    .mission-section .mission-progress{
+      margin-top:4px;
+      height:6px;
+      border-radius:999px;
+      background:#f3f4f6;
+      overflow:hidden;
+    }
+    .mission-section .mission-progress-bar{
+      height:100%;
+      width:0;
+      border-radius:999px;
+      background:linear-gradient(90deg,#22c55e,#a3e635);
+      transition:width .25s ease-out;
+    }
+    .mission-section .mission-progress-label{
+      font-size:.78rem;
+      color:#6b7280;
+      margin-top:2px;
+    }
+
   </style>
 </head>
 
@@ -666,6 +744,30 @@
     </div>
   </div>
 
+
+     <!-- MISSIONS (NHIỆM VỤ) -->
+  <div class="container my-5">
+    <div class="home-section mission-section">
+      <div class="home-section-header mb-3">
+        <h3 class="sec-title mb-0">Nhiệm vụ của bạn</h3>
+        <div class="d-flex align-items-center gap-2">
+          <small id="mission_hint" class="text-muted d-none d-sm-inline">
+            Hoàn thành nhiệm vụ để nhận lượt quay &amp; điểm thưởng.
+          </small>
+          <button type="button"
+                  id="btnMissionRefresh"
+                  class="btn btn-outline-success btn-sm"
+                  title="Làm mới">
+            <i class="bi bi-arrow-clockwise"></i>
+          </button>
+        </div>
+      </div>
+
+      <div id="mission-list">
+        <div class="text-muted small">Đang tải nhiệm vụ...</div>
+      </div>
+    </div>
+  </div>
   <!-- RECOMMENDED GRID -->
   <div class="container my-5">
     <h3 class="sec-title mb-4">Gợi ý cho bạn</h3>
@@ -1828,6 +1930,203 @@
               });
           });
       });
+  </script>
+      <!-- ====== MISSIONS UI (HOME) ====== -->
+  <script>
+      (function () {
+          const API_BASE = (window.__API_BASE || '').replace(/\/+$/, '');
+          const MISSIONS_URL = (API_BASE ? API_BASE + '/api/missions/my' : '/api/missions/my');
+
+          // LẤY JWT TỪ SESSION (server-side)
+          const TOKEN = '<%= Session["JwtToken"] as string ?? "" %>';
+
+        const missionListEl = document.getElementById('mission-list');
+        const refreshBtn = document.getElementById('btnMissionRefresh');
+
+        if (!missionListEl) return;
+
+          function mapReward(m) {
+              const rt = m.rewardType ?? m.reward_type ?? m.RewardType ?? m.Reward_Type;
+              const val = m.rewardValue ?? m.reward_value ?? m.RewardValue ?? m.Reward_Value;
+
+              if (rt === 0) return { text: `+${val} lượt quay`, icon: '🎡' };
+              if (rt === 1) return { text: `+${val} điểm tích luỹ`, icon: '⭐' };
+              return { text: 'Phần thưởng khác', icon: '🎁' };
+          }
+
+          function mapStatus(m) {
+              const raw = (m.status ?? m.Status ?? '').toString().toLowerCase();
+              switch (raw) {
+                  case 'available': return { text: 'Chưa hoàn thành', className: 'available' };
+                  case 'completed': return { text: 'Đã hoàn thành một phần', className: 'completed' };
+                  case 'maxed': return { text: 'Đã hoàn thành tối đa', className: 'maxed' };
+                  default: return { text: raw || 'Nhiệm vụ', className: '' };
+              }
+          }
+
+          function safeInt(v, fallback) {
+              const n = Number(v);
+              return Number.isFinite(n) ? n : fallback;
+          }
+
+          function renderMissions(list) {
+              if (!Array.isArray(list) || list.length === 0) {
+                  missionListEl.innerHTML =
+                      '<div class="text-muted small">Hiện chưa có nhiệm vụ nào.</div>';
+                  return;
+              }
+
+              function getStatusRaw(m) {
+                  return (m.status ?? m.Status ?? '').toString().toLowerCase();
+              }
+
+              // Giữ nguyên thứ tự backend (IsFeatured + DisplayOrder + Status đã sort ở API)
+              const normalized = list.map(m => {
+                  const raw = getStatusRaw(m);
+                  return { raw, item: m };
+              });
+
+              // Ưu tiên show mission chưa max trên Home
+              const onlyNonMax = normalized.filter(x => x.raw !== 'maxed');
+
+              let forHome;
+              if (onlyNonMax.length > 0) {
+                  forHome = onlyNonMax.slice(0, 4);
+              } else {
+                  forHome = normalized.slice(0, 4);
+              }
+
+              missionListEl.innerHTML = '';
+
+              forHome.forEach(w => {
+                  const m = w.item;
+                  const rawStatus = w.raw;
+
+                  const status = (function () {
+                      switch (rawStatus) {
+                          case 'available': return { text: 'Chưa hoàn thành', className: 'available' };
+                          case 'completed': return { text: 'Đã hoàn thành một phần', className: 'completed' };
+                          case 'maxed': return { text: 'Đã hoàn thành tối đa', className: 'maxed' };
+                          default: return { text: 'Nhiệm vụ', className: '' };
+                      }
+                  })();
+
+                  const reward = mapReward(m);
+                  const timesCompleted = safeInt(m.timesCompleted ?? m.TimesCompleted, 0);
+                  const maxPerUser = m.maxPerUser ?? m.MaxPerUser;
+
+                  const max = Number(maxPerUser || 0);
+                  let progressHtml = '';
+
+                  if (max > 0) {
+                      const doneClamped = Math.min(timesCompleted, max);
+                      const percent = Math.max(0, Math.min(100, Math.round((doneClamped / max) * 100)));
+
+                      progressHtml = `
+                        <div class="mission-progress" aria-hidden="true">
+                            <div class="mission-progress-bar" style="width:${percent}%;"></div>
+                        </div>
+                        <div class="mission-progress-label">
+                            Tiến độ: ${doneClamped} / ${max} lần
+                        </div>
+                    `;
+                  }
+
+                  const card = document.createElement('div');
+                  card.className = 'mission-card';
+
+                  card.innerHTML = `
+                    <div class="mission-header">
+                        <div class="mission-title">${m.name ?? m.Name ?? ''}</div>
+                        <div class="mission-status ${status.className}">
+                            ${status.text}
+                        </div>
+                    </div>
+                    <div class="mission-desc">
+                        ${(m.description ?? m.Description ?? '') || ''}
+                    </div>
+                    <div class="mission-reward">
+                        <span>${reward.icon}</span>
+                        <span>${reward.text}</span>
+                    </div>
+                    <div class="mission-meta">
+                        Đã hoàn thành: ${timesCompleted}${maxPerUser ? ' / ' + maxPerUser + ' lần' : ''}
+                    </div>
+                    ${progressHtml}
+                `;
+
+                  missionListEl.appendChild(card);
+              });
+
+              // Nếu còn nhiều mission → link "Xem tất cả"
+              if (list.length > forHome.length) {
+                  const more = document.createElement('div');
+                  more.className = 'mt-1 small';
+                  more.innerHTML =
+                      '<a href="/MissionPage/MissionPage.aspx" class="text-decoration-none">Xem tất cả nhiệm vụ ›</a>';
+                  missionListEl.appendChild(more);
+              }
+          }
+
+
+
+
+          async function loadMissions() {
+
+              // Nếu TOKEN rỗng => khỏi gọi API, show luôn gợi ý
+              if (!TOKEN) {
+                  missionListEl.innerHTML =
+                      '<div class="text-muted small">Vui lòng đăng nhập để xem nhiệm vụ & nhận thưởng.</div>';
+                  return;
+              }
+
+              missionListEl.innerHTML =
+                  '<div class="text-muted small">Đang tải nhiệm vụ...</div>';
+
+              try {
+                  const headers = { 'Accept': 'application/json' };
+                  if (TOKEN) {
+                      headers['Authorization'] = 'Bearer ' + TOKEN;
+                  }
+
+                  const resp = await fetch(MISSIONS_URL, {
+                      method: 'GET',
+                      headers,
+                      credentials: 'include'
+                  });
+
+
+                  // Chưa đăng nhập → show gợi ý
+                  if (resp.status === 401) {
+                      missionListEl.innerHTML =
+                          '<div class="text-muted small">Vui lòng đăng nhập để xem nhiệm vụ của bạn.</div>';
+                      return;
+                  }
+
+                  if (!resp.ok) {
+                      missionListEl.innerHTML =
+                          `<div class="text-danger small">Không tải được nhiệm vụ (HTTP ${resp.status}).</div>`;
+                      return;
+                  }
+
+                  const data = await resp.json();
+                  renderMissions(data);
+              } catch (err) {
+                  console.error('load missions error', err);
+                  missionListEl.innerHTML =
+                      '<div class="text-danger small">Có lỗi khi tải nhiệm vụ, vui lòng thử lại.</div>';
+              }
+          }
+
+          document.addEventListener('DOMContentLoaded', function () {
+              loadMissions();
+              if (refreshBtn) {
+                  refreshBtn.addEventListener('click', function () {
+                      loadMissions();
+                  });
+              }
+          });
+      })();
   </script>
 
 </form>
