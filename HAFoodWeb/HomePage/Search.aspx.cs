@@ -39,7 +39,7 @@ namespace HAFoodWeb
             long.TryParse(Request["category_id"], out catId);
 
             double? min = null, max = null;
-            double tmp; // non-nullable cho TryParse
+            double tmp;
             if (double.TryParse(Request["min_price"], out tmp)) min = tmp;
             if (double.TryParse(Request["max_price"], out tmp)) max = tmp;
 
@@ -239,7 +239,6 @@ namespace HAFoodWeb
                 return;
             }
 
-            // Có dữ liệu thì bind bình thường
             rpProducts.Visible = true;
             ltEmpty.Text = string.Empty;
 
@@ -265,12 +264,12 @@ namespace HAFoodWeb
             }
         }
 
-
-
         private string BuildPager(int page, int pageSize, int total)
         {
             if (total <= pageSize) return "";
             var totalPages = (int)Math.Ceiling((double)total / pageSize);
+            if (page < 1) page = 1;
+            if (page > totalPages) page = totalPages;
 
             string SetPage(int p)
             {
@@ -282,22 +281,60 @@ namespace HAFoodWeb
                 return ub.Uri.PathAndQuery;
             }
 
-            var sbHtml = new StringBuilder();
-            sbHtml.AppendFormat("<li class='page-item{0}'><a class='page-link' href='{1}'>«</a></li>",
-                page <= 1 ? " disabled" : "", page <= 1 ? "#" : SetPage(page - 1));
-
-            int start = Math.Max(1, page - 2);
-            int end = Math.Min(totalPages, page + 2);
-            for (int i = start; i <= end; i++)
+            string PageItem(string text, string href, bool disabled, bool active, string ariaLabel, bool isSpanWhenDisabled = false)
             {
-                sbHtml.AppendFormat("<li class='page-item{0}'><a class='page-link' href='{1}'>{2}</a></li>",
-                    i == page ? " active" : "", SetPage(i), i);
+                var cls = "page-item";
+                if (disabled) cls += " disabled";
+                if (active) cls += " active";
+
+                if (disabled && isSpanWhenDisabled)
+                {
+                    return $"<li class='{cls}'><span class='page-link' aria-label='{HttpUtility.HtmlAttributeEncode(ariaLabel)}'>{HttpUtility.HtmlEncode(text)}</span></li>";
+                }
+
+                var ariaCurrent = active ? " aria-current='page'" : "";
+                var safeHref = disabled ? "#" : href;
+                return $"<li class='{cls}'><a class='page-link' href='{safeHref}' aria-label='{HttpUtility.HtmlAttributeEncode(ariaLabel)}'{ariaCurrent}>{HttpUtility.HtmlEncode(text)}</a></li>";
             }
 
-            sbHtml.AppendFormat("<li class='page-item{0}'><a class='page-link' href='{1}'>»</a></li>",
-                page >= totalPages ? " disabled" : "", page >= totalPages ? "#" : SetPage(page + 1));
+            string Ellipsis()
+            {
+                return "<li class='page-item disabled'><span class='page-link'>…</span></li>";
+            }
 
-            return sbHtml.ToString();
+            var sb = new StringBuilder();
+
+            // First / Prev
+            sb.Append(PageItem("Đầu", SetPage(1), page <= 1, false, "Trang đầu"));
+            sb.Append(PageItem("‹", SetPage(page - 1), page <= 1, false, "Trang trước"));
+
+            // Pages with ellipsis
+            const int window = 2;
+            int start = Math.Max(1, page - window);
+            int end = Math.Min(totalPages, page + window);
+
+            if (start > 1)
+            {
+                sb.Append(PageItem("1", SetPage(1), false, page == 1, "Trang 1"));
+                if (start > 2) sb.Append(Ellipsis());
+            }
+
+            for (int i = start; i <= end; i++)
+            {
+                sb.Append(PageItem(i.ToString(), SetPage(i), false, i == page, $"Trang {i}"));
+            }
+
+            if (end < totalPages)
+            {
+                if (end < totalPages - 1) sb.Append(Ellipsis());
+                sb.Append(PageItem(totalPages.ToString(), SetPage(totalPages), false, page == totalPages, $"Trang {totalPages}"));
+            }
+
+            // Next / Last
+            sb.Append(PageItem("›", SetPage(page + 1), page >= totalPages, false, "Trang sau"));
+            sb.Append(PageItem("Cuối", SetPage(totalPages), page >= totalPages, false, "Trang cuối"));
+
+            return sb.ToString();
         }
     }
 }
