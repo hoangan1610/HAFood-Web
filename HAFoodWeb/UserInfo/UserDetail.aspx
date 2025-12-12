@@ -66,11 +66,10 @@
 
         .content-area{padding:0 0 0 24px}
 
-        /* Iframe: KHÓA MỘT CHIỀU CAO CỐ ĐỊNH – KHÔNG TỰ GIÃN */
+        /* Iframe: không còn cố định 2000px, chỉ đặt min-height */
         .content-frame{
             width:100%; border:0; display:block; background:#ffffff;
-            height:2000px;          /* Fallback CSS: 2000px */
-            min-height:2000px;      /* Ngừa flash khi JS chưa chạy */
+            min-height:700px;
         }
 
         @media (max-width:992px){
@@ -82,18 +81,6 @@
             .content-area{padding-left:0}
         }
     </style>
-
-    <!-- Chặn mọi thông điệp đổi chiều cao từ trang con -->
-    <script>
-        (function () {
-            window.addEventListener('message', function (ev) {
-                var d = ev && ev.data;
-                if (d && d.type === 'haf-embed-height') {
-                    ev.stopImmediatePropagation && ev.stopImmediatePropagation();
-                }
-            }, true);
-        })();
-    </script>
 </head>
 <body>
 <form id="form1" runat="server">
@@ -145,18 +132,43 @@
         const mAddresses = document.getElementById('mAddresses');
 
         function withEmbed(u) {
-            try { const url = new URL(u, location.origin); url.searchParams.set('embed', '1'); return url.pathname + url.search + url.hash; }
-            catch { return u + (u.indexOf('?') >= 0 ? '&' : '?') + 'embed=1'; }
+            try {
+                const url = new URL(u, location.origin);
+                url.searchParams.set('embed', '1');
+                return url.pathname + url.search + url.hash;
+            }
+            catch {
+                return u + (u.indexOf('?') >= 0 ? '&' : '?') + 'embed=1';
+            }
         }
 
-        /* KHÓA 1 CHIỀU CAO CỐ ĐỊNH – KHÔNG ĐO */
-        (function lockFixedHeight() {
-            const FIXED_FRAME_HEIGHT = 1100;  // chỉnh tại đây nếu bạn muốn
-            frame.style.height = FIXED_FRAME_HEIGHT + 'px';
-            frame.style.minHeight = FIXED_FRAME_HEIGHT + 'px';
-        })();
+        // Fallback: tự đo chiều cao trang con nếu không nhận được postMessage
+        function resizeFrameToContent() {
+            if (!frame) return;
+            try {
+                const doc = frame.contentDocument || frame.contentWindow.document;
+                if (!doc) return;
+                const body = doc.body;
+                const html = doc.documentElement;
 
-        // Tiêm CSS trắng tuyệt đối cho trang con (phòng trang nào quên embed=1)
+                let h = 0;
+                if (body) {
+                    h = Math.max(h, body.scrollHeight, body.offsetHeight);
+                }
+                if (html) {
+                    h = Math.max(h, html.scrollHeight, html.offsetHeight);
+                }
+
+                if (!h || h < 700) {
+                    h = 700; // chiều cao tối thiểu
+                }
+                frame.style.height = h + 'px';
+            } catch (e) {
+                console.warn('resizeFrameToContent error', e);
+            }
+        }
+
+        // Tiêm CSS nền trắng cho trang con (phòng page con quên xử lý embed=1)
         function injectWhite(iframe) {
             try {
                 const d = iframe.contentDocument || iframe.contentWindow.document;
@@ -166,14 +178,37 @@
                 const st = d.createElement('style');
                 st.id = '__haf_force_white';
                 st.textContent = `
-                html,body{background:#ffffff !important;background-image:none !important;min-height:auto !important;}
-            `;
+                    html,body{
+                        background:#ffffff !important;
+                        background-image:none !important;
+                        min-height:auto !important;
+                    }
+                `;
                 head.appendChild(st);
             } catch { }
         }
-        frame.addEventListener('load', function () { injectWhite(frame); });
 
-        // Chuyển tab: chỉ thay src (luôn kèm embed=1), KHÔNG đổi chiều cao
+        if (frame) {
+            frame.addEventListener('load', function () {
+                injectWhite(frame);
+                resizeFrameToContent();
+                setTimeout(resizeFrameToContent, 200);
+                setTimeout(resizeFrameToContent, 800);
+            });
+        }
+
+        // Nhận postMessage từ các trang con để set height chính xác
+        window.addEventListener('message', function (ev) {
+            const d = ev && ev.data;
+            if (!d || d.type !== 'haf-embed-height') return;
+            if (frame && ev.source !== frame.contentWindow) return;
+
+            let h = Number(d.height || d.h || d.value || 0);
+            if (!h || h < 700) h = 700;
+            frame.style.height = h + 'px';
+        });
+
+        // Chuyển tab: đổi src (luôn kèm embed=1)
         menuItems.forEach(it => {
             it.addEventListener('click', e => {
                 const url = it.dataset?.url;
@@ -185,10 +220,11 @@
             }, false);
         });
 
-        // Hỗ trợ ?tab=... nhưng không đổi height
+        // Hỗ trợ ?tab=orders / ?tab=addresses
         try {
             const params = new URLSearchParams(location.search);
             const tab = (params.get('tab') || '').toLowerCase();
+
             if (tab === 'orders') {
                 const orderId = params.get('orderId') || params.get('id');
                 mProfile && mProfile.classList.remove('active');

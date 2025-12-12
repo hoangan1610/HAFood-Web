@@ -125,9 +125,19 @@ namespace HAFoodWeb.UserAddress
                 var fullAddr = BuildFullAddress();
                 Debug.WriteLine($"[UpdateUserAddress] id={id} Built fullAddress = \"{fullAddr}\"");
 
+                // 🔧 LẤY GIÁ TRỊ TYPE TRỰC TIẾP TỪ FORM ĐỂ TRÁNH BỊ GIỮ GIÁ TRỊ CŨ
+                var typeValueFromForm = Request.Form[rblType.UniqueID];
+                var typeValue = !string.IsNullOrEmpty(typeValueFromForm)
+                    ? typeValueFromForm
+                    : rblType.SelectedValue;
+
+                Debug.WriteLine($"[UpdateUserAddress] id={id} rblType.UniqueID = {rblType.UniqueID}");
+                Debug.WriteLine($"[UpdateUserAddress] id={id} typeValueFromForm = {typeValueFromForm}, SelectedValue = {rblType.SelectedValue}");
+
                 var req = new AddressUpdateRequest
                 {
-                    type = int.TryParse(rblType.SelectedValue, out var t) ? t : (int?)0,
+                    // dùng typeValue vừa lấy ở trên
+                    type = int.TryParse(typeValue, out var t) ? t : (int?)0,
                     isDefault = swDefault.Checked,
                     fullName = txtFullName.Text?.Trim(),
                     phone = txtPhone.Text?.Trim(),

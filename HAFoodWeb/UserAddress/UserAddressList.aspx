@@ -12,11 +12,16 @@
 
     <style>
         :root{ --accent:#ff7a45; --border:#e5e7eb; --muted:#6b7280; }
+
+        /* Khóa tràn ngang + bẻ chuỗi dài */
+        html, body { width:100%; max-width:100%; overflow-x:hidden; }
+        body{ word-break:break-word; overflow-wrap:anywhere; }
+
         body{
             font-family:'Segoe UI',system-ui,-apple-system,BlinkMacSystemFont,sans-serif;
             margin:0;
             min-height:100%;
-            background:radial-gradient(circle at top left,#ffe8cc 0,#f8f9fa 40%,#e9ecef 100%);
+            background:#ffffff; /* <-- NỀN TRẮNG */
         }
 
         .page-header{
@@ -33,19 +38,18 @@
             max-width:900px;
             margin:0 auto 20px;
             padding:0 16px 16px;
+            width:100%;
+            overflow-x:hidden;
         }
         .wrap-inner{
             background:#fff;
             border-radius:1.25rem;
             box-shadow:0 .75rem 1.8rem rgba(15,23,42,.14);
             padding:1.1rem 1.25rem 1.3rem;
+            max-width:100%;
+            overflow-x:hidden;
         }
-        .topbar{
-            display:flex;
-            align-items:flex-start;
-            gap:10px;
-            padding:4px 0 12px;
-        }
+        .topbar{ display:flex; align-items:flex-start; gap:10px; padding:4px 0 12px; }
 
         .title-badge{
             font-size:.75rem; letter-spacing:.08em; text-transform:uppercase; font-weight:700;
@@ -105,33 +109,18 @@
         .toast-error{ background:#ef4444 !important; border-color:#dc2626 !important; color:#fff !important; }
         .toast-error .toast-icon{ color:#fff !important; }
 
+        /* PHÂN TRANG – tránh tràn ngang */
         .paging {
-            display:flex;
-            justify-content:center;
-            align-items:center;
-            gap:0.5rem;
-            margin-top:1.0rem;
+            display:flex; justify-content:center; align-items:center; gap:0.5rem;
+            margin-top:1.0rem; overflow:hidden; width:100%;
         }
-        .paging .btn{
-            min-width:40px;
-            border-radius:999px;
-            font-size:.86rem;
-        }
-        .paging .btn-warning{
-            border-radius:999px;
-            font-weight:700;
-        }
-        .paging .btn-outline-secondary{
-            background:rgba(255,255,255,.85);
-        }
+        .paging .btn{ min-width:40px; border-radius:999px; font-size:.86rem; }
+        .paging .btn-warning{ border-radius:999px; font-weight:700; }
+        .paging .btn-outline-secondary{ background:rgba(255,255,255,.85); }
 
         @media (max-width: 575.98px){
-            .page-header{
-                margin:12px 0 6px !important;
-                padding:0 16px !important;
-            }
+            .page-header{ margin:12px 0 6px !important; padding:0 16px !important; }
         }
-
     </style>
 </head>
 <body>
@@ -199,7 +188,7 @@
                     </asp:Repeater>
                 </div>
 
-                <!-- PHÂN TRANG -->
+                <!-- Phân trang -->
                 <asp:Panel ID="pnlPagination" runat="server" CssClass="paging" Visible="false">
                     <asp:Button ID="btnPrev" runat="server"
                         CssClass="btn btn-outline-secondary btn-sm"
@@ -255,6 +244,20 @@
             var clean = location.pathname + (params.toString() ? '?' + params.toString() : '');
             history.replaceState({}, '', clean);
         }
+    })();
+</script>
+
+<!-- Dọn text-node rơi ra DOM -->
+<script>
+    (function () {
+        try {
+            var nodes = Array.from(document.body.childNodes);
+            nodes.forEach(function (n) {
+                if (n.nodeType === 3 && /ResizeObserver|ro\.observe|measure\(\)/.test(n.nodeValue || '')) {
+                    n.remove();
+                }
+            });
+        } catch (e) { }
     })();
 </script>
 </body>
