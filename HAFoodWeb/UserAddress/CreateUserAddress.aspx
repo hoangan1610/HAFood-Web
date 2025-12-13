@@ -12,73 +12,29 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
 
     <style>
-        :root{
-            --accent:#ff7a45;
-            --border:#e5e7eb;
-            --menu:#fff;
-            --shadow:0 10px 25px rgba(0,0,0,.08);
-        }
+        :root{ --accent:#ff7a45; --border:#e5e7eb; --menu:#fff; --shadow:0 10px 25px rgba(0,0,0,.08); }
 
         body{
             font-family:'Segoe UI',system-ui,-apple-system,BlinkMacSystemFont,sans-serif;
-            margin:0;
-            background:radial-gradient(circle at top left,#ffe8cc 0,#f8f9fa 40%,#e9ecef 100%);
-            min-height:100vh;
+            margin:0; background:radial-gradient(circle at top left,#ffe8cc 0,#f8f9fa 40%,#e9ecef 100%); min-height:100vh;
         }
 
-        .page-header{
-            width:100%;
-            max-width:100% !important;
-            margin:24px 0 8px !important;
-            padding:0 24px !important;
-            background:transparent;
-            box-shadow:none;
-        }
+        .page-header{ width:100%; max-width:100% !important; margin:24px 0 8px !important; padding:0 24px !important; background:transparent; box-shadow:none; }
 
-       
-        .header-grid{
-            display:grid;
-            grid-template-columns: 1fr 1fr;
-            align-items:center;
-            gap:12px;
-        }
-        .header-left{
-            display:flex; justify-content:flex-start; align-items:center;
-        }
-        .header-right{
-            display:flex; flex-direction:column;
-            align-items:flex-end; text-align:right;
-        }
+        .header-grid{ display:grid; grid-template-columns: 1fr 1fr; align-items:center; gap:12px; }
+        .header-left{ display:flex; justify-content:flex-start; align-items:center; }
+        .header-right{ display:flex; flex-direction:column; align-items:flex-end; text-align:right; }
 
-        .title-badge{
-            font-size:.75rem;
-            letter-spacing:.08em; text-transform:uppercase;
-            font-weight:700; color:#fd7e14; background:rgba(253,126,20,.08);
-            padding:.26rem .7rem; border-radius:999px;
-            display:inline-flex; align-items:center; gap:.35rem; margin-bottom:.25rem;
-        }
+        .title-badge{ font-size:.75rem; letter-spacing:.08em; text-transform:uppercase; font-weight:700; color:#fd7e14; background:rgba(253,126,20,.08); padding:.26rem .7rem; border-radius:999px; display:inline-flex; align-items:center; gap:.35rem; margin-bottom:.25rem; }
         .title-badge i{ font-size:.9rem; }
         .page-title{ font-weight:700; font-size:1.6rem; color:#212529; margin:.1rem 0 .15rem; }
         .page-subtitle{ font-size:.9rem; color:#6c757d; margin:0; }
 
-        .page-shell{
-            max-width:720px;
-            margin:0 auto 2.5rem;
-            background:#fff;
-            border-radius:1.25rem;
-            box-shadow:0 .75rem 1.8rem rgba(15,23,42,.14);
-            padding:1.4rem 1.6rem 1.7rem;
-        }
-
+        .page-shell{ max-width:720px; margin:0 auto 2.5rem; background:#fff; border-radius:1.25rem; box-shadow:0 .75rem 1.8rem rgba(15,23,42,.14); padding:1.4rem 1.6rem 1.7rem; }
         .page-anim{ opacity:0; transform:translateY(6px); transition:opacity .18s ease, transform .18s ease; }
         .page-anim.ready{ opacity:1; transform:none; }
 
-        .btn-back{
-            display:inline-flex; align-items:center; gap:.35rem;
-            border-radius:999px; padding:.45rem 1rem;
-            border:1px solid #dee2e6; background:#f8f9fa;
-            color:#495057; font-size:.88rem; font-weight:500; text-decoration:none; white-space:nowrap;
-        }
+        .btn-back{ display:inline-flex; align-items:center; gap:.35rem; border-radius:999px; padding:.45rem 1rem; border:1px solid #dee2e6; background:#f8f9fa; color:#495057; font-size:.88rem; font-weight:500; text-decoration:none; white-space:nowrap; }
         .btn-back:hover{ background:#e9ecef; color:#212529; text-decoration:none; }
 
         .section-card{ border-radius:12px; border:1px solid #e9ecef; background:#fff; margin-bottom:1rem; }
@@ -91,42 +47,21 @@
             border-radius:9999px; border:1px solid var(--border); background:#f6f6f6; color:#222; font-weight:500; line-height:1; font-size:.9rem;
         }
         .rbl-chips input[type="radio"]:checked + label{
-            background:rgba(255,122,69,.08); border-color:var(--accent); color:var(--accent);
-            box-shadow:0 0 0 2px rgba(255,122,69,.15) inset;
+            background:rgba(255,122,69,.08); border-color:var(--accent); color:var(--accent); box-shadow:0 0 0 2px rgba(255,122,69,.15) inset;
         }
 
         .combo{ position:relative; }
-        .combo .combo-input{
-            width:100%; height:38px; border:1px solid var(--border); border-radius:.375rem;
-            padding:.375rem 2rem .375rem .75rem; background:#fff; font-size:.95rem;
-        }
+        .combo .combo-input{ width:100%; height:38px; border:1px solid var(--border); border-radius:.375rem; padding:.375rem 2rem .375rem .75rem; background:#fff; font-size:.95rem; }
         .combo .combo-input[disabled]{ background:#f5f5f5; cursor:not-allowed; }
-        .combo .combo-caret{
-            position:absolute; right:.35rem; top:50%; transform:translateY(-50%);
-            width:28px; height:28px; border:1px solid transparent; background:transparent; border-radius:6px; cursor:pointer;
-        }
+        .combo .combo-caret{ position:absolute; right:.35rem; top:50%; transform:translateY(-50%); width:28px; height:28px; border:1px solid transparent; background:transparent; border-radius:6px; cursor:pointer; }
         .combo .combo-caret:after{ content:"▾"; font-size:14px; color:#6b7280; }
-        .combo .combo-menu{
-            position:absolute; left:0; right:0; top:calc(100% + 4px);
-            background:var(--menu); border:1px solid var(--border); border-radius:.5rem; box-shadow:var(--shadow);
-            z-index:1000; display:none; max-height:330px; overflow:auto;
-        }
+        .combo .combo-menu{ position:absolute; left:0; right:0; top:calc(100% + 4px); background:var(--menu); border:1px solid var(--border); border-radius:.5rem; box-shadow:var(--shadow); z-index:1000; display:none; max-height:330px; overflow:auto; }
         .combo.open .combo-menu{ display:block; }
-        .combo .combo-item{
-            padding:.45rem .75rem; cursor:pointer; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-            font-size:.94rem;
-        }
+        .combo .combo-item{ padding:.45rem .75rem; cursor:pointer; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-size:.94rem; }
         .combo .combo-item:hover, .combo .combo-item.active{ background:#f1f5f9; }
 
-        /* Toast */
         .toast-stack{ position:fixed; right:16px; top:16px; z-index:2300; display:flex; flex-direction:column; gap:10px; align-items:flex-end; }
-        .toast{
-          min-width:unset; width:fit-content; max-width:min(92vw, 560px);
-          display:inline-flex; align-items:flex-start; gap:10px;
-          border-radius:14px; padding:12px 14px; box-shadow:0 8px 20px rgba(0,0,0,.12);
-          border:1px solid var(--border); background:#fff; color:#111; font-weight:600; font-size:15.5px; line-height:1.35;
-          opacity:0; transform:translateY(-8px); transition:opacity .18s ease, transform .18s ease;
-        }
+        .toast{ min-width:unset; width:fit-content; max-width:min(92vw, 560px); display:inline-flex; align-items:flex-start; gap:10px; border-radius:14px; padding:12px 14px; box-shadow:0 8px 20px rgba(0,0,0,.12); border:1px solid var(--border); background:#fff; color:#111; font-weight:600; font-size:15.5px; line-height:1.35; opacity:0; transform:translateY(-8px); transition:opacity .18s ease, transform .18s ease; }
         .toast.show{ opacity:1; transform:translateY(0); }
         .toast-icon{ flex:0 0 auto; }
         .toast-text{ white-space:pre-line; overflow-wrap:anywhere; }
@@ -141,11 +76,17 @@
         }
     </style>
 
-    <%-- Ẩn Back khi embed trong popup --%>
+    <%-- ✅ Ẩn Back & nền TRẮNG khi embed --%>
     <% if ("1".Equals(Request["embed"])) { %>
       <style>
         a[href$="UserAddressList.aspx"]{display:none!important}
-        body{background:#fafafa}
+        body,html{
+          background:#ffffff !important;
+          background-image:none !important;
+          overflow:visible !important;
+          min-height:auto !important;
+          height:auto !important;
+        }
       </style>
     <% } %>
 </head>
@@ -155,14 +96,10 @@
     <div class="page-header">
         <div class="header-grid">
             <div class="header-left">
-                <a href="UserAddressList.aspx" class="btn-back">
-                    ← Quay lại địa chỉ
-                </a>
+                <a href="UserAddressList.aspx" class="btn-back">← Quay lại địa chỉ</a>
             </div>
             <div class="header-right">
-                <div class="title-badge">
-                    <i class="bi bi-geo-alt"></i> HAFood - Địa chỉ giao hàng
-                </div>
+                <div class="title-badge"><i class="bi bi-geo-alt"></i> HAFood - Địa chỉ giao hàng</div>
                 <h2 class="page-title">Địa chỉ mới</h2>
                 <p class="page-subtitle">Thêm địa chỉ nhận hàng để thanh toán nhanh hơn.</p>
             </div>
@@ -304,7 +241,7 @@
     }
 </script>
 
-<!-- Searchable dropdown logic (giữ nguyên) -->
+<!-- Searchable dropdown logic -->
 <script>
     (function () {
         const DATA_BASE = '<%= ResolveClientUrl("~/assets/vn-admin") %>';
@@ -327,8 +264,7 @@
         let activeIndexCity = -1;
         let activeIndexWard = -1;
 
-        const rm = s => (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-            .replace(/đ/g, 'd').replace(/Đ/g, 'D').replace(/\s+/g, ' ').trim().toLowerCase();
+        const rm = s => (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').replace(/\s+/g, ' ').trim().toLowerCase();
 
         function openCombo(combo) { combo.classList.add('open'); }
         function closeCombo(combo) { combo.classList.remove('open'); }
@@ -368,15 +304,8 @@
             renderList(wardMenu, WARDS, wardInput.value, -1);
         }
 
-        cityInput.addEventListener('focus', () => {
-            renderList(cityMenu, PROVINCES, cityInput.value, activeIndexCity = -1);
-            openCombo(cityCombo);
-        });
-        cityInput.addEventListener('input', () => {
-            setCityHidden('', '');
-            renderList(cityMenu, PROVINCES, cityInput.value, activeIndexCity = -1);
-            openCombo(cityCombo);
-        });
+        cityInput.addEventListener('focus', () => { renderList(cityMenu, PROVINCES, cityInput.value, activeIndexCity = -1); openCombo(cityCombo); });
+        cityInput.addEventListener('input', () => { setCityHidden('', ''); renderList(cityMenu, PROVINCES, cityInput.value, activeIndexCity = -1); openCombo(cityCombo); });
         cityCombo.querySelector('.combo-caret').addEventListener('click', () => {
             if (cityCombo.classList.contains('open')) closeCombo(cityCombo);
             else { renderList(cityMenu, PROVINCES, cityInput.value, activeIndexCity = -1); openCombo(cityCombo); }
@@ -389,17 +318,13 @@
             await loadWards(item.dataset.code);
         });
         cityInput.addEventListener('keydown', async (e) => {
-            const items = Array.from(cityMenu.querySelectorAll('.combo-item'));
-            if (!items.length) return;
+            const items = Array.from(cityMenu.querySelectorAll('.combo-item')); if (!items.length) return;
             if (e.key === 'ArrowDown') { e.preventDefault(); activeIndexCity = Math.min(activeIndexCity + 1, items.length - 1); }
             else if (e.key === 'ArrowUp') { e.preventDefault(); activeIndexCity = Math.max(activeIndexCity - 1, 0); }
             else if (e.key === 'Enter') { e.preventDefault(); items[activeIndexCity >= 0 ? activeIndexCity : 0].click(); }
             else if (e.key === 'Escape') { closeCombo(cityCombo); }
             items.forEach(x => x.classList.remove('active'));
-            if (items[activeIndexCity]) {
-                items[activeIndexCity].classList.add('active');
-                items[activeIndexCity].scrollIntoView({ block: 'nearest' });
-            }
+            if (items[activeIndexCity]) { items[activeIndexCity].classList.add('active'); items[activeIndexCity].scrollIntoView({ block: 'nearest' }); }
         });
         cityInput.addEventListener('blur', () => {
             const text = cityInput.value.trim();
@@ -408,13 +333,8 @@
             setTimeout(() => closeCombo(cityCombo), 150);
         });
 
-        wardInput.addEventListener('focus', () => {
-            if (!wardInput.disabled) { renderList(wardMenu, WARDS, wardInput.value, activeIndexWard = -1); openCombo(wardCombo); }
-        });
-        wardInput.addEventListener('input', () => {
-            setWardHidden('', '');
-            if (!wardInput.disabled) { renderList(wardMenu, WARDS, wardInput.value, activeIndexWard = -1); openCombo(wardCombo); }
-        });
+        wardInput.addEventListener('focus', () => { if (!wardInput.disabled) { renderList(wardMenu, WARDS, wardInput.value, activeIndexWard = -1); openCombo(wardCombo); } });
+        wardInput.addEventListener('input', () => { setWardHidden('', ''); if (!wardInput.disabled) { renderList(wardMenu, WARDS, wardInput.value, activeIndexWard = -1); openCombo(wardCombo); } });
         wardCombo.querySelector('.combo-caret').addEventListener('click', () => {
             if (wardInput.disabled) return;
             if (wardCombo.classList.contains('open')) closeCombo(wardCombo);
@@ -427,17 +347,13 @@
             closeCombo(wardCombo);
         });
         wardInput.addEventListener('keydown', (e) => {
-            const items = Array.from(wardMenu.querySelectorAll('.combo-item'));
-            if (!items.length) return;
+            const items = Array.from(wardMenu.querySelectorAll('.combo-item')); if (!items.length) return;
             if (e.key === 'ArrowDown') { e.preventDefault(); activeIndexWard = Math.min(activeIndexWard + 1, items.length - 1); }
             else if (e.key === 'ArrowUp') { e.preventDefault(); activeIndexWard = Math.max(activeIndexWard - 1, 0); }
             else if (e.key === 'Enter') { e.preventDefault(); items[activeIndexWard >= 0 ? activeIndexWard : 0].click(); }
             else if (e.key === 'Escape') { closeCombo(wardCombo); }
             items.forEach(x => x.classList.remove('active'));
-            if (items[activeIndexWard]) {
-                items[activeIndexWard].classList.add('active');
-                items[activeIndexWard].scrollIntoView({ block: 'nearest' });
-            }
+            if (items[activeIndexWard]) { items[activeIndexWard].classList.add('active'); items[activeIndexWard].scrollIntoView({ block: 'nearest' }); }
         });
         wardInput.addEventListener('blur', () => {
             const text = wardInput.value.trim();
@@ -455,6 +371,51 @@
             await loadProvinces();
             wardInput.disabled = true;
         });
+    })();
+</script>
+
+<%-- ✅ embed=1: rewrite link nội bộ + auto-height --%>
+<script>
+    (function () {
+        var isEmbed = /[?&]embed=1\b/.test(location.search) && window.parent && window.parent !== window;
+        var TARGET = location.origin;
+
+        // 1) rewrite links
+        if (isEmbed) {
+            try {
+                document.querySelectorAll('a[href]').forEach(function (a) {
+                    var href = a.getAttribute('href'); if (!href) return;
+                    if (href.startsWith('#') || href.startsWith('javascript:')) return;
+                    var u = new URL(href, location.href);
+                    if (u.origin !== location.origin) return;
+                    u.searchParams.set('embed', '1');
+                    a.setAttribute('href', u.pathname + u.search + u.hash);
+                });
+            } catch { }
+        }
+
+        // 2) auto-height
+        if (!isEmbed) return;
+
+        function measure() {
+            try {
+                var d = document, b = d.body, e = d.documentElement;
+                var h = Math.max(b.scrollHeight || 0, e.scrollHeight || 0, b.offsetHeight || 0, e.offsetHeight || 0);
+                if (!h || h < 400) h = 400;
+                window.parent.postMessage({ type: 'haf-embed-height', height: h }, TARGET);
+            } catch (_) { }
+        }
+
+        document.addEventListener('DOMContentLoaded', function () { setTimeout(measure, 0); });
+        window.addEventListener('load', function () { setTimeout(measure, 20); });
+        if (document.fonts && document.fonts.ready) { document.fonts.ready.then(function () { setTimeout(measure, 20); }); }
+
+        var ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(function () { measure(); }) : null;
+        if (ro) { ro.observe(document.documentElement); ro.observe(document.body); }
+
+        setTimeout(measure, 200);
+        setTimeout(measure, 600);
+        setTimeout(measure, 1200);
     })();
 </script>
 </body>
