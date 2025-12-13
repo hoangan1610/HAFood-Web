@@ -1,4 +1,4 @@
-﻿<%@ Page Language="C#" AutoEventWireup="true"
+<%@ Page Language="C#" AutoEventWireup="true"
     CodeBehind="OrderPage.aspx.cs"
     Inherits="HAFoodWeb.OrderPage" Async="true" %>
 
@@ -14,13 +14,14 @@
   <style>
     :root{ --accent:#ff7a45; --border:#e5e7eb; --muted:#6b7280; }
 
+    /* Khóa tràn ngang + bẻ chuỗi */
     html, body { width:100%; max-width:100%; overflow-x:hidden; }
     body{ word-break:break-word; overflow-wrap:anywhere; margin:0; }
 
     body{
         font-family:'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
         min-height:100%;
-        background:#ffffff;
+        background:#ffffff; /* NỀN TRẮNG */
         overflow-x:hidden;
     }
 
@@ -72,13 +73,13 @@
     }
     .btn-sm{ font-size:.86rem; }
     .btn-outline-dark{ background:#fff; color:#111; border-color:var(--border); }
-    .btn-outline-dark.active{ background:#212529; color:#fff; box-shadow:0 .3rem 1rem rgba(15, 23, 42, 0.12); }
+    .btn-outline-dark.active{ background:#212529; color:#fff; box-shadow:0 .3rem 1rem rgba(33,37,41,.35); }
     .btn-outline-secondary{ background:rgba(255,255,255,.85); border-color:var(--border); color:#111; }
 
     .filter-bar{
       display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin-bottom:1rem;
       background:rgba(255,255,255,.8); border-radius:999px; padding:.35rem;
-      box-shadow:0 .25rem .75rem rgba(15, 23, 42, 0.12); overflow:hidden;
+      box-shadow:0 .25rem .75rem rgba(15,23,42,.08); overflow:hidden;
     }
     .filter-bar .btn{
       min-width:120px; border-radius:999px; font-weight:500; border-color:transparent; color:#495057;
@@ -324,5 +325,6 @@
           setTimeout(rafMeasure, 1200);
       })();
   </script>
+
 </body>
 </html>

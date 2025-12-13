@@ -1,4 +1,4 @@
-﻿<%@ Page Language="C#" AutoEventWireup="true" CodeBehind="UserProfile.aspx.cs" Inherits="HAFoodWeb.UserProfile" Async="true" %>
+<%@ Page Language="C#" AutoEventWireup="true" CodeBehind="UserProfile.aspx.cs" Inherits="HAFoodWeb.UserProfile" Async="true" %>
 
 <!DOCTYPE html>
 <html lang="vi">
@@ -38,6 +38,7 @@
 
         .account-page { width: 100%; max-width: 100%; margin: 0 auto; }
 
+        /* header chung cho các page tài khoản – cho sát card hơn */
         .account-page-header { margin-bottom: 8px; }
 
         .page-title {

@@ -1,4 +1,4 @@
-﻿<%@ Page Language="C#" AutoEventWireup="true" CodeBehind="UserDetail.aspx.cs" Inherits="HAFoodWeb.UserPage.UserDetail" Async="true" %>
+<%@ Page Language="C#" AutoEventWireup="true" CodeBehind="UserDetail.aspx.cs" Inherits="HAFoodWeb.UserPage.UserDetail" Async="true" %>
 <%@ Register Src="~/Control/Header.ascx" TagPrefix="uc" TagName="Header" %>
 <%@ Register Src="~/Control/Footer.ascx" TagPrefix="uc" TagName="Footer" %>
 
@@ -281,6 +281,7 @@
             if (h) setFrameHeight(h);
         });
 
+        // Chuyển tab: đổi src (luôn kèm embed=1)
         menuItems.forEach(it => {
             it.addEventListener('click', e => {
                 const url = it.dataset && it.dataset.url;
@@ -296,6 +297,7 @@
             }, false);
         });
 
+        // Hỗ trợ ?tab=orders / ?tab=addresses
         try {
             const params = new URLSearchParams(location.search);
             const tab = (params.get('tab') || '').toLowerCase();

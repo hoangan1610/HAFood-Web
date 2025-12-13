@@ -1,4 +1,4 @@
-﻿<%@ Page Language="C#" AutoEventWireup="true" CodeBehind="OrderDetail.aspx.cs" Inherits="HAFoodWeb.OrderDetail" Async="true" %>
+<%@ Page Language="C#" AutoEventWireup="true" CodeBehind="OrderDetail.aspx.cs" Inherits="HAFoodWeb.OrderDetail" Async="true" %>
 
 <!DOCTYPE html>
 <html lang="vi">
@@ -458,7 +458,7 @@
               const API_BASE = (window.__API_BASE || '').replace(/\/+$/, '');
               const token = window.__AUTH_TOKEN || '';
               const pid = parseInt((document.getElementById('<%= hFirstProductId.ClientID %>')?.value || '0'), 10);
-            const vid = parseInt((document.getElementById('<%= hFirstVariantId.ClientID %>')?.value || '0'), 10);
+              const vid = parseInt((document.getElementById('<%= hFirstVariantId.ClientID %>')?.value || '0'), 10);
 
               if (!API_BASE || !token || !pid) { if (btn) btn.classList.remove('d-none'); return; }
 
@@ -725,7 +725,7 @@
               } catch (_) { }
           }
 
-          function rafMeasure() { try { requestAnimationFrame(measure); } catch { measure(); } }
+          function rafMeasure() { try { requestAnimationFrame(measure); } catch (e) { measure(); } }
 
           document.addEventListener('DOMContentLoaded', function () { setTimeout(rafMeasure, 0); });
           window.addEventListener('load', function () { setTimeout(rafMeasure, 20); });

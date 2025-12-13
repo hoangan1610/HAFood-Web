@@ -1,4 +1,4 @@
-﻿<%@ Page Language="C#" AutoEventWireup="true"
+<%@ Page Language="C#" AutoEventWireup="true"
     CodeBehind="UpdateUserAddress.aspx.cs"
     Inherits="HAFoodWeb.UserAddress.UpdateUserAddress" Async="true" %>
 
@@ -72,6 +72,7 @@
         .toast-error{ background:#ef4444 !important; border-color:#dc2626 !important; color:#fff !important; }
         .toast-error .toast-icon, .toast-success .toast-icon{ color:#fff !important; }
 
+        /* Modal xóa */
         .haf-delete-modal .modal-dialog { max-width: 440px; }
         .haf-delete-modal .modal-content { border-radius: 14px; border: none; box-shadow: 0 16px 40px rgba(15, 23, 42, 0.25); }
         .haf-delete-modal .modal-header { padding: 14px 20px 10px; border-bottom: 1px solid #f1f1f1; justify-content: center; position: relative; }
@@ -190,6 +191,7 @@
         </div>
     </div>
 
+    <!-- POPUP XÓA ĐỊA CHỈ -->
     <div class="modal fade haf-delete-modal" id="confirmDeleteModal" tabindex="-1" aria-labelledby="confirmDeleteLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
@@ -260,6 +262,7 @@
     }
 </script>
 
+<!-- Combo + dữ liệu -->
 <script>
     (function () {
         const DATA_BASE = '<%= ResolveClientUrl("~/assets/vn-admin") %>';
@@ -493,6 +496,27 @@
         setTimeout(measure, 200);
         setTimeout(measure, 600);
         setTimeout(measure, 1200);
+    })();
+</script>
+
+<!-- Dọn text-node "ResizeObserver…" nếu bị rớt ra DOM -->
+<script>
+    (function () {
+        function cleanOnce() {
+            try {
+                var nodes = Array.from(document.body.childNodes);
+                nodes.forEach(function (n) {
+                    if (n.nodeType === 3 && /ResizeObserver|ro\.observe|measure\(\)|setTimeout\(measure/.test(n.nodeValue || '')) {
+                        n.remove();
+                    }
+                });
+            } catch (e) { }
+        }
+        cleanOnce();
+        var tries = 0, t = setInterval(function () {
+            cleanOnce();
+            if (++tries > 10) clearInterval(t);
+        }, 200);
     })();
 </script>
 

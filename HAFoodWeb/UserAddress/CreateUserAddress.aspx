@@ -1,4 +1,4 @@
-﻿<%@ Page Language="C#" AutoEventWireup="true"     CodeBehind="CreateUserAddress.aspx.cs"     Inherits="HAFoodWeb.UserAddress.CreateUserAddress" Async="true" %>
+<%@ Page Language="C#" AutoEventWireup="true"     CodeBehind="CreateUserAddress.aspx.cs"     Inherits="HAFoodWeb.UserAddress.CreateUserAddress" Async="true" %>
 
 <!DOCTYPE html>
 <html lang="vi">
