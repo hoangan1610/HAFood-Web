@@ -1,4 +1,4 @@
-﻿<%@ Page Language="C#" AutoEventWireup="true" CodeBehind="UserProfileEdit.aspx.cs" Inherits="HAFoodWeb.UserProfileEdit" Async="true" %>
+<%@ Page Language="C#" AutoEventWireup="true" CodeBehind="UserProfileEdit.aspx.cs" Inherits="HAFoodWeb.UserProfileEdit" Async="true" %>
 
 <!DOCTYPE html>
 <html lang="vi">
@@ -14,7 +14,6 @@
         :root {
             --haf-primary: #ff7b32;
             --haf-primary-hover: #e8631d;
-            --haf-bg: #f5f5f5;
             --haf-border: #e5e7eb;
             --haf-text-main: #111827;
             --haf-text-muted: #6b7280;
@@ -24,19 +23,16 @@
 
         * { box-sizing: border-box; }
 
-        body {
-            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        /* ✅ NỀN TRẮNG THẬT - KHÔNG GRADIENT */
+        html, body {
             margin: 0;
-            padding: 20px 10px 30px;
-            background:
-              radial-gradient(circle at top left,
-                               #ffe8cc 0,
-                               #ffe0bd 20%,
-                               #fdf5ee 40%,
-                               #f5f5f5 70%,
-                               #f5f5f5 100%);
-            background-color: var(--haf-bg);
+            padding: 0;
+            background: #ffffff;
+            color: var(--haf-text-main);
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
         }
+
+        body { padding: 20px 10px 30px; }
 
         .account-page { width: 100%; max-width: 100%; margin: 0 auto; }
         .account-page-header { margin-bottom: 8px; }
@@ -131,10 +127,17 @@
         }
     </style>
 
-    <%-- ✅ NỀN TRẮNG khi mở bằng ?embed=1 --%>
+    <%-- ✅ embed=1: nền trắng chắc chắn + auto height chuẩn --%>
     <% if ("1".Equals(Request["embed"])) { %>
       <style>
-        html, body { background:#ffffff !important; background-image:none !important; overflow:visible !important; min-height:auto !important; }
+        html, body {
+          background:#ffffff !important;
+          background-image:none !important;
+          background-color:#ffffff !important;
+          overflow:visible !important;
+          min-height:auto !important;
+          height:auto !important;
+        }
       </style>
     <% } %>
 </head>
@@ -143,7 +146,6 @@
     <form id="form1" runat="server">
 
         <div class="account-page my-3 px-3 px-md-4">
-            <!-- HEADER -->
             <div class="account-page-header">
                 <div class="title-badge">
                     <i class="fa-solid fa-pen-to-square"></i>
@@ -199,7 +201,6 @@
             </div>
         </div>
 
-        <!-- Toast -->
         <div id="toast" class="toast">
             <i id="toastIcon" class="fa-solid fa-circle-check"></i>
             <span id="toastMessage"></span>
@@ -266,17 +267,17 @@
             }
         </script>
 
-        <%-- ✅ BLOCK-JS: Auto-height + truyền embed=1 cho link nội bộ --%>
+        <%-- ✅ embed=1: rewrite link nội bộ + auto-height + nghe request resize --%>
         <script>
             (function () {
                 var isEmbed = /[?&]embed=1\b/.test(location.search) && window.parent && window.parent !== window;
+                if (!isEmbed) return;
 
-                // 1) Gắn embed=1 cho TẤT CẢ link nội bộ
-                if (isEmbed) {
+                function rewriteLinks() {
                     try {
                         document.querySelectorAll('a[href]').forEach(function (a) {
                             var href = a.getAttribute('href'); if (!href) return;
-                            if (href.startsWith('#') || href.startsWith('javascript:')) return;
+                            if (href.startsWith('#') || href.startsWith('javascript:') || href.startsWith('mailto:') || href.startsWith('tel:')) return;
                             var u = new URL(href, location.href);
                             if (u.origin !== location.origin) return;
                             u.searchParams.set('embed', '1');
@@ -285,21 +286,28 @@
                     } catch { }
                 }
 
-                // 2) Auto-height báo parent
-                if (!isEmbed) return;
                 function measure() {
                     try {
                         var d = document, b = d.body, e = d.documentElement;
                         var h = Math.max(b.scrollHeight || 0, e.scrollHeight || 0, b.offsetHeight || 0, e.offsetHeight || 0);
-                        if (!h || h < 400) h = 400;
+                        if (!h || h < 420) h = 420;
                         window.parent.postMessage({ type: 'haf-embed-height', height: h }, '*');
                     } catch (_) { }
                 }
-                document.addEventListener('DOMContentLoaded', function () { setTimeout(measure, 0); });
-                window.addEventListener('load', function () { setTimeout(measure, 20); });
+
+                window.addEventListener('message', function (ev) {
+                    var d = ev.data;
+                    if (!d || d.type !== 'haf-embed-request') return;
+                    measure();
+                });
+
+                document.addEventListener('DOMContentLoaded', function () { rewriteLinks(); setTimeout(measure, 0); });
+                window.addEventListener('load', function () { rewriteLinks(); setTimeout(measure, 20); });
                 if (document.fonts && document.fonts.ready) { document.fonts.ready.then(function () { setTimeout(measure, 20); }); }
+
                 var ro = (typeof ResizeObserver !== 'undefined') ? new ResizeObserver(function () { measure(); }) : null;
                 if (ro) { ro.observe(document.documentElement); ro.observe(document.body); }
+
                 setTimeout(measure, 200); setTimeout(measure, 600); setTimeout(measure, 1200);
             })();
         </script>
