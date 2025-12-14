@@ -1,4 +1,4 @@
-﻿<%@ Page Language="C#" AutoEventWireup="true"
+<%@ Page Language="C#" AutoEventWireup="true"
     CodeBehind="OrderPage.aspx.cs"
     Inherits="HAFoodWeb.OrderPage" Async="true" %>
 
@@ -16,13 +16,12 @@
 
     /* Khóa tràn ngang + bẻ chuỗi */
     html, body { width:100%; max-width:100%; overflow-x:hidden; }
-    body{ word-break:break-word; overflow-wrap:anywhere; }
+    body{ word-break:break-word; overflow-wrap:anywhere; margin:0; }
 
     body{
         font-family:'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-        margin:0;
         min-height:100%;
-        background:#ffffff; /* <-- NỀN TRẮNG */
+        background:#ffffff; /* NỀN TRẮNG */
         overflow-x:hidden;
     }
 
@@ -45,7 +44,7 @@
     .wrap-inner{
         background:#fff;
         border-radius:1.25rem;
-        box-shadow:0 .75rem 1.8rem rgba(15,23,42,.14);
+        box-shadow:0 16px 34px rgba(15, 23, 42, 0.12);
         padding:1.1rem 1.25rem 1.3rem;
         max-width:100%;
         overflow-x:hidden;
@@ -127,6 +126,7 @@
     .paging{
         display:flex; justify-content:center; align-items:center; gap:0.5rem; margin-top:1.0rem;
         overflow:hidden; width:100%;
+        flex-wrap:wrap;
     }
     .paging .btn{ min-width:40px; border-radius:999px; font-size:.86rem; }
     .paging .btn-page-active{ background:#e5e7eb; border-color:#d1d5db; color:#111827; }
@@ -138,6 +138,18 @@
         .page-header{ margin:12px 0 6px !important; padding:0 16px !important; }
     }
   </style>
+
+  <% if ("1".Equals(Request["embed"])) { %>
+    <style>
+      html, body{
+        background:#ffffff !important;
+        background-image:none !important;
+        min-height:auto !important;
+        height:auto !important;
+        overflow:visible !important;
+      }
+    </style>
+  <% } %>
 </head>
 
 <body>
@@ -258,5 +270,61 @@
           } catch (e) { }
       })();
   </script>
+
+  <!-- ✅ embed=1: rewrite link + auto-height (robust) -->
+  <script>
+      (function () {
+          var isEmbed = /[?&]embed=1\b/.test(location.search) && window.parent && window.parent !== window;
+          var params = new URLSearchParams(location.search);
+          var TARGET = params.get('parentOrigin') || '*';
+
+          // 1) rewrite tất cả link nội bộ -> luôn kèm embed=1
+          if (isEmbed) {
+              try {
+                  document.querySelectorAll('a[href]').forEach(function (a) {
+                      var href = a.getAttribute('href'); if (!href) return;
+                      if (href.startsWith('#') || href.startsWith('javascript:')) return;
+                      var u = new URL(href, location.href);
+                      if (u.origin !== location.origin) return;
+                      u.searchParams.set('embed', '1');
+                      a.setAttribute('href', u.pathname + u.search + u.hash);
+                  });
+              } catch (e) { }
+          }
+
+          // 2) auto-height báo về parent
+          if (!isEmbed) return;
+
+          function measure() {
+              try {
+                  var d = document, b = d.body, e = d.documentElement;
+                  var h = Math.max(
+                      b.scrollHeight || 0, e.scrollHeight || 0,
+                      b.offsetHeight || 0, e.offsetHeight || 0,
+                      b.clientHeight || 0, e.clientHeight || 0
+                  );
+                  if (!h || h < 350) h = 350;
+                  window.parent.postMessage({ type: 'haf-embed-height', height: h }, TARGET);
+              } catch (_) { }
+          }
+
+          function rafMeasure() { try { requestAnimationFrame(measure); } catch { measure(); } }
+
+          document.addEventListener('DOMContentLoaded', function () { setTimeout(rafMeasure, 0); });
+          window.addEventListener('load', function () { setTimeout(rafMeasure, 20); });
+          if (document.fonts && document.fonts.ready) { document.fonts.ready.then(function () { setTimeout(rafMeasure, 20); }); }
+
+          var ro = (typeof ResizeObserver !== 'undefined') ? new ResizeObserver(function () { rafMeasure(); }) : null;
+          if (ro) { ro.observe(document.documentElement); ro.observe(document.body); }
+
+          var mo = (typeof MutationObserver !== 'undefined') ? new MutationObserver(function () { rafMeasure(); }) : null;
+          if (mo) { mo.observe(document.body, { childList: true, subtree: true, attributes: true, characterData: true }); }
+
+          setTimeout(rafMeasure, 200);
+          setTimeout(rafMeasure, 600);
+          setTimeout(rafMeasure, 1200);
+      })();
+  </script>
+
 </body>
 </html>

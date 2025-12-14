@@ -1,4 +1,4 @@
-﻿<%@ Page Language="C#" AutoEventWireup="true" CodeBehind="UserProfile.aspx.cs" Inherits="HAFoodWeb.UserProfile" Async="true" %>
+<%@ Page Language="C#" AutoEventWireup="true" CodeBehind="UserProfile.aspx.cs" Inherits="HAFoodWeb.UserProfile" Async="true" %>
 
 <!DOCTYPE html>
 <html lang="vi">
@@ -26,7 +26,6 @@
             font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
             margin: 0;
             padding: 20px 10px 30px;
-            /* nền cam gradient giống OrderPage */
             background:
               radial-gradient(circle at top left,
                                #ffe8cc 0,
@@ -68,7 +67,6 @@
 
         .title-badge i { font-size: .9rem; }
 
-        /* CARD HỒ SƠ */
         .profile-container {
             max-width: 720px;
             margin: 0 auto;
@@ -180,7 +178,12 @@
 
     <% if (Request["embed"] == "1") { %>
     <style>
-        html, body { background: #ffffff !important; background-image: none !important; }
+        html, body {
+            background: #ffffff !important;
+            background-image: none !important;
+            min-height: auto !important;
+            height: auto !important;
+        }
     </style>
     <% } %>
 
@@ -190,7 +193,6 @@
     <form id="form1" runat="server">
 
         <div class="account-page my-3 px-3 px-md-4">
-            <!-- HEADER -->
             <div class="account-page-header">
                 <div class="title-badge">
                     <i class="fa-solid fa-user"></i>
@@ -199,7 +201,6 @@
                 <h2 class="page-title">Hồ sơ của tôi</h2>
             </div>
 
-            <!-- CARD THÔNG TIN CÁ NHÂN -->
             <div class="profile-container">
                 <div class="profile-header">
                     <div class="avatar-wrapper">
@@ -267,33 +268,72 @@
 
     </form>
 
-    <!-- BLOCK-JS: auto-height cho iframe khi trang được mở với ?embed=1 -->
+    <!-- ✅ Embed helper: rewrite link + auto height -->
     <script>
-    (function(){
-      var isEmbed=/[?&]embed=1\b/.test(location.search)&&window.parent&&window.parent!==window;
-      if(!isEmbed)return;
+        (function () {
+            var params = new URLSearchParams(location.search);
+            var isEmbed = (params.get('embed') === '1') && window.parent && window.parent !== window;
+            if (!isEmbed) return;
 
-      function measure(){
-        try{
-          var d=document,b=d.body,e=d.documentElement;
-          var h=Math.max(b.scrollHeight||0,e.scrollHeight||0,b.offsetHeight||0,e.offsetHeight||0);
-          if(!h||h<400) h=400;
-          window.parent.postMessage({type:'haf-embed-height',height:h},'*');
-        }catch(_){}
-      }
+            function rewriteLinks() {
+                try {
+                    document.querySelectorAll('a[href]').forEach(function (a) {
+                        var href = a.getAttribute('href'); if (!href) return;
+                        if (href.startsWith('#') || href.startsWith('javascript:')) return;
+                        var u = new URL(href, location.href);
+                        if (u.origin !== location.origin) return;
+                        u.searchParams.set('embed', '1');
+                        a.setAttribute('href', u.pathname + u.search + u.hash);
+                    });
+                } catch { }
+            }
 
-      document.addEventListener('DOMContentLoaded',function(){ setTimeout(measure,0); });
-      window.addEventListener('load',function(){ setTimeout(measure,20); });
-      if(document.fonts&&document.fonts.ready){ document.fonts.ready.then(function(){ setTimeout(measure,20); }); }
+            function getHeight() {
+                var b = document.body, e = document.documentElement;
+                var h = Math.max(
+                    b ? b.scrollHeight : 0,
+                    e ? e.scrollHeight : 0,
+                    b ? b.offsetHeight : 0,
+                    e ? e.offsetHeight : 0,
+                    e ? Math.ceil(e.getBoundingClientRect().height) : 0
+                );
+                return h;
+            }
 
-      var ro=typeof ResizeObserver!=='undefined'?new ResizeObserver(function(){ measure(); }):null;
-      if(ro){ ro.observe(document.documentElement); ro.observe(document.body); }
+            var raf = 0;
+            function post() {
+                cancelAnimationFrame(raf);
+                raf = requestAnimationFrame(function () {
+                    var h = getHeight();
+                    if (!h || h < 350) h = 350;
+                    window.parent.postMessage({ type: 'haf-embed-height', height: h }, '*');
+                });
+            }
 
-      // đo lại theo nhịp trễ để bắt các nội dung render muộn
-      setTimeout(measure,200);
-      setTimeout(measure,600);
-      setTimeout(measure,1200);
-    })();
+            rewriteLinks();
+            document.addEventListener('DOMContentLoaded', function () { post(); setTimeout(post, 200); });
+            window.addEventListener('load', function () { post(); setTimeout(post, 200); });
+            window.addEventListener('pageshow', function () { post(); });
+
+            if (document.fonts && document.fonts.ready) {
+                document.fonts.ready.then(function () { post(); });
+            }
+
+            if (typeof ResizeObserver !== 'undefined') {
+                var ro = new ResizeObserver(function () { post(); });
+                ro.observe(document.documentElement);
+                if (document.body) ro.observe(document.body);
+            }
+
+            if (typeof MutationObserver !== 'undefined') {
+                var mo = new MutationObserver(function () { post(); });
+                mo.observe(document.documentElement, { subtree: true, childList: true, attributes: true, characterData: true });
+            }
+
+            window.addEventListener('message', function (ev) {
+                if (ev && ev.data && ev.data.type === 'haf-embed-request') post();
+            });
+        })();
     </script>
 </body>
 </html>

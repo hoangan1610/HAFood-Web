@@ -1,4 +1,4 @@
-﻿<%@ Page Language="C#" AutoEventWireup="true"     CodeBehind="CreateUserAddress.aspx.cs"     Inherits="HAFoodWeb.UserAddress.CreateUserAddress" Async="true" %>
+<%@ Page Language="C#" AutoEventWireup="true"     CodeBehind="CreateUserAddress.aspx.cs"     Inherits="HAFoodWeb.UserAddress.CreateUserAddress" Async="true" %>
 
 <!DOCTYPE html>
 <html lang="vi">
@@ -76,11 +76,17 @@
         }
     </style>
 
-    <%-- ✅ Ẩn Back & nền trắng khi embed --%>
+    <%-- ✅ Ẩn Back & nền TRẮNG khi embed --%>
     <% if ("1".Equals(Request["embed"])) { %>
       <style>
         a[href$="UserAddressList.aspx"]{display:none!important}
-        body,html{background:#fafafa!important; background-image:none!important; overflow:visible!important; min-height:auto!important;}
+        body,html{
+          background:#ffffff !important;
+          background-image:none !important;
+          overflow:visible !important;
+          min-height:auto !important;
+          height:auto !important;
+        }
       </style>
     <% } %>
 </head>
@@ -368,10 +374,11 @@
     })();
 </script>
 
-<%-- ✅ BLOCK-JS: gắn embed=1 cho link nội bộ + auto-height --%>
+<%-- ✅ embed=1: rewrite link nội bộ + auto-height --%>
 <script>
     (function () {
         var isEmbed = /[?&]embed=1\b/.test(location.search) && window.parent && window.parent !== window;
+        var TARGET = location.origin;
 
         // 1) rewrite links
         if (isEmbed) {
@@ -389,20 +396,26 @@
 
         // 2) auto-height
         if (!isEmbed) return;
+
         function measure() {
             try {
                 var d = document, b = d.body, e = d.documentElement;
                 var h = Math.max(b.scrollHeight || 0, e.scrollHeight || 0, b.offsetHeight || 0, e.offsetHeight || 0);
                 if (!h || h < 400) h = 400;
-                window.parent.postMessage({ type: 'haf-embed-height', height: h }, '*');
+                window.parent.postMessage({ type: 'haf-embed-height', height: h }, TARGET);
             } catch (_) { }
         }
+
         document.addEventListener('DOMContentLoaded', function () { setTimeout(measure, 0); });
         window.addEventListener('load', function () { setTimeout(measure, 20); });
         if (document.fonts && document.fonts.ready) { document.fonts.ready.then(function () { setTimeout(measure, 20); }); }
+
         var ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(function () { measure(); }) : null;
         if (ro) { ro.observe(document.documentElement); ro.observe(document.body); }
-        setTimeout(measure, 200); setTimeout(measure, 600); setTimeout(measure, 1200);
+
+        setTimeout(measure, 200);
+        setTimeout(measure, 600);
+        setTimeout(measure, 1200);
     })();
 </script>
 </body>

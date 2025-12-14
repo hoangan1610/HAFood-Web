@@ -106,6 +106,17 @@
     }
     .of-contain{object-fit:contain}
 
+    ratio-badges{
+      position:absolute;
+      inset:0;
+      z-index:2;
+      pointer-events:none;
+    }
+    .ratio-badges .badge-new{
+      position:absolute;
+      top:.5rem;
+      left:.5rem;
+    }
     /* ==== Horizontal shelf (Mới về) ==== */
     .shelf{
       display:flex;
@@ -705,13 +716,18 @@
             <div class="card product-card shadow-sm h-100 js-product-card" data-product-id="<%# Eval("Id") %>">
               <a href='<%# Eval("Id", ResolveUrl("~/product/Product.aspx?id={0}")) %>' class="text-decoration-none">
                 <div class="ratio ratio-4x3 position-relative">
-                  <img src="<%# Eval("ImageUrl") %>" loading="lazy"
+                  <!-- ✅ FIX: chuẩn hoá URL ảnh (API base/relative) để không bị fallback về ảnh xanh -->
+                  <img src="<%# ProductImageUrl(Eval("ImageUrl")) %>" loading="eager" decoding="async" fetchpriority="high"
                        class="w-100 h-100 of-contain p-2" alt="<%# Eval("Name") %>"
-                       onerror="this.src='/images/product-default.png';" />
-                  <div class="badge-off js-badge-off"></div>
-                  <span class="badge bg-success position-absolute top-0 start-0 m-2">Mới</span>
+                       onerror="this.onerror=null;this.src='<%= ResolveUrl("~/images/product-default.png") %>';" />
+
+                  <!-- ✅ Badge phải nằm trong wrapper để KHÔNG bị .ratio kéo giãn phủ kín -->
+                  <div class="ratio-badges">
+                    <div class="badge-off js-badge-off"></div>
+                    <span class="badge bg-success badge-new">Mới</span>
+                  </div>
                 </div>
-              </a>
+                </a>
 
               <div class="card-body d-flex flex-column">
                 <h6 class="mb-1 text-truncate-2">
@@ -780,9 +796,10 @@
           <div class="card product-card h-100 shadow-sm d-flex js-product-card" data-product-id="<%# Eval("Id") %>">
             <a href='<%# Eval("Id", ResolveUrl("~/product/Product.aspx?id={0}")) %>' class="text-decoration-none">
               <div class="ratio ratio-4x3 position-relative">
-                <img src="<%# Eval("ImageUrl") %>" loading="lazy"
+                <!-- ✅ FIX tương tự cho phần Gợi ý -->
+                <img src="<%# ProductImageUrl(Eval("ImageUrl")) %>" loading="lazy"
                      class="w-100 h-100 of-contain p-2"
-                     onerror="this.src='/images/product-default.png';"
+                     onerror="this.onerror=null;this.src='<%# ResolveUrl("~/images/product-default.png") %>';" 
                      alt="<%# Eval("Name") %>" />
                 <div class="badge-off js-badge-off"></div>
               </div>
@@ -1951,10 +1968,10 @@
           // LẤY JWT TỪ SESSION (server-side)
           const TOKEN = '<%= Session["JwtToken"] as string ?? "" %>';
 
-        const missionListEl = document.getElementById('mission-list');
-        const refreshBtn = document.getElementById('btnMissionRefresh');
+          const missionListEl = document.getElementById('mission-list');
+          const refreshBtn = document.getElementById('btnMissionRefresh');
 
-        if (!missionListEl) return;
+          if (!missionListEl) return;
 
           function mapReward(m) {
               const rt = m.rewardType ?? m.reward_type ?? m.RewardType ?? m.Reward_Type;
@@ -2079,9 +2096,6 @@
               }
           }
 
-
-
-
           async function loadMissions() {
 
               // Nếu TOKEN rỗng => khỏi gọi API, show luôn gợi ý
@@ -2105,7 +2119,6 @@
                       headers,
                       credentials: 'include'
                   });
-
 
                   // Chưa đăng nhập → show gợi ý
                   if (resp.status === 401) {

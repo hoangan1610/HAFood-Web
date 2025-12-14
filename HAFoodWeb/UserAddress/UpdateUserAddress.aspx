@@ -1,4 +1,4 @@
-﻿<%@ Page Language="C#" AutoEventWireup="true"
+<%@ Page Language="C#" AutoEventWireup="true"
     CodeBehind="UpdateUserAddress.aspx.cs"
     Inherits="HAFoodWeb.UserAddress.UpdateUserAddress" Async="true" %>
 
@@ -15,11 +15,10 @@
     <style>
         :root{ --accent:#ff7a45; --border:#e5e7eb; --menu:#fff; }
 
-        /* NỀN TRẮNG */
         html, body { width:100%; max-width:100%; overflow-x:hidden; }
         body{
             font-family:'Segoe UI',system-ui,-apple-system,BlinkMacSystemFont,sans-serif;
-            margin:0; background:#ffffff; min-height:100vh; /* <-- nền trắng */
+            margin:0; background:#ffffff; min-height:100vh;
             word-break:break-word; overflow-wrap:anywhere;
         }
 
@@ -35,9 +34,13 @@
         .page-subtitle{ font-size:.9rem; color:#6c757d; margin:0; }
 
         .page-shell{
-            max-width:720px; margin:0 auto 2.5rem; background:#fff; border-radius:1.25rem;
-            box-shadow:0 .75rem 1.8rem rgba(15,23,42,.14); padding:1.4rem 1.6rem 1.7rem;
-            width:100%; max-width:100%; overflow-x:hidden;
+            max-width:720px;
+            width:min(720px, calc(100% - 32px));
+            margin:0 auto 2.5rem;
+            background:#fff;
+            border-radius:1.25rem;
+            box-shadow:0 .75rem 1.8rem rgba(15,23,42,.14);
+            padding:1.4rem 1.6rem 1.7rem;
         }
 
         .btn-back{ display:inline-flex; align-items:center; gap:.35rem; border-radius:999px; padding:.45rem 1rem; border:1px solid #dee2e6; background:#f8f9fa; color:#495057; font-size:.88rem; font-weight:500; text-decoration:none; white-space:nowrap; }
@@ -60,7 +63,6 @@
         .combo-item{padding:.45rem .75rem;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
         .combo-item:hover{background:#f1f5f9}
 
-        /* Toast */
         .toast-stack{ position:fixed; right:16px; top:16px; z-index:2300; display:flex; flex-direction:column; gap:10px; align-items:flex-end; }
         .toast{ min-width:unset; width:fit-content; max-width:min(92vw, 560px); display:inline-flex; align-items:flex-start; gap:10px; border-radius:14px; padding:12px 14px; box-shadow:0 8px 20px rgba(0,0,0,.12); border:1px solid var(--border); background:#fff; color:#111; font-weight:600; font-size:15.5px; line-height:1.35; opacity:0; transform:translateY(-8px); transition:opacity .18s ease, transform .18s ease; }
         .toast.show{ opacity:1; transform:translateY(0); }
@@ -89,8 +91,21 @@
             .page-header{ margin:12px 0 8px !important; padding:0 16px !important; }
             .header-grid{ grid-template-columns: 1fr; }
             .header-right{ align-items:flex-start; text-align:left; }
+            .page-shell{ width:calc(100% - 24px); padding:1.1rem 1.1rem 1.2rem; }
         }
     </style>
+
+    <% if ("1".Equals(Request["embed"])) { %>
+      <style>
+        html, body{
+          background:#ffffff !important;
+          background-image:none !important;
+          overflow:visible !important;
+          min-height:auto !important;
+          height:auto !important;
+        }
+      </style>
+    <% } %>
 </head>
 <body>
 <form id="form1" runat="server">
@@ -111,7 +126,6 @@
     <div class="page-shell">
         <asp:HiddenField ID="hfId" runat="server" />
 
-        <!-- hidden mirrors -->
         <asp:TextBox ID="txtCitySel" runat="server" CssClass="d-none" />
         <asp:TextBox ID="txtWardSel" runat="server" CssClass="d-none" />
         <asp:TextBox ID="txtCityCode" runat="server" CssClass="d-none" />
@@ -200,8 +214,9 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     document.getElementById('btnCancelUpdate')?.addEventListener('click', function () {
+        var isEmbed = /[?&]embed=1\b/.test(location.search);
         if (history.length > 1) history.back();
-        else window.location.href = '/UserAddress/UserAddressList.aspx';
+        else window.location.href = isEmbed ? 'UserAddressList.aspx?embed=1' : 'UserAddressList.aspx';
     });
 
     function showToast(message, variant) {
@@ -428,6 +443,62 @@
     })();
 </script>
 
+<%-- ✅ embed=1: rewrite link + auto-height --%>
+<script>
+    (function () {
+        var isEmbed = /[?&]embed=1\b/.test(location.search) && window.parent && window.parent !== window;
+        var TARGET = location.origin;
+
+        if (isEmbed) {
+            // rewrite links nội bộ
+            try {
+                document.querySelectorAll('a[href]').forEach(function (a) {
+                    var href = a.getAttribute('href'); if (!href) return;
+                    if (href.startsWith('#') || href.startsWith('javascript:')) return;
+                    var u = new URL(href, location.href);
+                    if (u.origin !== location.origin) return;
+                    u.searchParams.set('embed', '1');
+                    a.setAttribute('href', u.pathname + u.search + u.hash);
+                });
+            } catch { }
+
+            // sửa link "Quay lại" luôn kèm embed=1
+            try {
+                var back = document.querySelector('a.btn-back[href]');
+                if (back) {
+                    var u2 = new URL(back.getAttribute('href'), location.href);
+                    if (u2.origin === location.origin) {
+                        u2.searchParams.set('embed', '1');
+                        back.setAttribute('href', u2.pathname + u2.search + u2.hash);
+                    }
+                }
+            } catch { }
+        }
+
+        if (!isEmbed) return;
+
+        function measure() {
+            try {
+                var d = document, b = d.body, e = d.documentElement;
+                var h = Math.max(b.scrollHeight || 0, e.scrollHeight || 0, b.offsetHeight || 0, e.offsetHeight || 0);
+                if (!h || h < 350) h = 350;
+                window.parent.postMessage({ type: 'haf-embed-height', height: h }, TARGET);
+            } catch (_) { }
+        }
+
+        document.addEventListener('DOMContentLoaded', function () { setTimeout(measure, 0); });
+        window.addEventListener('load', function () { setTimeout(measure, 20); });
+        if (document.fonts && document.fonts.ready) { document.fonts.ready.then(function () { setTimeout(measure, 20); }); }
+
+        var ro = (typeof ResizeObserver !== 'undefined') ? new ResizeObserver(function () { measure(); }) : null;
+        if (ro) { ro.observe(document.documentElement); ro.observe(document.body); }
+
+        setTimeout(measure, 200);
+        setTimeout(measure, 600);
+        setTimeout(measure, 1200);
+    })();
+</script>
+
 <!-- Dọn text-node "ResizeObserver…" nếu bị rớt ra DOM -->
 <script>
     (function () {
@@ -448,5 +519,6 @@
         }, 200);
     })();
 </script>
+
 </body>
 </html>

@@ -1,4 +1,4 @@
-﻿<%@ Page Language="C#" AutoEventWireup="true" CodeBehind="OrderDetail.aspx.cs" Inherits="HAFoodWeb.OrderDetail" Async="true" %>
+<%@ Page Language="C#" AutoEventWireup="true" CodeBehind="OrderDetail.aspx.cs" Inherits="HAFoodWeb.OrderDetail" Async="true" %>
 
 <!DOCTYPE html>
 <html lang="vi">
@@ -11,6 +11,9 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet" />
 
   <style>
+    html, body { width:100%; max-width:100%; overflow-x:hidden; }
+    body{ word-break:break-word; overflow-wrap:anywhere; margin:0; }
+
     body {
       font-family: 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
       background: radial-gradient(circle at top left, #ffe8cc 0, #f8f9fa 40%, #e9ecef 100%);
@@ -136,7 +139,13 @@
 
   <% if ("1".Equals(Request["embed"])) { %>
     <style>
-      html, body { height:auto; overflow: visible !important; background:#ffffff !important; background-image:none !important; min-height:auto !important; }
+      html, body {
+        height:auto !important;
+        min-height:auto !important;
+        overflow: visible !important;
+        background:#ffffff !important;
+        background-image:none !important;
+      }
     </style>
   <% } %>
 </head>
@@ -434,22 +443,24 @@
       }
 
       async function decideOrderReviewUI() {
-          const canReview = (document.getElementById('<%= hCanReview.ClientID %>').value === '1');
-        const btn = document.getElementById('btnOpenOrderReview');
-        const disabled = document.getElementById('orderReviewDisabled');
-        const already = document.getElementById('orderReviewAlready');
+          const canReviewEl = document.getElementById('<%= hCanReview.ClientID %>');
+          const canReview = (canReviewEl && canReviewEl.value === '1');
 
-        [btn, disabled, already].forEach(x => x && x.classList.add('d-none'));
+          const btn = document.getElementById('btnOpenOrderReview');
+          const disabled = document.getElementById('orderReviewDisabled');
+          const already = document.getElementById('orderReviewAlready');
 
-        if (!canReview) { disabled.classList.remove('d-none'); return; }
+          [btn, disabled, already].forEach(x => x && x.classList.add('d-none'));
 
-        try {
-            const API_BASE = (window.__API_BASE || '').replace(/\/+$/, '');
-            const token = window.__AUTH_TOKEN || '';
-            const pid = parseInt(document.getElementById('<%= hFirstProductId.ClientID %>').value || '0', 10);
-          const vid = parseInt(document.getElementById('<%= hFirstVariantId.ClientID %>').value || '0', 10);
+          if (!canReview) { if (disabled) disabled.classList.remove('d-none'); return; }
 
-              if (!API_BASE || !token || !pid) { btn.classList.remove('d-none'); return; }
+          try {
+              const API_BASE = (window.__API_BASE || '').replace(/\/+$/, '');
+              const token = window.__AUTH_TOKEN || '';
+              const pid = parseInt((document.getElementById('<%= hFirstProductId.ClientID %>')?.value || '0'), 10);
+              const vid = parseInt((document.getElementById('<%= hFirstVariantId.ClientID %>')?.value || '0'), 10);
+
+              if (!API_BASE || !token || !pid) { if (btn) btn.classList.remove('d-none'); return; }
 
               let url = `${API_BASE}/api/products/${pid}/reviews/eligibility`;
               if (vid > 0) url += `?variantId=${vid}`;
@@ -460,227 +471,278 @@
                   credentials: 'include'
               });
 
-              if (!resp.ok) { btn.classList.remove('d-none'); return; }
+              if (!resp.ok) { if (btn) btn.classList.remove('d-none'); return; }
 
               const data = await resp.json();
               const alreadyReviewed = !!(data.already_Reviewed || data.Already_Reviewed);
-              if (alreadyReviewed) { already.classList.remove('d-none'); } else { btn.classList.remove('d-none'); }
+              if (alreadyReviewed) { if (already) already.classList.remove('d-none'); }
+              else { if (btn) btn.classList.remove('d-none'); }
           } catch (e) {
               console.warn('eligibility error', e);
-              btn.classList.remove('d-none');
+              if (btn) btn.classList.remove('d-none');
           }
       }
 
       // ✅ Chỉ hiện nút hủy khi status=0; còn lại ẩn hoàn toàn
       function decideCancelUI() {
           const status = parseInt(document.getElementById('<%= hStatus.ClientID %>').value || '0', 10);
-      const canCancel = (document.getElementById('<%= hCanCancel.ClientID %>').value === '1');
-      const btn = document.getElementById('btnCancelOrder');
-      if (!btn) return;
-
-      if (status === 0 && canCancel) btn.classList.remove('d-none');
-      else btn.classList.add('d-none');
-    }
-
-    // ✅ Swagger: POST /api/orders/{id}/status, body là số 4
-    async function callCancelOrderApi(orderId) {
-      const API_BASE = (window.__API_BASE || '').replace(/\/+$/, '');
-      const token = window.__AUTH_TOKEN || '';
-      if (!API_BASE) throw new Error('Thiếu cấu hình API');
-      if (!token) throw new Error('Vui lòng đăng nhập để hủy đơn');
-
-      const resp = await fetch(`${API_BASE}/api/orders/${orderId}/status`, {
-        method: 'POST',
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ' + token
-        },
-        credentials: 'include',
-        body: JSON.stringify(4)
-      });
-
-      let data = null; try { data = await resp.json(); } catch {}
-      if (resp.status === 401 || resp.status === 403) throw new Error('Vui lòng đăng nhập để hủy đơn');
-      if (!resp.ok) throw new Error((data && (data.message || data.detail)) || 'Không thể hủy đơn, vui lòng thử lại.');
-      return data;
-    }
-
-    document.addEventListener('DOMContentLoaded', function () {
-      setStatusPill(document.getElementById('<%= hStatus.ClientID %>').value || '0');
-
-      setRatingUI(5);
-      document.getElementById('rvOrderCode').textContent = document.getElementById('<%= hOrderCode.ClientID %>').value || '';
-      document.getElementById('cnOrderCode').textContent = document.getElementById('<%= hOrderCode.ClientID %>').value || '';
-
-      // Cancel modal
-      let cancelModalInstance = null;
-      document.getElementById('btnCancelOrder')?.addEventListener('click', function () {
-        const el = document.getElementById('cancelModal');
-        if (!cancelModalInstance) cancelModalInstance = new bootstrap.Modal(el);
-        cancelModalInstance.show();
-      });
-
-      // Confirm cancel
-      document.getElementById('btnConfirmCancelOrder')?.addEventListener('click', async function () {
-        const btn = document.getElementById('btnConfirmCancelOrder');
-        const oldHtml = btn.innerHTML;
-
-        try {
-          const status = parseInt(document.getElementById('<%= hStatus.ClientID %>').value || '0', 10);
           const canCancel = (document.getElementById('<%= hCanCancel.ClientID %>').value === '1');
-          if (!(canCancel && status === 0)) { showToast('Đơn hàng không đủ điều kiện để hủy.', true); return; }
+          const btn = document.getElementById('btnCancelOrder');
+          if (!btn) return;
 
-          const orderId = parseInt(document.getElementById('<%= hOrderId.ClientID %>').value || '0', 10);
-          if (!orderId) { showToast('Thiếu dữ liệu đơn hàng', true); return; }
+          if (status === 0 && canCancel) btn.classList.remove('d-none');
+          else btn.classList.add('d-none');
+      }
 
-          btn.disabled = true;
-          btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Đang hủy...';
+      // ✅ Swagger: POST /api/orders/{id}/status, body là số 4
+      async function callCancelOrderApi(orderId) {
+        const API_BASE = (window.__API_BASE || '').replace(/\/+$/, '');
+        const token = window.__AUTH_TOKEN || '';
+        if (!API_BASE) throw new Error('Thiếu cấu hình API');
+        if (!token) throw new Error('Vui lòng đăng nhập để hủy đơn');
 
-          await callCancelOrderApi(orderId);
+        const resp = await fetch(`${API_BASE}/api/orders/${orderId}/status`, {
+          method: 'POST',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + token
+          },
+          credentials: 'include',
+          body: JSON.stringify(4)
+        });
 
-          document.getElementById('<%= hStatus.ClientID %>').value = '4';
-          document.getElementById('<%= hCanCancel.ClientID %>').value = '0';
-          setStatusPill(4);
-          decideCancelUI();
+        let data = null; try { data = await resp.json(); } catch {}
+        if (resp.status === 401 || resp.status === 403) throw new Error('Vui lòng đăng nhập để hủy đơn');
+        if (!resp.ok) throw new Error((data && (data.message || data.detail)) || 'Không thể hủy đơn, vui lòng thử lại.');
+        return data;
+      }
 
-          showToast('Đã hủy đơn hàng.');
-          try { bootstrap.Modal.getInstance(document.getElementById('cancelModal'))?.hide(); } catch {}
+      document.addEventListener('DOMContentLoaded', function () {
+        setStatusPill(document.getElementById('<%= hStatus.ClientID %>').value || '0');
 
-          btn.disabled = false;
-          btn.innerHTML = oldHtml;
-        } catch (err) {
-          console.error(err);
-          showToast((err && err.message) ? err.message : 'Có lỗi xảy ra, vui lòng thử lại.', true);
-          btn.disabled = false;
-          btn.innerHTML = oldHtml;
-        }
-      });
+        setRatingUI(5);
+        const oc = document.getElementById('<%= hOrderCode.ClientID %>')?.value || '';
+        const rv = document.getElementById('rvOrderCode'); if (rv) rv.textContent = oc;
+        const cn = document.getElementById('cnOrderCode'); if (cn) cn.textContent = oc;
 
-      // Review modal
-      let reviewModalInstance = null;
-      document.getElementById('btnOpenOrderReview')?.addEventListener('click', function () {
-        const el = document.getElementById('reviewModal');
-        if (!reviewModalInstance) reviewModalInstance = new bootstrap.Modal(el);
-        reviewModalInstance.show();
-      });
+        // Cancel modal
+        let cancelModalInstance = null;
+        document.getElementById('btnCancelOrder')?.addEventListener('click', function () {
+          const el = document.getElementById('cancelModal');
+          if (!cancelModalInstance) cancelModalInstance = new bootstrap.Modal(el);
+          cancelModalInstance.show();
+        });
 
-      // Submit review
-      document.getElementById('btnSubmitReview')?.addEventListener('click', async function () {
-        try {
-          var API_BASE = (window.__API_BASE || '').replace(/\/+$/, '');
-          var auth = window.__AUTH_TOKEN || '';
-          if (!API_BASE) { showToast('Thiếu cấu hình API', true); return; }
-          if (!auth) { showToast('Vui lòng đăng nhập để gửi đánh giá', true); return; }
+        // Confirm cancel
+        document.getElementById('btnConfirmCancelOrder')?.addEventListener('click', async function () {
+          const btn = document.getElementById('btnConfirmCancelOrder');
+          const oldHtml = btn.innerHTML;
 
-          var rating = parseInt((document.getElementById('reviewRatingValue') || {}).value || '0', 10);
-          var title = (document.getElementById('reviewTitleInput') || {}).value || '';
-          var content = (document.getElementById('reviewContentInput') || {}).value || '';
-          var filesEl = document.getElementById('reviewImagesInput');
-          var files = (filesEl && filesEl.files) ? filesEl.files : null;
+          try {
+            const status = parseInt(document.getElementById('<%= hStatus.ClientID %>').value || '0', 10);
+            const canCancel = (document.getElementById('<%= hCanCancel.ClientID %>').value === '1');
+            if (!(canCancel && status === 0)) { showToast('Đơn hàng không đủ điều kiện để hủy.', true); return; }
 
-          if (!rating || rating < 1 || rating > 5) { showToast('Vui lòng chọn số sao đánh giá', true); return; }
+            const orderId = parseInt(document.getElementById('<%= hOrderId.ClientID %>').value || '0', 10);
+            if (!orderId) { showToast('Thiếu dữ liệu đơn hàng', true); return; }
 
-          var orderId = parseInt((document.getElementById('<%= hOrderId.ClientID %>').value || '0'), 10);
-          var productId = parseInt((document.getElementById('<%= hFirstProductId.ClientID %>').value || '0'), 10);
-          var variantId = parseInt((document.getElementById('<%= hFirstVariantId.ClientID %>').value || '0'), 10);
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Đang hủy...';
 
-          if (!orderId || !productId) { showToast('Thiếu dữ liệu đơn hàng/sản phẩm', true); return; }
+            await callCancelOrderApi(orderId);
 
-          var formData = new FormData();
-          formData.append('Product_Id', String(productId));
-          if (variantId > 0) formData.append('Variant_Id', String(variantId));
-          formData.append('Order_Id', String(orderId));
-          formData.append('Rating', String(rating));
-          if (title.trim()) formData.append('Title', title.trim());
-          if (content.trim()) formData.append('Content', content.trim());
+            document.getElementById('<%= hStatus.ClientID %>').value = '4';
+            document.getElementById('<%= hCanCancel.ClientID %>').value = '0';
+            setStatusPill(4);
+            decideCancelUI();
 
-          var hasImages = false;
-          if (files && files.length) {
-            for (var i = 0; i < files.length; i++) {
-              var f = files[i]; if (!f) continue;
-              if (f.size > 2 * 1024 * 1024) continue;
-              hasImages = true; formData.append('Images', f);
+            showToast('Đã hủy đơn hàng.');
+            try { bootstrap.Modal.getInstance(document.getElementById('cancelModal'))?.hide(); } catch {}
+
+            btn.disabled = false;
+            btn.innerHTML = oldHtml;
+          } catch (err) {
+            console.error(err);
+            showToast((err && err.message) ? err.message : 'Có lỗi xảy ra, vui lòng thử lại.', true);
+            btn.disabled = false;
+            btn.innerHTML = oldHtml;
+          }
+        });
+
+        // Review modal
+        let reviewModalInstance = null;
+        document.getElementById('btnOpenOrderReview')?.addEventListener('click', function () {
+          const el = document.getElementById('reviewModal');
+          if (!reviewModalInstance) reviewModalInstance = new bootstrap.Modal(el);
+          reviewModalInstance.show();
+        });
+
+        // Click stars
+        document.getElementById('reviewRatingStars')?.addEventListener('click', function(e){
+          var t = e.target;
+          if (!t || !t.getAttribute) return;
+          var r = parseInt(t.getAttribute('data-rating') || '0', 10);
+          if (r >= 1 && r <= 5) setRatingUI(r);
+        });
+
+        // Submit review
+        document.getElementById('btnSubmitReview')?.addEventListener('click', async function () {
+          try {
+            var API_BASE = (window.__API_BASE || '').replace(/\/+$/, '');
+            var auth = window.__AUTH_TOKEN || '';
+            if (!API_BASE) { showToast('Thiếu cấu hình API', true); return; }
+            if (!auth) { showToast('Vui lòng đăng nhập để gửi đánh giá', true); return; }
+
+            var rating = parseInt((document.getElementById('reviewRatingValue') || {}).value || '0', 10);
+            var title = (document.getElementById('reviewTitleInput') || {}).value || '';
+            var content = (document.getElementById('reviewContentInput') || {}).value || '';
+            var filesEl = document.getElementById('reviewImagesInput');
+            var files = (filesEl && filesEl.files) ? filesEl.files : null;
+
+            if (!rating || rating < 1 || rating > 5) { showToast('Vui lòng chọn số sao đánh giá', true); return; }
+
+            var orderId = parseInt((document.getElementById('<%= hOrderId.ClientID %>').value || '0'), 10);
+            var productId = parseInt((document.getElementById('<%= hFirstProductId.ClientID %>').value || '0'), 10);
+            var variantId = parseInt((document.getElementById('<%= hFirstVariantId.ClientID %>').value || '0'), 10);
+
+            if (!orderId || !productId) { showToast('Thiếu dữ liệu đơn hàng/sản phẩm', true); return; }
+
+            var formData = new FormData();
+            formData.append('Product_Id', String(productId));
+            if (variantId > 0) formData.append('Variant_Id', String(variantId));
+            formData.append('Order_Id', String(orderId));
+            formData.append('Rating', String(rating));
+            if (title.trim()) formData.append('Title', title.trim());
+            if (content.trim()) formData.append('Content', content.trim());
+
+            var hasImages = false;
+            if (files && files.length) {
+              for (var i = 0; i < files.length; i++) {
+                var f = files[i]; if (!f) continue;
+                if (f.size > 2 * 1024 * 1024) continue;
+                hasImages = true; formData.append('Images', f);
+              }
             }
+            formData.append('Has_Image', hasImages ? 'true' : 'false');
+
+            var resp = await fetch(API_BASE + '/api/reviews', {
+              method: 'POST',
+              headers: { 'Accept': 'application/json', 'Authorization': 'Bearer ' + auth },
+              credentials: 'include',
+              body: formData
+            });
+
+            var data = null; try { data = await resp.json(); } catch {}
+            if (resp.status === 401 || resp.status === 403) { showToast('Vui lòng đăng nhập để gửi đánh giá', true); return; }
+            if (!resp.ok || (data && data.success === false)) {
+              showToast((data && (data.message || data.detail)) || 'Không thể gửi đánh giá, vui lòng thử lại.', true);
+              return;
+            }
+
+            showToast('Đã gửi đánh giá, chờ duyệt.');
+            (document.getElementById('reviewTitleInput') || {}).value = '';
+            (document.getElementById('reviewContentInput') || {}).value = '';
+            if (filesEl) filesEl.value = '';
+            setRatingUI(5);
+
+            try { bootstrap.Modal.getInstance(document.getElementById('reviewModal'))?.hide(); } catch {}
+
+            document.getElementById('btnOpenOrderReview')?.classList.add('d-none');
+            document.getElementById('orderReviewAlready')?.classList.remove('d-none');
+          } catch (err) {
+            console.error(err);
+            showToast('Có lỗi xảy ra, vui lòng thử lại.', true);
           }
-          formData.append('Has_Image', hasImages ? 'true' : 'false');
+        });
 
-          var resp = await fetch(API_BASE + '/api/reviews', {
-            method: 'POST',
-            headers: { 'Accept': 'application/json', 'Authorization': 'Bearer ' + auth },
-            credentials: 'include',
-            body: formData
-          });
+        decideOrderReviewUI();
+        decideCancelUI();
 
-          var data = null; try { data = await resp.json(); } catch {}
-          if (resp.status === 401 || resp.status === 403) { showToast('Vui lòng đăng nhập để gửi đánh giá', true); return; }
-          if (!resp.ok || (data && data.success === false)) {
-            showToast((data && (data.message || data.detail)) || 'Không thể gửi đánh giá, vui lòng thử lại.', true);
-            return;
+        // ===== embed helpers =====
+        var isEmbed = /[?&]embed=1\b/.test(location.search);
+
+        // back link khi embed
+        var backLink = document.getElementById('<%= lnkBack.ClientID %>');
+        if (isEmbed && backLink) {
+          try {
+            var u = new URL(backLink.getAttribute('href') || backLink.href, location.href);
+            u.searchParams.set('embed', '1');
+            backLink.setAttribute('href', u.pathname + u.search + u.hash);
+          } catch (e) {
+            var href = backLink.getAttribute('href') || backLink.href;
+            backLink.setAttribute('href', href + (href.indexOf('?') >= 0 ? '&' : '?') + 'embed=1');
           }
+        }
 
-          showToast('Đã gửi đánh giá, chờ duyệt.');
-          (document.getElementById('reviewTitleInput') || {}).value = '';
-          (document.getElementById('reviewContentInput') || {}).value = '';
-          if (filesEl) filesEl.value = '';
-          setRatingUI(5);
-
-          try { bootstrap.Modal.getInstance(document.getElementById('reviewModal'))?.hide(); } catch {}
-
-          document.getElementById('btnOpenOrderReview')?.classList.add('d-none');
-          document.getElementById('orderReviewAlready')?.classList.remove('d-none');
-        } catch (err) {
-          console.error(err);
-          showToast('Có lỗi xảy ra, vui lòng thử lại.', true);
+        // gắn embed=1 cho mọi link nội bộ
+        if (isEmbed) {
+          try {
+            document.querySelectorAll('a[href]').forEach(function(a){
+              var href = a.getAttribute('href'); if (!href) return;
+              if (href.startsWith('#') || href.startsWith('javascript:')) return;
+              var u = new URL(href, location.href);
+              if (u.origin !== location.origin) return;
+              u.searchParams.set('embed','1');
+              a.setAttribute('href', u.pathname + u.search + u.hash);
+            });
+          } catch(e){}
         }
       });
-
-      decideOrderReviewUI();
-      decideCancelUI();
-
-      // back link khi embed
-      var isEmbed = /[?&]embed=1\b/.test(location.search);
-      var backLink = document.getElementById('<%= lnkBack.ClientID %>');
-      if (isEmbed && backLink) {
-          try { var u = new URL(backLink.href, location.origin); u.searchParams.set('embed', '1'); backLink.href = u.pathname + u.search + u.hash; }
-          catch { backLink.href = backLink.href + (backLink.href.indexOf('?') >= 0 ? '&' : '?') + 'embed=1'; }
-      }
-
-      // gắn embed=1 cho mọi link nội bộ
-      if (isEmbed) {
-        try {
-          document.querySelectorAll('a[href]').forEach(function(a){
-            var href = a.getAttribute('href'); if (!href) return;
-            if (href.startsWith('#') || href.startsWith('javascript:')) return;
-            var u = new URL(href, location.href);
-            if (u.origin !== location.origin) return;
-            u.searchParams.set('embed','1');
-            a.setAttribute('href', u.pathname + u.search + u.hash);
-          });
-        } catch{}
-      }
-    });
   </script>
 
-  <%-- Auto-height --%>
+  <!-- Dọn text-node rơi ra DOM -->
+  <script>
+    (function () {
+      try {
+        var nodes = Array.from(document.body.childNodes);
+        nodes.forEach(function (n) {
+          if (n.nodeType === 3 && /ResizeObserver|ro\.observe|measure\(\)/.test(n.nodeValue || '')) n.remove();
+        });
+      } catch (e) { }
+    })();
+  </script>
+
+  <%-- Auto-height (robust) --%>
   <script>
       (function () {
           var isEmbed = /[?&]embed=1\b/.test(location.search) && window.parent && window.parent !== window;
           if (!isEmbed) return;
+
+          var params = new URLSearchParams(location.search);
+          var TARGET = params.get('parentOrigin') || '*';
+
           function measure() {
               try {
                   var d = document, b = d.body, e = d.documentElement;
-                  var h = Math.max(b.scrollHeight || 0, e.scrollHeight || 0, b.offsetHeight || 0, e.offsetHeight || 0);
+                  var h = Math.max(
+                      b.scrollHeight || 0, e.scrollHeight || 0,
+                      b.offsetHeight || 0, e.offsetHeight || 0,
+                      b.clientHeight || 0, e.clientHeight || 0
+                  );
                   if (!h || h < 400) h = 400;
-                  window.parent.postMessage({ type: 'haf-embed-height', height: h }, '*');
+                  window.parent.postMessage({ type: 'haf-embed-height', height: h }, TARGET);
               } catch (_) { }
           }
-          document.addEventListener('DOMContentLoaded', function () { setTimeout(measure, 0); });
-          window.addEventListener('load', function () { setTimeout(measure, 20); });
-          if (document.fonts && document.fonts.ready) { document.fonts.ready.then(function () { setTimeout(measure, 20); }); }
-          var ro = (typeof ResizeObserver !== 'undefined') ? new ResizeObserver(function () { measure(); }) : null;
+
+          function rafMeasure() { try { requestAnimationFrame(measure); } catch (e) { measure(); } }
+
+          document.addEventListener('DOMContentLoaded', function () { setTimeout(rafMeasure, 0); });
+          window.addEventListener('load', function () { setTimeout(rafMeasure, 20); });
+
+          if (document.fonts && document.fonts.ready) {
+              document.fonts.ready.then(function () { setTimeout(rafMeasure, 20); });
+          }
+
+          var ro = (typeof ResizeObserver !== 'undefined') ? new ResizeObserver(function () { rafMeasure(); }) : null;
           if (ro) { ro.observe(document.documentElement); ro.observe(document.body); }
-          setTimeout(measure, 200); setTimeout(measure, 600); setTimeout(measure, 1200);
+
+          var mo = (typeof MutationObserver !== 'undefined') ? new MutationObserver(function () { rafMeasure(); }) : null;
+          if (mo) { mo.observe(document.body, { childList: true, subtree: true, attributes: true, characterData: true }); }
+
+          setTimeout(rafMeasure, 200);
+          setTimeout(rafMeasure, 600);
+          setTimeout(rafMeasure, 1200);
       })();
   </script>
 </body>
