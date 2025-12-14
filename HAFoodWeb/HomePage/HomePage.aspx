@@ -1544,20 +1544,23 @@
                   return r.json();
               })
               .then(list => {
+                  // Chỉ dùng /turns để lấy turnId, KHÔNG đụng vào remainingSpins
                   hasLogin = true;
+
                   var available = (list || []).filter(function (x) {
                       var st = x.status ?? x.Status;
                       return st === 0;
                   });
 
-                  remainingSpins = available.length;
-                  updateSpinTurnsLabel();
+                  if (!available.length) {
+                      throw new Error('Bạn đã sử dụng hết lượt quay.');
+                  }
 
-                  if (!available.length) throw new Error('Bạn đã sử dụng hết lượt quay.');
                   var first = available[0];
                   return first.id ?? first.Id;
               });
       }
+
 
       function callSpinRoll(spinTurnId) {
           return fetch(SPIN_PROXY + '?action=roll&turnId=' + encodeURIComponent(spinTurnId), {
@@ -1670,13 +1673,20 @@
                           + '. Nhập mã này ở bước thanh toán nhé 🎫';
                   }
 
-                  if (remainingSpins != null) {
-                      remainingSpins = Math.max(0, remainingSpins - 1 + (extraSpins || 0));
-                      updateSpinTurnsLabel();
-                  }
+                  // ❌ KHÔNG tự -1/+extraSpins nữa
+                  // if (remainingSpins != null) {
+                  //     remainingSpins = Math.max(0, remainingSpins - 1 + (extraSpins || 0));
+                  //     updateSpinTurnsLabel();
+                  // }
 
                   setSpinMessage(msg || '');
+
+                  // ✅ Hỏi lại server cho chắc số lượt
+                  fetchGamStatus();
+
                   stopWithResult(idx);
+
+                
 
               })
               .catch(function (err) {
@@ -1739,15 +1749,16 @@
                   hasCheckedInToday = true;
                   refreshCheckinUi();
 
-                  // Nếu có tạo thêm lượt quay, refresh lại số lượt
-                  getAvailableSpinTurn().catch(function () { });
+                  // Dùng /status để đồng bộ cả lượt quay & trạng thái checkin
+                  fetchGamStatus();
 
-                  // Không set statusEl success nữa
+                  // Không set statusEl success nữa (ẩn luôn)
                   var statusEl2 = document.getElementById('checkin_status');
                   if (statusEl2) {
                       statusEl2.textContent = '';
                       statusEl2.classList.remove('text-success', 'text-danger');
                   }
+
               })
               .catch(err => {
                   console.error('checkin error', err);
