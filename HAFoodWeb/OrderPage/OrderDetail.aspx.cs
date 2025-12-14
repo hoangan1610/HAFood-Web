@@ -15,8 +15,8 @@ namespace HAFoodWeb
     {
         private readonly IOrderService _orderService = new OrderService();
 
-        // Cho phép dùng ở .aspx để biết đơn đủ điều kiện review hay chưa
         public bool CanReview { get; private set; } = false;
+        public bool CanCancel { get; private set; } = false;
 
         protected async void Page_Load(object sender, EventArgs e)
         {
@@ -25,7 +25,6 @@ namespace HAFoodWeb
                 Response.ContentEncoding = Encoding.UTF8;
                 Response.Charset = "utf-8";
 
-                // nhận ?code= hoặc ?id=
                 var raw = Request.QueryString["code"];
                 if (string.IsNullOrWhiteSpace(raw))
                     raw = Request.QueryString["id"];
@@ -65,7 +64,7 @@ namespace HAFoodWeb
                 litShipAddress.InnerText = Decode(h.ship_Full_Address ?? "");
                 litNote.InnerText = Decode(h.note ?? "");
 
-                // Thanh toán
+                // Payment
                 string paymentText = "";
                 if (!string.IsNullOrWhiteSpace(h.payment_Provider))
                 {
@@ -100,12 +99,20 @@ namespace HAFoodWeb
                 pnlPayment.Visible = !string.IsNullOrWhiteSpace(paymentText);
                 if (pnlPayment.Visible) litPayment.InnerText = paymentText;
 
-                // Trạng thái đơn
+                // Status text + css
                 litStatus.InnerText = GetStatusText(h.status);
+                litStatus.Attributes["class"] = "order-status-pill " + GetStatusCssClass(h.status);
 
-                // Quyết định quyền review theo đơn
+                // Review: chỉ khi đã giao
                 CanReview = (h.status == 3);
                 hCanReview.Value = CanReview ? "1" : "0";
+
+                // Cancel: chỉ khi đã được tạo (status=0)
+                CanCancel = (h.status == 0);
+                hCanCancel.Value = CanCancel ? "1" : "0";
+
+                // Hidden for JS
+                hStatus.Value = h.status.ToString();
                 hOrderId.Value = (h.id > 0 ? h.id.ToString() : "0");
 
                 // Items
@@ -115,7 +122,6 @@ namespace HAFoodWeb
                     rpItems.DataBind();
                     pnlItems.Visible = true;
 
-                    // Lưu product/variant đầu tiên để dùng eligibility + gửi review theo ĐƠN
                     var first = detail.items.FirstOrDefault();
                     hFirstProductId.Value = (first?.product_Id ?? 0).ToString();
                     hFirstVariantId.Value = (first?.variant_Id ?? 0).ToString();
@@ -139,7 +145,7 @@ namespace HAFoodWeb
                 pnlHeader.Visible = true;
                 pnlSummary.Visible = true;
 
-                // Luôn hiển thị khung review (nút / chip sẽ do JS quyết định)
+                // Always show review card (JS decides button/chip)
                 pnlOrderReview.Visible = true;
             }
             catch (Exception ex)
@@ -154,13 +160,18 @@ namespace HAFoodWeb
         {
             switch (status)
             {
-                case 0: return "Đã được tạo ";
+                case 0: return "Đã được tạo";
                 case 1: return "Xác nhận";
                 case 2: return "Đang giao";
                 case 3: return "Đã giao";
                 case 4: return "Đã hủy";
                 default: return "Không rõ";
             }
+        }
+
+        private string GetStatusCssClass(int status)
+        {
+            return "status-" + status; // status-0..status-4
         }
     }
 }

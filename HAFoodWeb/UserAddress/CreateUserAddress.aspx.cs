@@ -62,14 +62,7 @@ namespace HAFoodWeb.UserAddress
 
                 if (created != null) Session["selected_address_obj"] = created;
 
-                if (IsEmbed())
-                {
-                    var back = ResolveUrl("~/CartPage/AddressSelect.aspx?refresh=1&t=" + DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
-                    Response.Redirect(back, false);
-                    Context.ApplicationInstance.CompleteRequest();
-                    return;
-                }
-
+                // ✅ FIX: DÙ embed hay không embed đều quay về UserAddressList
                 RedirectWithToast("~/UserAddress/UserAddressList.aspx", "created");
             }
             catch (Exception ex)
@@ -144,11 +137,22 @@ namespace HAFoodWeb.UserAddress
                 ClientScript.RegisterStartupScript(GetType(), key, js, true);
         }
 
+        // ✅ FIX: RedirectWithToast tự thêm embed=1 nếu đang trong iframe
         private void RedirectWithToast(string relativeUrl, string toastKey)
         {
             var url = VirtualPathUtility.ToAbsolute(relativeUrl);
-            // thêm ts để tránh cache URL cũ
-            url += (url.Contains("?") ? "&" : "?") + "toast=" + HttpUtility.UrlEncode(toastKey) + "&ts=" + DateTime.UtcNow.Ticks;
+
+            // thêm toast + ts để tránh cache URL cũ
+            var qs = "toast=" + HttpUtility.UrlEncode(toastKey) + "&ts=" + DateTime.UtcNow.Ticks;
+
+            // ✅ nếu embed thì giữ embed=1 để UI không bị bung ra (và list vẫn chạy trong iframe đúng chuẩn)
+            if (IsEmbed())
+            {
+                qs += "&embed=1";
+            }
+
+            url += (url.Contains("?") ? "&" : "?") + qs;
+
             Response.Redirect(url, false);
             Context.ApplicationInstance.CompleteRequest();
         }

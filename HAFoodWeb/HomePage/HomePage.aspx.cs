@@ -2,7 +2,9 @@
 using HAFoodWeb.Services;
 using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.Threading.Tasks;
+using System.Web;
 using System.Web.UI;
 
 namespace HAFoodWeb.HomePage
@@ -29,6 +31,59 @@ namespace HAFoodWeb.HomePage
                 RegisterAsyncTask(new PageAsyncTask(LoadNewAsync));
                 RegisterAsyncTask(new PageAsyncTask(SendDeviceInfoAsync));
             }
+        }
+
+        /// <summary>
+        /// ✅ FIX ẢNH PRODUCT CARD:
+        /// - Admin thường lưu ảnh dạng path tương đối (vd: "/uploads/..", "uploads/..", "images/..")
+        /// - Khi render ra HomePage (nằm trong /HomePage/), path tương đối rất dễ bị sai.
+        /// - Hàm này chuẩn hoá URL ảnh để luôn load đúng (ưu tiên ApiBaseUrl nếu có cấu hình).
+        /// </summary>
+        protected string ProductImageUrl(object imageUrlObj)
+        {
+            var raw = Convert.ToString(imageUrlObj)?.Trim();
+            if (string.IsNullOrWhiteSpace(raw))
+                return ResolveUrl("~/images/product-default.png");
+
+            // data-uri hoặc absolute url thì giữ nguyên
+            if (raw.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
+                return raw;
+
+            if (Uri.TryCreate(raw, UriKind.Absolute, out var abs))
+                return abs.ToString();
+
+            // "~/..." (app-relative) thì resolve luôn
+            if (raw.StartsWith("~/", StringComparison.Ordinal))
+                return ResolveUrl(raw);
+
+            // Chuẩn hoá thành "/..."
+            var path = raw.StartsWith("/", StringComparison.Ordinal) ? raw : "/" + raw;
+
+            // Nếu là ảnh local của web thì dùng ResolveUrl để hỗ trợ virtual directory
+            if (path.StartsWith("/images/", StringComparison.OrdinalIgnoreCase) ||
+                path.StartsWith("/assets/", StringComparison.OrdinalIgnoreCase) ||
+                path.StartsWith("/uploads/", StringComparison.OrdinalIgnoreCase) ||
+                path.StartsWith("/content/", StringComparison.OrdinalIgnoreCase))
+            {
+                return ResolveUrl("~" + path);
+            }
+
+            // Nếu có ApiBaseUrl thì prefix vào (ảnh sản phẩm thường nằm ở API)
+            var apiBase = (ConfigurationManager.AppSettings["ApiBaseUrl"] ?? "").Trim().TrimEnd('/');
+            if (!string.IsNullOrEmpty(apiBase))
+            {
+                // Tránh mixed-content: nếu page đang https mà apiBase lại http
+                if (Request != null && Request.IsSecureConnection &&
+                    apiBase.StartsWith("http://", StringComparison.OrdinalIgnoreCase))
+                {
+                    apiBase = "https://" + apiBase.Substring("http://".Length);
+                }
+
+                return apiBase + path;
+            }
+
+            // Không có apiBase => fallback về site root
+            return ResolveUrl("~" + path);
         }
 
         private async Task LoadFeaturedCategoriesAsync()

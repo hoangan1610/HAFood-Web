@@ -524,25 +524,25 @@
             <div>Chào bạn, tôi là trợ lý CSKH cho HAFood. Tôi hỗ trợ tra cứu đơn, tìm sản phẩm và giải đáp thắc mắc. Bạn cần gì hôm nay?</div>
             <div class="haf-hint">Bạn có thể đặt câu hỏi bất kỳ về sản phẩm hoặc đơn hàng.</div>
 
-            <!-- Gợi ý nhanh -->
+            <!-- Gợi ý nhanh (đã đổi sang câu chủ động) -->
             <div class="haf-quick-wrap" aria-label="Gợi ý nhanh">
                 <div class="haf-quick-title">Gợi ý câu hỏi</div>
                 <div class="haf-quick-grid" id="hafQuickGrid">
-                    <button type="button" class="haf-quick-btn" data-text="Bạn muốn tìm kiếm sản phẩm có giá trị bao nhiêu?">
+                    <button type="button" class="haf-quick-btn" data-text="Tìm cho tôi các sản phẩm có giá từ 20.000đ đến 100.000đ.">
                         <i class="bi bi-cash-coin" aria-hidden="true"></i>
-                        <span>Bạn muốn tìm kiếm sản phẩm có giá trị bao nhiêu?</span>
+                        <span>Sản phẩm giá 20k - 100k</span>
                     </button>
-                    <button type="button" class="haf-quick-btn" data-text="Bạn có muốn mình gợi ý các sản phẩm bán chạy không?">
+                    <button type="button" class="haf-quick-btn" data-text="Gợi ý cho tôi các sản phẩm bán chạy nhất hiện tại.">
                         <i class="bi bi-stars" aria-hidden="true"></i>
-                        <span>Bạn có muốn mình gợi ý các sản phẩm bán chạy không?</span>
+                        <span>Gợi ý sản phẩm bán chạy</span>
                     </button>
-                    <button type="button" class="haf-quick-btn" data-text="Bạn có muốn kiểm tra đơn hàng không? Nếu có hãy nhập mã đơn để mình kiểm tra nhé.">
+                    <button type="button" class="haf-quick-btn" data-text="Tra cho tôi mã đơn hàng 251212000001.">
                         <i class="bi bi-truck" aria-hidden="true"></i>
-                        <span>Bạn có muốn kiểm tra đơn hàng không? Nếu có hãy nhập mã đơn để mình kiểm tra nhé.</span>
+                        <span>Tra cứu đơn 251212000001</span>
                     </button>
-                    <button type="button" class="haf-quick-btn" data-text="Bạn muốn tìm kiếm sản phẩm nào? Hãy nhập tên giúp mình nhé.">
+                    <button type="button" class="haf-quick-btn" data-text="Tìm cho tôi sản phẩm theo tên: .">
                         <i class="bi bi-search" aria-hidden="true"></i>
-                        <span>Bạn muốn tìm kiếm sản phẩm nào? Hãy nhập tên giúp mình nhé.</span>
+                        <span>Tìm sản phẩm theo tên</span>
                     </button>
                 </div>
             </div>
@@ -714,12 +714,13 @@
             sendText(input.value);
         });
 
-        // Click gợi ý nhanh -> gửi ngay
+        // Click gợi ý nhanh -> đưa text vào ô chat, KHÔNG gửi luôn
         chatBody.addEventListener('click', (e) => {
             const btn = e.target.closest('.haf-quick-btn');
             if (!btn) return;
             const text = btn.getAttribute('data-text') || btn.textContent.trim();
-            sendText(text);
+            input.value = text;
+            input.focus();
         });
     })();
 </script>

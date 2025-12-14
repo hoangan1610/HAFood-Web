@@ -1,7 +1,7 @@
 ﻿<%@ Page Language="C#" AutoEventWireup="true" CodeBehind="ChangePassword.aspx.cs" Inherits="HAFoodWeb.UserInfo.ChangePassword" Async="true" %>
 
 <!DOCTYPE html>
-<html>
+<html lang="vi">
 <head runat="server">
     <title>Thay đổi mật khẩu</title>
 
@@ -9,143 +9,283 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f8f9fa;
-            margin: 0;
-            padding: 0;
-        }
-        .change-container {
-            max-width: 400px;
-            margin: 50px auto;
-            background: white;
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-        }
-        h2 { text-align: center; margin-bottom: 20px; }
-        .form-group { margin-bottom: 15px; }
-        label { display: block; font-weight: bold; margin-bottom: 5px; }
-        input[type="password"] {
-            width: 95%;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-        }
-        .aspNetButton {
-            display: block;
-            width: 60%;
-            padding: 12px;
-            border: none;
-            border-radius: 20px;
-            background-color: #e55a00;
-            color: white;
-            font-size: 16px;
-            cursor: pointer;
-            box-shadow: 0 4px 10px rgba(255, 123, 0, 0.3);
-            transition: background-color 0.3s ease, transform 0.2s;
-            margin: 18px auto 0; 
-        }
-        .aspNetButton:hover:not(:disabled) {
-            background-color: #d14e00;
-            transform: translateY(-2px);
+        :root{
+            --haf-primary:#ff7b32;
+            --haf-border:#e5e7eb;
+            --haf-text-main:#111827;
+            --haf-text-muted:#6b7280;
+            --haf-success:#16a34a;
+            --haf-error:#dc2626;
         }
 
-        /* Toast styles */
-        .toast {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            min-width: 260px;
-            max-width: 320px;
-            padding: 12px 16px;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            opacity: 0;
-            visibility: hidden;
-            transform: translateY(-20px);
-            transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s;
-            z-index: 9999;
-            font-size: 14px;
+        *{ box-sizing:border-box; }
 
-            /* 🔥 chữ trắng & in đậm */
-            color: #fff;
-            font-weight: bold;
+        /* ✅ NỀN TRẮNG */
+        html, body{
+            margin:0;
+            background:#ffffff;
+            color:var(--haf-text-main);
+            font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
         }
-        .toast.show {
-            opacity: 1;
-            visibility: visible;
-            transform: translateY(0);
+
+        body{ padding:22px 14px 28px; }
+
+        .account-page{ width:100%; max-width:980px; margin:0 auto; }
+
+        .page-header{
+            display:flex; align-items:flex-start; justify-content:space-between;
+            gap:12px; margin-bottom:12px;
         }
-        .toast.success {
-            background-color: #28a745; /* xanh lá đậm hơn tí cho hợp màu trắng */
+
+        .btn-back{
+            display:inline-flex; align-items:center; gap:.45rem;
+            border-radius:999px; padding:.45rem 1rem;
+            border:1px solid var(--haf-border);
+            background:#f8f9fa;
+            color:#495057; font-size:.9rem; font-weight:600;
+            text-decoration:none; white-space:nowrap;
+            transition:.12s ease;
         }
-        .toast.error {
-            background-color: #dc3545; /* đỏ đậm cho chữ trắng rõ hơn */
+        .btn-back:hover{ background:#e9ecef; color:#212529; }
+
+        .header-right{
+            text-align:right;
         }
-        .toast i {
-            font-size: 18px;
+        .title-badge{
+            font-size:.75rem; letter-spacing:.08em; text-transform:uppercase; font-weight:800;
+            color:#fd7e14; background:rgba(253,126,20,.08);
+            padding:.26rem .7rem; border-radius:999px;
+            display:inline-flex; align-items:center; gap:.4rem;
+            margin-bottom:.3rem;
+        }
+        .page-title{
+            margin:0;
+            font-size:1.6rem;
+            font-weight:800;
+            color:#212529;
+        }
+        .page-sub{
+            margin:.2rem 0 0;
+            font-size:.92rem;
+            color:var(--haf-text-muted);
+        }
+
+        /* ✅ FRAME NGOÀI */
+        .frame-card{
+            background:#fff;
+            border:1px solid var(--haf-border);
+            border-radius:22px;
+            box-shadow:0 16px 34px rgba(15, 23, 42, 0.12);
+            padding:18px 18px 16px;
+        }
+
+        .form-grid{
+            max-width:520px;
+            margin:6px auto 0;
+        }
+
+        .form-title{
+            text-align:center;
+            font-weight:800;
+            font-size:1.1rem;
+            margin:2px 0 14px;
+        }
+
+        .form-group{ margin-bottom:12px; }
+        label{ display:block; font-weight:700; margin-bottom:6px; font-size:13px; }
+
+        input[type="password"]{
+            width:100%;
+            padding:10px 12px;
+            border:1px solid var(--haf-border);
+            border-radius:12px;
+            outline:none;
+            font-size:14px;
+            transition:border-color .15s, box-shadow .15s, background-color .15s;
+            background:#fff;
+        }
+        input[type="password"]:focus{
+            border-color:rgba(255,123,50,.7);
+            box-shadow:0 0 0 2px rgba(255,123,50,.18);
+            background:#fff7ed;
+        }
+
+        .aspNetButton{
+            display:block;
+            width:100%;
+            padding:12px 14px;
+            border:none;
+            border-radius:999px;
+            background:linear-gradient(135deg, #ff7b32, #e8631d);
+            color:#fff;
+            font-weight:800;
+            font-size:15px;
+            cursor:pointer;
+            box-shadow:0 14px 24px rgba(255,123,50,.28);
+            transition:transform .12s ease, box-shadow .12s ease, filter .12s ease;
+            margin-top:14px;
+        }
+        .aspNetButton:hover{ transform:translateY(-1px); box-shadow:0 18px 30px rgba(255,123,50,.35); }
+        .aspNetButton:active{ transform:translateY(0); }
+
+        /* Toast */
+        .toast{
+            position:fixed;
+            top:16px; right:16px;
+            min-width:260px; max-width:340px;
+            padding:12px 14px;
+            border-radius:14px;
+            display:flex; align-items:center; gap:10px;
+            box-shadow:0 10px 22px rgba(0,0,0,.18);
+            opacity:0; visibility:hidden;
+            transform:translateY(-14px);
+            transition:.22s ease;
+            z-index:9999;
+
+            color:#fff;
+            font-weight:800;
+            font-size:14px;
+        }
+        .toast.show{ opacity:1; visibility:visible; transform:translateY(0); }
+        .toast.success{ background:var(--haf-success); }
+        .toast.error{ background:var(--haf-error); }
+        .toast i{ font-size:18px; }
+
+        @media (max-width: 640px){
+            body{ padding:16px 12px 22px; }
+            .page-header{ flex-direction:column; align-items:stretch; }
+            .header-right{ text-align:left; }
+            .frame-card{ border-radius:18px; padding:14px; }
         }
     </style>
+
+    <%-- embed=1: nền trắng chắc chắn --%>
+    <% if ("1".Equals(Request["embed"])) { %>
+      <style>
+        html, body{
+          background:#ffffff !important;
+          background-image:none !important;
+          overflow:visible !important;
+          min-height:auto !important;
+          height:auto !important;
+        }
+      </style>
+    <% } %>
 
     <script type="text/javascript">
         function showToast(message, type) {
             var toast = document.getElementById('toast');
             var icon = document.getElementById('toastIcon');
             var text = document.getElementById('toastMessage');
-
             if (!toast || !icon || !text) return;
 
-            if (type === 'success') {
-                icon.className = 'fa-solid fa-circle-check';
-            } else if (type === 'error') {
-                icon.className = 'fa-solid fa-circle-xmark';
-            } else {
-                icon.className = 'fa-solid fa-circle-info';
-            }
+            if (type === 'success') icon.className = 'fa-solid fa-circle-check';
+            else if (type === 'error') icon.className = 'fa-solid fa-circle-xmark';
+            else icon.className = 'fa-solid fa-circle-info';
 
-            toast.classList.remove('success', 'error');
-            if (type) {
-                toast.classList.add(type);
-            }
-
-            text.textContent = message;
-
+            toast.classList.remove('success', 'error', 'show');
+            toast.classList.add(type === 'success' ? 'success' : 'error');
+            text.textContent = message || '';
             toast.classList.add('show');
 
-            setTimeout(function () {
-                toast.classList.remove('show');
-            }, 3000);
+            setTimeout(function(){ toast.classList.remove('show'); }, 3000);
         }
     </script>
 </head>
+
 <body>
-    <form id="form1" runat="server">
-        <!-- Toast container -->
-        <div id="toast" class="toast">
-            <i id="toastIcon" class="fa-solid"></i>
-            <span id="toastMessage"></span>
+<form id="form1" runat="server">
+
+    <div id="toast" class="toast">
+        <i id="toastIcon" class="fa-solid"></i>
+        <span id="toastMessage"></span>
+    </div>
+
+    <div class="account-page">
+
+        <div class="page-header">
+            <a class="btn-back" href="<%= ResolveUrl("~/UserInfo/UserProfile.aspx") %>">
+                <i class="fa-solid fa-arrow-left"></i> Quay lại
+            </a>
+
+            <div class="header-right">
+                <div class="title-badge">
+                    <i class="fa-solid fa-shield-halved"></i>
+                    HAFood - Bảo mật tài khoản
+                </div>
+                <h1 class="page-title">Thay đổi mật khẩu</h1>
+                <p class="page-sub">Cập nhật mật khẩu để bảo vệ tài khoản của bạn.</p>
+            </div>
         </div>
 
-        <div class="change-container">
-            <h2>Thay đổi mật khẩu</h2>
+        <div class="frame-card">
+            <div class="form-grid">
+                <div class="form-title">Thông tin mật khẩu</div>
 
-            <div class="form-group">
-                <label for="txtOldPassword">Mật khẩu cũ</label>
-                <asp:TextBox ID="txtOldPassword" runat="server" TextMode="Password" />
+                <div class="form-group">
+                    <label for="txtOldPassword">Mật khẩu cũ</label>
+                    <asp:TextBox ID="txtOldPassword" runat="server" TextMode="Password" />
+                </div>
+
+                <div class="form-group">
+                    <label for="txtNewPassword">Mật khẩu mới</label>
+                    <asp:TextBox ID="txtNewPassword" runat="server" TextMode="Password" />
+                </div>
+
+                <asp:Button ID="btnSubmit" runat="server" Text="Xác nhận thay đổi"
+                    CssClass="aspNetButton" OnClick="btnSubmit_Click" />
             </div>
-
-            <div class="form-group">
-                <label for="txtNewPassword">Mật khẩu mới</label>
-                <asp:TextBox ID="txtNewPassword" runat="server" TextMode="Password" />
-            </div>
-
-            <asp:Button ID="btnSubmit" runat="server" Text="Xác nhận thay đổi" CssClass="aspNetButton" OnClick="btnSubmit_Click" />
         </div>
-    </form>
+
+    </div>
+
+</form>
+
+<%-- ✅ embed=1: rewrite link + auto-height + nghe request resize --%>
+<script>
+    (function () {
+        var isEmbed = /[?&]embed=1\b/.test(location.search) && window.parent && window.parent !== window;
+        if (!isEmbed) return;
+
+        function rewriteLinks() {
+            try {
+                document.querySelectorAll('a[href]').forEach(function (a) {
+                    var href = a.getAttribute('href'); if (!href) return;
+                    if (href.startsWith('#') || href.startsWith('javascript:') || href.startsWith('mailto:') || href.startsWith('tel:')) return;
+                    var u = new URL(href, location.href);
+                    if (u.origin !== location.origin) return;
+                    u.searchParams.set('embed', '1');
+                    a.setAttribute('href', u.pathname + u.search + u.hash);
+                });
+            } catch { }
+        }
+
+        function measure() {
+            try {
+                var d = document, b = d.body, e = d.documentElement;
+                var h = Math.max(b.scrollHeight || 0, e.scrollHeight || 0, b.offsetHeight || 0, e.offsetHeight || 0);
+                if (!h || h < 420) h = 420;
+                window.parent.postMessage({ type: 'haf-embed-height', height: h }, '*');
+            } catch (_) { }
+        }
+
+        window.addEventListener('message', function (ev) {
+            var d = ev.data;
+            if (d && d.type === 'haf-embed-request') measure();
+        });
+
+        document.addEventListener('DOMContentLoaded', function () { rewriteLinks(); setTimeout(measure, 0); });
+        window.addEventListener('load', function () { rewriteLinks(); setTimeout(measure, 20); });
+        if (document.fonts && document.fonts.ready) { document.fonts.ready.then(function () { setTimeout(measure, 20); }); }
+
+        var ro = (typeof ResizeObserver !== 'undefined') ? new ResizeObserver(function () { measure(); }) : null;
+        if (ro) { ro.observe(document.documentElement); ro.observe(document.body); }
+
+        setTimeout(measure, 200); setTimeout(measure, 600); setTimeout(measure, 1200);
+    })();
+</script>
+
 </body>
 </html>
