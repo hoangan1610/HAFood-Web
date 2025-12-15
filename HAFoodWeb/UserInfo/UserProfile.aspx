@@ -38,7 +38,6 @@
 
         .account-page { width: 100%; max-width: 100%; margin: 0 auto; }
 
-        /* header chung cho các page tài khoản – cho sát card hơn */
         .account-page-header { margin-bottom: 8px; }
 
         .page-title {

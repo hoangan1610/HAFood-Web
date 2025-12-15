@@ -1,4 +1,4 @@
-<%@ Page Language="C#" AutoEventWireup="true"
+﻿<%@ Page Language="C#" AutoEventWireup="true"
     CodeBehind="OrderPage.aspx.cs"
     Inherits="HAFoodWeb.OrderPage" Async="true" %>
 
@@ -14,14 +14,13 @@
   <style>
     :root{ --accent:#ff7a45; --border:#e5e7eb; --muted:#6b7280; }
 
-    /* Khóa tràn ngang + bẻ chuỗi */
     html, body { width:100%; max-width:100%; overflow-x:hidden; }
     body{ word-break:break-word; overflow-wrap:anywhere; margin:0; }
 
     body{
         font-family:'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
         min-height:100%;
-        background:#ffffff; /* NỀN TRẮNG */
+        background:#ffffff;
         overflow-x:hidden;
     }
 
@@ -34,20 +33,15 @@
         box-shadow:none;
     }
 
-    .wrap{
-        max-width:900px;
-        margin:0 auto 20px;
-        padding:0 16px 16px;
-        overflow-x:hidden;
-        width:100%;
-    }
     .wrap-inner{
         background:#fff;
         border-radius:1.25rem;
-        box-shadow:0 16px 34px rgba(15, 23, 42, 0.12);
         padding:1.1rem 1.25rem 1.3rem;
-        max-width:100%;
+        max-width:900px;
+        width:calc(100% - 32px);
+        margin:0 auto 20px;
         overflow-x:hidden;
+        box-sizing:border-box;
     }
 
     .mb-0{ margin-bottom:0; } .mb-1{ margin-bottom:0.25rem; } .mb-2{ margin-bottom:0.5rem; }
@@ -73,16 +67,18 @@
     }
     .btn-sm{ font-size:.86rem; }
     .btn-outline-dark{ background:#fff; color:#111; border-color:var(--border); }
-    .btn-outline-dark.active{ background:#212529; color:#fff; box-shadow:0 .3rem 1rem rgba(33,37,41,.35); }
+    .btn-outline-dark.active{ background:#212529; color:#fff; box-shadow:0 .3rem 1rem rgba(15, 23, 42, 0.12); }
     .btn-outline-secondary{ background:rgba(255,255,255,.85); border-color:var(--border); color:#111; }
 
     .filter-bar{
       display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin-bottom:1rem;
       background:rgba(255,255,255,.8); border-radius:999px; padding:.35rem;
-      box-shadow:0 .25rem .75rem rgba(15,23,42,.08); overflow:hidden;
+      box-shadow:0 .25rem .75rem rgba(15, 23, 42, 0.12); overflow:hidden;
     }
     .filter-bar .btn{
-      min-width:120px; border-radius:999px; font-weight:500; border-color:transparent; color:#495057;
+      min-width:120px; border-radius:999px;
+      font-weight:700; /* ✅ CHỮ IN ĐẬM */
+      border-color:transparent; color:#495057;
       background-color:transparent; transition:all 0.2s ease; padding-block:.32rem; padding-inline:.85rem; font-size:.84rem;
     }
     .filter-bar .btn:hover{ background-color:rgba(33,37,41,.08); }
@@ -163,8 +159,7 @@
         <h2 class="page-title mb-0">Đơn hàng của tôi</h2>
     </div>
 
-    <div class="wrap">
-      <div class="wrap-inner">
+    <div class="wrap-inner">
 
         <div class="filter-bar mt-2">
           <asp:Button ID="btnAll" runat="server" CssClass="btn btn-outline-dark btn-sm active" Text="Tất cả" CommandArgument="all" OnClick="btnFilter_Click" />
@@ -252,7 +247,6 @@
           <asp:Button ID="btnNext" runat="server" CssClass="btn btn-outline-secondary btn-sm btn-prevnext" Text="Sau →" OnClick="btnNext_Click" />
         </asp:Panel>
 
-      </div>
     </div>
 
   </form>
@@ -278,7 +272,6 @@
           var params = new URLSearchParams(location.search);
           var TARGET = params.get('parentOrigin') || '*';
 
-          // 1) rewrite tất cả link nội bộ -> luôn kèm embed=1
           if (isEmbed) {
               try {
                   document.querySelectorAll('a[href]').forEach(function (a) {
@@ -292,7 +285,6 @@
               } catch (e) { }
           }
 
-          // 2) auto-height báo về parent
           if (!isEmbed) return;
 
           function measure() {
@@ -325,6 +317,5 @@
           setTimeout(rafMeasure, 1200);
       })();
   </script>
-
 </body>
 </html>

@@ -281,7 +281,6 @@
             if (h) setFrameHeight(h);
         });
 
-        // Chuyển tab: đổi src (luôn kèm embed=1)
         menuItems.forEach(it => {
             it.addEventListener('click', e => {
                 const url = it.dataset && it.dataset.url;
@@ -297,7 +296,6 @@
             }, false);
         });
 
-        // Hỗ trợ ?tab=orders / ?tab=addresses
         try {
             const params = new URLSearchParams(location.search);
             const tab = (params.get('tab') || '').toLowerCase();
