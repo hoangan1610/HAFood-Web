@@ -11,5 +11,6 @@ namespace HAFoodWeb.Services
 
         // Phân trang cho “Mới về” / Load More
         Task<IList<ProductCardVM>> GetRecommendedPageAsync(int page, int pageSize);
+        Task<IList<ProductCardVM>> GetCardsByIdsAsync(IEnumerable<long> productIds, int take);
     }
 }

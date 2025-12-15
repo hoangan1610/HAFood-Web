@@ -658,13 +658,15 @@
         let __cartCount = 0;
 
         window.setCartBadge = function (n) {
-            const b = document.querySelector('[data-cart-badge="true"]');
-            if (!b) return;
             const v = Math.max(0, parseInt(n ?? 0, 10) || 0);
             __cartCount = v;
-            b.textContent = String(v);
-            b.style.display = 'flex';
+
+            document.querySelectorAll('[data-cart-badge="true"]').forEach(b => {
+                b.textContent = String(v);
+                b.style.display = 'flex';
+            });
         };
+
 
         window.getCartBadgeCount = function () {
             return __cartCount;
