@@ -1,4 +1,4 @@
-<%@ Page Language="C#" AutoEventWireup="true"
+﻿<%@ Page Language="C#" AutoEventWireup="true"
     CodeBehind="UserAddressList.aspx.cs"
     Inherits="HAFoodWeb.UserAddress.UserAddressList" Async="true" %>
 
@@ -13,7 +13,6 @@
     <style>
         :root{ --accent:#ff7a45; --border:#e5e7eb; --muted:#6b7280; }
 
-        /* Khóa tràn ngang + bẻ chuỗi dài */
         html, body { width:100%; max-width:100%; overflow-x:hidden; }
         body{ word-break:break-word; overflow-wrap:anywhere; }
 
@@ -21,7 +20,7 @@
             font-family:'Segoe UI',system-ui,-apple-system,BlinkMacSystemFont,sans-serif;
             margin:0;
             min-height:100%;
-            background:#ffffff; /* <-- NỀN TRẮNG */
+            background:#ffffff;
         }
 
         .page-header{
@@ -34,21 +33,18 @@
         }
         body { overflow-x: hidden; }
 
-        .wrap{
-            max-width:900px;
-            margin:0 auto 20px;
-            padding:0 16px 16px;
-            width:100%;
-            overflow-x:hidden;
-        }
         .wrap-inner{
             background:#fff;
             border-radius:1.25rem;
-            box-shadow:0 16px 34px rgba(15, 23, 42, 0.12);
             padding:1.1rem 1.25rem 1.3rem;
             max-width:100%;
             overflow-x:hidden;
+            max-width:900px;
+            margin:0 auto 20px;
+            width:calc(100% - 32px);
+            box-sizing:border-box;
         }
+
         .topbar{ display:flex; align-items:flex-start; gap:10px; padding:4px 0 12px; }
 
         .title-badge{
@@ -108,7 +104,6 @@
         .toast-error{ background:#ef4444 !important; border-color:#dc2626 !important; color:#fff !important; }
         .toast-error .toast-icon{ color:#fff !important; }
 
-        /* PHÂN TRANG – tránh tràn ngang */
         .paging {
             display:flex; justify-content:center; align-items:center; gap:0.5rem;
             margin-top:1.0rem; overflow:hidden; width:100%;
@@ -145,81 +140,79 @@
         <h2 class="page-title">Địa chỉ của tôi</h2>
     </div>
 
-    <div class="wrap">
-        <div class="wrap-inner">
-            <div class="topbar">
-                <a href="CreateUserAddress.aspx" class="add-new">
-                    <span class="btn btn-primary">
-                        <i class="bi bi-plus-circle" style="margin-right:6px"></i>Thêm địa chỉ mới
-                    </span>
-                </a>
+    <!-- ✅ ĐÃ XÓA THẺ <div class="wrap"> ... </div> -->
+    <div class="wrap-inner">
+        <div class="topbar">
+            <a href="CreateUserAddress.aspx" class="add-new">
+                <span class="btn btn-primary">
+                    <i class="bi bi-plus-circle" style="margin-right:6px"></i>Thêm địa chỉ mới
+                </span>
+            </a>
+        </div>
+
+        <asp:PlaceHolder ID="phEmpty" runat="server" Visible="false">
+            <div class="card empty">Người dùng chưa có địa chỉ.</div>
+        </asp:PlaceHolder>
+
+        <asp:Panel ID="pnlList" runat="server">
+            <div class="card">
+                <asp:Repeater ID="rptAddresses" runat="server" OnItemCommand="rptAddresses_ItemCommand">
+                    <ItemTemplate>
+                        <div class="addr-item">
+                            <div>
+                                <div>
+                                    <span class="addr-name"><%# Eval("fullName") %></span>
+                                    <span class="addr-sep">|</span>
+                                    <span class="addr-phone"><%# Eval("phone") %></span>
+                                </div>
+                                <div class="addr-detail"><%# Eval("fullAddress") %></div>
+                                <div class="small-meta">
+                                    Loại:
+                                    <%# (Eval("type") != null && Eval("type").ToString() == "1") ? "Văn phòng" : "Nhà riêng" %>
+                                    <%# string.IsNullOrEmpty((string)Eval("label")) ? "" : " • " + Eval("label") %>
+                                </div>
+                                <asp:PlaceHolder ID="phDefault" runat="server" Visible='<%# Eval("isDefault") != null && (bool)Eval("isDefault") %>'>
+                                    <span class="badge-default">
+                                        <i class="bi bi-star-fill"></i>
+                                        Mặc định
+                                    </span>
+                                </asp:PlaceHolder>
+                            </div>
+
+                            <div class="list-actions">
+                                <a class="btn btn-ghost" href='<%# "UpdateUserAddress.aspx?id=" + Eval("id") %>'>Chỉnh sửa</a>
+                                <asp:LinkButton ID="btnSetDefault" runat="server"
+                                    CssClass="btn"
+                                    CommandName="setDefault"
+                                    CommandArgument='<%# Eval("id") %>' Visible='<%# !(bool)Eval("isDefault") %>'>
+                                    Đặt mặc định
+                                </asp:LinkButton>
+                            </div>
+                        </div>
+                    </ItemTemplate>
+                </asp:Repeater>
             </div>
 
-            <asp:PlaceHolder ID="phEmpty" runat="server" Visible="false">
-                <div class="card empty">Người dùng chưa có địa chỉ.</div>
-            </asp:PlaceHolder>
-
-            <asp:Panel ID="pnlList" runat="server">
-                <div class="card">
-                    <asp:Repeater ID="rptAddresses" runat="server" OnItemCommand="rptAddresses_ItemCommand">
-                        <ItemTemplate>
-                            <div class="addr-item">
-                                <div>
-                                    <div>
-                                        <span class="addr-name"><%# Eval("fullName") %></span>
-                                        <span class="addr-sep">|</span>
-                                        <span class="addr-phone"><%# Eval("phone") %></span>
-                                    </div>
-                                    <div class="addr-detail"><%# Eval("fullAddress") %></div>
-                                    <div class="small-meta">
-                                        Loại:
-                                        <%# (Eval("type") != null && Eval("type").ToString() == "1") ? "Văn phòng" : "Nhà riêng" %>
-                                        <%# string.IsNullOrEmpty((string)Eval("label")) ? "" : " • " + Eval("label") %>
-                                    </div>
-                                    <asp:PlaceHolder ID="phDefault" runat="server" Visible='<%# Eval("isDefault") != null && (bool)Eval("isDefault") %>'>
-                                        <span class="badge-default">
-                                            <i class="bi bi-star-fill"></i>
-                                            Mặc định
-                                        </span>
-                                    </asp:PlaceHolder>
-                                </div>
-
-                                <div class="list-actions">
-                                    <a class="btn btn-ghost" href='<%# "UpdateUserAddress.aspx?id=" + Eval("id") %>'>Chỉnh sửa</a>
-                                    <asp:LinkButton ID="btnSetDefault" runat="server"
-                                        CssClass="btn"
-                                        CommandName="setDefault"
-                                        CommandArgument='<%# Eval("id") %>' Visible='<%# !(bool)Eval("isDefault") %>'>
-                                        Đặt mặc định
-                                    </asp:LinkButton>
-                                </div>
-                            </div>
-                        </ItemTemplate>
-                    </asp:Repeater>
-                </div>
-
-                <!-- Phân trang -->
-                <asp:Panel ID="pnlPagination" runat="server" CssClass="paging" Visible="false">
-                    <asp:Button ID="btnPrev" runat="server"
-                        CssClass="btn btn-outline-secondary btn-sm"
-                        Text="← Trước" OnClick="btnPrev_Click" />
-                    <asp:Repeater ID="rpPaging" runat="server" OnItemCommand="rpPaging_ItemCommand">
-                        <ItemTemplate>
-                            <asp:LinkButton ID="lnkPage" runat="server"
-                                CssClass='<%# (int)Container.DataItem == CurrentPage ? "btn btn-sm btn-warning mx-1" : "btn btn-sm btn-outline-secondary mx-1" %>'
-                                CommandName="ChangePage"
-                                CommandArgument='<%# Container.DataItem %>'
-                                Text='<%# Container.DataItem %>'>
-                            </asp:LinkButton>
-                        </ItemTemplate>
-                    </asp:Repeater>
-                    <asp:Button ID="btnNext" runat="server"
-                        CssClass="btn btn-outline-secondary btn-sm"
-                        Text="Sau →" OnClick="btnNext_Click" />
-                </asp:Panel>
+            <asp:Panel ID="pnlPagination" runat="server" CssClass="paging" Visible="false">
+                <asp:Button ID="btnPrev" runat="server"
+                    CssClass="btn btn-outline-secondary btn-sm"
+                    Text="← Trước" OnClick="btnPrev_Click" />
+                <asp:Repeater ID="rpPaging" runat="server" OnItemCommand="rpPaging_ItemCommand">
+                    <ItemTemplate>
+                        <asp:LinkButton ID="lnkPage" runat="server"
+                            CssClass='<%# (int)Container.DataItem == CurrentPage ? "btn btn-sm btn-warning mx-1" : "btn btn-sm btn-outline-secondary mx-1" %>'
+                            CommandName="ChangePage"
+                            CommandArgument='<%# Container.DataItem %>'
+                            Text='<%# Container.DataItem %>'>
+                        </asp:LinkButton>
+                    </ItemTemplate>
+                </asp:Repeater>
+                <asp:Button ID="btnNext" runat="server"
+                    CssClass="btn btn-outline-secondary btn-sm"
+                    Text="Sau →" OnClick="btnNext_Click" />
             </asp:Panel>
+        </asp:Panel>
 
-        </div>
     </div>
 
     <div class="toast-stack" id="toastStack" aria-live="polite"></div>
@@ -256,28 +249,12 @@
     })();
 </script>
 
-<!-- Dọn text-node rơi ra DOM -->
-<script>
-    (function () {
-        try {
-            var nodes = Array.from(document.body.childNodes);
-            nodes.forEach(function (n) {
-                if (n.nodeType === 3 && /ResizeObserver|ro\.observe|measure\(\)/.test(n.nodeValue || '')) {
-                    n.remove();
-                }
-            });
-        } catch (e) { }
-    })();
-</script>
-
-<!-- ✅ embed=1: rewrite link + auto-height (robust) -->
+<!-- ✅ embed=1: rewrite link + auto-height -->
 <script>
     (function () {
         var isEmbed = /[?&]embed=1\b/.test(location.search) && window.parent && window.parent !== window;
-        var params = new URLSearchParams(location.search);
-        var TARGET = params.get('parentOrigin') || '*';
+        var TARGET = location.origin;
 
-        // 1) rewrite tất cả link nội bộ -> luôn kèm embed=1
         if (isEmbed) {
             try {
                 document.querySelectorAll('a[href]').forEach(function (a) {
@@ -288,40 +265,30 @@
                     u.searchParams.set('embed', '1');
                     a.setAttribute('href', u.pathname + u.search + u.hash);
                 });
-            } catch (e) { }
+            } catch { }
         }
 
-        // 2) auto-height báo về parent
         if (!isEmbed) return;
 
         function measure() {
             try {
                 var d = document, b = d.body, e = d.documentElement;
-                var h = Math.max(
-                    b.scrollHeight || 0, e.scrollHeight || 0,
-                    b.offsetHeight || 0, e.offsetHeight || 0,
-                    b.clientHeight || 0, e.clientHeight || 0
-                );
+                var h = Math.max(b.scrollHeight || 0, e.scrollHeight || 0, b.offsetHeight || 0, e.offsetHeight || 0);
                 if (!h || h < 350) h = 350;
                 window.parent.postMessage({ type: 'haf-embed-height', height: h }, TARGET);
             } catch (_) { }
         }
 
-        function rafMeasure() { try { requestAnimationFrame(measure); } catch { measure(); } }
+        document.addEventListener('DOMContentLoaded', function () { setTimeout(measure, 0); });
+        window.addEventListener('load', function () { setTimeout(measure, 20); });
+        if (document.fonts && document.fonts.ready) { document.fonts.ready.then(function () { setTimeout(measure, 20); }); }
 
-        document.addEventListener('DOMContentLoaded', function () { setTimeout(rafMeasure, 0); });
-        window.addEventListener('load', function () { setTimeout(rafMeasure, 20); });
-        if (document.fonts && document.fonts.ready) { document.fonts.ready.then(function () { setTimeout(rafMeasure, 20); }); }
-
-        var ro = (typeof ResizeObserver !== 'undefined') ? new ResizeObserver(function () { rafMeasure(); }) : null;
+        var ro = (typeof ResizeObserver !== 'undefined') ? new ResizeObserver(function () { measure(); }) : null;
         if (ro) { ro.observe(document.documentElement); ro.observe(document.body); }
 
-        var mo = (typeof MutationObserver !== 'undefined') ? new MutationObserver(function () { rafMeasure(); }) : null;
-        if (mo) { mo.observe(document.body, { childList: true, subtree: true, attributes: true, characterData: true }); }
-
-        setTimeout(rafMeasure, 200);
-        setTimeout(rafMeasure, 600);
-        setTimeout(rafMeasure, 1200);
+        setTimeout(measure, 200);
+        setTimeout(measure, 600);
+        setTimeout(measure, 1200);
     })();
 </script>
 

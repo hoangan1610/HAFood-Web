@@ -1060,7 +1060,7 @@
     var hasLogin = true;
     var hasCheckedInToday = false;
 
-    var linkImg = "<%= ResolveUrl("~/assets/spin/") %>";
+    var linkImg = '<%= ResolveUrl("~/assets/spin/") %>';
 
       var imgContainRota = new Image();
       var imgCenterRota = new Image();
