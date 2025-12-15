@@ -16,8 +16,14 @@
         window.__API_BASE = (document.querySelector('meta[name="api-base"]')?.content || '').replace(/\/+$/, '');
     </script>
 
+    <!-- Bootstrap -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet" />
+
+    <!-- Fonts (giống HomePage) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Playfair+Display:wght@600;700&family=Noto+Serif:wght@400;700&display=swap&subset=latin,vietnamese" rel="stylesheet" />
 
     <style>
         :root{
@@ -26,21 +32,47 @@
             --haf-radius-lg:24px;
             --haf-shadow-subtle:0 10px 30px rgba(15,23,42,.06);
         }
+
+        /* nền chung giống HomePage */
         body{
+            margin:0;
             background:radial-gradient(circle at top,#fff7e6 0,#fffaf3 40%,#ffffff 100%);
+            color:#111827;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
         }
 
+        /* Khung trang nhiệm vụ dạng card lớn */
         .mission-page-wrap{
             max-width:960px;
-            margin:1.5rem auto 3rem;
+            margin:2rem auto 3rem;
+            padding:2.25rem 2rem 2.5rem;
+            background:rgba(255,255,255,.96);
+            border-radius:var(--haf-radius-lg);
+            box-shadow:var(--haf-shadow-subtle);
+        }
+        @media (max-width: 575.98px){
+            .mission-page-wrap{
+                margin:1.25rem auto 2.25rem;
+                padding:1.75rem 1.25rem 2rem;
+            }
+        }
+
+        /* Font serif cho các phần chữ chính – đồng bộ với HomePage */
+        .sec-title,
+        .mission-group-title,
+        .mission-title,
+        .mission-desc,
+        .mission-reward,
+        .mission-meta{
+            font-family:"Noto Serif","Times New Roman",Times,serif;
         }
 
         .sec-title{
             text-align:center;
-            font-family:"Georgia","Times New Roman",Times,serif;
             font-weight:700;
             font-style:italic;
             margin-bottom:.5rem;
+            letter-spacing:.03em;
         }
         .sec-title::after{
             content:"";
@@ -52,31 +84,59 @@
             background:linear-gradient(90deg,var(--haf-primary),var(--haf-accent));
         }
 
+        .mission-subtitle{
+            font-size:.9rem;
+            color:#6b7280;
+            text-align:center;
+            margin-bottom:1.5rem;
+        }
+
+        /* FILTER BAR */
         .mission-filter-bar{
             display:flex;
             flex-wrap:wrap;
             align-items:center;
             justify-content:space-between;
             gap:.75rem;
-            margin-bottom:1rem;
+            margin-bottom:1.25rem;
         }
 
+        .mission-filter-tabs{
+            background:#f3f4f6;
+            border-radius:999px;
+            padding:3px;
+        }
         .mission-filter-tabs .btn{
             border-radius:999px;
+            border:0;
+            font-size:.85rem;
+            padding:.3rem .75rem;
+            font-family:"Noto Serif","Times New Roman",Times,serif;
+            color:#4b5563;
+        }
+        .mission-filter-tabs .btn:not(.active):hover{
+            background:#e5e7eb;
         }
         .mission-filter-tabs .btn.active{
             background:var(--haf-primary);
-            border-color:var(--haf-primary);
             color:#fff;
+            box-shadow:0 0 0 1px rgba(34,197,94,.3);
         }
 
+        #mission_count_label{
+            font-size:.85rem;
+            color:#6b7280;
+        }
+
+        /* GROUP TITLE */
         .mission-group-title{
             font-weight:600;
-            margin:.75rem 0 .35rem;
+            margin:1rem 0 .4rem;
             font-size:.95rem;
             color:#374151;
         }
 
+        /* CARD */
         .mission-card{
             border-radius:16px;
             border:1px solid #e5e7eb;
@@ -88,6 +148,10 @@
             flex-direction:column;
             gap:4px;
         }
+        .mission-card + .mission-card{
+            margin-top:6px;
+        }
+
         .mission-header{
             display:flex;
             align-items:center;
@@ -101,9 +165,11 @@
         }
         .mission-status{
             font-size:.75rem;
-            padding:2px 8px;
+            padding:2px 10px;
             border-radius:999px;
             white-space:nowrap;
+            background:#f3f4f6;
+            color:#4b5563;
         }
         .mission-status.available{
             background:#ecfdf3;
@@ -117,23 +183,31 @@
             background:#f3f4f6;
             color:#4b5563;
         }
+
         .mission-desc{
-            font-size:.85rem;
+            font-size:.86rem;
             color:#4b5563;
         }
+
         .mission-reward{
-            font-size:.85rem;
+            font-size:.86rem;
             color:#16a34a;
             display:flex;
             align-items:center;
             gap:.35rem;
+            margin-top:2px;
         }
+        .mission-reward span:last-child{
+            font-weight:600;
+        }
+
         .mission-meta{
             font-size:.78rem;
             color:#9ca3af;
+            margin-top:2px;
         }
 
-                /* ==== PROGRESS CHO NHIỆM VỤ ==== */
+        /* PROGRESS */
         .mission-progress{
             margin-top:4px;
             height:6px;
@@ -154,6 +228,26 @@
             margin-top:2px;
         }
 
+        /* text rỗng / lỗi */
+        .mission-empty,
+        .mission-error{
+            font-size:.85rem;
+            color:#6b7280;
+            text-align:left;
+        }
+        .mission-error{
+            color:#b91c1c;
+        }
+
+        @media (max-width: 575.98px){
+            .mission-header{
+                align-items:flex-start;
+                flex-direction:column;
+            }
+            .mission-status{
+                align-self:flex-start;
+            }
+        }
     </style>
 </head>
 <body>
@@ -164,24 +258,24 @@
 
         <main class="container mission-page-wrap">
             <h1 class="sec-title">Nhiệm vụ của bạn</h1>
-            <p class="text-center text-muted mb-3">
+            <p class="mission-subtitle">
                 Hoàn thành nhiệm vụ để nhận lượt quay, điểm tích luỹ và nhiều ưu đãi khác.
             </p>
 
             <!-- Filter -->
             <div class="mission-filter-bar">
                 <div class="mission-filter-tabs btn-group btn-group-sm" role="group" aria-label="Lọc nhiệm vụ">
-                    <button type="button" class="btn btn-outline-secondary active" data-status-filter="all">Tất cả</button>
-                    <button type="button" class="btn btn-outline-secondary" data-status-filter="available">Chưa hoàn thành</button>
-                    <button type="button" class="btn btn-outline-secondary" data-status-filter="completed">Đã hoàn thành</button>
-                    <button type="button" class="btn btn-outline-secondary" data-status-filter="maxed">Đã tối đa</button>
+                    <button type="button" class="btn active" data-status-filter="all">Tất cả</button>
+                    <button type="button" class="btn" data-status-filter="available">Chưa hoàn thành</button>
+                    <button type="button" class="btn" data-status-filter="completed">Đã hoàn thành</button>
+                    <button type="button" class="btn" data-status-filter="maxed">Đã tối đa</button>
                 </div>
 
                 <small id="mission_count_label" class="text-muted"></small>
             </div>
 
             <div id="mission_list_full">
-                <div class="text-muted small">Đang tải nhiệm vụ...</div>
+                <div class="mission-empty">Đang tải nhiệm vụ...</div>
             </div>
         </main>
 
@@ -189,7 +283,7 @@
 
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
-        <!-- MISSIONS PAGE JS -->
+        <!-- MISSIONS PAGE JS (giữ nguyên logic, chỉ sửa class text rỗng / lỗi chút xíu) -->
         <script>
             (function () {
                 const API_BASE = (window.__API_BASE || '').replace(/\/+$/, '');
@@ -224,8 +318,8 @@
                     switch (raw) {
                         case 'available': return { text: 'Chưa hoàn thành', className: 'available' };
                         case 'completed': return { text: 'Đã hoàn thành một phần', className: 'completed' };
-                        case 'maxed':     return { text: 'Đã hoàn thành tối đa', className: 'maxed' };
-                        default:          return { text: 'Nhiệm vụ', className: '' };
+                        case 'maxed': return { text: 'Đã hoàn thành tối đa', className: 'maxed' };
+                        default: return { text: 'Nhiệm vụ', className: '' };
                     }
                 }
 
@@ -233,19 +327,18 @@
                     switch (raw) {
                         case 'available': return 0;
                         case 'completed': return 1;
-                        case 'maxed':     return 2;
-                        default:          return 9;
+                        case 'maxed': return 2;
+                        default: return 9;
                     }
                 }
 
                 function renderMissions(filterStatus) {
                     if (!Array.isArray(allMissions) || allMissions.length === 0) {
-                        listEl.innerHTML = '<div class="text-muted small">Hiện chưa có nhiệm vụ nào.</div>';
+                        listEl.innerHTML = '<div class="mission-empty">Hiện chưa có nhiệm vụ nào.</div>';
                         if (countLabel) countLabel.textContent = '';
                         return;
                     }
 
-                    // chuẩn hoá + sort
                     let items = allMissions.map(m => {
                         const raw = getStatusRaw(m);
                         return {
@@ -267,7 +360,7 @@
                     });
 
                     if (items.length === 0) {
-                        listEl.innerHTML = '<div class="text-muted small">Không có nhiệm vụ phù hợp bộ lọc.</div>';
+                        listEl.innerHTML = '<div class="mission-empty">Không có nhiệm vụ phù hợp bộ lọc.</div>';
                         if (countLabel) countLabel.textContent = '';
                         return;
                     }
@@ -276,7 +369,6 @@
                         countLabel.textContent = `Có ${items.length} nhiệm vụ`;
                     }
 
-                    // group theo status để người dùng dễ nhìn
                     const groups = {
                         available: [],
                         completed: [],
@@ -356,22 +448,20 @@
                                 ${progressHtml}
                             `;
 
-
                             listEl.appendChild(card);
                         });
                     });
                 }
 
                 async function loadMissions() {
-                    // chưa login
                     if (!TOKEN) {
                         listEl.innerHTML =
-                            '<div class="text-muted small">Vui lòng đăng nhập để xem nhiệm vụ của bạn.</div>';
+                            '<div class="mission-empty">Vui lòng đăng nhập để xem nhiệm vụ của bạn.</div>';
                         if (countLabel) countLabel.textContent = '';
                         return;
                     }
 
-                    listEl.innerHTML = '<div class="text-muted small">Đang tải nhiệm vụ...</div>';
+                    listEl.innerHTML = '<div class="mission-empty">Đang tải nhiệm vụ...</div>';
                     if (countLabel) countLabel.textContent = '';
 
                     try {
@@ -388,13 +478,13 @@
 
                         if (resp.status === 401) {
                             listEl.innerHTML =
-                                '<div class="text-muted small">Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.</div>';
+                                '<div class="mission-empty">Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.</div>';
                             return;
                         }
 
                         if (!resp.ok) {
                             listEl.innerHTML =
-                                `<div class="text-danger small">Không tải được nhiệm vụ (HTTP ${resp.status}).</div>`;
+                                `<div class="mission-error">Không tải được nhiệm vụ (HTTP ${resp.status}).</div>`;
                             return;
                         }
 
@@ -404,7 +494,7 @@
                     } catch (err) {
                         console.error('load missions error', err);
                         listEl.innerHTML =
-                            '<div class="text-danger small">Có lỗi khi tải nhiệm vụ, vui lòng thử lại.</div>';
+                            '<div class="mission-error">Có lỗi khi tải nhiệm vụ, vui lòng thử lại.</div>';
                     }
                 }
 
