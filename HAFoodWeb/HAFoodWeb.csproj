@@ -181,6 +181,8 @@
     <Content Include="AuthPage\OTPForgotPassword.aspx" />
     <Content Include="AuthPage\Register.aspx" />
     <Content Include="AuthPage\ResetPassword.aspx" />
+    <Content Include="Blog\BlogDetail.aspx" />
+    <Content Include="Blog\BlogList.aspx" />
     <Content Include="CartPage\AddressSelect.aspx" />
     <Content Include="CartPage\CartPage.aspx" />
     <Content Include="CartPage\CartItem.ascx" />
@@ -395,6 +397,20 @@
       <DependentUpon>ResetPassword.aspx</DependentUpon>
     </Compile>
     <Compile Include="BLL\UserBLL.cs" />
+    <Compile Include="Blog\BlogDetail.aspx.cs">
+      <DependentUpon>BlogDetail.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Blog\BlogDetail.aspx.designer.cs">
+      <DependentUpon>BlogDetail.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="Blog\BlogList.aspx.cs">
+      <DependentUpon>BlogList.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Blog\BlogList.aspx.designer.cs">
+      <DependentUpon>BlogList.aspx</DependentUpon>
+    </Compile>
     <Compile Include="CartPage\AddressSelect.aspx.cs">
       <DependentUpon>AddressSelect.aspx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>
@@ -500,6 +516,7 @@
       <SubType>ASPXCodeBehind</SubType>
     </Compile>
     <Compile Include="Models\AddressDto.cs" />
+    <Compile Include="Models\ArticleDtos.cs" />
     <Compile Include="Models\CartHeaderDto.cs" />
     <Compile Include="Models\CartItemDto.cs" />
     <Compile Include="Models\CartRequest.cs" />
@@ -566,6 +583,7 @@
       <DependentUpon>Suggest.ashx</DependentUpon>
     </Compile>
     <Compile Include="Services\AddressService.cs" />
+    <Compile Include="Services\ArticleService.cs" />
     <Compile Include="Services\CartService.cs" />
     <Compile Include="Services\CategoryService.cs" />
     <Compile Include="Services\ChatService.cs" />
@@ -654,6 +672,7 @@
     <Compile Include="UserInfo\UserProfileEdit.aspx.designer.cs">
       <DependentUpon>UserProfileEdit.aspx</DependentUpon>
     </Compile>
+    <Compile Include="Utils\EditorJsRenderer.cs" />
     <Compile Include="ViewSwitcher.ascx.cs">
       <DependentUpon>ViewSwitcher.ascx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>

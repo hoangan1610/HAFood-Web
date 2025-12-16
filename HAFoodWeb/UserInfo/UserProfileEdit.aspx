@@ -1,4 +1,4 @@
-﻿<%@ Page Language="C#" AutoEventWireup="true" CodeBehind="UserProfileEdit.aspx.cs" Inherits="HAFoodWeb.UserProfileEdit" Async="true" %>
+<%@ Page Language="C#" AutoEventWireup="true" CodeBehind="UserProfileEdit.aspx.cs" Inherits="HAFoodWeb.UserProfileEdit" Async="true" %>
 
 <!DOCTYPE html>
 <html lang="vi">

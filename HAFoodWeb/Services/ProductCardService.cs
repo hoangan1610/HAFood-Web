@@ -18,13 +18,11 @@ namespace HAFoodWeb.Services
             _apiBase = (ConfigurationManager.AppSettings["ApiBaseUrl"] ?? "").TrimEnd('/');
         }
 
-        // Dùng cho "Gợi ý" và "Mới về" mặc định (trang 1)
         public async Task<IList<ProductCardVM>> GetRecommendedCardsAsync(int take)
         {
             return await BuildCardsAsync(page: 1, pageSize: take, sort: "updated_at:desc");
         }
 
-        // Dùng cho "Load more" — lấy trang bất kỳ
         public Task<IList<ProductCardVM>> GetRecommendedPageAsync(int page, int pageSize)
         {
             return BuildCardsAsync(page, pageSize, sort: "updated_at:desc");
@@ -36,20 +34,18 @@ namespace HAFoodWeb.Services
         {
             var list = await GetProductListAsync(page, pageSize, sort);
 
-            // Nếu list rỗng (API lỗi), thử fallback ID cấu hình (tùy chọn)
             if (list == null || list.Items == null || list.Items.Count == 0)
             {
                 var fallback = await BuildFromConfiguredIdsAsync(pageSize);
                 if (fallback.Count > 0) return fallback;
-                return new List<ProductCardVM>(); // cuối cùng: trả rỗng, UI không vỡ
+                return new List<ProductCardVM>();
             }
 
-            // gọi detail để lấy ảnh & variants (đã cache chi tiết)
             var tasks = new List<Task<ProductDetailDto>>();
             foreach (var item in list.Items)
                 tasks.Add(GetProductDetailAsync(item.Product_Id));
-            var details = await Task.WhenAll(tasks.ToArray());
 
+            var details = await Task.WhenAll(tasks.ToArray());
             var cards = new List<ProductCardVM>(details.Length);
 
             for (int i = 0; i < details.Length; i++)
@@ -57,42 +53,65 @@ namespace HAFoodWeb.Services
                 var d = details[i];
                 var li = list.Items[i];
 
-                // Ảnh: ưu tiên variant -> ảnh product -> fallback
-                string img = null;
-                foreach (var v in d.Variants)
-                {
-                    if (!string.IsNullOrWhiteSpace(v.Image)) { img = v.Image; break; }
-                }
+                var allVars = d?.Variants ?? new List<VariantDto>();
+                var activeVars = allVars.Where(x => x.Status == 1).ToList();
+                var useVars = activeVars.Count > 0 ? activeVars : allVars;
+
+                // default variant + stock
+                long defaultVar = useVars.FirstOrDefault()?.Id ?? 0;
+                int totalStock = (activeVars.Count > 0 ? activeVars : useVars).Sum(v => v?.Stock ?? 0);
+
+                // card image: ưu tiên image của variant đầu tiên có ảnh, fallback product image
+                string img = useVars.FirstOrDefault(v => !string.IsNullOrWhiteSpace(v.Image))?.Image;
                 if (string.IsNullOrWhiteSpace(img))
                 {
-                    img = (!string.IsNullOrWhiteSpace(d.Image_Product) &&
+                    img = (!string.IsNullOrWhiteSpace(d?.Image_Product) &&
                            d.Image_Product.StartsWith("http", StringComparison.OrdinalIgnoreCase))
                           ? d.Image_Product
                           : "/images/product-default.png";
                 }
 
-                // Options dropdown
-                var opts = new List<VariantOptionVM>(d.Variants.Count);
-                foreach (var v in d.Variants)
+                // options dropdown: dùng useVars (đừng lọc Status==1 lần nữa!)
+                var opts = new List<VariantOptionVM>(useVars.Count);
+                foreach (var v in useVars)
                 {
-                    string name = string.IsNullOrWhiteSpace(v.Name) ? v.Sku : v.Name;
-                    opts.Add(new VariantOptionVM { Id = v.Id, Label = name + " (" + FormatVnd(v.Retail_Price) + ")" });
+                    var nm = string.IsNullOrWhiteSpace(v.Name) ? v.Sku : v.Name;
+                    var vImg = string.IsNullOrWhiteSpace(v.Image) ? "" : v.Image;
+
+                    opts.Add(new VariantOptionVM
+                    {
+                        Id = v.Id,
+                        Name = nm,
+                        Price = v.Retail_Price,
+                        Image = vImg,
+                        Label = nm + " (" + FormatVnd(v.Retail_Price) + ")"
+                    });
                 }
 
-                // Giá min-max (đã có ở list)
-                string priceHtml = (li.Min_Retail_Price == li.Max_Retail_Price)
-                    ? "<span class='price-now'>" + FormatVnd(li.Min_Retail_Price) + "</span>"
-                    : "<span class='price-now'>" + FormatVnd(li.Min_Retail_Price) + " - " + FormatVnd(li.Max_Retail_Price) + "</span>";
+                // Giá min-max (ưu tiên từ list nếu có, fallback tự tính)
+                decimal min = li.Min_Retail_Price;
+                decimal max = li.Max_Retail_Price;
+                if (min == 0 && max == 0 && useVars.Count > 0)
+                {
+                    min = useVars.Min(v => v.Retail_Price);
+                    max = useVars.Max(v => v.Retail_Price);
+                }
+
+                string priceHtml = (min == max)
+                    ? "<span class='price-now'>" + FormatVnd(min) + "</span>"
+                    : "<span class='price-now'>" + FormatVnd(min) + " - " + FormatVnd(max) + "</span>";
 
                 cards.Add(new ProductCardVM
                 {
                     Id = d.Id,
                     Name = d.Name,
                     ImageUrl = img,
-                    MinRetail = li.Min_Retail_Price,
-                    MaxRetail = li.Max_Retail_Price,
+                    MinRetail = min,
+                    MaxRetail = max,
                     PriceRangeHtml = priceHtml,
                     DiscountBadgeHtml = "",
+                    TotalStock = totalStock,
+                    DefaultVariantId = defaultVar,
                     Variants = opts
                 });
             }
@@ -100,41 +119,57 @@ namespace HAFoodWeb.Services
             return cards;
         }
 
-        // Fallback: đọc danh sách ID sản phẩm từ appSettings (tuỳ chọn)
         private async Task<IList<ProductCardVM>> BuildFromConfiguredIdsAsync(int take)
         {
-            var idsRaw = ConfigurationManager.AppSettings["NewArrivalsIds"] ?? ""; // ví dụ: "1,2,3,4"
+            var idsRaw = ConfigurationManager.AppSettings["NewArrivalsIds"] ?? "";
             var tokens = idsRaw.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
             if (tokens.Length == 0) return new List<ProductCardVM>();
 
             var result = new List<ProductCardVM>();
+
             foreach (var s in tokens)
             {
                 if (!long.TryParse(s.Trim(), out var id)) continue;
+
                 var d = await GetProductDetailAsync(id);
                 if (d == null || string.IsNullOrWhiteSpace(d.Name)) continue;
 
-                // Ảnh
-                string img = null;
-                foreach (var v in d.Variants) { if (!string.IsNullOrWhiteSpace(v.Image)) { img = v.Image; break; } }
+                var allVars = d.Variants ?? new List<VariantDto>();
+                var activeVars = allVars.Where(x => x.Status == 1).ToList();
+                var useVars = activeVars.Count > 0 ? activeVars : allVars;
+
+                long defaultVar = useVars.FirstOrDefault()?.Id ?? 0;
+                int totalStock = (activeVars.Count > 0 ? activeVars : useVars).Sum(v => v?.Stock ?? 0);
+
+                string img = useVars.FirstOrDefault(v => !string.IsNullOrWhiteSpace(v.Image))?.Image;
                 if (string.IsNullOrWhiteSpace(img))
                     img = (!string.IsNullOrWhiteSpace(d.Image_Product) && d.Image_Product.StartsWith("http", StringComparison.OrdinalIgnoreCase))
-                        ? d.Image_Product : "/images/product-default.png";
+                        ? d.Image_Product
+                        : "/images/product-default.png";
 
-                // Options + min/max tự tính từ variants
-                var opts = new List<VariantOptionVM>(d.Variants.Count);
-                decimal min = decimal.MaxValue, max = 0;
-                foreach (var v in d.Variants)
+                var opts = new List<VariantOptionVM>(useVars.Count);
+                decimal min = 0, max = 0;
+
+                if (useVars.Count > 0)
                 {
-                    if (v.Retail_Price < min) min = v.Retail_Price;
-                    if (v.Retail_Price > max) max = v.Retail_Price;
+                    min = useVars.Min(v => v.Retail_Price);
+                    max = useVars.Max(v => v.Retail_Price);
 
-                    var name = string.IsNullOrWhiteSpace(v.Name) ? v.Sku : v.Name;
-                    opts.Add(new VariantOptionVM { Id = v.Id, Label = name + " (" + FormatVnd(v.Retail_Price) + ")" });
+                    foreach (var v in useVars)
+                    {
+                        var nm = string.IsNullOrWhiteSpace(v.Name) ? v.Sku : v.Name;
+                        opts.Add(new VariantOptionVM
+                        {
+                            Id = v.Id,
+                            Name = nm,
+                            Price = v.Retail_Price,
+                            Image = string.IsNullOrWhiteSpace(v.Image) ? "" : v.Image,
+                            Label = nm + " (" + FormatVnd(v.Retail_Price) + ")"
+                        });
+                    }
                 }
-                if (min == decimal.MaxValue) min = 0;
 
-                var priceHtml = (min == max || max == 0)
+                string priceHtml = (min == max)
                     ? "<span class='price-now'>" + FormatVnd(min) + "</span>"
                     : "<span class='price-now'>" + FormatVnd(min) + " - " + FormatVnd(max) + "</span>";
 
@@ -147,15 +182,18 @@ namespace HAFoodWeb.Services
                     MaxRetail = max,
                     PriceRangeHtml = priceHtml,
                     DiscountBadgeHtml = "",
+                    TotalStock = totalStock,
+                    DefaultVariantId = defaultVar,
                     Variants = opts
                 });
 
                 if (result.Count >= take) break;
             }
+
             return result;
         }
 
-        // ================== HTTP helpers (có cache qua AppCache) ==================
+        // ================== HTTP helpers ==================
 
         private async Task<PagedResult<ProductListItemDto>> GetProductListAsync(int page, int pageSize, string sort)
         {
@@ -173,6 +211,7 @@ namespace HAFoodWeb.Services
                     PageSize = pageSize,
                     TotalCount = 0
                 };
+
                 return await HttpJson.TryGetJsonAsync(url, fallback);
             }, seconds: 60);
         }
@@ -190,7 +229,78 @@ namespace HAFoodWeb.Services
                     Variants = new List<VariantDto>()
                 };
                 return await HttpJson.TryGetJsonAsync(url, fallback);
-            }, seconds: 300); // 5 phút
+            }, seconds: 300);
+        }
+
+        public async Task<IList<ProductCardVM>> GetCardsByIdsAsync(IEnumerable<long> productIds, int take)
+        {
+            var ids = (productIds ?? Array.Empty<long>())
+                .Where(x => x > 0)
+                .Distinct()
+                .Take(Math.Max(1, take))
+                .ToArray();
+
+            if (ids.Length == 0) return new List<ProductCardVM>();
+
+            var details = await Task.WhenAll(ids.Select(GetProductDetailAsync).ToArray());
+            var cards = new List<ProductCardVM>();
+
+            foreach (var d in details)
+            {
+                if (d == null || d.Id <= 0) continue;
+
+                var all = d.Variants ?? new List<VariantDto>();
+                var active = all.Where(v => v.Status == 1).ToList();
+                var use = active.Count > 0 ? active : all;
+
+                long defaultVar = use.FirstOrDefault()?.Id ?? 0;
+                int totalStock = (active.Count > 0 ? active : use).Sum(v => v?.Stock ?? 0);
+
+                decimal min = 0, max = 0;
+                if (use.Count > 0)
+                {
+                    min = use.Min(v => v.Retail_Price);
+                    max = use.Max(v => v.Retail_Price);
+                }
+
+                string img = use.FirstOrDefault(v => !string.IsNullOrWhiteSpace(v.Image))?.Image;
+                if (string.IsNullOrWhiteSpace(img)) img = d.Image_Product;
+                if (string.IsNullOrWhiteSpace(img)) img = "/images/product-default.png";
+
+                var opts = new List<VariantOptionVM>(use.Count);
+                foreach (var v in use)
+                {
+                    var nm = string.IsNullOrWhiteSpace(v.Name) ? v.Sku : v.Name;
+                    opts.Add(new VariantOptionVM
+                    {
+                        Id = v.Id,
+                        Name = nm,
+                        Price = v.Retail_Price,
+                        Image = string.IsNullOrWhiteSpace(v.Image) ? "" : v.Image,
+                        Label = nm + " (" + FormatVnd(v.Retail_Price) + ")"
+                    });
+                }
+
+                string priceHtml = (min == max)
+                    ? "<span class='price-now'>" + FormatVnd(min) + "</span>"
+                    : "<span class='price-now'>" + FormatVnd(min) + " - " + FormatVnd(max) + "</span>";
+
+                cards.Add(new ProductCardVM
+                {
+                    Id = d.Id,
+                    Name = d.Name,
+                    ImageUrl = img,
+                    MinRetail = min,
+                    MaxRetail = max,
+                    PriceRangeHtml = priceHtml,
+                    DiscountBadgeHtml = "",
+                    TotalStock = totalStock,
+                    DefaultVariantId = defaultVar,
+                    Variants = opts
+                });
+            }
+
+            return cards;
         }
 
         private static string FormatVnd(decimal v)
