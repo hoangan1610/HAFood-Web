@@ -66,7 +66,11 @@ namespace HAFoodWeb.Blog
             }
 
             litEmpty.Text = items.Any() ? "" : "<div class='text-muted py-3'>Chưa có bài viết.</div>";
-            litInfo.Text = $"<span class='small text-muted'>Trang <b>{PageNum}</b>/<b>{totalPages}</b> · {total} bài</span>";
+
+            // Bỏ "Trang 1/1"
+            litInfo.Text = "";
+
+            // Pagination kiểu: 1,2,3 … 6 … 9,10 (khi nhiều trang)
             litPager.Text = BuildPagerHtml(PageNum, totalPages, Q);
         }
 
@@ -85,41 +89,61 @@ namespace HAFoodWeb.Blog
 
         private string BuildPagerHtml(int page, int totalPages, string q)
         {
-            int start = Math.Max(1, page - 2);
-            int end = Math.Min(totalPages, page + 2);
-
             string U(int p) => BuildUrl(p, q);
 
             var sb = new StringBuilder();
-            sb.Append("<nav aria-label='Blog pagination'><ul class='pagination pagination-sm mb-0'>");
+            sb.Append("<nav class='ha-pager' aria-label='Blog pagination'><ul class='pagination pagination-sm mb-0'>");
 
+            // Prev
             sb.Append(page > 1
-                ? $"<li class='page-item'><a class='page-link' href='{U(page - 1)}'>←</a></li>"
-                : "<li class='page-item disabled'><span class='page-link'>←</span></li>");
+                ? $"<li class='page-item'><a class='page-link' href='{U(page - 1)}' aria-label='Previous'>←</a></li>"
+                : "<li class='page-item disabled'><span class='page-link' aria-label='Previous'>←</span></li>");
 
-            if (start > 1)
+            // Nếu ít trang thì show hết cho dễ
+            if (totalPages <= 10)
             {
-                sb.Append($"<li class='page-item'><a class='page-link' href='{U(1)}'>1</a></li>");
-                if (start > 2) sb.Append("<li class='page-item disabled'><span class='page-link'>…</span></li>");
+                for (int p = 1; p <= totalPages; p++)
+                {
+                    if (p == page)
+                        sb.Append($"<li class='page-item active'><span class='page-link'>{p}</span></li>");
+                    else
+                        sb.Append($"<li class='page-item'><a class='page-link' href='{U(p)}'>{p}</a></li>");
+                }
+            }
+            else
+            {
+                // Nhiều trang: 1,2,3 … current … last-1,last
+                var pages = new System.Collections.Generic.SortedSet<int>();
+
+                // first 3
+                for (int p = 1; p <= 3; p++) pages.Add(p);
+
+                // last 2
+                pages.Add(totalPages - 1);
+                pages.Add(totalPages);
+
+                // current (nếu không nằm trong nhóm đầu/đuôi)
+                if (page > 3 && page < totalPages - 1) pages.Add(page);
+
+                int prev = 0;
+                foreach (var p in pages)
+                {
+                    if (prev != 0 && p - prev > 1)
+                        sb.Append("<li class='page-item disabled'><span class='page-link'>…</span></li>");
+
+                    if (p == page)
+                        sb.Append($"<li class='page-item active'><span class='page-link'>{p}</span></li>");
+                    else
+                        sb.Append($"<li class='page-item'><a class='page-link' href='{U(p)}'>{p}</a></li>");
+
+                    prev = p;
+                }
             }
 
-            for (int p = start; p <= end; p++)
-            {
-                if (p == page)
-                    sb.Append($"<li class='page-item active'><span class='page-link'>{p}</span></li>");
-                else
-                    sb.Append($"<li class='page-item'><a class='page-link' href='{U(p)}'>{p}</a></li>");
-            }
-
-            if (end < totalPages)
-            {
-                if (end < totalPages - 1) sb.Append("<li class='page-item disabled'><span class='page-link'>…</span></li>");
-                sb.Append($"<li class='page-item'><a class='page-link' href='{U(totalPages)}'>{totalPages}</a></li>");
-            }
-
+            // Next
             sb.Append(page < totalPages
-                ? $"<li class='page-item'><a class='page-link' href='{U(page + 1)}'>→</a></li>"
-                : "<li class='page-item disabled'><span class='page-link'>→</span></li>");
+                ? $"<li class='page-item'><a class='page-link' href='{U(page + 1)}' aria-label='Next'>→</a></li>"
+                : "<li class='page-item disabled'><span class='page-link' aria-label='Next'>→</span></li>");
 
             sb.Append("</ul></nav>");
             return sb.ToString();

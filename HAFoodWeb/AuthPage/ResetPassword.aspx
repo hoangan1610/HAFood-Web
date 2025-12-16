@@ -11,11 +11,10 @@
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
 
     <style>
-        :root {
-            --border: #e5e7eb;
-        }
+        :root { --border: #e5e7eb; }
 
         * { box-sizing: border-box; }
 
@@ -29,11 +28,7 @@
             margin: 0;
         }
 
-        .reset-wrapper {
-            width: 100%;
-            max-width: 430px;
-            padding: 16px;
-        }
+        .reset-wrapper { width: 100%; max-width: 430px; padding: 16px; }
 
         .card-reset {
             width: 100%;
@@ -80,24 +75,11 @@
             margin: 0 auto 16px;
         }
 
-        .card-reset h2 {
-            margin: 0;
-            font-size: 22px;
-            color: #222;
-            font-weight: 600;
-        }
+        .card-reset h2 { margin: 0; font-size: 22px; color: #222; font-weight: 600; }
 
-        .reset-subtitle {
-            margin-top: 6px;
-            font-size: 14px;
-            color: #6c757d;
-        }
+        .reset-subtitle { margin-top: 6px; font-size: 14px; color: #6c757d; }
 
-        .form-group {
-            margin-bottom: 14px;
-            position: relative;
-            z-index: 1;
-        }
+        .form-group { margin-bottom: 14px; position: relative; z-index: 1; }
 
         .form-group label {
             display: block;
@@ -123,22 +105,11 @@
             box-shadow: 0 0 0 3px rgba(255, 122, 26, 0.18);
         }
 
-        .password-hint {
-            font-size: 12px;
-            color: #868e96;
-            margin-top: 4px;
-        }
+        .password-hint { font-size: 12px; color: #868e96; margin-top: 4px; }
 
-        .error-label {
-            display: none;
-            font-size: 13px;
-            color: #c0392b;
-            margin-top: 4px;
-        }
+        .error-label { display: none; font-size: 13px; color: #c0392b; margin-top: 4px; }
 
-        #lblSuccess {
-            display: none;
-        }
+        #lblSuccess { display: none; }
 
         .aspNetButton {
             width: 100%;
@@ -173,21 +144,9 @@
             box-shadow: 0 10px 18px rgba(255, 102, 0, 0.3);
         }
 
-        .message {
-            margin-top: 10px;
-            font-size: 14px;
-            margin-bottom: 4px;
-            position: relative;
-            z-index: 1;
-        }
+        .message { margin-top: 10px; font-size: 14px; margin-bottom: 4px; position: relative; z-index: 1; }
 
-        .back-link {
-            position: relative;
-            z-index: 1;
-            margin-top: 10px;
-            font-size: 13px;
-            text-align: center;
-        }
+        .back-link { position: relative; z-index: 1; margin-top: 10px; font-size: 13px; text-align: center; }
 
         .back-link a {
             text-decoration: none;
@@ -195,10 +154,7 @@
             transition: color 0.2s ease, transform 0.2s ease;
         }
 
-        .back-link a:hover {
-            color: #ff6600;
-            transform: translateY(-1px);
-        }
+        .back-link a:hover { color: #ff6600; transform: translateY(-1px); }
 
         /* TOAST CUSTOM */
         .toast-stack{
@@ -210,44 +166,30 @@
             flex-direction:column;
             gap:10px;
         }
-         .toast{
-             width: auto;
-             max-width: min(480px, calc(100vw - 32px)); 
-             border-radius:14px;
-             padding:14px 18px;
-             box-shadow:0 8px 20px rgba(0,0,0,.12);
-             border:1px solid var(--border);
-             background:#fff;
-             color:#111;
-             font-weight:600;
-             font-size:15.5px;
-             display:flex;
-             align-items:flex-start;
-             gap:10px;
-             word-break: break-word;
-             white-space: normal;
-             opacity:0;
-             transform:translateY(-8px);
-             transition:opacity .18s ease, transform .18s ease;
-         }
-        .toast.show{
-            opacity:1;
-            transform:translateY(0);
+        .toast{
+            width: auto;
+            max-width: min(480px, calc(100vw - 32px)); 
+            border-radius:14px;
+            padding:14px 18px;
+            box-shadow:0 8px 20px rgba(0,0,0,.12);
+            border:1px solid var(--border);
+            background:#fff;
+            color:#111;
+            font-weight:600;
+            font-size:15.5px;
+            display:flex;
+            align-items:flex-start;
+            gap:10px;
+            word-break: break-word;
+            white-space: normal;
+            opacity:0;
+            transform:translateY(-8px);
+            transition:opacity .18s ease, transform .18s ease;
         }
-        .toast-success{
-            background:#22c55e !important;
-            border-color:#16a34a !important;
-            color:#fff !important;
-        }
-        .toast-error{
-            background:#ef4444 !important;
-            border-color:#b91c1c !important;
-            color:#fff !important;
-        }
-        .toast-text{
-            display:inline-block;
-            flex:1;
-        }
+        .toast.show{ opacity:1; transform:translateY(0); }
+        .toast-success{ background:#22c55e !important; border-color:#16a34a !important; color:#fff !important; }
+        .toast-error{ background:#ef4444 !important; border-color:#b91c1c !important; color:#fff !important; }
+        .toast-text{ display:inline-block; flex:1; }
         .toast-close{
             cursor:pointer;
             font-size:18px;
@@ -258,9 +200,24 @@
             border:none;
             color:inherit;
         }
-        .toast-close:hover{
-            opacity:1;
+        .toast-close:hover{ opacity:1; }
+
+        /* ✅ Eye toggle */
+        .password-wrapper { position: relative; }
+        .password-wrapper .input-control { padding-right: 44px !important; }
+        .toggle-password {
+            position: absolute;
+            right: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            border: none;
+            background: transparent;
+            padding: 0;
+            color: #6c757d;
+            cursor: pointer;
+            z-index: 2;
         }
+        .toggle-password:hover { color: #ff6600; }
     </style>
 
     <script type="text/javascript">
@@ -311,6 +268,18 @@
                 alert(message);
             }
         }
+
+        function togglePassword(btn) {
+            var targetId = btn.getAttribute('data-target');
+            var input = document.getElementById(targetId);
+            if (!input) return;
+
+            var icon = btn.querySelector('i');
+            var isHidden = (input.type === 'password');
+
+            input.type = isHidden ? 'text' : 'password';
+            if (icon) icon.className = isHidden ? 'fa-regular fa-eye-slash' : 'fa-regular fa-eye';
+        }
     </script>
 </head>
 <body>
@@ -330,14 +299,34 @@
 
                 <div class="form-group">
                     <label for="txtNewPassword">Mật khẩu mới</label>
-                    <asp:TextBox ID="txtNewPassword" runat="server" TextMode="Password" CssClass="input-control" />
+
+                    <div class="password-wrapper">
+                        <asp:TextBox ID="txtNewPassword" runat="server" TextMode="Password" CssClass="input-control" />
+                        <button type="button" class="toggle-password"
+                            data-target="<%= txtNewPassword.ClientID %>"
+                            onclick="togglePassword(this)"
+                            aria-label="Hiện/ẩn mật khẩu">
+                            <i class="fa-regular fa-eye"></i>
+                        </button>
+                    </div>
+
                     <span class="password-hint">Tối thiểu 6–8 ký tự, nên có chữ hoa, chữ thường và số.</span>
                     <asp:Label ID="lblNewPasswordError" runat="server" CssClass="error-label" />
                 </div>
 
                 <div class="form-group">
                     <label for="txtConfirmPassword">Xác nhận mật khẩu mới</label>
-                    <asp:TextBox ID="txtConfirmPassword" runat="server" TextMode="Password" CssClass="input-control" />
+
+                    <div class="password-wrapper">
+                        <asp:TextBox ID="txtConfirmPassword" runat="server" TextMode="Password" CssClass="input-control" />
+                        <button type="button" class="toggle-password"
+                            data-target="<%= txtConfirmPassword.ClientID %>"
+                            onclick="togglePassword(this)"
+                            aria-label="Hiện/ẩn mật khẩu">
+                            <i class="fa-regular fa-eye"></i>
+                        </button>
+                    </div>
+
                     <asp:Label ID="lblConfirmPasswordError" runat="server" CssClass="error-label" />
                 </div>
 
@@ -356,7 +345,6 @@
             </div>
         </div>
 
-        <!-- Toast stack -->
         <div id="toastStack" class="toast-stack"></div>
     </form>
 

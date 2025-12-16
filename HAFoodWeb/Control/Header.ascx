@@ -156,11 +156,19 @@
     display: none !important;
   }
 
+  /* ICONS */
   .nav-icons{
     display: flex;
     align-items: center;
-    gap: 30px;
+    gap: 18px;
     margin-left: 16px;
+  }
+
+  .nav-icons a{
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
   }
 
   .nav-icons i{
@@ -206,7 +214,7 @@
 
   /* Dropdown thông báo */
   .notify-dropdown{
-    position: absolute;
+    position: absolute; /* sẽ được JS đổi sang fixed khi mở */
     top: 150%;
     right: 0;
     left: auto;
@@ -217,11 +225,14 @@
     padding: 0;
     display: none;
     flex-direction: column;
+
     width: 360px;
     max-width: min(360px, 95vw);
     max-height: 400px;
+
     z-index: 1001;
     border: 1px solid #e5e7eb;
+    overflow: hidden; /* ✅ bo góc trên đúng như footer */
   }
 
   .notify-header{
@@ -234,6 +245,7 @@
     font-size: 15px;
     background: #ffffff;
     flex: 0 0 auto;
+    border-radius: 14px 14px 0 0; /* ✅ bo góc trên */
   }
 
   .notify-header span:first-child{
@@ -270,11 +282,15 @@
     cursor: pointer;
     text-align: left;
     border-bottom: 1px solid #f3f4f6;
-    display: block;
     text-decoration: none;
     color: #111827;
     background-color: #fff;
     transition: background .15s ease, border-color .15s ease;
+
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 2px;
   }
 
   .notify-item:last-child{
@@ -293,18 +309,25 @@
 
   .notify-item-title{
     margin-bottom: 2px;
-    font-weight: 600;
+    font-weight: 700;
+    order: 1;
+    width: 100%;
   }
 
   .notify-item-body{
     font-size: 13px;
     color: #6b7280;
+    order: 2;
+    width: 100%;
   }
 
   .notify-item-time{
     font-size: 11px;
     color: #9ca3af;
-    margin-top: 4px;
+    margin-top: 6px;
+    order: 3;
+    width: 100%;
+    text-align: left;
   }
 
   .notify-empty{
@@ -349,35 +372,71 @@
     }
   }
 
+  /* ===== USER DROPDOWN (fixed) ===== */
   .user-dropdown{
-    position: absolute;
-    top: 150%;
-    right: 0;
+    position: absolute; /* sẽ được JS đổi sang fixed khi mở */
+    top: calc(100% + 10px);
+    right: 0;           /* ✅ bám phải icon */
+    left: auto;
+
     background: #fff;
-    border-radius: 10px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-    padding: 10px 0;
+    border-radius: 12px;
+    box-shadow: 0 10px 24px rgba(15,23,42,.12);
+    padding: 8px 0;
     display: none;
     flex-direction: column;
-    width: 220px;
+
+    width: 200px;
+    max-width: min(220px, 90vw);
     z-index: 1001;
+    border: 1px solid #e5e7eb;
   }
 
   .user-dropdown a,
   .user-dropdown asp\:LinkButton{
     text-decoration: none;
-    color: #333;
-    padding: 10px 20px;
-    font-size: 16px;
-    transition: background .3s, color .3s;
-    display: block;
+    color: #111827;
+    padding: 10px 12px;
+    font-size: 15px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    justify-content: flex-start;
     text-align: left;
+    transition: background .15s ease, color .15s ease;
   }
 
   .user-dropdown a:hover,
   .user-dropdown asp\:LinkButton:hover{
-    background: #f4f4f4;
+    background: #f8fafc;
     color: var(--ha-accent);
+  }
+
+  /* ✅ icon trong user dropdown không bị ăn style .nav-icons i */
+  .nav-icons .user-dropdown i{
+    width: 28px;
+    height: 28px;
+    border-radius: 999px;
+    background: #f3f4f6;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    color: #111827;
+    transform: none !important;
+    box-shadow: none !important;
+  }
+
+  .nav-icons .user-dropdown a:hover i,
+  .nav-icons .user-dropdown asp\:LinkButton:hover i{
+    color: var(--ha-accent);
+    background: rgba(40,167,69,0.10);
+  }
+
+  @media (max-width: 576px){
+    .user-dropdown{
+      width: min(200px, 90vw);
+    }
   }
 
   .cart-link{
@@ -403,9 +462,7 @@
   }
 
   @media (max-width: 992px){
-    .ha-header-wrap{
-      padding: 12px 0;
-    }
+    .ha-header-wrap{ padding: 12px 0; }
 
     .navbar{
       margin: 0 12px;
@@ -416,9 +473,7 @@
       gap: 12px;
     }
 
-    .navbar-brand{
-      justify-content: center;
-    }
+    .navbar-brand{ justify-content: center; }
 
     .navbar-brand img,
     .brand-logo-img{
@@ -426,13 +481,8 @@
       width: 64px;
     }
 
-    .brand-title{
-      font-size: 18px;
-    }
-
-    .brand-tagline{
-      font-size: 10px;
-    }
+    .brand-title{ font-size: 18px; }
+    .brand-tagline{ font-size: 10px; }
 
     .ha-search{
       order: 3;
@@ -443,6 +493,7 @@
     .nav-icons{
       order: 2;
       justify-content: flex-end;
+      gap: 14px;
     }
   }
 
@@ -452,9 +503,7 @@
       padding: 8px 10px;
     }
 
-    .nav-icons{
-      gap: 6px;
-    }
+    .nav-icons{ gap: 10px; }
 
     .nav-icons i{
       width: 34px;
@@ -462,26 +511,17 @@
       font-size: 18px;
     }
 
-    .search-box{
-      padding: 8px 12px;
-    }
+    .search-box{ padding: 8px 12px; }
 
-    .search-box input{
-      font-size: 14px;
-    }
+    .search-box input{ font-size: 14px; }
 
     .navbar-brand{
       flex-direction: column;
       text-align: center;
     }
 
-    .brand-text{
-      align-items: center;
-    }
-
-    .brand-tagline{
-      display: none;
-    }
+    .brand-text{ align-items: center; }
+    .brand-tagline{ display: none; }
   }
 
   /* ===== Toast thông báo góc phải ===== */
@@ -523,6 +563,21 @@
     font-size: 16px;
     color:#22c55e;
   }
+
+  /* ==========================================
+     ✅ CO GIÃN + AUTO FIT kiểu YouTube
+     (CSS clamp + không tràn màn hình)
+     ========================================== */
+  .notify-dropdown{
+    width: clamp(280px, 36vw, 380px);
+    max-width: calc(100vw - 16px);
+    max-height: min(70vh, 440px);
+  }
+
+  .user-dropdown{
+    width: clamp(170px, 22vw, 220px);
+    max-width: calc(100vw - 16px);
+  }
 </style>
 
 <div class="ha-header-wrap">
@@ -553,18 +608,14 @@
       data-authid='<%= authDropdown.ClientID %>'>
 
       <asp:HiddenField ID="hfIsAuth" runat="server" />
-      <!-- NEW: hidden lưu unread ban đầu -->
       <asp:HiddenField ID="hfNotifyUnread" runat="server" />
 
       <!-- Notification -->
       <div class="position-relative notify-wrapper" id="notifyWrapper">
         <i class="bi bi-bell" id="notifyIcon" title="Thông báo"></i>
-        <%-- DOT chỉ là HTML, không runat="server" --%>
         <span class="notify-dot" id="notifyDot"></span>
 
-        <!-- [NOTIFY] dropdown -->
         <div class="notify-dropdown" id="notifyDropdown" runat="server" aria-label="Thông báo mới">
-          <!-- Header -->
           <div class="notify-header">
             <span>Thông báo</span>
             <asp:LinkButton
@@ -576,7 +627,6 @@
             </asp:LinkButton>
           </div>
 
-          <!-- Danh sách cuộn -->
           <div class="notify-items" id="notifyItems">
             <asp:Label ID="lblNotifyEmpty" runat="server" CssClass="notify-empty" Visible="false"></asp:Label>
 
@@ -595,7 +645,6 @@
             </asp:Repeater>
           </div>
 
-          <!-- Footer cố định -->
           <div class="notify-footer">
             <asp:HyperLink
               ID="lnkAllNotifications"
@@ -605,8 +654,12 @@
             </asp:HyperLink>
           </div>
         </div>
-        <!-- [END NOTIFY] dropdown -->
       </div>
+
+      <!-- Blog (đúng theo bạn) -->
+      <asp:HyperLink ID="lnkBlog" runat="server" NavigateUrl="~/blog" CssClass="d-inline-flex" ToolTip="Blog">
+        <i class="bi bi-journal-text" id="blogIcon" title="Blog" aria-label="Blog"></i>
+      </asp:HyperLink>
 
       <!-- User -->
       <div class="position-relative">
@@ -667,7 +720,6 @@
             });
         };
 
-
         window.getCartBadgeCount = function () {
             return __cartCount;
         };
@@ -675,11 +727,7 @@
         window.refreshCartCount = async function () {
             try {
                 const url = `${window.CART_API}?action=count&t=${Date.now()}`;
-                const r = await fetch(url, {
-                    method: 'GET',
-                    credentials: 'include',
-                    cache: 'no-store'
-                });
+                const r = await fetch(url, { method: 'GET', credentials: 'include', cache: 'no-store' });
                 if (!r.ok) throw new Error('HTTP ' + r.status);
                 const j = await r.json();
                 const c = Number(j && (j.count ?? j.item_Count));
@@ -766,7 +814,6 @@
     const notifyDot = document.getElementById('notifyDot');
     const notifyItems = document.getElementById('notifyItems');
 
-    // SSE + list + mark-read URL
     const notifySseUrl  = '<%= ResolveUrl("~/Proxy/NotificationStream.ashx") %>';
     const notifyListUrl = '<%= ResolveUrl("~/Proxy/NotificationList.ashx") %>';
     const notifyMarkUrl = '<%= ResolveUrl("~/Proxy/NotificationMarkRead.ashx") %>';
@@ -798,9 +845,7 @@
       const count = Number(unread) || 0;
       if (count <= 0) return;
 
-      const msg = count === 1
-        ? 'Bạn có 1 thông báo mới'
-        : `Bạn có ${count} thông báo mới`;
+      const msg = count === 1 ? 'Bạn có 1 thông báo mới' : `Bạn có ${count} thông báo mới`;
 
       let container = document.querySelector('.ha-toast-container');
       if (!container) {
@@ -811,47 +856,95 @@
 
       const toast = document.createElement('div');
       toast.className = 'ha-toast';
-      toast.innerHTML =
-        '<i class="bi bi-bell-fill"></i>' +
-        '<span>' + msg + '</span>';
-
+      toast.innerHTML = '<i class="bi bi-bell-fill"></i>' + '<span>' + msg + '</span>';
       container.appendChild(toast);
 
-      requestAnimationFrame(function() {
-        toast.classList.add('ha-toast-show');
-      });
+      requestAnimationFrame(function() { toast.classList.add('ha-toast-show'); });
 
       setTimeout(function () {
         toast.classList.remove('ha-toast-show');
         setTimeout(function () {
           toast.remove();
-          if (!container.hasChildNodes()) {
-            container.remove();
-          }
+          if (!container.hasChildNodes()) container.remove();
         }, 200);
       }, 4000);
     }
+
+    /* ==============================
+       ✅ Auto-fit dropdown kiểu YouTube
+       ============================== */
+    function isVisible(el){
+      return el && window.getComputedStyle(el).display !== 'none';
+    }
+
+    function autoFitDropdown(dd, anchorEl) {
+      if (!dd || !anchorEl) return;
+
+      const pad = 8;
+      const gap = 10;
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+
+      // dùng fixed để luôn bám theo viewport (như YouTube)
+      dd.style.position = 'fixed';
+      dd.style.right = 'auto';
+      dd.style.left = '0px';
+      dd.style.top = '0px';
+
+      // đo size
+      const a = anchorEl.getBoundingClientRect();
+      const w = dd.offsetWidth || 320;
+      const h = dd.offsetHeight || 200;
+
+      // ưu tiên canh phải theo icon
+      let left = a.right - w;
+      left = Math.min(left, vw - w - pad);
+      left = Math.max(left, pad);
+
+      // ưu tiên mở xuống, nếu sát đáy thì lật lên
+      let top = a.bottom + gap;
+      if (top + h > vh - pad) {
+        top = Math.max(pad, a.top - h - gap);
+      }
+
+      dd.style.left = left + 'px';
+      dd.style.top = top + 'px';
+    }
+
+    function bindAutoFit(dd, anchorEl){
+      const handler = () => { if (isVisible(dd)) autoFitDropdown(dd, anchorEl); };
+      window.addEventListener('resize', handler);
+      window.addEventListener('scroll', handler, true);
+      return handler;
+    }
+
+    // bind auto-fit cho notify + guest dropdown
+    bindAutoFit(notifyDropdown, notifyIcon);
+    bindAutoFit(guestDD, userIcon);
 
     // Load HTML list từ NotificationList.ashx
     async function reloadNotifyList() {
       if (!isAuth || !notifyItems) return;
       try {
         notifyItems.innerHTML = '<div class="notify-empty">Đang tải...</div>';
-        const r = await fetch(notifyListUrl, {
-          method: 'GET',
-          credentials: 'include',
-          cache: 'no-store'
-        });
+        const r = await fetch(notifyListUrl, { method: 'GET', credentials: 'include', cache: 'no-store' });
         if (!r.ok) throw new Error('HTTP ' + r.status);
         const html = await r.text();
         notifyItems.innerHTML = html;
+
+        requestAnimationFrame(function(){
+          autoFitDropdown(notifyDropdown, notifyIcon);
+        });
       } catch (e) {
         console.warn('[notify] load list error:', e);
         notifyItems.innerHTML = '<div class="notify-empty">Không tải được thông báo.</div>';
+        requestAnimationFrame(function(){
+          autoFitDropdown(notifyDropdown, notifyIcon);
+        });
       }
     }
 
-    // 🔴 Bắt click vào item trong dropdown để mark-read (và vẫn cho phép chuyển trang)
+    // click item => mark read (bổ trợ), vẫn cho phép chuyển trang theo href (NotificationGo.ashx)
     if (notifyItems) {
       notifyItems.addEventListener('click', function (e) {
         const item = e.target.closest('.notify-item');
@@ -860,23 +953,15 @@
         const id = item.getAttribute('data-id');
         if (!id) return;
 
-        // Fire-and-forget: gọi handler đánh dấu đã đọc
         try {
           fetch(`${notifyMarkUrl}?id=${encodeURIComponent(id)}`, {
-            method: 'POST',
-            credentials: 'include',
-            cache: 'no-store'
+            method: 'POST', credentials: 'include', cache: 'no-store'
           }).catch(() => {});
         } catch { }
 
-        // Update UI local
         item.classList.remove('unread');
-
-        // Nếu không còn item nào unread -> tắt dot đỏ
         const anyUnread = notifyItems.querySelector('.notify-item.unread');
-        if (!anyUnread && notifyDot) {
-          notifyDot.style.display = 'none';
-        }
+        if (!anyUnread && notifyDot) notifyDot.style.display = 'none';
       });
     }
 
@@ -886,7 +971,6 @@
         return;
       }
 
-      // Init lastUnread từ server (hidden field)
       if (hfUnread && hfUnread.value !== '') {
         const init = Number(hfUnread.value || 0);
         if (Number.isFinite(init)) {
@@ -948,13 +1032,8 @@
       if (authDD) authDD.style.display = 'none';
     };
 
-    const hideSuggest = () => {
-      box?.classList.add('hf-hide');
-    };
-
-    const hideNotify = () => {
-      if (notifyDropdown) notifyDropdown.style.display = 'none';
-    };
+    const hideSuggest = () => { box?.classList.add('hf-hide'); };
+    const hideNotify  = () => { if (notifyDropdown) notifyDropdown.style.display = 'none'; };
 
     userIcon?.addEventListener('click', e => {
       e.stopPropagation();
@@ -967,6 +1046,9 @@
         hideNotify();
         if (willShow && guestDD) {
             guestDD.style.display = 'flex';
+            requestAnimationFrame(function () {
+                autoFitDropdown(guestDD, userIcon);
+            });
         } else if (guestDD) {
             guestDD.style.display = 'none';
         }
@@ -975,16 +1057,19 @@
       notifyIcon?.addEventListener('click', e => {
           e.stopPropagation();
           if (!isAuth) return;
-          const isVisible = notifyDropdown && window.getComputedStyle(notifyDropdown).display !== 'none';
+
+          const isOpen = notifyDropdown && window.getComputedStyle(notifyDropdown).display !== 'none';
           hideUser();
           hideSuggest();
           if (!notifyDropdown) return;
 
-          if (isVisible) {
+          if (isOpen) {
               notifyDropdown.style.display = 'none';
           } else {
               notifyDropdown.style.display = 'flex';
-              // mỗi lần mở chuông → reload list từ server
+              requestAnimationFrame(function () {
+                  autoFitDropdown(notifyDropdown, notifyIcon);
+              });
               reloadNotifyList();
           }
       });
@@ -997,15 +1082,9 @@
       });
 
       document.addEventListener('click', e => {
-          if (!(searchWrap?.contains(e.target) || openBtn?.contains(e.target))) {
-              hideSuggest();
-          }
-          if (!userIcon?.contains(e.target) && !guestDD?.contains(e.target) && !authDD?.contains(e.target)) {
-              hideUser();
-          }
-          if (!notifyWrapper?.contains(e.target)) {
-              hideNotify();
-          }
+          if (!(searchWrap?.contains(e.target) || openBtn?.contains(e.target))) hideSuggest();
+          if (!userIcon?.contains(e.target) && !guestDD?.contains(e.target) && !authDD?.contains(e.target)) hideUser();
+          if (!notifyWrapper?.contains(e.target)) hideNotify();
       });
 
       searchWrap?.addEventListener('click', e => e.stopPropagation());
@@ -1039,16 +1118,10 @@
 
       const doSuggest = debounce(async () => {
           const q = (input?.value || '').trim();
-          if (q.length < 2) {
-              render([]);
-              return;
-          }
+          if (q.length < 2) { render([]); return; }
           try {
               const r = await fetch(`${suggestUrl}?q=${encodeURIComponent(q)}`);
-              if (!r.ok) {
-                  render([]);
-                  return;
-              }
+              if (!r.ok) { render([]); return; }
               const d = await r.json();
               render(d.items || []);
           } catch {
@@ -1100,11 +1173,7 @@
 
       btn?.addEventListener('click', () => gotoSearch(input?.value));
 
-      // Khởi động SSE thông báo
-      if (isAuth) {
-          startNotifySse();
-      } else if (notifyDot) {
-          notifyDot.style.display = 'none';
-      }
+      if (isAuth) startNotifySse();
+      else if (notifyDot) notifyDot.style.display = 'none';
   });
 </script>
