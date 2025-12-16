@@ -616,6 +616,99 @@
       margin-top:2px;
     }
 
+    /* ==== BLOG SECTION ==== */
+    .blog-section .blog-shelf-wrap{
+      position:relative;
+      padding: 6px 10px;     
+      overflow: visible;     
+    }
+
+    .blog-shelf{
+      display:flex;
+      gap:1rem;
+      overflow:auto;
+      scroll-snap-type:x mandatory;
+      padding: 10px 10px 14px;
+      scroll-padding-left: 10px;
+      scroll-padding-right: 10px;
+    }
+    .blog-shelf::-webkit-scrollbar{height:8px}
+    .blog-shelf::-webkit-scrollbar-thumb{background:#d1d5db;border-radius:100px}
+
+    .blog-item{
+      min-width: 320px;
+      max-width: 320px;
+      scroll-snap-align:start;
+    }
+    @media (min-width:576px){
+      .blog-item{min-width:360px;max-width:360px;}
+    }
+
+    .blog-card{
+      border: 1.5px solid rgba(229,231,235,.9);   
+      border-radius: 18px;
+      background:#ffffff;
+      overflow:hidden;
+      height:100%;
+      display:flex;
+      flex-direction:column;
+      transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+    }
+    .blog-card:hover{
+      transform:translateY(-3px);
+      border-color: rgba(196,221,199,.95);
+    }
+
+    .blog-thumb{
+      width:100%;
+      height: 175px;
+      background:var(--haf-accent-soft);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+    .blog-thumb img{ width:100%; height:100%; object-fit:cover; }
+
+    .blog-body{
+      padding:12px 14px;
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      flex:1;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    .blog-title, .blog-excerpt, .blog-meta{
+      font-family:"Noto Serif","Times New Roman",Times,serif !important;
+    }
+    .blog-title{
+      font-weight:700;
+      font-size:1.05rem;
+      line-height:1.35;
+      color:#111827;
+    }
+    .blog-excerpt{ color:#6b7280; font-size:.88rem; }
+    .blog-meta{ color:#9ca3af; font-size:.78rem; margin-top:auto; }
+
+    .blog-nav{
+      position:absolute;
+      top:50%;
+      transform:translateY(-50%);
+      width:36px;height:36px;
+      border-radius:999px;
+      border:0;
+      background:rgba(255,255,255,.92);
+      box-shadow:0 10px 24px rgba(15,23,42,.14);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      z-index:5;
+    }
+    .blog-nav.is-show{display:flex}
+    .blog-nav:hover{filter:brightness(.97)}
+    .blog-nav-left{left:0}     /* ✅ tránh bị cắt */
+    .blog-nav-right{right:0}   /* ✅ tránh bị cắt */
+
   </style>
 </head>
 
@@ -784,6 +877,45 @@
       </div>
     </div>
   </div>
+
+    <!-- BLOGS (BÀI VIẾT) -->
+    <div class="container my-5">
+      <div class="home-section blog-section">
+        <div class="home-section-header mb-3">
+          <h3 class="sec-title mb-0">Bài viết</h3>
+          <div class="d-flex align-items-center gap-2">
+            <small class="text-muted d-none d-sm-inline">
+              Cập nhật tin tức &amp; mẹo hay mỗi ngày.
+            </small>
+            <button type="button"
+                    id="btnBlogRefresh"
+                    class="btn btn-outline-success btn-sm"
+                    title="Làm mới">
+              <i class="bi bi-arrow-clockwise"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="blog-shelf-wrap">
+          <button type="button" class="blog-nav blog-nav-left" id="blogNavLeft" aria-label="Trước">
+            <i class="bi bi-chevron-left"></i>
+          </button>
+
+          <div id="blog-shelf" class="blog-shelf">
+            <div class="text-muted small">Đang tải bài viết...</div>
+          </div>
+
+          <button type="button" class="blog-nav blog-nav-right" id="blogNavRight" aria-label="Sau">
+            <i class="bi bi-chevron-right"></i>
+          </button>
+        </div>
+
+        <div class="mt-2 small">
+          <a href="/blog" class="text-decoration-none">Xem tất cả bài viết ›</a>
+        </div>
+      </div>
+    </div>
+
   <!-- RECOMMENDED GRID -->
   <div class="container my-5">
     <h3 class="sec-title mb-4">Gợi ý cho bạn</h3>
@@ -2152,6 +2284,212 @@
           });
       })();
   </script>
+
+    <script>
+    (function () {
+        const API_BASE = (window.__API_BASE || '').replace(/\/+$/, '');
+        const ARTICLES_URL = (API_BASE ? (API_BASE + '/api/articles') : '/api/articles');
+
+        // RouteConfig list = /blog , detail = /blog/{slug}
+        const BLOG_LIST_URL = '/blog';
+        const BLOG_DETAIL_URL = (slug) => (BLOG_LIST_URL.replace(/\/+$/, '') + '/' + encodeURIComponent(slug || ''));
+
+        const shelfEl = document.getElementById('blog-shelf');
+        const refreshBtn = document.getElementById('btnBlogRefresh');
+        const navLeft = document.getElementById('blogNavLeft');
+        const navRight = document.getElementById('blogNavRight');
+
+        if (!shelfEl) return;
+
+        function safeText(v) { return (v == null) ? '' : String(v); }
+        function safeHtml(text) {
+            return safeText(text)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+        function formatDateUtc(d) {
+            if (!d) return '';
+            const dt = new Date(d);
+            if (isNaN(dt.getTime())) return '';
+            return dt.toLocaleDateString('vi-VN');
+        }
+
+        // Đúng theo ArticleService.ListAsync(page,pageSize,q)
+        async function fetchArticleListAll() {
+            const pageSize = 20; // Home: lấy vừa đủ
+            let page = 1;
+            const out = [];
+            let guard = 0;
+
+            while (true) {
+                guard++;
+                if (guard > 20) break;
+
+                const qs = new URLSearchParams({
+                    page: String(page),
+                    pageSize: String(pageSize)
+                });
+
+                const url = ARTICLES_URL + '?' + qs.toString();
+                const r = await fetch(url, {
+                    method: 'GET',
+                    credentials: 'include',
+                    cache: 'no-store'
+                });
+
+                if (!r.ok) {
+                    const txt = await r.text().catch(() => '');
+                    throw new Error('Không tải được bài viết (HTTP ' + r.status + '): ' + txt);
+                }
+
+                // ArticleListResponseDto: { page, pageSize, total, items: [...] }
+                const data = await r.json().catch(() => null);
+                const items = (data && Array.isArray(data.items)) ? data.items : [];
+                out.push(...items);
+
+                const total = (data && typeof data.total === 'number') ? data.total : out.length;
+                if (out.length >= total) break;
+                if (items.length < pageSize) break;
+
+                page++;
+            }
+
+            return out;
+        }
+
+        function renderArticles(list) {
+            if (!Array.isArray(list) || list.length === 0) {
+                shelfEl.innerHTML = '<div class="text-muted small">Hiện chưa có bài viết nào.</div>';
+                updateNav();
+                return;
+            }
+
+            shelfEl.innerHTML = '';
+
+            list.forEach(a => {
+                // ArticleListItemDto fields: title, slug, excerpt, cover_Image_Url, published_At_Utc
+                const title = a.title || 'Bài viết';
+                const slug = a.slug || '';
+                const excerpt = a.excerpt || '';
+                const cover = a.cover_Image_Url || '';
+                const meta = formatDateUtc(a.published_At_Utc);
+
+                const href = slug ? BLOG_DETAIL_URL(slug) : BLOG_LIST_URL;
+
+                const item = document.createElement('div');
+                item.className = 'blog-item';
+
+                const link = document.createElement('a');
+                link.href = href;
+                link.className = 'text-decoration-none text-reset';
+                link.setAttribute('aria-label', safeText(title));
+
+                const card = document.createElement('div');
+                card.className = 'blog-card';
+
+                const thumbWrap = document.createElement('div');
+                thumbWrap.className = 'blog-thumb';
+
+                if (cover) {
+                    const img = document.createElement('img');
+                    img.loading = 'lazy';
+                    img.decoding = 'async';
+                    img.alt = safeText(title);
+                    img.src = cover;
+
+                    img.onerror = function () {
+                        img.remove();
+                        thumbWrap.innerHTML = '<i class="bi bi-journal-text" style="font-size:2rem;color:#9ca3af"></i>';
+                    };
+
+                    thumbWrap.appendChild(img);
+                } else {
+                    thumbWrap.innerHTML = '<i class="bi bi-journal-text" style="font-size:2rem;color:#9ca3af"></i>';
+                }
+
+                const body = document.createElement('div');
+                body.className = 'blog-body';
+
+                const h = document.createElement('div');
+                h.className = 'blog-title text-truncate-2';
+                h.innerHTML = safeHtml(title);
+
+                const p = document.createElement('div');
+                p.className = 'blog-excerpt text-truncate-2';
+                p.innerHTML = safeHtml(excerpt);
+
+                const m = document.createElement('div');
+                m.className = 'blog-meta';
+                m.textContent = meta ? ('📅 ' + meta) : '';
+
+                body.appendChild(h);
+                if (excerpt) body.appendChild(p);
+                if (meta) body.appendChild(m);
+
+                card.appendChild(thumbWrap);
+                card.appendChild(body);
+
+                link.appendChild(card);
+                item.appendChild(link);
+                shelfEl.appendChild(item);
+            });
+
+            updateNav(true);
+        }
+
+        function scrollByShelf(dir) {
+            const amount = Math.max(240, Math.round(shelfEl.clientWidth * 0.85));
+            shelfEl.scrollBy({ left: dir * amount, behavior: 'smooth' });
+        }
+
+        function updateNav(forceShow) {
+            if (!navLeft || !navRight) return;
+
+            const canScroll = shelfEl.scrollWidth > shelfEl.clientWidth + 8;
+            if (!canScroll) {
+                navLeft.classList.remove('is-show');
+                navRight.classList.remove('is-show');
+                return;
+            }
+
+            const left = shelfEl.scrollLeft;
+            const max = shelfEl.scrollWidth - shelfEl.clientWidth;
+
+            if (left <= 2) navLeft.classList.remove('is-show'); else navLeft.classList.add('is-show');
+            if (left >= max - 2) navRight.classList.remove('is-show'); else navRight.classList.add('is-show');
+
+            if (forceShow && max > 2) navRight.classList.add('is-show');
+        }
+
+        async function loadBlogs() {
+            try {
+                shelfEl.innerHTML = '<div class="text-muted small">Đang tải bài viết...</div>';
+                updateNav();
+
+                const list = await fetchArticleListAll();
+                renderArticles(list);
+            } catch (err) {
+                console.error('load blogs error', err);
+                shelfEl.innerHTML = '<div class="text-danger small">Có lỗi khi tải bài viết, vui lòng thử lại.</div>';
+                updateNav();
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            loadBlogs();
+
+            if (refreshBtn) refreshBtn.addEventListener('click', loadBlogs);
+            if (navLeft) navLeft.addEventListener('click', () => scrollByShelf(-1));
+            if (navRight) navRight.addEventListener('click', () => scrollByShelf(1));
+
+            shelfEl.addEventListener('scroll', () => updateNav());
+            window.addEventListener('resize', () => updateNav());
+        });
+    })();
+    </script>
 
 </form>
 </body>

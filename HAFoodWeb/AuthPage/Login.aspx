@@ -11,8 +11,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
 
     <style>
         * { box-sizing: border-box; }
@@ -162,32 +162,15 @@
             transform: translateY(-1px);
         }
 
-        /* Label lỗi dưới input */
         .text-danger {
             font-size: 0.85rem;
-            margin-top: 6px;
+            margin-top: 5px;
             display: block;
         }
 
-        /* Eye icon */
-        .password-wrapper { position: relative; }
-        .password-wrapper .form-control { padding-right: 44px; }
-
-        .toggle-password {
-            position: absolute;
-            top: 50%;
-            right: 16px;
-            transform: translateY(-50%);
-            cursor: pointer;
-            color: #6c757d;
-            user-select: none;
-        }
-        .toggle-password:hover { color: #ff6600; }
-
-        /* Lỗi hệ thống (mạng/API) */
-        .system-error {
+        .error-summary {
             font-size: 13px;
-            margin-top: 10px;
+            margin-bottom: 8px;
         }
 
         .bottom-meta {
@@ -195,7 +178,40 @@
             font-size: 13px;
             color: #6c757d;
         }
+
+        /* ✅ Eye toggle */
+        .password-wrapper { position: relative; }
+        .password-input { padding-right: 44px !important; }
+        .toggle-password {
+            position: absolute;
+            right: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            border: none;
+            background: transparent;
+            padding: 0;
+            color: #6c757d;
+            cursor: pointer;
+            z-index: 2;
+        }
+        .toggle-password:hover { color: #ff6600; }
     </style>
+
+    <script type="text/javascript">
+        function togglePassword(btn) {
+            var targetId = btn.getAttribute('data-target');
+            var input = document.getElementById(targetId);
+            if (!input) return;
+
+            var icon = btn.querySelector('i');
+            var isHidden = (input.type === 'password');
+
+            input.type = isHidden ? 'text' : 'password';
+            if (icon) {
+                icon.className = isHidden ? 'fa-regular fa-eye-slash' : 'fa-regular fa-eye';
+            }
+        }
+    </script>
 </head>
 <body>
 <form id="form1" runat="server">
@@ -211,7 +227,7 @@
 
             <div class="mb-3">
                 <label for="txtEmail">Email</label>
-                <asp:TextBox ID="txtEmail" runat="server" ClientIDMode="Static" CssClass="form-control" placeholder="Nhập email" />
+                <asp:TextBox ID="txtEmail" runat="server" CssClass="form-control" placeholder="Nhập email" />
                 <asp:Label ID="lblEmailError" runat="server" CssClass="text-danger"></asp:Label>
             </div>
 
@@ -219,18 +235,20 @@
                 <label for="txtPassword">Mật khẩu</label>
 
                 <div class="password-wrapper">
-                    <asp:TextBox ID="txtPassword" runat="server" ClientIDMode="Static"
-                        CssClass="form-control" TextMode="Password" placeholder="Nhập mật khẩu" />
-
-                    <span id="togglePassword" class="toggle-password" role="button" tabindex="0" aria-label="Hiện mật khẩu" title="Hiện mật khẩu">
-                        <i id="togglePasswordIcon" class="bi bi-eye-slash"></i>
-                    </span>
+                    <asp:TextBox ID="txtPassword" runat="server" CssClass="form-control password-input"
+                        TextMode="Password" placeholder="Nhập mật khẩu" />
+                    <button type="button" class="toggle-password"
+                        data-target="<%= txtPassword.ClientID %>"
+                        onclick="togglePassword(this)"
+                        aria-label="Hiện/ẩn mật khẩu">
+                        <i class="fa-regular fa-eye"></i>
+                    </button>
                 </div>
 
                 <asp:Label ID="lblPasswordError" runat="server" CssClass="text-danger"></asp:Label>
             </div>
 
-            <asp:Label ID="lblLoginError" runat="server" CssClass="text-danger text-center d-block system-error"></asp:Label>
+            <asp:Label ID="lblLoginError" runat="server" CssClass="text-danger text-center d-block error-summary"></asp:Label>
 
             <div class="text-center mb-3">
                 <asp:HyperLink ID="lnkCreateAccount" runat="server" NavigateUrl="~/AuthPage/Register.aspx" CssClass="link-option">
@@ -259,40 +277,5 @@
 
     <uc:Footer ID="Footer1" runat="server" />
 </form>
-
-<script>
-    (function () {
-        const pwd = document.getElementById('txtPassword');
-        const toggle = document.getElementById('togglePassword');
-        const icon = document.getElementById('togglePasswordIcon');
-        if (!pwd || !toggle || !icon) return;
-
-        let shown = false;
-
-        function applyState() {
-            pwd.type = shown ? 'text' : 'password';
-            icon.classList.toggle('bi-eye', shown);
-            icon.classList.toggle('bi-eye-slash', !shown);
-            toggle.setAttribute('aria-label', shown ? 'Ẩn mật khẩu' : 'Hiện mật khẩu');
-            toggle.title = shown ? 'Ẩn mật khẩu' : 'Hiện mật khẩu';
-        }
-
-        toggle.addEventListener('click', function () {
-            shown = !shown;
-            applyState();
-            pwd.focus();
-        });
-
-        toggle.addEventListener('keydown', function (e) {
-            if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                shown = !shown;
-                applyState();
-                pwd.focus();
-            }
-        });
-    })();
-</script>
-
 </body>
 </html>

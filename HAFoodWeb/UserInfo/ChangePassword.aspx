@@ -22,7 +22,6 @@
 
         *{ box-sizing:border-box; }
 
-        /* ✅ NỀN TRẮNG */
         html, body{
             margin:0;
             background:#ffffff;
@@ -50,55 +49,46 @@
         }
         .btn-back:hover{ background:#e9ecef; color:#212529; }
 
-        .header-right{
-            text-align:right;
-        }
+        .header-right{ text-align:right; }
+
         .title-badge{
-            font-size:.75rem; letter-spacing:.08em; text-transform:uppercase; font-weight:800;
+            font-size:.75rem; letter-spacing:.08em; text-transform:uppercase; font-weight:700;
             color:#fd7e14; background:rgba(253,126,20,.08);
             padding:.26rem .7rem; border-radius:999px;
             display:inline-flex; align-items:center; gap:.4rem;
             margin-bottom:.3rem;
         }
+
         .page-title{
             margin:0;
             font-size:1.6rem;
-            font-weight:800;
+            font-weight:700;
             color:#212529;
         }
+
         .page-sub{
             margin:.2rem 0 0;
             font-size:.92rem;
             color:var(--haf-text-muted);
         }
 
-        /* ✅ FRAME NGOÀI */
         .frame-card{
             background:#fff;
-            border:1px solid var(--haf-border);
+            border:none;
             border-radius:22px;
-            box-shadow:0 16px 34px rgba(15, 23, 42, 0.12);
+            box-shadow:0 16px 34px rgba(15, 23, 42, 0.10);
             padding:18px 18px 16px;
         }
 
-        .form-grid{
-            max-width:520px;
-            margin:6px auto 0;
-        }
-
-        .form-title{
-            text-align:center;
-            font-weight:800;
-            font-size:1.1rem;
-            margin:2px 0 14px;
-        }
+        .form-grid{ max-width:520px; margin:6px auto 0; }
+        .form-title{ text-align:center; font-weight:800; font-size:1.1rem; margin:2px 0 14px; }
 
         .form-group{ margin-bottom:12px; }
         label{ display:block; font-weight:700; margin-bottom:6px; font-size:13px; }
 
-        input[type="password"]{
+        .pw-input{
             width:100%;
-            padding:10px 12px;
+            padding:10px 44px 10px 12px; /* chừa chỗ icon */
             border:1px solid var(--haf-border);
             border-radius:12px;
             outline:none;
@@ -106,7 +96,7 @@
             transition:border-color .15s, box-shadow .15s, background-color .15s;
             background:#fff;
         }
-        input[type="password"]:focus{
+        .pw-input:focus{
             border-color:rgba(255,123,50,.7);
             box-shadow:0 0 0 2px rgba(255,123,50,.18);
             background:#fff7ed;
@@ -120,7 +110,7 @@
             border-radius:999px;
             background:linear-gradient(135deg, #ff7b32, #e8631d);
             color:#fff;
-            font-weight:800;
+            font-weight:700;
             font-size:15px;
             cursor:pointer;
             box-shadow:0 14px 24px rgba(255,123,50,.28);
@@ -130,7 +120,6 @@
         .aspNetButton:hover{ transform:translateY(-1px); box-shadow:0 18px 30px rgba(255,123,50,.35); }
         .aspNetButton:active{ transform:translateY(0); }
 
-        /* Toast */
         .toast{
             position:fixed;
             top:16px; right:16px;
@@ -143,15 +132,30 @@
             transform:translateY(-14px);
             transition:.22s ease;
             z-index:9999;
-
             color:#fff;
-            font-weight:800;
+            font-weight:500;
             font-size:14px;
         }
         .toast.show{ opacity:1; visibility:visible; transform:translateY(0); }
         .toast.success{ background:var(--haf-success); }
         .toast.error{ background:var(--haf-error); }
         .toast i{ font-size:18px; }
+
+        /* ✅ Eye toggle */
+        .pw-wrap{ position:relative; }
+        .toggle-password{
+            position:absolute;
+            right:12px;
+            top:50%;
+            transform:translateY(-50%);
+            border:none;
+            background:transparent;
+            padding:0;
+            cursor:pointer;
+            color:#6b7280;
+            z-index:2;
+        }
+        .toggle-password:hover{ color: var(--haf-primary); }
 
         @media (max-width: 640px){
             body{ padding:16px 12px 22px; }
@@ -161,7 +165,6 @@
         }
     </style>
 
-    <%-- embed=1: nền trắng chắc chắn --%>
     <% if ("1".Equals(Request["embed"])) { %>
       <style>
         html, body{
@@ -191,6 +194,18 @@
             toast.classList.add('show');
 
             setTimeout(function(){ toast.classList.remove('show'); }, 3000);
+        }
+
+        function togglePassword(btn) {
+            var targetId = btn.getAttribute('data-target');
+            var input = document.getElementById(targetId);
+            if (!input) return;
+
+            var icon = btn.querySelector('i');
+            var isHidden = (input.type === 'password');
+
+            input.type = isHidden ? 'text' : 'password';
+            if (icon) icon.className = isHidden ? 'fa-regular fa-eye-slash' : 'fa-regular fa-eye';
         }
     </script>
 </head>
@@ -226,12 +241,28 @@
 
                 <div class="form-group">
                     <label for="txtOldPassword">Mật khẩu cũ</label>
-                    <asp:TextBox ID="txtOldPassword" runat="server" TextMode="Password" />
+                    <div class="pw-wrap">
+                        <asp:TextBox ID="txtOldPassword" runat="server" TextMode="Password" CssClass="pw-input" />
+                        <button type="button" class="toggle-password"
+                            data-target="<%= txtOldPassword.ClientID %>"
+                            onclick="togglePassword(this)"
+                            aria-label="Hiện/ẩn mật khẩu">
+                            <i class="fa-regular fa-eye"></i>
+                        </button>
+                    </div>
                 </div>
 
                 <div class="form-group">
                     <label for="txtNewPassword">Mật khẩu mới</label>
-                    <asp:TextBox ID="txtNewPassword" runat="server" TextMode="Password" />
+                    <div class="pw-wrap">
+                        <asp:TextBox ID="txtNewPassword" runat="server" TextMode="Password" CssClass="pw-input" />
+                        <button type="button" class="toggle-password"
+                            data-target="<%= txtNewPassword.ClientID %>"
+                            onclick="togglePassword(this)"
+                            aria-label="Hiện/ẩn mật khẩu">
+                            <i class="fa-regular fa-eye"></i>
+                        </button>
+                    </div>
                 </div>
 
                 <asp:Button ID="btnSubmit" runat="server" Text="Xác nhận thay đổi"
@@ -243,7 +274,6 @@
 
 </form>
 
-<%-- ✅ embed=1: rewrite link + auto-height + nghe request resize --%>
 <script>
     (function () {
         var isEmbed = /[?&]embed=1\b/.test(location.search) && window.parent && window.parent !== window;
