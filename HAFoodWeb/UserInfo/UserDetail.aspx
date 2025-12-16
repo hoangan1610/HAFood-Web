@@ -22,10 +22,14 @@
         }
         *{box-sizing:border-box}
         html{scrollbar-gutter:stable}
+
+        /* ✅ NỀN TRANG CHA TRẮNG */
         html,body{
             margin:0; min-height:100vh;
             font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
-            background:#ffffff !important; color:var(--haf-text-main);
+            background:#ffffff !important;
+            background-image:none !important;
+            color:var(--haf-text-main);
         }
 
         .page{ max-width:1280px; margin:24px auto; padding:0 16px; }
@@ -64,13 +68,29 @@
         .menu-item.logout i{color:#b91c1c}
         .menu-item.logout:hover{background:#fef2f2;border-color:#fecaca}
 
-        .content-area{padding:0 0 0 24px}
+        .content-area{
+            padding:0 0 0 24px;
+            background:#ffffff; /* ✅ đảm bảo vùng phải trắng */
+        }
 
-        /* Iframe: KHÓA MỘT CHIỀU CAO CỐ ĐỊNH – KHÔNG TỰ GIÃN */
+        /* ✅ KHUNG PHẢI TRẮNG LUÔN */
+        .frame-card{
+            background:#fff;
+            border:1px solid var(--haf-border);
+            border-radius:22px;
+            box-shadow:0 16px 34px rgba(15,23,42,.12);
+            overflow:hidden;
+            padding:10px;
+        }
+
+        /* ✅ IFRAME NỀN TRẮNG LUÔN (không để transparent) */
         .content-frame{
-            width:100%; border:0; display:block; background:#ffffff;
-            height:2000px;          /* Fallback CSS: 2000px */
-            min-height:2000px;      /* Ngừa flash khi JS chưa chạy */
+            width:100%;
+            border:0;
+            display:block;
+            background:#fff;
+            height:420px;      /* JS override */
+            min-height:420px;
         }
 
         @media (max-width:992px){
@@ -80,21 +100,12 @@
             .menu-item{white-space:nowrap;font-size:13px;padding:7px 10px}
             .menu-item.logout{margin-top:0;margin-left:auto}
             .content-area{padding-left:0}
+            .frame-card{border-radius:18px; padding:8px;}
+            .content-frame{min-height:380px; height:380px;}
         }
     </style>
-
-    <!-- Chặn mọi thông điệp đổi chiều cao từ trang con -->
-    <script>
-        (function () {
-            window.addEventListener('message', function (ev) {
-                var d = ev && ev.data;
-                if (d && d.type === 'haf-embed-height') {
-                    ev.stopImmediatePropagation && ev.stopImmediatePropagation();
-                }
-            }, true);
-        })();
-    </script>
 </head>
+
 <body>
 <form id="form1" runat="server">
     <uc:Header runat="server" ID="Header1" />
@@ -110,10 +121,10 @@
 
                 <div class="sidebar-section-label">Tổng quan</div>
                 <div class="menu-list">
-                    <a id="mProfile"   class="menu-item active" data-url="../UserInfo/UserProfile.aspx" href="javascript:void(0);">
+                    <a id="mProfile" class="menu-item active" data-url="../UserInfo/UserProfile.aspx" href="javascript:void(0);">
                         <i class="bi bi-person-circle"></i><span>Hồ sơ của tôi</span>
                     </a>
-                    <a id="mOrders"    class="menu-item" data-url="../OrderPage/OrderPage.aspx" href="javascript:void(0);">
+                    <a id="mOrders" class="menu-item" data-url="../OrderPage/OrderPage.aspx" href="javascript:void(0);">
                         <i class="bi bi-basket2-fill"></i><span>Đơn hàng của tôi</span>
                     </a>
                     <a id="mAddresses" class="menu-item" data-url="../UserAddress/UserAddressList.aspx" href="javascript:void(0);">
@@ -127,8 +138,13 @@
             </aside>
 
             <main class="content-area">
-                <!-- Luôn kèm ?embed=1 -->
-                <iframe id="contentFrame" class="content-frame" src="../UserInfo/UserProfile.aspx?embed=1" title="Nội dung tài khoản"></iframe>
+                <div class="frame-card">
+                    <iframe id="contentFrame"
+                            class="content-frame"
+                            src="../UserInfo/UserProfile.aspx?embed=1"
+                            title="Nội dung tài khoản"
+                            scrolling="no"></iframe>
+                </div>
             </main>
         </div>
     </div>
@@ -139,56 +155,151 @@
 <script>
     (function () {
         const frame = document.getElementById('contentFrame');
-        const menuItems = document.querySelectorAll('.menu-item');
+
+        // ✅ chỉ bắt click menu có data-url
+        const menuItems = document.querySelectorAll('.menu-item[data-url]');
         const mProfile = document.getElementById('mProfile');
         const mOrders = document.getElementById('mOrders');
         const mAddresses = document.getElementById('mAddresses');
 
+        const MIN_H = 420;
+
         function withEmbed(u) {
-            try { const url = new URL(u, location.origin); url.searchParams.set('embed', '1'); return url.pathname + url.search + url.hash; }
-            catch { return u + (u.indexOf('?') >= 0 ? '&' : '?') + 'embed=1'; }
+            try {
+                const url = new URL(u, location.href);
+                url.searchParams.set('embed', '1');
+                return url.pathname + url.search + url.hash;
+            } catch {
+                return u + (u.indexOf('?') >= 0 ? '&' : '?') + 'embed=1';
+            }
         }
 
-        /* KHÓA 1 CHIỀU CAO CỐ ĐỊNH – KHÔNG ĐO */
-        (function lockFixedHeight() {
-            const FIXED_FRAME_HEIGHT = 1100;  // chỉnh tại đây nếu bạn muốn
-            frame.style.height = FIXED_FRAME_HEIGHT + 'px';
-            frame.style.minHeight = FIXED_FRAME_HEIGHT + 'px';
-        })();
+        function setFrameHeight(h) {
+            if (!frame) return;
+            let hh = Number(h || 0);
+            if (!hh || hh < MIN_H) hh = MIN_H;
+            frame.style.height = hh + 'px';
+        }
 
-        // Tiêm CSS trắng tuyệt đối cho trang con (phòng trang nào quên embed=1)
-        function injectWhite(iframe) {
+        function sameOriginOk() {
+            try { void frame.contentDocument; return true; } catch { return false; }
+        }
+
+        // ✅ Rewrite link trong iframe để luôn giữ embed=1 (fix lỗi bấm Edit/Quay lại bị bung layout)
+        function rewriteInternalLinks(doc) {
+            if (!doc) return;
             try {
-                const d = iframe.contentDocument || iframe.contentWindow.document;
-                if (!d) return;
-                const head = d.head || d.getElementsByTagName('head')[0];
-                if (!head || d.getElementById('__haf_force_white')) return;
-                const st = d.createElement('style');
-                st.id = '__haf_force_white';
-                st.textContent = `
-                html,body{background:#ffffff !important;background-image:none !important;min-height:auto !important;}
-            `;
-                head.appendChild(st);
+                const baseHref = (frame && frame.contentWindow) ? frame.contentWindow.location.href : location.href;
+
+                doc.querySelectorAll('a[href]').forEach(a => {
+                    const href = a.getAttribute('href');
+                    if (!href) return;
+                    if (href.startsWith('#') || href.startsWith('javascript:') || href.startsWith('mailto:') || href.startsWith('tel:')) return;
+
+                    let u;
+                    try { u = new URL(href, baseHref); } catch { return; }
+                    if (u.origin !== location.origin) return;
+
+                    u.searchParams.set('embed', '1');
+                    a.setAttribute('href', u.pathname + u.search + u.hash);
+                });
             } catch { }
         }
-        frame.addEventListener('load', function () { injectWhite(frame); });
 
-        // Chuyển tab: chỉ thay src (luôn kèm embed=1), KHÔNG đổi chiều cao
+        function measureFrameHeightDirect() {
+            if (!frame || !sameOriginOk()) return 0;
+            const doc = frame.contentDocument;
+            if (!doc) return 0;
+
+            const b = doc.body, e = doc.documentElement;
+            if (!b || !e) return 0;
+
+            const h = Math.max(
+                b.scrollHeight || 0, e.scrollHeight || 0,
+                b.offsetHeight || 0, e.offsetHeight || 0
+            );
+            return h || 0;
+        }
+
+        let ro = null;
+        function attachResizeObserver() {
+            try {
+                if (!frame || !sameOriginOk()) return;
+                const doc = frame.contentDocument;
+                if (!doc || !doc.body || !doc.documentElement) return;
+
+                if (ro) { try { ro.disconnect(); } catch { } ro = null; }
+                ro = new ResizeObserver(() => {
+                    const h = measureFrameHeightDirect();
+                    if (h) setFrameHeight(h);
+                });
+                ro.observe(doc.documentElement);
+                ro.observe(doc.body);
+            } catch { }
+        }
+
+        function requestResize() {
+            try { frame.contentWindow && frame.contentWindow.postMessage({ type: 'haf-embed-request' }, '*'); } catch { }
+        }
+
+        window.addEventListener('message', function (ev) {
+            if (!frame || ev.source !== frame.contentWindow) return;
+            const d = ev.data;
+            if (!d || d.type !== 'haf-embed-height') return;
+            setFrameHeight(d.height || 0);
+        });
+
+        if (frame) {
+            frame.addEventListener('load', function () {
+                setFrameHeight(MIN_H);
+
+                if (sameOriginOk()) {
+                    const doc = frame.contentDocument;
+                    rewriteInternalLinks(doc);
+
+                    const h0 = measureFrameHeightDirect();
+                    if (h0) setFrameHeight(h0);
+
+                    attachResizeObserver();
+                }
+
+                requestResize();
+                setTimeout(requestResize, 150);
+                setTimeout(requestResize, 450);
+
+                setTimeout(() => { const h1 = measureFrameHeightDirect(); if (h1) setFrameHeight(h1); }, 200);
+                setTimeout(() => { const h2 = measureFrameHeightDirect(); if (h2) setFrameHeight(h2); }, 600);
+                setTimeout(() => { const h3 = measureFrameHeightDirect(); if (h3) setFrameHeight(h3); }, 1200);
+            });
+        }
+
+        window.addEventListener('pageshow', function () {
+            requestResize();
+            setTimeout(requestResize, 120);
+
+            const h = measureFrameHeightDirect();
+            if (h) setFrameHeight(h);
+        });
+
         menuItems.forEach(it => {
             it.addEventListener('click', e => {
-                const url = it.dataset?.url;
+                const url = it.dataset && it.dataset.url;
                 if (!url) return;
+
                 e.preventDefault();
+
                 menuItems.forEach(i => i.classList.remove('active'));
                 it.classList.add('active');
+
+                setFrameHeight(MIN_H);
                 frame.src = withEmbed(url);
             }, false);
         });
 
-        // Hỗ trợ ?tab=... nhưng không đổi height
         try {
             const params = new URLSearchParams(location.search);
             const tab = (params.get('tab') || '').toLowerCase();
+
             if (tab === 'orders') {
                 const orderId = params.get('orderId') || params.get('id');
                 mProfile && mProfile.classList.remove('active');
@@ -196,7 +307,10 @@
                 const u = orderId
                     ? '../OrderPage/OrderDetail.aspx?id=' + encodeURIComponent(orderId)
                     : (mOrders.dataset.url || '../OrderPage/OrderPage.aspx');
+
+                setFrameHeight(MIN_H);
                 frame.src = withEmbed(u);
+
             } else if (tab === 'addresses') {
                 const addressId = params.get('addressId') || params.get('id');
                 mProfile && mProfile.classList.remove('active');
@@ -204,6 +318,8 @@
                 const u = addressId
                     ? '../UserAddress/UpdateUserAddress.aspx?id=' + encodeURIComponent(addressId)
                     : (mAddresses.dataset.url || '../UserAddress/UserAddressList.aspx');
+
+                setFrameHeight(MIN_H);
                 frame.src = withEmbed(u);
             }
         } catch { }

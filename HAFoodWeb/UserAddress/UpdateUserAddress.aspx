@@ -5,62 +5,37 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head runat="server">
-    
     <title>Sửa địa chỉ - HAFood</title>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <!-- Bootstrap + Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
 
     <style>
         :root{ --accent:#ff7a45; --border:#e5e7eb; --menu:#fff; }
 
+        html, body { width:100%; max-width:100%; overflow-x:hidden; }
         body{
             font-family:'Segoe UI',system-ui,-apple-system,BlinkMacSystemFont,sans-serif;
-            margin:0;
-            background:radial-gradient(circle at top left,#ffe8cc 0,#f8f9fa 40%,#e9ecef 100%);
-            min-height:100vh;
+            margin:0; background:#ffffff; min-height:100vh;
+            word-break:break-word; overflow-wrap:anywhere;
         }
 
-        .page-header{
-            width:100%;
-            max-width:100% !important;
-            margin:24px 0 8px !important;
-            padding:0 24px !important;
-            background:transparent;
-            box-shadow:none;
-        }
+        .page-header{ width:100%; max-width:100% !important; margin:24px 0 8px !important; padding:0 24px !important; background:transparent; box-shadow:none; }
 
-        /* ====== Back trái, Badge + Title phải ====== */
-        .header-grid{
-            display:grid;
-            grid-template-columns: 1fr 1fr;
-            align-items:center;
-            gap:12px;
-        }
-        .header-left{
-            display:flex; justify-content:flex-start; align-items:center;
-        }
-        .header-right{
-            display:flex; flex-direction:column;
-            align-items:flex-end; text-align:right;
-        }
+        .header-grid{ display:grid; grid-template-columns: 1fr 1fr; align-items:center; gap:12px; }
+        .header-left{ display:flex; justify-content:flex-start; align-items:center; }
+        .header-right{ display:flex; flex-direction:column; align-items:flex-end; text-align:right; }
 
-        .title-badge{
-            font-size:.75rem; letter-spacing:.08em; text-transform:uppercase;
-            font-weight:700; color:#fd7e14; background:rgba(253,126,20,.08);
-            padding:.26rem .7rem; border-radius:999px;
-            display:inline-flex; align-items:center; gap:.35rem; margin-bottom:.25rem;
-        }
+        .title-badge{ font-size:.75rem; letter-spacing:.08em; text-transform:uppercase; font-weight:700; color:#fd7e14; background:rgba(253,126,20,.08); padding:.26rem .7rem; border-radius:999px; display:inline-flex; align-items:center; gap:.35rem; margin-bottom:.25rem; }
         .title-badge i{ font-size:.9rem; }
-
         .page-title{ font-weight:700; font-size:1.6rem; color:#212529; margin:.1rem 0 .2rem; }
         .page-subtitle{ font-size:.9rem; color:#6c757d; margin:0; }
 
         .page-shell{
             max-width:720px;
+            width:min(720px, calc(100% - 32px));
             margin:0 auto 2.5rem;
             background:#fff;
             border-radius:1.25rem;
@@ -68,12 +43,7 @@
             padding:1.4rem 1.6rem 1.7rem;
         }
 
-        .btn-back{
-            display:inline-flex; align-items:center; gap:.35rem;
-            border-radius:999px; padding:.45rem 1rem;
-            border:1px solid #dee2e6; background:#f8f9fa;
-            color:#495057; font-size:.88rem; font-weight:500; text-decoration:none; white-space:nowrap;
-        }
+        .btn-back{ display:inline-flex; align-items:center; gap:.35rem; border-radius:999px; padding:.45rem 1rem; border:1px solid #dee2e6; background:#f8f9fa; color:#495057; font-size:.88rem; font-weight:500; text-decoration:none; white-space:nowrap; }
         .btn-back:hover{ background:#e9ecef; color:#212529; text-decoration:none; }
 
         .section-card{ border-radius:12px; border:1px solid #e9ecef; background:#fff; margin-bottom:1rem; }
@@ -81,36 +51,20 @@
         .section-title{ font-weight:600; font-size:.96rem; }
 
         .rbl-chips input[type="radio"]{ position:absolute; opacity:0; width:0; height:0; }
-        .rbl-chips label{
-            display:inline-block; cursor:pointer; padding:.5rem .9rem; margin-right:.5rem; margin-bottom:.5rem;
-            border-radius:9999px; border:1px solid var(--border); background:#f6f6f6; color:#222; font-weight:500; line-height:1; font-size:.9rem;
-        }
-        .rbl-chips input[type="radio"]:checked + label{
-            background:rgba(255,122,69,.08); border-color:var(--accent); color:var(--accent);
-            box-shadow:0 0 0 2px rgba(255,122,69,.15) inset;
-        }
+        .rbl-chips label{ display:inline-block; cursor:pointer; padding:.5rem .9rem; margin-right:.5rem; margin-bottom:.5rem; border-radius:9999px; border:1px solid var(--border); background:#f6f6f6; color:#222; font-weight:500; line-height:1; font-size:.9rem; }
+        .rbl-chips input[type="radio"]:checked + label{ background:rgba(255,122,69,.08); border-color:var(--accent); color:var(--accent); box-shadow:0 0 0 2px rgba(255,122,69,.15) inset; }
 
         .combo{position:relative}
-        .combo-input{ display:flex;align-items:center;height:38px;border:1px solid var(--border);border-radius:.375rem;background:#fff;padding:0 .75rem;cursor:text }
-        .combo-text{flex:1 1 auto;border:none;outline:none;height:100%;font:inherit;font-size:.95rem}
+        .combo-input{ display:flex;align-items:center;height:38px;border:1px solid var(--border);border-radius:.375rem;background:#fff;padding:0 .75rem;cursor:text; max-width:100%; }
+        .combo-text{flex:1 1 auto;border:none;outline:none;height:100%;font:inherit;font-size:.95rem; min-width:0;}
         .combo-caret{margin-left:8px}
-        .combo-menu{
-            position:absolute;left:0;right:0;top:calc(100% + 4px);background:#fff;border:1px solid var(--border);
-            border-radius:.5rem;box-shadow:0 10px 25px rgba(0,0,0,.08);max-height:330px;overflow:auto;display:none;z-index:1000
-        }
+        .combo-menu{ position:absolute;left:0;right:0;top:calc(100% + 4px);background:#fff;border:1px solid var(--border); border-radius:.5rem;box-shadow:0 10px 25px rgba(0,0,0,.08);max-height:330px;overflow:auto;display:none;z-index:1000 }
         .combo.open .combo-menu{display:block}
         .combo-item{padding:.45rem .75rem;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
         .combo-item:hover{background:#f1f5f9}
 
-        /* Toast */
         .toast-stack{ position:fixed; right:16px; top:16px; z-index:2300; display:flex; flex-direction:column; gap:10px; align-items:flex-end; }
-        .toast{
-          min-width:unset; width:fit-content; max-width:min(92vw, 560px);
-          display:inline-flex; align-items:flex-start; gap:10px;
-          border-radius:14px; padding:12px 14px; box-shadow:0 8px 20px rgba(0,0,0,.12);
-          border:1px solid var(--border); background:#fff; color:#111; font-weight:600; font-size:15.5px; line-height:1.35;
-          opacity:0; transform:translateY(-8px); transition:opacity .18s ease, transform .18s ease;
-        }
+        .toast{ min-width:unset; width:fit-content; max-width:min(92vw, 560px); display:inline-flex; align-items:flex-start; gap:10px; border-radius:14px; padding:12px 14px; box-shadow:0 8px 20px rgba(0,0,0,.12); border:1px solid var(--border); background:#fff; color:#111; font-weight:600; font-size:15.5px; line-height:1.35; opacity:0; transform:translateY(-8px); transition:opacity .18s ease, transform .18s ease; }
         .toast.show{ opacity:1; transform:translateY(0); }
         .toast-icon{ flex:0 0 auto; font-size:1.1rem; margin-top:2px; }
         .toast-text{ white-space:pre-line; overflow-wrap:anywhere; }
@@ -118,90 +72,39 @@
         .toast-error{ background:#ef4444 !important; border-color:#dc2626 !important; color:#fff !important; }
         .toast-error .toast-icon, .toast-success .toast-icon{ color:#fff !important; }
 
-        /* === Popup xác nhận xóa địa chỉ (giống hình) === */
-        .haf-delete-modal .modal-dialog {
-            max-width: 440px;
-        }
+        .haf-delete-modal .modal-dialog { max-width: 440px; }
+        .haf-delete-modal .modal-content { border-radius: 14px; border: none; box-shadow: 0 16px 40px rgba(15, 23, 42, 0.25); }
+        .haf-delete-modal .modal-header { padding: 14px 20px 10px; border-bottom: 1px solid #f1f1f1; justify-content: center; position: relative; }
+        .haf-delete-modal .modal-title { font-size: 16px; font-weight: 700; margin: 0; }
+        .haf-delete-modal .modal-header .btn-close { position: absolute; right: 18px; top: 50%; transform: translateY(-50%); opacity: .7; }
+        .haf-delete-modal .modal-body { padding: 18px 24px 8px; text-align: center; font-size: 14px; color: #111827; }
+        .haf-delete-modal .modal-body-text { font-weight: 700; margin: 0; }
+        .haf-delete-modal .modal-footer { border-top: none; padding: 10px 20px 18px; justify-content: space-between; }
 
-        .haf-delete-modal .modal-content {
-            border-radius: 14px;
-            border: none;
-            box-shadow: 0 16px 40px rgba(15, 23, 42, 0.25);
-        }
-
-        .haf-delete-modal .modal-header {
-            padding: 14px 20px 10px;
-            border-bottom: 1px solid #f1f1f1;
-            justify-content: center;
-            position: relative;
-        }
-
-        .haf-delete-modal .modal-title {
-            font-size: 16px;
-            font-weight: 700; /* đậm hơn */
-            margin: 0;
-        }
-
-        .haf-delete-modal .modal-header .btn-close {
-            position: absolute;
-            right: 18px;
-            top: 50%;
-            transform: translateY(-50%);
-            opacity: .7;
-        }
-
-        .haf-delete-modal .modal-body {
-            padding: 18px 24px 8px;
-            text-align: center;
-            font-size: 14px;
-            color: #111827;
-        }
-
-        .haf-delete-modal .modal-body-text {
-            font-weight: 700; /* chữ câu hỏi in đậm */
-            margin: 0;
-        }
-
-        .haf-delete-modal .modal-footer {
-            border-top: none;
-            padding: 10px 20px 18px;
-            justify-content: space-between; /* Hủy trái, Xác nhận phải */
-        }
-
-        .haf-btn-cancel {
-            min-width: 110px;
-            border-radius: 999px;
-            background: #ffffff;
-            border: 1px solid #e5e7eb;
-            color: #111827;
-            font-weight: 500;
-        }
-
-        .haf-btn-cancel:hover {
-            background: #f3f4f6;
-            color: #111827;
-        }
-
-        .haf-btn-confirm {
-            min-width: 110px;
-            border-radius: 999px;
-            background: var(--accent);
-            border: none;
-            color: #ffffff;
-            font-weight: 600;
-        }
-
-        .haf-btn-confirm:hover {
-            background: #ff6a2c;
-            color: #ffffff;
-        }
+        .haf-btn-cancel { min-width: 110px; border-radius: 999px; background: #ffffff; border: 1px solid #e5e7eb; color: #111827; font-weight: 500; }
+        .haf-btn-cancel:hover { background: #f3f4f6; color: #111827; }
+        .haf-btn-confirm { min-width: 110px; border-radius: 999px; background: var(--accent); border: none; color: #ffffff; font-weight: 600; }
+        .haf-btn-confirm:hover { background: #ff6a2c; color: #ffffff; }
 
         @media (max-width: 575.98px){
             .page-header{ margin:12px 0 8px !important; padding:0 16px !important; }
             .header-grid{ grid-template-columns: 1fr; }
             .header-right{ align-items:flex-start; text-align:left; }
+            .page-shell{ width:calc(100% - 24px); padding:1.1rem 1.1rem 1.2rem; }
         }
     </style>
+
+    <% if ("1".Equals(Request["embed"])) { %>
+      <style>
+        html, body{
+          background:#ffffff !important;
+          background-image:none !important;
+          overflow:visible !important;
+          min-height:auto !important;
+          height:auto !important;
+        }
+      </style>
+    <% } %>
 </head>
 <body>
 <form id="form1" runat="server">
@@ -209,14 +112,10 @@
     <div class="page-header">
         <div class="header-grid">
             <div class="header-left">
-                <a href="UserAddressList.aspx" class="btn-back">
-                    ← Quay lại địa chỉ
-                </a>
+                <a href="UserAddressList.aspx" class="btn-back">← Quay lại địa chỉ</a>
             </div>
             <div class="header-right">
-                <div class="title-badge">
-                    <i class="bi bi-geo-alt"></i> HAFood - Địa chỉ giao hàng
-                </div>
+                <div class="title-badge"><i class="bi bi-geo-alt"></i> HAFood - Địa chỉ giao hàng</div>
                 <h2 class="page-title">Sửa địa chỉ</h2>
                 <p class="page-subtitle">Chỉnh sửa thông tin địa chỉ nhận hàng hiện tại.</p>
             </div>
@@ -226,7 +125,6 @@
     <div class="page-shell">
         <asp:HiddenField ID="hfId" runat="server" />
 
-        <!-- hidden mirrors -->
         <asp:TextBox ID="txtCitySel" runat="server" CssClass="d-none" />
         <asp:TextBox ID="txtWardSel" runat="server" CssClass="d-none" />
         <asp:TextBox ID="txtCityCode" runat="server" CssClass="d-none" />
@@ -259,8 +157,7 @@
 
                 <div class="mb-1 mt-3">
                     <label class="form-label">Địa chỉ nhận hàng <span class="text-danger">*</span></label>
-                    <asp:TextBox ID="txtAddress" runat="server" CssClass="form-control"
-                                 placeholder="VD: 12 Quang Trung, hẻm 5, tầng 2" ClientIDMode="Static" />
+                    <asp:TextBox ID="txtAddress" runat="server" CssClass="form-control" placeholder="VD: 12 Quang Trung, hẻm 5, tầng 2" ClientIDMode="Static" />
                 </div>
             </div>
         </div>
@@ -284,12 +181,8 @@
 
         <div class="mt-3 d-flex align-items-center">
             <div class="d-flex align-items-center gap-2">
-                <asp:Button ID="btnSave" runat="server" Text="Hoàn thành" CssClass="btn btn-success"
-                    OnClientClick="return validateUpdate();" OnClick="btnSave_Click" />
-
-                <button type="button" class="btn btn-danger text-white" data-bs-toggle="modal" data-bs-target="#confirmDeleteModal">
-                    Xóa địa chỉ
-                </button>
+                <asp:Button ID="btnSave" runat="server" Text="Hoàn thành" CssClass="btn btn-success" OnClientClick="return validateUpdate();" OnClick="btnSave_Click" />
+                <button type="button" class="btn btn-danger text-white" data-bs-toggle="modal" data-bs-target="#confirmDeleteModal">Xóa địa chỉ</button>
             </div>
 
             <button type="button" id="btnCancelUpdate" class="btn btn-outline-secondary ms-auto">Hủy</button>
@@ -297,26 +190,17 @@
         </div>
     </div>
 
-    <!-- POPUP XÓA ĐỊA CHỈ -->
-    <div class="modal fade haf-delete-modal" id="confirmDeleteModal" tabindex="-1"
-         aria-labelledby="confirmDeleteLabel" aria-hidden="true">
+    <div class="modal fade haf-delete-modal" id="confirmDeleteModal" tabindex="-1" aria-labelledby="confirmDeleteLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title w-100 text-center" id="confirmDeleteLabel">Xóa địa chỉ</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
                 </div>
-                <div class="modal-body">
-                    <p class="modal-body-text">Bạn có muốn xóa địa chỉ không?</p>
-                </div>
+                <div class="modal-body"><p class="modal-body-text">Bạn có muốn xóa địa chỉ không?</p></div>
                 <div class="modal-footer">
-                    <button type="button" class="btn haf-btn-cancel" data-bs-dismiss="modal">
-                        Hủy
-                    </button>
-                    <button type="button" class="btn haf-btn-confirm"
-                            onclick="document.getElementById('<%= btnDelete.ClientID %>').click();">
-                        Xác nhận
-                    </button>
+                    <button type="button" class="btn haf-btn-cancel" data-bs-dismiss="modal">Hủy</button>
+                    <button type="button" class="btn haf-btn-confirm" onclick="document.getElementById('<%= btnDelete.ClientID %>').click();">Xác nhận</button>
                 </div>
             </div>
         </div>
@@ -328,8 +212,9 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     document.getElementById('btnCancelUpdate')?.addEventListener('click', function () {
+        var isEmbed = /[?&]embed=1\b/.test(location.search);
         if (history.length > 1) history.back();
-        else window.location.href = '/UserAddress/UserAddressList.aspx';
+        else window.location.href = isEmbed ? 'UserAddressList.aspx?embed=1' : 'UserAddressList.aspx';
     });
 
     function showToast(message, variant) {
@@ -375,7 +260,6 @@
     }
 </script>
 
-<!-- Combo + dữ liệu (giữ nguyên) -->
 <script>
     (function () {
         const DATA_BASE = '<%= ResolveClientUrl("~/assets/vn-admin") %>';
@@ -389,8 +273,7 @@
         const hidWardCode = document.getElementById('<%= txtWardCode.ClientID %>');
 
         const rm = (s) => (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-            .replace(/đ/g, 'd').replace(/Đ/g, 'D')
-            .replace(/\s+/g, ' ').trim().toLowerCase();
+            .replace(/đ/g, 'd').replace(/Đ/g, 'D').replace(/\s+/g, ' ').trim().toLowerCase();
 
         const baseCity = s => rm(String(s || '').replace(/^(tinh|thanh pho|tp\.?|tp)\s*/i, ''));
         const baseWard = s => rm(String(s || '')
@@ -426,17 +309,8 @@
             }
             function openMenu() { if (open) return; el.classList.add('open'); open = true; }
             function closeMenu() { if (!open) return; el.classList.remove('open'); open = false; }
-            function filter() {
-                const q = rm(input.value);
-                const filtered = !q ? all : all.filter(o => rm(o.label).includes(q));
-                render(filtered); openMenu();
-            }
-            function pick(opt) {
-                input.value = opt.label;
-                el.dataset.value = opt.value;
-                closeMenu();
-                el.dispatchEvent(new CustomEvent('combochange', { detail: opt }));
-            }
+            function filter() { const q = rm(input.value); const filtered = !q ? all : all.filter(o => rm(o.label).includes(q)); render(filtered); openMenu(); }
+            function pick(opt) { input.value = opt.label; el.dataset.value = opt.value; closeMenu(); el.dispatchEvent(new CustomEvent('combochange', { detail: opt })); }
 
             input.addEventListener('input', () => { el.dataset.value = ''; filter(); });
             input.addEventListener('keydown', (e) => {
@@ -451,25 +325,21 @@
             document.addEventListener('click', (e) => { if (!el.contains(e.target)) closeMenu(); });
 
             return {
-                setData(arr) { all = arr || []; render(all); },
-                setSelected(val, label) { el.dataset.value = val || ''; input.value = label || ''; },
-                get value() { return el.dataset.value || ''; },
-                get label() { return input.value || ''; },
-                clear() { this.setSelected('', ''); }
+                setData(arr){ all = arr || []; render(all); },
+                setSelected(val, label){ el.dataset.value = val || ''; input.value = label || ''; },
+                get value(){ return el.dataset.value || ''; },
+                get label(){ return input.value || ''; },
+                clear(){ this.setSelected('', ''); }
             };
         }
 
         const cityCombo = createCombo(cityBox, '— Chọn Tỉnh/Thành —');
         const wardCombo = createCombo(wardBox, '— Chọn Xã/Phường —');
 
-        function extractWardNumber(base) {
-            const m = (base || '').match(/\b(\d{1,3})\b/);
-            return m ? m[1] : null;
-        }
+        function extractWardNumber(base) { const m = (base || '').match(/\b(\d{1,3})\b/); return m ? m[1] : null; }
         function findWardMatch(name, wards) {
             if (!name || !wards || !wards.length) return null;
-            const tgt = baseWard(name);
-            if (!tgt) return null;
+            const tgt = baseWard(name); if (!tgt) return null;
 
             let w = wards.find(x => baseWard(x.name) === tgt);
             if (w) return w;
@@ -491,9 +361,7 @@
                 const bx = baseWard(x.name);
                 return bx.startsWith(tgt) || tgt.startsWith(bx) || bx.endsWith(tgt) || tgt.endsWith(bx);
             });
-            if (w) return w;
-
-            return null;
+            return w || null;
         }
 
         let provinces = [];
@@ -504,17 +372,10 @@
                 cityCombo && cityCombo.setData(provinces.map(p => ({ value: String(p.code), label: p.name, raw: p })));
 
                 let p = null;
-                if (hidCityCode.value) {
-                    p = provinces.find(x => String(x.code) === hidCityCode.value);
-                }
-                if (!p && hidCityName.value) {
-                    p = provinces.find(x => baseCity(x.name) === baseCity(hidCityName.value));
-                }
+                if (hidCityCode.value) { p = provinces.find(x => String(x.code) === hidCityCode.value); }
+                if (!p && hidCityName.value) { p = provinces.find(x => baseCity(x.name) === baseCity(hidCityName.value)); }
                 if (p) setCity(p);
-                else {
-                    cityCombo && cityCombo.setSelected('', hidCityName.value || '');
-                    prefillWardText();
-                }
+                else { cityCombo && cityCombo.setSelected('', hidCityName.value || ''); prefillWardText(); }
             });
 
         function prefillWardText() { wardCombo && wardCombo.setSelected('', hidWardName.value || ''); }
@@ -578,5 +439,62 @@
         prefillWardText();
     })();
 </script>
+
+<%-- ✅ embed=1: rewrite link + auto-height --%>
+<script>
+    (function () {
+        var isEmbed = /[?&]embed=1\b/.test(location.search) && window.parent && window.parent !== window;
+        var TARGET = location.origin;
+
+        if (isEmbed) {
+            // rewrite links nội bộ
+            try {
+                document.querySelectorAll('a[href]').forEach(function (a) {
+                    var href = a.getAttribute('href'); if (!href) return;
+                    if (href.startsWith('#') || href.startsWith('javascript:')) return;
+                    var u = new URL(href, location.href);
+                    if (u.origin !== location.origin) return;
+                    u.searchParams.set('embed', '1');
+                    a.setAttribute('href', u.pathname + u.search + u.hash);
+                });
+            } catch { }
+
+            // sửa link "Quay lại" luôn kèm embed=1
+            try {
+                var back = document.querySelector('a.btn-back[href]');
+                if (back) {
+                    var u2 = new URL(back.getAttribute('href'), location.href);
+                    if (u2.origin === location.origin) {
+                        u2.searchParams.set('embed', '1');
+                        back.setAttribute('href', u2.pathname + u2.search + u2.hash);
+                    }
+                }
+            } catch { }
+        }
+
+        if (!isEmbed) return;
+
+        function measure() {
+            try {
+                var d = document, b = d.body, e = d.documentElement;
+                var h = Math.max(b.scrollHeight || 0, e.scrollHeight || 0, b.offsetHeight || 0, e.offsetHeight || 0);
+                if (!h || h < 350) h = 350;
+                window.parent.postMessage({ type: 'haf-embed-height', height: h }, TARGET);
+            } catch (_) { }
+        }
+
+        document.addEventListener('DOMContentLoaded', function () { setTimeout(measure, 0); });
+        window.addEventListener('load', function () { setTimeout(measure, 20); });
+        if (document.fonts && document.fonts.ready) { document.fonts.ready.then(function () { setTimeout(measure, 20); }); }
+
+        var ro = (typeof ResizeObserver !== 'undefined') ? new ResizeObserver(function () { measure(); }) : null;
+        if (ro) { ro.observe(document.documentElement); ro.observe(document.body); }
+
+        setTimeout(measure, 200);
+        setTimeout(measure, 600);
+        setTimeout(measure, 1200);
+    })();
+</script>
+
 </body>
 </html>

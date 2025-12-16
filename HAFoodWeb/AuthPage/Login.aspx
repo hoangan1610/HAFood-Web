@@ -11,6 +11,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet" />
 
     <style>
@@ -59,7 +60,6 @@
             text-align: center;
         }
 
-        /* Logo HAFood dùng chung */
         .logo-circle {
             width: 110px;
             height: 110px;
@@ -162,15 +162,32 @@
             transform: translateY(-1px);
         }
 
+        /* Label lỗi dưới input */
         .text-danger {
             font-size: 0.85rem;
-            margin-top: 5px;
+            margin-top: 6px;
             display: block;
         }
 
-        .error-summary {
+        /* Eye icon */
+        .password-wrapper { position: relative; }
+        .password-wrapper .form-control { padding-right: 44px; }
+
+        .toggle-password {
+            position: absolute;
+            top: 50%;
+            right: 16px;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: #6c757d;
+            user-select: none;
+        }
+        .toggle-password:hover { color: #ff6600; }
+
+        /* Lỗi hệ thống (mạng/API) */
+        .system-error {
             font-size: 13px;
-            margin-bottom: 8px;
+            margin-top: 10px;
         }
 
         .bottom-meta {
@@ -194,17 +211,26 @@
 
             <div class="mb-3">
                 <label for="txtEmail">Email</label>
-                <asp:TextBox ID="txtEmail" runat="server" CssClass="form-control" placeholder="Nhập email" />
+                <asp:TextBox ID="txtEmail" runat="server" ClientIDMode="Static" CssClass="form-control" placeholder="Nhập email" />
                 <asp:Label ID="lblEmailError" runat="server" CssClass="text-danger"></asp:Label>
             </div>
 
             <div class="mb-3">
                 <label for="txtPassword">Mật khẩu</label>
-                <asp:TextBox ID="txtPassword" runat="server" CssClass="form-control" TextMode="Password" placeholder="Nhập mật khẩu" />
+
+                <div class="password-wrapper">
+                    <asp:TextBox ID="txtPassword" runat="server" ClientIDMode="Static"
+                        CssClass="form-control" TextMode="Password" placeholder="Nhập mật khẩu" />
+
+                    <span id="togglePassword" class="toggle-password" role="button" tabindex="0" aria-label="Hiện mật khẩu" title="Hiện mật khẩu">
+                        <i id="togglePasswordIcon" class="bi bi-eye-slash"></i>
+                    </span>
+                </div>
+
                 <asp:Label ID="lblPasswordError" runat="server" CssClass="text-danger"></asp:Label>
             </div>
 
-            <asp:Label ID="lblLoginError" runat="server" CssClass="text-danger text-center d-block error-summary"></asp:Label>
+            <asp:Label ID="lblLoginError" runat="server" CssClass="text-danger text-center d-block system-error"></asp:Label>
 
             <div class="text-center mb-3">
                 <asp:HyperLink ID="lnkCreateAccount" runat="server" NavigateUrl="~/AuthPage/Register.aspx" CssClass="link-option">
@@ -233,5 +259,40 @@
 
     <uc:Footer ID="Footer1" runat="server" />
 </form>
+
+<script>
+    (function () {
+        const pwd = document.getElementById('txtPassword');
+        const toggle = document.getElementById('togglePassword');
+        const icon = document.getElementById('togglePasswordIcon');
+        if (!pwd || !toggle || !icon) return;
+
+        let shown = false;
+
+        function applyState() {
+            pwd.type = shown ? 'text' : 'password';
+            icon.classList.toggle('bi-eye', shown);
+            icon.classList.toggle('bi-eye-slash', !shown);
+            toggle.setAttribute('aria-label', shown ? 'Ẩn mật khẩu' : 'Hiện mật khẩu');
+            toggle.title = shown ? 'Ẩn mật khẩu' : 'Hiện mật khẩu';
+        }
+
+        toggle.addEventListener('click', function () {
+            shown = !shown;
+            applyState();
+            pwd.focus();
+        });
+
+        toggle.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                shown = !shown;
+                applyState();
+                pwd.focus();
+            }
+        });
+    })();
+</script>
+
 </body>
 </html>
