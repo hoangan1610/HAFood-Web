@@ -291,6 +291,8 @@
 
 <body>
 <form runat="server">
+    <asp:HiddenField ID="hidArticleId" runat="server" />
+<asp:HiddenField ID="hidApiBase" runat="server" />
 
   <div class="read-progress" aria-hidden="true"><span id="readProgressBar"></span></div>
 
@@ -352,50 +354,65 @@
                   <asp:Repeater ID="rpCards" runat="server">
                     <HeaderTemplate><div class="row g-2"></HeaderTemplate>
                     <ItemTemplate>
-                      <div class="col-12">
-                        <div class="ha-card">
-                          <a class="text-decoration-none" href="/Product/Product.aspx?id=<%# Eval("Id") %>">
-                            <img class="card-img-top ha-card-img"
-                                 src="<%# Eval("ImageUrl") %>"
-                                 alt=""
-                                 loading="lazy"
-                                 onerror="this.src='/images/product-default.png';" />
-                          </a>
+  <div class="col-12">
+    <div class="ha-card">
 
-                          <div class="p-3">
-                            <div class="d-flex justify-content-between align-items-start gap-2">
-                              <a class="text-decoration-none" href="/Product/Product.aspx?id=<%# Eval("Id") %>">
-                                <div class="fw-semibold" style="color:#0f172a"><%# Eval("Name") %></div>
-                              </a>
+      <!-- LINK ẢNH: ✅ gắn tracking -->
+      <a class="text-decoration-none js-ap-prod"
+         data-product="<%# Eval("Id") %>"
+         data-default-variant="<%# Eval("DefaultVariantId") %>"
+         href="/Product/Product.aspx?id=<%# Eval("Id") %>">
+        <img class="card-img-top ha-card-img"
+             src="<%# Eval("ImageUrl") %>"
+             alt=""
+             loading="lazy"
+             onerror="this.src='/images/product-default.png';" />
+      </a>
 
-                              <span class='badge <%# (Convert.ToInt32(Eval("TotalStock")) > 0) ? "bg-success" : "bg-secondary" %>'>
-                                <%# (Convert.ToInt32(Eval("TotalStock")) > 0) ? ("Còn " + Eval("TotalStock")) : "Hết hàng" %>
-                              </span>
-                            </div>
+      <div class="p-3">
+        <div class="d-flex justify-content-between align-items-start gap-2">
 
-                            <div class="mt-2 ha-price">
-                              <asp:Literal ID="litPrice" runat="server" Text='<%# Eval("PriceRangeHtml") %>' />
-                            </div>
+          <!-- LINK TÊN: ✅ gắn tracking -->
+          <a class="text-decoration-none js-ap-prod"
+             data-product="<%# Eval("Id") %>"
+             data-default-variant="<%# Eval("DefaultVariantId") %>"
+             href="/Product/Product.aspx?id=<%# Eval("Id") %>">
+            <div class="fw-semibold" style="color:#0f172a"><%# Eval("Name") %></div>
+          </a>
 
-                            <asp:Literal ID="litVariant" runat="server" Mode="PassThrough"
-                                         Text='<%# RenderVariantSelect(Container.DataItem) %>' />
+          <span class='badge <%# (Convert.ToInt32(Eval("TotalStock")) > 0) ? "bg-success" : "bg-secondary" %>'>
+            <%# (Convert.ToInt32(Eval("TotalStock")) > 0) ? ("Còn " + Eval("TotalStock")) : "Hết hàng" %>
+          </span>
+        </div>
 
-                            <div class="mt-2 d-grid gap-2">
-                              <a class="btn btn-outline-secondary btn-sm"
-                                 href="/Product/Product.aspx?id=<%# Eval("Id") %>">Xem chi tiết</a>
+        <div class="mt-2 ha-price">
+          <asp:Literal ID="litPrice" runat="server" Text='<%# Eval("PriceRangeHtml") %>' />
+        </div>
 
-                              <button type="button"
-                                      class="btn btn-success btn-sm js-buy"
-                                      data-product="<%# Eval("Id") %>"
-                                      data-default-variant="<%# Eval("DefaultVariantId") %>"
-                                      <%# (Convert.ToInt32(Eval("TotalStock")) > 0) ? "" : "disabled='disabled'" %>>
-                                Thêm vào giỏ
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </ItemTemplate>
+        <asp:Literal ID="litVariant" runat="server" Mode="PassThrough"
+                     Text='<%# RenderVariantSelect(Container.DataItem) %>' />
+
+        <div class="mt-2 d-grid gap-2">
+
+          <!-- LINK XEM CHI TIẾT: ✅ gắn tracking -->
+          <a class="btn btn-outline-secondary btn-sm js-ap-prod"
+             data-product="<%# Eval("Id") %>"
+             data-default-variant="<%# Eval("DefaultVariantId") %>"
+             href="/Product/Product.aspx?id=<%# Eval("Id") %>">Xem chi tiết</a>
+
+          <button type="button"
+                  class="btn btn-success btn-sm js-buy"
+                  data-product="<%# Eval("Id") %>"
+                  data-default-variant="<%# Eval("DefaultVariantId") %>"
+                  <%# (Convert.ToInt32(Eval("TotalStock")) > 0) ? "" : "disabled='disabled'" %>>
+            Thêm vào giỏ
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</ItemTemplate>
+
                     <FooterTemplate></div></FooterTemplate>
                   </asp:Repeater>
                 </div>
@@ -501,6 +518,60 @@
                 }
             });
         }
+
+        // =========================
+        // ARTICLE -> PRODUCT CLICK TRACKING
+        // =========================
+        function getBootVal(id) {
+            var el = document.getElementById(id);
+            return el ? (el.value || '').trim() : '';
+        }
+
+        var __articleId = parseInt(getBootVal('<%= hidArticleId.ClientID %>') || '0', 10) || 0;
+        var __apiBase = (getBootVal('<%= hidApiBase.ClientID %>') || '').replace(/\/+$/, '');
+
+        function trackArticleProductClick(productId, variantId) {
+            if (!__articleId) return;
+
+            productId = parseInt(productId || '0', 10) || 0;
+            if (!productId) return;
+
+            var v = parseInt(variantId || '0', 10) || 0;
+
+            // Nếu apiBase rỗng thì fallback relative (tuỳ cấu hình bạn)
+            var base = __apiBase || '';
+
+            var url =
+                base +
+                '/api/articles/' + __articleId +
+                '/products/' + productId +
+                '/click' + (v ? ('?variantId=' + v) : '');
+
+            try {
+                if (navigator.sendBeacon) {
+                    // sendBeacon mặc định POST, không cần body
+                    navigator.sendBeacon(url);
+                } else {
+                    fetch(url, { method: 'POST', keepalive: true, credentials: 'omit' });
+                }
+            } catch { }
+        }
+
+        // Track click vào link sản phẩm trong card (ảnh/tên/xem chi tiết)
+        document.addEventListener('click', function (e) {
+            var a = e.target.closest('a.js-ap-prod');
+            if (!a) return;
+
+            var card = a.closest('.ha-card') || a.closest('.card');
+            var productId = a.getAttribute('data-product') || '';
+
+            var variantId = a.getAttribute('data-default-variant') || '';
+            var sel = card ? qs('select.js-variant', card) : null;
+            if (sel && sel.value) variantId = sel.value;
+
+            trackArticleProductClick(productId, variantId);
+            // KHÔNG preventDefault để vẫn điều hướng bình thường
+        }, true);
 
         // ===== CART (giữ logic của bạn, chỉ giữ phần làm badge update chắc chắn) =====
         function setBtnLoading(btn, on) {
@@ -638,6 +709,7 @@
                 window.location.href = '/Product/Product.aspx?id=' + encodeURIComponent(productId);
                 return;
             }
+            try { trackArticleProductClick(productId, variantId); } catch { }
 
             optimisticAdd();
 

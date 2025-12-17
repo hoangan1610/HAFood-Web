@@ -42,6 +42,24 @@ namespace HAFoodWeb.Blog
         protected global::System.Web.UI.WebControls.Literal litJsonLd;
 
         /// <summary>
+        /// hidArticleId control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.HiddenField hidArticleId;
+
+        /// <summary>
+        /// hidApiBase control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.HiddenField hidApiBase;
+
+        /// <summary>
         /// Header1 control.
         /// </summary>
         /// <remarks>

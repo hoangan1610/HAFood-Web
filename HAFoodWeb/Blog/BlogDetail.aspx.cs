@@ -44,6 +44,8 @@ namespace HAFoodWeb.Blog
             pageTitle.Text = title + " - HAFood";
             Page.Title = title + " - HAFood";
             litTitle.Text = Server.HtmlEncode(title);
+            hidArticleId.Value = (dto.id).ToString();
+            hidApiBase.Value = apiBase; // đã TrimEnd('/')
 
             // excerpt (show dưới title)
             var excerpt = (dto.excerpt ?? "").Trim();
