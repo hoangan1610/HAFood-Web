@@ -12,6 +12,7 @@
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
 
     <style>
         * { box-sizing: border-box; }
@@ -59,7 +60,6 @@
             text-align: center;
         }
 
-        /* Logo HAFood dùng chung */
         .logo-circle {
             width: 110px;
             height: 110px;
@@ -178,7 +178,40 @@
             font-size: 13px;
             color: #6c757d;
         }
+
+        /* ✅ Eye toggle */
+        .password-wrapper { position: relative; }
+        .password-input { padding-right: 44px !important; }
+        .toggle-password {
+            position: absolute;
+            right: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            border: none;
+            background: transparent;
+            padding: 0;
+            color: #6c757d;
+            cursor: pointer;
+            z-index: 2;
+        }
+        .toggle-password:hover { color: #ff6600; }
     </style>
+
+    <script type="text/javascript">
+        function togglePassword(btn) {
+            var targetId = btn.getAttribute('data-target');
+            var input = document.getElementById(targetId);
+            if (!input) return;
+
+            var icon = btn.querySelector('i');
+            var isHidden = (input.type === 'password');
+
+            input.type = isHidden ? 'text' : 'password';
+            if (icon) {
+                icon.className = isHidden ? 'fa-regular fa-eye-slash' : 'fa-regular fa-eye';
+            }
+        }
+    </script>
 </head>
 <body>
 <form id="form1" runat="server">
@@ -200,7 +233,18 @@
 
             <div class="mb-3">
                 <label for="txtPassword">Mật khẩu</label>
-                <asp:TextBox ID="txtPassword" runat="server" CssClass="form-control" TextMode="Password" placeholder="Nhập mật khẩu" />
+
+                <div class="password-wrapper">
+                    <asp:TextBox ID="txtPassword" runat="server" CssClass="form-control password-input"
+                        TextMode="Password" placeholder="Nhập mật khẩu" />
+                    <button type="button" class="toggle-password"
+                        data-target="<%= txtPassword.ClientID %>"
+                        onclick="togglePassword(this)"
+                        aria-label="Hiện/ẩn mật khẩu">
+                        <i class="fa-regular fa-eye"></i>
+                    </button>
+                </div>
+
                 <asp:Label ID="lblPasswordError" runat="server" CssClass="text-danger"></asp:Label>
             </div>
 

@@ -74,6 +74,17 @@
     }
     .ha-back:hover{ color: var(--ha-accent); }
 
+    .ha-back-btn{
+      border: 1px solid #cbd5e1;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.9);
+      box-shadow: 0 8px 18px rgba(15,23,42,.06);
+    }
+    .ha-back-btn:hover{
+      border-color: #94a3b8;
+    }
+
     .ha-hero{
       border-radius: var(--ha-radius);
       background:#fff;
@@ -300,7 +311,9 @@
 
   <div class="ha-shell">
 
-    <a href="/blog" class="ha-back"><i class="bi bi-arrow-left"></i> Quay lại blog</a>
+    <a href="/blog" class="ha-back ha-back-btn">
+      <i class="bi bi-arrow-left"></i> Quay lại bài viết
+    </a>
 
     <div class="ha-hero mt-2">
       <div class="ha-coverwrap">
