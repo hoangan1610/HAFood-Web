@@ -23,10 +23,27 @@ namespace HAFoodWeb.Services
 
         private void AttachAuthHeader(HttpRequestMessage req)
         {
-            var token = HttpContext.Current?.Request?.Cookies["AuthToken"]?.Value;
-            if (!string.IsNullOrEmpty(token))
+            string token = null;
+
+            // 1) Cookie
+            var ck = HttpContext.Current?.Request?.Cookies["AuthToken"]?.Value;
+            if (!string.IsNullOrWhiteSpace(ck))
+                token = HttpUtility.UrlDecode(ck);
+
+            // 2) Fallback: Session (đúng với code bạn đang dùng trong ASPX)
+            if (string.IsNullOrWhiteSpace(token))
+                token = HttpContext.Current?.Session?["JwtToken"] as string;
+
+            // 3) Gắn header
+            if (!string.IsNullOrWhiteSpace(token))
+            {
+                if (token.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+                    token = token.Substring(7).Trim();
+
                 req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            }
         }
+
 
         // === NEW: Đổi phương thức thanh toán cho order đã tạo (an toàn, không throw) ===
         public async Task<SwitchPaymentResult> SwitchPaymentSafeAsync(

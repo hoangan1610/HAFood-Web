@@ -78,15 +78,17 @@ namespace HAFoodWeb
                     if (!string.IsNullOrWhiteSpace(provQ))
                     {
                         provName = provQ == "zalopay" ? "ZaloPay"
-                                   : provQ == "vnpay" ? "VNPay"
-                                   : "cổng thanh toán";
+            : provQ == "pay2s" ? "Pay2S"
+            : "cổng thanh toán";
+
                     }
                     else
                     {
                         var m = GetPendingMethodFromSession();
-                        provName = m == 2 ? "VNPay"
-                                  : m == 1 ? "ZaloPay"
-                                  : "cổng thanh toán";
+                        provName = m == 2 ? "Pay2S"
+          : m == 1 ? "ZaloPay"
+          : "cổng thanh toán";
+
                     }
 
                     ShowNiceError(

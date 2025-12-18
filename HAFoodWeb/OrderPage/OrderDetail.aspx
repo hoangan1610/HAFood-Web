@@ -210,11 +210,17 @@
             </div>
 
             <asp:Panel ID="pnlPayment" runat="server" Visible="false" CssClass="mt-3">
-              <div class="meta-small fw-semibold text-primary d-flex align-items-center gap-2">
-                <i class="bi bi-credit-card-2-front"></i> Phương thức thanh toán:
-                <span id="litPayment" runat="server" class="order-meta-value ms-1"></span>
-              </div>
-            </asp:Panel>
+  <div class="meta-small fw-semibold text-primary">
+    <div class="d-flex align-items-center gap-2 flex-wrap">
+      <i class="bi bi-credit-card-2-front"></i>
+      <span>Phương thức thanh toán:</span>
+      <span id="litPayment" runat="server" class="order-meta-value ms-1"></span>
+    </div>
+
+    <small id="litPaymentExtra" runat="server" class="meta-small d-block mt-1 ms-4 text-muted"></small>
+  </div>
+</asp:Panel>
+
           </asp:Panel>
 
           <asp:Panel ID="pnlItems" runat="server" Visible="false" CssClass="card-order mb-3">

@@ -219,14 +219,14 @@ namespace HAFoodWeb
                 {
                     case 0: return "COD";
                     case 1: return "ZaloPay";
-                    case 2: return "VNPay";
+                    case 2: return "Pay2s";
                 }
             }
 
             if (!string.IsNullOrWhiteSpace(paymentProvider))
             {
                 var p = paymentProvider.Trim().ToUpperInvariant();
-                if (p == "VNPAY") return "VNPay";
+                if (p == "PAY2S") return "Pay2s";
                 if (p == "ZALOPAY") return "ZaloPay";
                 return HttpUtility.HtmlDecode(paymentProvider);
             }

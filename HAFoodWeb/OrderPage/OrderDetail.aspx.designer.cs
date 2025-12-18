@@ -123,6 +123,15 @@ namespace HAFoodWeb
         protected global::System.Web.UI.HtmlControls.HtmlGenericControl litPayment;
 
         /// <summary>
+        /// litPaymentExtra control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.HtmlControls.HtmlGenericControl litPaymentExtra;
+
+        /// <summary>
         /// pnlItems control.
         /// </summary>
         /// <remarks>

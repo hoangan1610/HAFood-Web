@@ -44,7 +44,7 @@ namespace HAFoodWeb
         {
             try
             {
-                Debug.WriteLine($"📦 Gọi API lấy chi tiết đơn hàng smart key={codeOrId}");
+                Debug.WriteLine("📦 Gọi API lấy chi tiết đơn hàng smart key=" + codeOrId);
                 var detail = await _orderService.GetOrderDetailSmartAsync(codeOrId);
 
                 if (detail == null || detail.header == null)
@@ -55,59 +55,168 @@ namespace HAFoodWeb
                 }
 
                 var h = detail.header;
-                string Decode(string s) => string.IsNullOrEmpty(s) ? "" : HttpUtility.HtmlDecode(s);
 
-                // Header
-                litOrderCode.InnerText = Decode(h.order_Code ?? $"#{h.id}");
+                Func<string, string> Decode = s =>
+                    string.IsNullOrEmpty(s) ? "" : HttpUtility.HtmlDecode(s);
+
+                // ===== Header =====
+                litOrderCode.InnerText = Decode(h.order_Code ?? ("#" + h.id));
                 litShipName.InnerText = Decode(h.ship_Name ?? "");
                 litShipPhone.InnerText = Decode(h.ship_Phone ?? "");
                 litShipAddress.InnerText = Decode(h.ship_Full_Address ?? "");
                 litNote.InnerText = Decode(h.note ?? "");
 
-                // Payment
-                string paymentText = "";
-                if (!string.IsNullOrWhiteSpace(h.payment_Provider))
+                // ===== Payment helpers =====
+                Func<string, string> NiceProvider = p =>
                 {
-                    string provider = h.payment_Provider.ToUpperInvariant();
-                    string status = (h.payment_Status ?? "").Trim().ToLowerInvariant();
+                    p = (p ?? "").Trim();
+                    if (p.Length == 0) return "";
+                    var up = p.ToUpperInvariant();
+                    if (up == "PAY2S") return "Pay2S";
+                    if (up == "ZALOPAY") return "ZaloPay";
+                    if (up == "VNPAY") return "VNPAY";
+                    if (up == "COD") return "COD";
+                    return p;
+                };
 
-                    if (provider == "VNPAY")
-                    {
-                        if (status == "pending") paymentText = "VNPAY – Đang chờ thanh toán";
-                        else if (status == "paid") paymentText = "VNPAY – Đã thanh toán";
-                        else paymentText = "VNPAY";
-                    }
-                    else
-                    {
-                        paymentText = Decode(h.payment_Provider);
-                    }
-                }
-                else if (h.payment_Method.HasValue)
+                Func<string, string> NiceStatus = s =>
                 {
-                    switch (h.payment_Method.Value)
+                    s = (s ?? "").Trim();
+                    if (s.Length == 0) return "";
+                    var lo = s.ToLowerInvariant();
+                    if (lo == "paid") return "Đã thanh toán";
+                    if (lo == "pending") return "Đang chờ thanh toán";
+                    if (lo == "unpaid") return "Chưa thanh toán";
+                    if (lo == "failed") return "Thất bại";
+                    return s;
+                };
+
+                Func<byte?, string> FromMethod = m =>
+                {
+                    if (!m.HasValue) return "";
+                    switch (m.Value)
                     {
-                        case 1: paymentText = "Thanh toán khi nhận hàng"; break;
-                        case 2: paymentText = "Chuyển khoản ngân hàng"; break;
-                        default: paymentText = "COD"; break;
+                        case 0: return "COD";
+                        case 1: return "ZaloPay";
+                        case 2: return "Pay2S";
+                        default: return "Khác";
                     }
+                };
+
+                Func<string, bool> IsPaid = s =>
+                {
+                    s = (s ?? "").Trim().ToLowerInvariant();
+                    return s == "paid" || s == "success" || s == "succeeded";
+                };
+
+                // ===== Payment build (LUÔN HIỆN) =====
+                string providerTxt = NiceProvider(h.payment_Provider);
+                if (string.IsNullOrWhiteSpace(providerTxt))
+                    providerTxt = FromMethod(h.payment_Method);
+
+                // fallback cuối cùng: KHÔNG BAO GIỜ RỖNG
+                if (string.IsNullOrWhiteSpace(providerTxt))
+                    providerTxt = "COD";
+
+                string statusRaw = (h.payment_Status ?? "");
+                string statusTxt = NiceStatus(statusRaw);
+
+                string providerUp = providerTxt.Trim().ToUpperInvariant();
+                string paymentText;
+
+                // COD: hiển thị mô tả chuẩn UX
+                if (providerUp == "COD")
+                {
+                    paymentText = "COD – Thanh toán khi nhận hàng";
                 }
                 else
                 {
-                    paymentText = "COD";
+                    // Online: có status thì ghép, không có thì chỉ provider
+                    if (string.IsNullOrWhiteSpace(statusTxt))
+                        paymentText = providerTxt;
+                    else
+                        paymentText = providerTxt + " – " + statusTxt;
                 }
 
-                pnlPayment.Visible = !string.IsNullOrWhiteSpace(paymentText);
-                if (pnlPayment.Visible) litPayment.InnerText = paymentText;
+                // ===== Extra line (payment ref + paid at) =====
+                // hiển thị khi online & paid
+                string extraText = "";
+                bool onlinePaid = (providerUp != "COD") && IsPaid(statusRaw);
 
-                // Status text + css
+                if (onlinePaid)
+                {
+                    string refTxt = (h.payment_Ref ?? "").Trim();
+                    DateTime? paidAt = h.paid_At;
+
+                    // format thời gian VN (UTC+7) nếu server đang trả local VN thì giữ nguyên; nếu UTC thì bạn tự convert ở BE.
+                    string paidAtTxt = "";
+                    if (paidAt.HasValue)
+                    {
+                        // hiển thị đẹp: 18/12/2025 07:19
+                        paidAtTxt = paidAt.Value.ToString("dd/MM/yyyy HH:mm", new CultureInfo("vi-VN"));
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(refTxt) && !string.IsNullOrWhiteSpace(paidAtTxt))
+                        extraText = "Mã GD: " + refTxt + " • Lúc: " + paidAtTxt;
+                    else if (!string.IsNullOrWhiteSpace(refTxt))
+                        extraText = "Mã GD: " + refTxt;
+                    else if (!string.IsNullOrWhiteSpace(paidAtTxt))
+                        extraText = "Lúc: " + paidAtTxt;
+                }
+
+                // ===== Render payment (KHÔNG ẨN PANEL) =====
+                pnlPayment.Visible = true;
+                litPayment.InnerText = paymentText;
+
+                // Gợi ý: nếu ASPX bạn CHƯA có span nhỏ để hiện extra, sẽ gắn vào title attribute / data-attr để test.
+                // Nếu bạn thêm <small id="litPaymentExtra" runat="server"></small> thì dùng đoạn dưới.
+                try
+                {
+                    // nếu có control litPaymentExtra (HtmlGenericControl) thì set
+                    if (!string.IsNullOrWhiteSpace(extraText))
+                    {
+                        var extraCtrl = this.FindControl("litPaymentExtra") as System.Web.UI.HtmlControls.HtmlGenericControl;
+                        if (extraCtrl != null)
+                        {
+                            extraCtrl.InnerText = extraText;
+                            extraCtrl.Visible = true;
+                        }
+                        else
+                        {
+                            // fallback: nhét vào title để vẫn xem được
+                            litPayment.Attributes["title"] = extraText;
+                        }
+                    }
+                    else
+                    {
+                        var extraCtrl = this.FindControl("litPaymentExtra") as System.Web.UI.HtmlControls.HtmlGenericControl;
+                        if (extraCtrl != null)
+                        {
+                            extraCtrl.InnerText = "";
+                            extraCtrl.Visible = false;
+                        }
+                        litPayment.Attributes["title"] = "";
+                    }
+                }
+                catch { /* ignore */ }
+
+                // debug attributes để inspect
+                litPayment.Attributes["data-pay-provider"] = (h.payment_Provider ?? "");
+                litPayment.Attributes["data-pay-status"] = (h.payment_Status ?? "");
+                litPayment.Attributes["data-pay-method"] = (h.payment_Method.HasValue ? h.payment_Method.Value.ToString() : "");
+                litPayment.Attributes["data-pay-ref"] = (h.payment_Ref ?? "");
+                litPayment.Attributes["data-paid-at"] = (h.paid_At.HasValue ? h.paid_At.Value.ToString("o") : "");
+                litPayment.Attributes["data-pay-text"] = paymentText;
+                litPayment.Attributes["data-pay-extra"] = extraText;
+
+                // ===== Status pill =====
                 litStatus.InnerText = GetStatusText(h.status);
                 litStatus.Attributes["class"] = "order-status-pill " + GetStatusCssClass(h.status);
 
-                // Review: chỉ khi đã giao
+                // Review/Cancel flags
                 CanReview = (h.status == 3);
                 hCanReview.Value = CanReview ? "1" : "0";
 
-                // Cancel: chỉ khi đã được tạo (status=0)
                 CanCancel = (h.status == 0);
                 hCanCancel.Value = CanCancel ? "1" : "0";
 
@@ -115,7 +224,7 @@ namespace HAFoodWeb
                 hStatus.Value = h.status.ToString();
                 hOrderId.Value = (h.id > 0 ? h.id.ToString() : "0");
 
-                // Items
+                // ===== Items =====
                 if (detail.items != null && detail.items.Count > 0)
                 {
                     rpItems.DataSource = detail.items;
@@ -123,30 +232,45 @@ namespace HAFoodWeb
                     pnlItems.Visible = true;
 
                     var first = detail.items.FirstOrDefault();
-                    hFirstProductId.Value = (first?.product_Id ?? 0).ToString();
-                    hFirstVariantId.Value = (first?.variant_Id ?? 0).ToString();
-                    hOrderCode.Value = Decode(h.order_Code ?? $"#{h.id}");
+                    hFirstProductId.Value = ((first != null ? first.product_Id : 0)).ToString();
+                    hFirstVariantId.Value = ((first != null ? first.variant_Id : 0)).ToString();
+                    hOrderCode.Value = Decode(h.order_Code ?? ("#" + h.id));
                 }
                 else
                 {
                     pnlItems.Visible = false;
                     hFirstProductId.Value = "0";
                     hFirstVariantId.Value = "0";
-                    hOrderCode.Value = Decode(h.order_Code ?? $"#{h.id}");
+                    hOrderCode.Value = Decode(h.order_Code ?? ("#" + h.id));
                 }
 
-                // Summary
-                litSubtotal.Text = string.Format(new CultureInfo("vi-VN"), "{0:#,0}đ", h.sub_Total);
-                litDiscount.Text = string.Format(new CultureInfo("vi-VN"), "{0:#,0}đ", h.discount_Total);
-                litShipping.Text = string.Format(new CultureInfo("vi-VN"), "{0:#,0}đ", h.shipping_Total);
-                litVat.Text = string.Format(new CultureInfo("vi-VN"), "{0:#,0}đ", h.vat_Total);
-                litPayTotal.Text = string.Format(new CultureInfo("vi-VN"), "{0:#,0}đ", h.pay_Total);
+                // ===== Summary =====
+                var vi = new CultureInfo("vi-VN");
+                litSubtotal.Text = string.Format(vi, "{0:#,0}đ", h.sub_Total);
+                litDiscount.Text = string.Format(vi, "{0:#,0}đ", h.discount_Total);
+                litShipping.Text = string.Format(vi, "{0:#,0}đ", h.shipping_Total);
+                litVat.Text = string.Format(vi, "{0:#,0}đ", h.vat_Total);
+                litPayTotal.Text = string.Format(vi, "{0:#,0}đ", h.pay_Total);
 
                 pnlHeader.Visible = true;
                 pnlSummary.Visible = true;
-
-                // Always show review card (JS decides button/chip)
                 pnlOrderReview.Visible = true;
+
+                // ✅ Debug in-page nếu cần
+                if ("1".Equals(Request.QueryString["debug"]))
+                {
+                    string dbg =
+                        "payment_Provider=" + (h.payment_Provider ?? "NULL") + "\n" +
+                        "payment_Status=" + (h.payment_Status ?? "NULL") + "\n" +
+                        "payment_Method=" + (h.payment_Method.HasValue ? h.payment_Method.Value.ToString() : "NULL") + "\n" +
+                        "payment_Ref=" + (h.payment_Ref ?? "NULL") + "\n" +
+                        "paid_At=" + (h.paid_At.HasValue ? h.paid_At.Value.ToString("o") : "NULL") + "\n" +
+                        "paymentText=" + paymentText + "\n" +
+                        "paymentExtra=" + extraText;
+
+                    litDebug.Text = "<pre>DEBUG\n" + Server.HtmlEncode(dbg) + "</pre>";
+                    litDebug.Visible = true;
+                }
             }
             catch (Exception ex)
             {
@@ -155,6 +279,11 @@ namespace HAFoodWeb
                 litDebug.Visible = true;
             }
         }
+
+
+
+
+
 
         private string GetStatusText(int status)
         {
