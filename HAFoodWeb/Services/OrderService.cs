@@ -489,10 +489,6 @@ namespace HAFoodWeb.Services
         public int quantity { get; set; }
     }
 
-
-
-   
-
     public class OrderCheckoutResponse
     {
         public long order_Id { get; set; }
@@ -500,7 +496,3 @@ namespace HAFoodWeb.Services
         public string payment_Url { get; set; }  // bỏ ?
     }
 }
-
-
-   
-

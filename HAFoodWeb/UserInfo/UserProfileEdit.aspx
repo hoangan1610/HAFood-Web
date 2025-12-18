@@ -145,6 +145,10 @@
 <body>
     <form id="form1" runat="server">
 
+        <!-- Lưu giá trị gốc để so sánh khi lưu -->
+        <asp:HiddenField ID="hdnOrigFullName" runat="server" />
+        <asp:HiddenField ID="hdnOrigPhone" runat="server" />
+
         <div class="account-page my-3 px-3 px-md-4">
             <div class="account-page-header">
                 <div class="title-badge">

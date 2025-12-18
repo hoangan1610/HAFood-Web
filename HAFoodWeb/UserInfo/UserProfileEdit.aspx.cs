@@ -30,6 +30,10 @@ namespace HAFoodWeb
                     txtEmail.Text = profile.user.email;
                     txtPhone.Text = profile.user.phone;
 
+                    // ✅ Lưu giá trị gốc để so sánh khi PostBack
+                    hdnOrigFullName.Value = (profile.user.fullName ?? string.Empty).Trim();
+                    hdnOrigPhone.Value = (profile.user.phone ?? string.Empty).Trim();
+
                     string avatarUrl = string.IsNullOrEmpty(profile.user.avatar)
                         ? ResolveUrl("~/images/default-avatar.png")
                         : profile.user.avatar;
@@ -46,37 +50,53 @@ namespace HAFoodWeb
 
         protected async void btnSave_Click(object sender, EventArgs e)
         {
+            lblMessage.Text = string.Empty;
+
             var token = Request.Cookies["AuthToken"]?.Value;
             if (string.IsNullOrEmpty(token)) return;
 
-            // --- Kiểm tra tên ---
             string fullName = (txtFullName.Text ?? string.Empty).Trim();
-            if (string.IsNullOrEmpty(fullName))
+            string phone = (txtPhone.Text ?? string.Empty).Trim();
+
+            // ✅ Lấy giá trị gốc
+            string origFullName = (hdnOrigFullName.Value ?? string.Empty).Trim();
+            string origPhone = (hdnOrigPhone.Value ?? string.Empty).Trim();
+
+            bool fullNameChanged = !string.Equals(fullName, origFullName, StringComparison.Ordinal);
+            bool phoneChanged = !string.Equals(phone, origPhone, StringComparison.Ordinal);
+            bool avatarChanged = fileAvatar.HasFile;
+
+            // ✅ Validate CHỈ những field thay đổi
+            if (fullNameChanged)
             {
-                ShowFormError("❌ Vui lòng nhập họ và tên.");
-                return;
-            }
-            if (!Regex.IsMatch(fullName, @"^[\p{L}\s]+$"))
-            {
-                ShowFormError("❌ Tên không được chứa ký tự đặc biệt hoặc số.");
-                return;
+                if (string.IsNullOrEmpty(fullName))
+                {
+                    ShowFormError("❌ Vui lòng nhập họ và tên.");
+                    return;
+                }
+                if (!Regex.IsMatch(fullName, @"^[\p{L}\s]+$"))
+                {
+                    ShowFormError("❌ Tên không được chứa ký tự đặc biệt hoặc số.");
+                    return;
+                }
             }
 
-            // --- Kiểm tra số điện thoại ---
-            string phone = (txtPhone.Text ?? string.Empty).Trim();
-            if (string.IsNullOrEmpty(phone))
+            if (phoneChanged)
             {
-                ShowFormError("❌ Vui lòng nhập số điện thoại.");
-                return;
-            }
-            if (!Regex.IsMatch(phone, @"^0\d{9}$"))
-            {
-                ShowFormError("❌ Số điện thoại phải gồm 10 chữ số và bắt đầu bằng số 0.");
-                return;
+                if (string.IsNullOrEmpty(phone))
+                {
+                    ShowFormError("❌ Vui lòng nhập số điện thoại.");
+                    return;
+                }
+                if (!Regex.IsMatch(phone, @"^0\d{9}$"))
+                {
+                    ShowFormError("❌ Số điện thoại phải gồm 10 chữ số và bắt đầu bằng số 0.");
+                    return;
+                }
             }
 
             // 1) Upload ảnh nếu có
-            if (fileAvatar.HasFile)
+            if (avatarChanged)
             {
                 var avatarResult = await _userService.UpdateAvatarAsync(token, fileAvatar);
                 if (!(avatarResult?.Success ?? false))
@@ -97,11 +117,23 @@ namespace HAFoodWeb
                 }
             }
 
-            // 2) Cập nhật thông tin
+            // ✅ Nếu không đổi name/phone thì KHÔNG gọi UpdateProfileAsync (tránh gửi phone)
+            if (!fullNameChanged && !phoneChanged)
+            {
+                lblMessage.Text = string.Empty;
+                ShowToast(avatarChanged ? "Cập nhật ảnh thành công!" : "Không có thay đổi để lưu.", "success");
+
+                ScriptManager.RegisterStartupScript(this, GetType(), "redirectProfile_nochange",
+                    "setTimeout(function(){ window.location.href = '../UserInfo/UserProfile.aspx?t=' + new Date().getTime(); }, 800);", true);
+                return;
+            }
+
+            // 2) Cập nhật thông tin: ✅ chỉ gửi field thay đổi (field không đổi => null)
             var updateRequest = new UserUpdateRequest
             {
-                fullName = fullName,
-                phone = phone
+                fullName = fullNameChanged ? fullName : null,
+                phone = phoneChanged ? phone : null,
+                avatar = null
             };
 
             var profileResult = await _userService.UpdateProfileAsync(token, updateRequest);
@@ -120,14 +152,16 @@ namespace HAFoodWeb
             }
 
             // === THẤT BẠI: CHỈ BẮT 2 TRƯỜNG HỢP 409 & 500 ===
-
             int? statusCode = GetStatusCode(profileResult);
 
             if (statusCode == 409)
             {
                 var msg = "Số điện thoại đã được sử dụng, vui lòng đổi số điện thoại khác.";
-                ShowFormError("❌ " + msg);
-                ShowFieldError("phoneError", "❌ " + msg);
+
+                // ✅ KHÔNG hiện lblMessage nữa (chỉ hiện lỗi dưới ô SĐT + toast)
+                lblMessage.Text = string.Empty;
+
+                if (phoneChanged) ShowFieldError("phoneError", "❌ " + msg);
                 ShowToast(msg, "error");
                 return;
             }
@@ -135,13 +169,15 @@ namespace HAFoodWeb
             if (statusCode == 500)
             {
                 var msg = "Đã xảy ra lỗi hệ thống, vui lòng thử lại sau.";
-                ShowFormError("❌ " + msg);
+
+                // ✅ KHÔNG hiện lblMessage nữa
+                lblMessage.Text = string.Empty;
+
                 ShowToast(msg, "error");
                 return;
             }
 
-            // Các lỗi khác: thông điệp mặc định ngắn gọn
-            ShowFormError("❌ Cập nhật thông tin thất bại, vui lòng thử lại.");
+            lblMessage.Text = string.Empty;
             ShowToast("Cập nhật thông tin thất bại, vui lòng thử lại.", "error");
         }
 
@@ -168,23 +204,18 @@ namespace HAFoodWeb
                 $"showToast('{safe}', '{t}');", true);
         }
 
-        // Lấy status code "dẻo": int? → int → string → parse từ RawBody
         private int? GetStatusCode(object result)
         {
-            // 1) Thử lấy int?
             var scNullable = TryGet<int?>(result, "StatusCode");
             if (scNullable.HasValue) return scNullable.Value;
 
-            // 2) Thử lấy int (không nullable)
             var scInt = TryGet<int>(result, "StatusCode");
             if (scInt > 0) return scInt;
 
-            // 3) Thử lấy string rồi parse
             var scStr = TryGet<string>(result, "StatusCode");
             if (!string.IsNullOrWhiteSpace(scStr) && int.TryParse(scStr, out var scParsed))
                 return scParsed;
 
-            // 4) Fallback: parse từ RawBody (Problem Details)
             var rawBody = TryGet<string>(result, "RawBody");
             if (!string.IsNullOrWhiteSpace(rawBody))
             {
@@ -194,13 +225,12 @@ namespace HAFoodWeb
                     int? st = (int?)p?.status;
                     if (st.HasValue) return st.Value;
                 }
-                catch { /* ignore */ }
+                catch { }
             }
 
             return null;
         }
 
-        // Đọc property bằng reflection (chấp nhận cả nullable & non-nullable)
         private T TryGet<T>(object obj, string propName)
         {
             try
@@ -212,22 +242,19 @@ namespace HAFoodWeb
                     var val = p.GetValue(obj);
                     if (val == null) return default(T);
 
-                    // Nếu cùng kiểu, cast thẳng
                     if (val is T tval) return tval;
 
-                    // Trường hợp cần convert (vd: int -> int?)
                     var targetType = typeof(T);
                     var underlying = Nullable.GetUnderlyingType(targetType) ?? targetType;
 
                     try
                     {
                         var converted = Convert.ChangeType(val, underlying);
-                        // nếu T là nullable, cần box qua object trước khi cast
                         if (Nullable.GetUnderlyingType(targetType) != null)
                             return (T)(object)converted;
                         return (T)converted;
                     }
-                    catch { /* ignore convert fail */ }
+                    catch { }
                 }
             }
             catch { }
