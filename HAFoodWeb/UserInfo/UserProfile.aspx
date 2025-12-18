@@ -26,14 +26,7 @@
             font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
             margin: 0;
             padding: 20px 10px 30px;
-            background:
-              radial-gradient(circle at top left,
-                               #ffe8cc 0,
-                               #ffe0bd 20%,
-                               #fdf5ee 40%,
-                               #f5f5f5 70%,
-                               #f5f5f5 100%);
-            background-color: var(--haf-bg);
+            background: #ffffff;
         }
 
         .account-page { width: 100%; max-width: 100%; margin: 0 auto; }

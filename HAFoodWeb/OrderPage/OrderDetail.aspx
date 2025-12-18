@@ -210,16 +210,16 @@
             </div>
 
             <asp:Panel ID="pnlPayment" runat="server" Visible="false" CssClass="mt-3">
-  <div class="meta-small fw-semibold text-primary">
-    <div class="d-flex align-items-center gap-2 flex-wrap">
-      <i class="bi bi-credit-card-2-front"></i>
-      <span>Phương thức thanh toán:</span>
-      <span id="litPayment" runat="server" class="order-meta-value ms-1"></span>
-    </div>
+              <div class="meta-small fw-semibold text-primary">
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                  <i class="bi bi-credit-card-2-front"></i>
+                  <span>Phương thức thanh toán:</span>
+                  <span id="litPayment" runat="server" class="order-meta-value ms-1"></span>
+                </div>
 
-    <small id="litPaymentExtra" runat="server" class="meta-small d-block mt-1 ms-4 text-muted"></small>
-  </div>
-</asp:Panel>
+                <small id="litPaymentExtra" runat="server" class="meta-small d-block mt-1 ms-4 text-muted"></small>
+              </div>
+            </asp:Panel>
 
           </asp:Panel>
 
@@ -301,7 +301,7 @@
                 </span>
 
                 <span id="orderReviewAlready" class="btn btn-outline-secondary btn-sm disabled ha-btn-pill d-none" style="cursor:not-allowed; pointer-events:none;">
-                  Bạn đã đánh giá đơn hàng này rồi
+                  Bạn đã đánh giá tất cả sản phẩm trong đơn rồi
                 </span>
               </div>
             </div>
@@ -324,6 +324,9 @@
       <asp:HiddenField ID="hCanReview" runat="server" />
       <asp:HiddenField ID="hFirstProductId" runat="server" />
       <asp:HiddenField ID="hFirstVariantId" runat="server" />
+
+      <%-- ✅ NEW: JSON danh sách item trong đơn để gửi review cho tất cả sản phẩm --%>
+      <asp:HiddenField ID="hOrderItemsJson" runat="server" />
 
       <%-- Hidden cho hủy đơn --%>
       <asp:HiddenField ID="hStatus" runat="server" />
@@ -349,7 +352,6 @@
           </div>
         </div>
 
-        <%-- ✅ Xác nhận bên trái, Hủy bên phải --%>
         <div class="modal-footer d-flex justify-content-between w-100">
           <button type="button" class="btn btn-danger btn-sm ha-btn-pill" id="btnConfirmCancelOrder">
             <i class="bi bi-x-circle me-1"></i>Xác nhận hủy
@@ -448,6 +450,90 @@
           pill.className = 'order-status-pill status-' + s;
       }
 
+      // ✅ NEW: lấy list sản phẩm trong đơn từ hidden JSON
+      function getOrderItems() {
+          try {
+              const raw = document.getElementById('<%= hOrderItemsJson.ClientID %>')?.value || '[]';
+              const arr = JSON.parse(raw) || [];
+              return arr
+                  .map(x => ({
+                      productId: parseInt(x.productId || x.ProductId || 0, 10),
+                      variantId: parseInt(x.variantId || x.VariantId || 0, 10)
+                  }))
+                  .filter(x => x.productId > 0);
+          } catch {
+              return [];
+          }
+      }
+
+      // ✅ NEW: check đã review chưa (theo từng product/variant)
+      async function isAlreadyReviewed(productId, variantId) {
+          try {
+              const API_BASE = (window.__API_BASE || '').replace(/\/+$/, '');
+              const token = window.__AUTH_TOKEN || '';
+              if (!API_BASE || !token || !productId) return false;
+
+              let url = `${API_BASE}/api/products/${productId}/reviews/eligibility`;
+              if (variantId > 0) url += `?variantId=${variantId}`;
+
+              const resp = await fetch(url, {
+                  method: 'GET',
+                  headers: { 'Accept': 'application/json', 'Authorization': 'Bearer ' + token },
+                  credentials: 'include'
+              });
+
+              if (!resp.ok) return false;
+
+              const data = await resp.json();
+              return !!(data.already_Reviewed || data.Already_Reviewed);
+          } catch {
+              return false;
+          }
+      }
+
+      // ✅ NEW: post review cho 1 item
+      async function postReviewForItem({ productId, variantId, orderId, rating, title, content, files }) {
+          const API_BASE = (window.__API_BASE || '').replace(/\/+$/, '');
+          const auth = window.__AUTH_TOKEN || '';
+          if (!API_BASE) throw new Error('Thiếu cấu hình API');
+          if (!auth) throw new Error('Vui lòng đăng nhập để gửi đánh giá');
+
+          const formData = new FormData();
+          formData.append('Product_Id', String(productId));
+          if (variantId > 0) formData.append('Variant_Id', String(variantId));
+          formData.append('Order_Id', String(orderId));
+          formData.append('Rating', String(rating));
+          if (title && title.trim()) formData.append('Title', title.trim());
+          if (content && content.trim()) formData.append('Content', content.trim());
+
+          let hasImages = false;
+          if (files && files.length) {
+              for (let i = 0; i < files.length; i++) {
+                  const f = files[i];
+                  if (!f) continue;
+                  if (f.size > 2 * 1024 * 1024) continue;
+                  hasImages = true;
+                  formData.append('Images', f);
+              }
+          }
+          formData.append('Has_Image', hasImages ? 'true' : 'false');
+
+          const resp = await fetch(API_BASE + '/api/reviews', {
+              method: 'POST',
+              headers: { 'Accept': 'application/json', 'Authorization': 'Bearer ' + auth },
+              credentials: 'include',
+              body: formData
+          });
+
+          let data = null; try { data = await resp.json(); } catch { }
+          if (resp.status === 401 || resp.status === 403) throw new Error('Vui lòng đăng nhập để gửi đánh giá');
+          if (!resp.ok || (data && data.success === false)) {
+              throw new Error((data && (data.message || data.detail)) || 'Không thể gửi đánh giá, vui lòng thử lại.');
+          }
+          return data;
+      }
+
+      // ✅ NEW: UI nút đánh giá dựa trên TẤT CẢ sản phẩm trong đơn
       async function decideOrderReviewUI() {
           const canReviewEl = document.getElementById('<%= hCanReview.ClientID %>');
           const canReview = (canReviewEl && canReviewEl.value === '1');
@@ -460,31 +546,18 @@
 
           if (!canReview) { if (disabled) disabled.classList.remove('d-none'); return; }
 
+          const items = getOrderItems();
+          if (!items.length) { if (btn) btn.classList.remove('d-none'); return; }
+
           try {
-              const API_BASE = (window.__API_BASE || '').replace(/\/+$/, '');
-              const token = window.__AUTH_TOKEN || '';
-              const pid = parseInt((document.getElementById('<%= hFirstProductId.ClientID %>')?.value || '0'), 10);
-            const vid = parseInt((document.getElementById('<%= hFirstVariantId.ClientID %>')?.value || '0'), 10);
-
-              if (!API_BASE || !token || !pid) { if (btn) btn.classList.remove('d-none'); return; }
-
-              let url = `${API_BASE}/api/products/${pid}/reviews/eligibility`;
-              if (vid > 0) url += `?variantId=${vid}`;
-
-              const resp = await fetch(url, {
-                  method: 'GET',
-                  headers: { 'Accept': 'application/json', 'Authorization': 'Bearer ' + token },
-                  credentials: 'include'
-              });
-
-              if (!resp.ok) { if (btn) btn.classList.remove('d-none'); return; }
-
-              const data = await resp.json();
-              const alreadyReviewed = !!(data.already_Reviewed || data.Already_Reviewed);
-              if (alreadyReviewed) { if (already) already.classList.remove('d-none'); }
-              else { if (btn) btn.classList.remove('d-none'); }
-          } catch (e) {
-              console.warn('eligibility error', e);
+              // nếu còn ít nhất 1 item chưa review => cho viết
+              for (const it of items) {
+                  const ar = await isAlreadyReviewed(it.productId, it.variantId);
+                  if (!ar) { if (btn) btn.classList.remove('d-none'); return; }
+              }
+              // tất cả đã review
+              if (already) already.classList.remove('d-none');
+          } catch {
               if (btn) btn.classList.remove('d-none');
           }
       }
@@ -502,211 +575,225 @@
 
       // ✅ Swagger: POST /api/orders/{id}/status, body là số 4
       async function callCancelOrderApi(orderId) {
-        const API_BASE = (window.__API_BASE || '').replace(/\/+$/, '');
-        const token = window.__AUTH_TOKEN || '';
-        if (!API_BASE) throw new Error('Thiếu cấu hình API');
-        if (!token) throw new Error('Vui lòng đăng nhập để hủy đơn');
+          const API_BASE = (window.__API_BASE || '').replace(/\/+$/, '');
+          const token = window.__AUTH_TOKEN || '';
+          if (!API_BASE) throw new Error('Thiếu cấu hình API');
+          if (!token) throw new Error('Vui lòng đăng nhập để hủy đơn');
 
-        const resp = await fetch(`${API_BASE}/api/orders/${orderId}/status`, {
-          method: 'POST',
-          headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + token
-          },
-          credentials: 'include',
-          body: JSON.stringify(4)
-        });
+          const resp = await fetch(`${API_BASE}/api/orders/${orderId}/status`, {
+              method: 'POST',
+              headers: {
+                  'Accept': 'application/json',
+                  'Content-Type': 'application/json',
+                  'Authorization': 'Bearer ' + token
+              },
+              credentials: 'include',
+              body: JSON.stringify(4)
+          });
 
-        let data = null; try { data = await resp.json(); } catch {}
-        if (resp.status === 401 || resp.status === 403) throw new Error('Vui lòng đăng nhập để hủy đơn');
-        if (!resp.ok) throw new Error((data && (data.message || data.detail)) || 'Không thể hủy đơn, vui lòng thử lại.');
-        return data;
+          let data = null; try { data = await resp.json(); } catch { }
+          if (resp.status === 401 || resp.status === 403) throw new Error('Vui lòng đăng nhập để hủy đơn');
+          if (!resp.ok) throw new Error((data && (data.message || data.detail)) || 'Không thể hủy đơn, vui lòng thử lại.');
+          return data;
       }
 
       document.addEventListener('DOMContentLoaded', function () {
-        setStatusPill(document.getElementById('<%= hStatus.ClientID %>').value || '0');
+          setStatusPill(document.getElementById('<%= hStatus.ClientID %>').value || '0');
 
-        setRatingUI(5);
-        const oc = document.getElementById('<%= hOrderCode.ClientID %>')?.value || '';
-        const rv = document.getElementById('rvOrderCode'); if (rv) rv.textContent = oc;
-        const cn = document.getElementById('cnOrderCode'); if (cn) cn.textContent = oc;
+          setRatingUI(5);
+          const oc = document.getElementById('<%= hOrderCode.ClientID %>')?.value || '';
+          const rv = document.getElementById('rvOrderCode'); if (rv) rv.textContent = oc;
+          const cn = document.getElementById('cnOrderCode'); if (cn) cn.textContent = oc;
 
-        // Cancel modal
-        let cancelModalInstance = null;
-        document.getElementById('btnCancelOrder')?.addEventListener('click', function () {
-          const el = document.getElementById('cancelModal');
-          if (!cancelModalInstance) cancelModalInstance = new bootstrap.Modal(el);
-          cancelModalInstance.show();
-        });
+          // Cancel modal
+          let cancelModalInstance = null;
+          document.getElementById('btnCancelOrder')?.addEventListener('click', function () {
+              const el = document.getElementById('cancelModal');
+              if (!cancelModalInstance) cancelModalInstance = new bootstrap.Modal(el);
+              cancelModalInstance.show();
+          });
 
-        // Confirm cancel
-        document.getElementById('btnConfirmCancelOrder')?.addEventListener('click', async function () {
-          const btn = document.getElementById('btnConfirmCancelOrder');
-          const oldHtml = btn.innerHTML;
+          // Confirm cancel
+          document.getElementById('btnConfirmCancelOrder')?.addEventListener('click', async function () {
+              const btn = document.getElementById('btnConfirmCancelOrder');
+              const oldHtml = btn.innerHTML;
 
-          try {
-            const status = parseInt(document.getElementById('<%= hStatus.ClientID %>').value || '0', 10);
-            const canCancel = (document.getElementById('<%= hCanCancel.ClientID %>').value === '1');
-            if (!(canCancel && status === 0)) { showToast('Đơn hàng không đủ điều kiện để hủy.', true); return; }
+              try {
+                  const status = parseInt(document.getElementById('<%= hStatus.ClientID %>').value || '0', 10);
+                  const canCancel = (document.getElementById('<%= hCanCancel.ClientID %>').value === '1');
+                  if (!(canCancel && status === 0)) { showToast('Đơn hàng không đủ điều kiện để hủy.', true); return; }
 
-            const orderId = parseInt(document.getElementById('<%= hOrderId.ClientID %>').value || '0', 10);
-            if (!orderId) { showToast('Thiếu dữ liệu đơn hàng', true); return; }
+                  const orderId = parseInt(document.getElementById('<%= hOrderId.ClientID %>').value || '0', 10);
+                  if (!orderId) { showToast('Thiếu dữ liệu đơn hàng', true); return; }
 
-            btn.disabled = true;
-            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Đang hủy...';
+                  btn.disabled = true;
+                  btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Đang hủy...';
 
-            await callCancelOrderApi(orderId);
+                  await callCancelOrderApi(orderId);
 
-            document.getElementById('<%= hStatus.ClientID %>').value = '4';
-            document.getElementById('<%= hCanCancel.ClientID %>').value = '0';
-            setStatusPill(4);
-            decideCancelUI();
+                  document.getElementById('<%= hStatus.ClientID %>').value = '4';
+                  document.getElementById('<%= hCanCancel.ClientID %>').value = '0';
+                  setStatusPill(4);
+                  decideCancelUI();
 
-            showToast('Đã hủy đơn hàng.');
-            try { bootstrap.Modal.getInstance(document.getElementById('cancelModal'))?.hide(); } catch {}
+                  showToast('Đã hủy đơn hàng.');
+                  try { bootstrap.Modal.getInstance(document.getElementById('cancelModal'))?.hide(); } catch { }
 
-            btn.disabled = false;
-            btn.innerHTML = oldHtml;
-          } catch (err) {
-            console.error(err);
-            showToast((err && err.message) ? err.message : 'Có lỗi xảy ra, vui lòng thử lại.', true);
-            btn.disabled = false;
-            btn.innerHTML = oldHtml;
-          }
-        });
-
-        // Review modal
-        let reviewModalInstance = null;
-        document.getElementById('btnOpenOrderReview')?.addEventListener('click', function () {
-          const el = document.getElementById('reviewModal');
-          if (!reviewModalInstance) reviewModalInstance = new bootstrap.Modal(el);
-          reviewModalInstance.show();
-        });
-
-        // Click stars
-        document.getElementById('reviewRatingStars')?.addEventListener('click', function(e){
-          var t = e.target;
-          if (!t || !t.getAttribute) return;
-          var r = parseInt(t.getAttribute('data-rating') || '0', 10);
-          if (r >= 1 && r <= 5) setRatingUI(r);
-        });
-
-        // Submit review
-        document.getElementById('btnSubmitReview')?.addEventListener('click', async function () {
-          try {
-            var API_BASE = (window.__API_BASE || '').replace(/\/+$/, '');
-            var auth = window.__AUTH_TOKEN || '';
-            if (!API_BASE) { showToast('Thiếu cấu hình API', true); return; }
-            if (!auth) { showToast('Vui lòng đăng nhập để gửi đánh giá', true); return; }
-
-            var rating = parseInt((document.getElementById('reviewRatingValue') || {}).value || '0', 10);
-            var title = (document.getElementById('reviewTitleInput') || {}).value || '';
-            var content = (document.getElementById('reviewContentInput') || {}).value || '';
-            var filesEl = document.getElementById('reviewImagesInput');
-            var files = (filesEl && filesEl.files) ? filesEl.files : null;
-
-            if (!rating || rating < 1 || rating > 5) { showToast('Vui lòng chọn số sao đánh giá', true); return; }
-
-            var orderId = parseInt((document.getElementById('<%= hOrderId.ClientID %>').value || '0'), 10);
-            var productId = parseInt((document.getElementById('<%= hFirstProductId.ClientID %>').value || '0'), 10);
-            var variantId = parseInt((document.getElementById('<%= hFirstVariantId.ClientID %>').value || '0'), 10);
-
-            if (!orderId || !productId) { showToast('Thiếu dữ liệu đơn hàng/sản phẩm', true); return; }
-
-            var formData = new FormData();
-            formData.append('Product_Id', String(productId));
-            if (variantId > 0) formData.append('Variant_Id', String(variantId));
-            formData.append('Order_Id', String(orderId));
-            formData.append('Rating', String(rating));
-            if (title.trim()) formData.append('Title', title.trim());
-            if (content.trim()) formData.append('Content', content.trim());
-
-            var hasImages = false;
-            if (files && files.length) {
-              for (var i = 0; i < files.length; i++) {
-                var f = files[i]; if (!f) continue;
-                if (f.size > 2 * 1024 * 1024) continue;
-                hasImages = true; formData.append('Images', f);
+                  btn.disabled = false;
+                  btn.innerHTML = oldHtml;
+              } catch (err) {
+                  console.error(err);
+                  showToast((err && err.message) ? err.message : 'Có lỗi xảy ra, vui lòng thử lại.', true);
+                  btn.disabled = false;
+                  btn.innerHTML = oldHtml;
               }
-            }
-            formData.append('Has_Image', hasImages ? 'true' : 'false');
+          });
 
-            var resp = await fetch(API_BASE + '/api/reviews', {
-              method: 'POST',
-              headers: { 'Accept': 'application/json', 'Authorization': 'Bearer ' + auth },
-              credentials: 'include',
-              body: formData
-            });
+          // Review modal
+          let reviewModalInstance = null;
+          document.getElementById('btnOpenOrderReview')?.addEventListener('click', function () {
+              const el = document.getElementById('reviewModal');
+              if (!reviewModalInstance) reviewModalInstance = new bootstrap.Modal(el);
+              reviewModalInstance.show();
+          });
 
-            var data = null; try { data = await resp.json(); } catch {}
-            if (resp.status === 401 || resp.status === 403) { showToast('Vui lòng đăng nhập để gửi đánh giá', true); return; }
-            if (!resp.ok || (data && data.success === false)) {
-              showToast((data && (data.message || data.detail)) || 'Không thể gửi đánh giá, vui lòng thử lại.', true);
-              return;
-            }
+          // Click stars
+          document.getElementById('reviewRatingStars')?.addEventListener('click', function (e) {
+              var t = e.target;
+              if (!t || !t.getAttribute) return;
+              var r = parseInt(t.getAttribute('data-rating') || '0', 10);
+              if (r >= 1 && r <= 5) setRatingUI(r);
+          });
 
-            showToast('Đã gửi đánh giá, chờ duyệt.');
-            (document.getElementById('reviewTitleInput') || {}).value = '';
-            (document.getElementById('reviewContentInput') || {}).value = '';
-            if (filesEl) filesEl.value = '';
-            setRatingUI(5);
+          // ✅ NEW: Submit review cho TẤT CẢ sản phẩm trong đơn
+          document.getElementById('btnSubmitReview')?.addEventListener('click', async function () {
+              const submitBtn = document.getElementById('btnSubmitReview');
+              const oldText = submitBtn ? submitBtn.innerHTML : '';
 
-            try { bootstrap.Modal.getInstance(document.getElementById('reviewModal'))?.hide(); } catch {}
+              try {
+                  const rating = parseInt((document.getElementById('reviewRatingValue') || {}).value || '0', 10);
+                  const title = (document.getElementById('reviewTitleInput') || {}).value || '';
+                  const content = (document.getElementById('reviewContentInput') || {}).value || '';
+                  const filesEl = document.getElementById('reviewImagesInput');
+                  const files = (filesEl && filesEl.files) ? filesEl.files : null;
 
-            document.getElementById('btnOpenOrderReview')?.classList.add('d-none');
-            document.getElementById('orderReviewAlready')?.classList.remove('d-none');
-          } catch (err) {
-            console.error(err);
-            showToast('Có lỗi xảy ra, vui lòng thử lại.', true);
+                  if (!rating || rating < 1 || rating > 5) { showToast('Vui lòng chọn số sao đánh giá', true); return; }
+
+                  const orderId = parseInt((document.getElementById('<%= hOrderId.ClientID %>')?.value || '0'), 10);
+                  if (!orderId) { showToast('Thiếu dữ liệu đơn hàng', true); return; }
+
+                  const items = getOrderItems();
+                  if (!items.length) {
+                      showToast('Không tìm thấy sản phẩm trong đơn để đánh giá', true);
+                      return;
+                  }
+
+                  if (submitBtn) {
+                      submitBtn.disabled = true;
+                      submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Đang gửi...';
+                  }
+
+                  // lọc các sản phẩm chưa review
+                  const targets = [];
+                  for (const it of items) {
+                      const ar = await isAlreadyReviewed(it.productId, it.variantId);
+                      if (!ar) targets.push(it);
+                  }
+
+                  if (!targets.length) {
+                      showToast('Bạn đã đánh giá tất cả sản phẩm trong đơn rồi.', true);
+                      try { bootstrap.Modal.getInstance(document.getElementById('reviewModal'))?.hide(); } catch { }
+                      document.getElementById('btnOpenOrderReview')?.classList.add('d-none');
+                      document.getElementById('orderReviewAlready')?.classList.remove('d-none');
+                      return;
+                  }
+
+                  let ok = 0, fail = 0;
+
+                  // gửi lần lượt
+                  for (const t of targets) {
+                      try {
+                          await postReviewForItem({
+                              productId: t.productId,
+                              variantId: t.variantId,
+                              orderId,
+                              rating,
+                              title,
+                              content,
+                              files
+                          });
+                          ok++;
+                      } catch (e) {
+                          fail++;
+                          console.warn('Review fail for', t, e);
+                      }
+                  }
+
+                  if (fail === 0) {
+                      showToast(`Đã gửi đánh giá cho ${ok} sản phẩm.`);
+                      try { bootstrap.Modal.getInstance(document.getElementById('reviewModal'))?.hide(); } catch { }
+                      document.getElementById('btnOpenOrderReview')?.classList.add('d-none');
+                      document.getElementById('orderReviewAlready')?.classList.remove('d-none');
+                  } else {
+                      showToast(`Đã gửi ${ok}/${ok + fail} đánh giá. Có ${fail} lỗi.`, true);
+                  }
+
+              } catch (err) {
+                  console.error(err);
+                  showToast((err && err.message) ? err.message : 'Có lỗi xảy ra, vui lòng thử lại.', true);
+              } finally {
+                  if (submitBtn) {
+                      submitBtn.disabled = false;
+                      submitBtn.innerHTML = oldText;
+                  }
+              }
+          });
+
+          decideOrderReviewUI();
+          decideCancelUI();
+
+          // ===== embed helpers =====
+          var isEmbed = /[?&]embed=1\b/.test(location.search);
+
+          // back link khi embed
+          var backLink = document.getElementById('<%= lnkBack.ClientID %>');
+          if (isEmbed && backLink) {
+              try {
+                  var u = new URL(backLink.getAttribute('href') || backLink.href, location.href);
+                  u.searchParams.set('embed', '1');
+                  backLink.setAttribute('href', u.pathname + u.search + u.hash);
+              } catch (e) {
+                  var href = backLink.getAttribute('href') || backLink.href;
+                  backLink.setAttribute('href', href + (href.indexOf('?') >= 0 ? '&' : '?') + 'embed=1');
+              }
           }
-        });
 
-        decideOrderReviewUI();
-        decideCancelUI();
-
-        // ===== embed helpers =====
-        var isEmbed = /[?&]embed=1\b/.test(location.search);
-
-        // back link khi embed
-        var backLink = document.getElementById('<%= lnkBack.ClientID %>');
-        if (isEmbed && backLink) {
-          try {
-            var u = new URL(backLink.getAttribute('href') || backLink.href, location.href);
-            u.searchParams.set('embed', '1');
-            backLink.setAttribute('href', u.pathname + u.search + u.hash);
-          } catch (e) {
-            var href = backLink.getAttribute('href') || backLink.href;
-            backLink.setAttribute('href', href + (href.indexOf('?') >= 0 ? '&' : '?') + 'embed=1');
+          // gắn embed=1 cho mọi link nội bộ
+          if (isEmbed) {
+              try {
+                  document.querySelectorAll('a[href]').forEach(function (a) {
+                      var href = a.getAttribute('href'); if (!href) return;
+                      if (href.startsWith('#') || href.startsWith('javascript:')) return;
+                      var u = new URL(href, location.href);
+                      if (u.origin !== location.origin) return;
+                      u.searchParams.set('embed', '1');
+                      a.setAttribute('href', u.pathname + u.search + u.hash);
+                  });
+              } catch (e) { }
           }
-        }
-
-        // gắn embed=1 cho mọi link nội bộ
-        if (isEmbed) {
-          try {
-            document.querySelectorAll('a[href]').forEach(function(a){
-              var href = a.getAttribute('href'); if (!href) return;
-              if (href.startsWith('#') || href.startsWith('javascript:')) return;
-              var u = new URL(href, location.href);
-              if (u.origin !== location.origin) return;
-              u.searchParams.set('embed','1');
-              a.setAttribute('href', u.pathname + u.search + u.hash);
-            });
-          } catch(e){}
-        }
       });
   </script>
 
   <!-- Dọn text-node rơi ra DOM -->
   <script>
-    (function () {
-      try {
-        var nodes = Array.from(document.body.childNodes);
-        nodes.forEach(function (n) {
-          if (n.nodeType === 3 && /ResizeObserver|ro\.observe|measure\(\)/.test(n.nodeValue || '')) n.remove();
-        });
-      } catch (e) { }
-    })();
+      (function () {
+          try {
+              var nodes = Array.from(document.body.childNodes);
+              nodes.forEach(function (n) {
+                  if (n.nodeType === 3 && /ResizeObserver|ro\.observe|measure\(\)/.test(n.nodeValue || '')) n.remove();
+              });
+          } catch (e) { }
+      })();
   </script>
 
   <%-- Auto-height (robust) --%>
