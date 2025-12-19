@@ -260,6 +260,8 @@ namespace HAFoodWeb
                     hFirstProductId.Value = "0";
                     hFirstVariantId.Value = "0";
                     hOrderCode.Value = Decode(h.order_Code ?? ("#" + h.id));
+
+                    // ✅ luôn có JSON (tránh JSON.parse lỗi)
                     hOrderItemsJson.Value = "[]";
                 }
 
@@ -284,6 +286,8 @@ namespace HAFoodWeb
                         "payment_Method=" + (h.payment_Method.HasValue ? h.payment_Method.Value.ToString() : "NULL") + "\n" +
                         "payment_Ref=" + (h.payment_Ref ?? "NULL") + "\n" +
                         "paid_At=" + (h.paid_At.HasValue ? h.paid_At.Value.ToString("o") : "NULL") + "\n" +
+                        "paymentText=" + paymentText + "\n" +
+                        "paymentExtra=" + extraText + "\n" +
                         "itemsJson=" + (hOrderItemsJson.Value ?? "[]");
 
                     litDebug.Text = "<pre>DEBUG\n" + Server.HtmlEncode(dbg) + "</pre>";
