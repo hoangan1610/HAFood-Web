@@ -31,8 +31,8 @@
 
     /* ===== Title + Badge ===== */
     .page-title{
-      font-weight: 900;
-      font-size: 2.45rem;
+      font-weight: 800;
+      font-size: 2rem;
       color: #111827;
       margin: .15rem 0 0;
       letter-spacing: -.02em;

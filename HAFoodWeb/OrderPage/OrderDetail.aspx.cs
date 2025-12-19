@@ -1,5 +1,6 @@
 ﻿using HAFoodWeb.Models;
 using HAFoodWeb.Services;
+using Newtonsoft.Json; // ✅ dùng để đổ JSON sang hidden field
 using System;
 using System.Diagnostics;
 using System.Globalization;
@@ -114,7 +115,6 @@ namespace HAFoodWeb
                 if (string.IsNullOrWhiteSpace(providerTxt))
                     providerTxt = FromMethod(h.payment_Method);
 
-                // fallback cuối cùng: KHÔNG BAO GIỜ RỖNG
                 if (string.IsNullOrWhiteSpace(providerTxt))
                     providerTxt = "COD";
 
@@ -124,14 +124,12 @@ namespace HAFoodWeb
                 string providerUp = providerTxt.Trim().ToUpperInvariant();
                 string paymentText;
 
-                // COD: hiển thị mô tả chuẩn UX
                 if (providerUp == "COD")
                 {
                     paymentText = "COD – Thanh toán khi nhận hàng";
                 }
                 else
                 {
-                    // Online: có status thì ghép, không có thì chỉ provider
                     if (string.IsNullOrWhiteSpace(statusTxt))
                         paymentText = providerTxt;
                     else
@@ -139,7 +137,6 @@ namespace HAFoodWeb
                 }
 
                 // ===== Extra line (payment ref + paid at) =====
-                // hiển thị khi online & paid
                 string extraText = "";
                 bool onlinePaid = (providerUp != "COD") && IsPaid(statusRaw);
 
@@ -148,11 +145,9 @@ namespace HAFoodWeb
                     string refTxt = (h.payment_Ref ?? "").Trim();
                     DateTime? paidAt = h.paid_At;
 
-                    // format thời gian VN (UTC+7) nếu server đang trả local VN thì giữ nguyên; nếu UTC thì bạn tự convert ở BE.
                     string paidAtTxt = "";
                     if (paidAt.HasValue)
                     {
-                        // hiển thị đẹp: 18/12/2025 07:19
                         paidAtTxt = paidAt.Value.ToString("dd/MM/yyyy HH:mm", new CultureInfo("vi-VN"));
                     }
 
@@ -164,18 +159,15 @@ namespace HAFoodWeb
                         extraText = "Lúc: " + paidAtTxt;
                 }
 
-                // ===== Render payment (KHÔNG ẨN PANEL) =====
+                // ===== Render payment =====
                 pnlPayment.Visible = true;
                 litPayment.InnerText = paymentText;
 
-                // Gợi ý: nếu ASPX bạn CHƯA có span nhỏ để hiện extra, sẽ gắn vào title attribute / data-attr để test.
-                // Nếu bạn thêm <small id="litPaymentExtra" runat="server"></small> thì dùng đoạn dưới.
                 try
                 {
-                    // nếu có control litPaymentExtra (HtmlGenericControl) thì set
+                    var extraCtrl = this.FindControl("litPaymentExtra") as System.Web.UI.HtmlControls.HtmlGenericControl;
                     if (!string.IsNullOrWhiteSpace(extraText))
                     {
-                        var extraCtrl = this.FindControl("litPaymentExtra") as System.Web.UI.HtmlControls.HtmlGenericControl;
                         if (extraCtrl != null)
                         {
                             extraCtrl.InnerText = extraText;
@@ -183,13 +175,11 @@ namespace HAFoodWeb
                         }
                         else
                         {
-                            // fallback: nhét vào title để vẫn xem được
                             litPayment.Attributes["title"] = extraText;
                         }
                     }
                     else
                     {
-                        var extraCtrl = this.FindControl("litPaymentExtra") as System.Web.UI.HtmlControls.HtmlGenericControl;
                         if (extraCtrl != null)
                         {
                             extraCtrl.InnerText = "";
@@ -198,7 +188,7 @@ namespace HAFoodWeb
                         litPayment.Attributes["title"] = "";
                     }
                 }
-                catch { /* ignore */ }
+                catch { }
 
                 // debug attributes để inspect
                 litPayment.Attributes["data-pay-provider"] = (h.payment_Provider ?? "");
@@ -235,6 +225,34 @@ namespace HAFoodWeb
                     hFirstProductId.Value = ((first != null ? first.product_Id : 0)).ToString();
                     hFirstVariantId.Value = ((first != null ? first.variant_Id : 0)).ToString();
                     hOrderCode.Value = Decode(h.order_Code ?? ("#" + h.id));
+
+                    // ✅ NEW: JSON danh sách sản phẩm/variant trong đơn (unique) + thông tin để render UI đẹp
+                    // NOTE: nếu đơn có nhiều dòng trùng productId/variantId thì gộp lại và cộng quantity
+                    var itemsSlim = detail.items
+                        .Where(x => x != null && x.product_Id > 0)
+                        .GroupBy(x => new { x.product_Id, x.variant_Id })
+                        .Select(g =>
+                        {
+                            var any = g.FirstOrDefault();
+                            var name = (any != null ? (any.product_Name ?? any.name_Variant) : "");
+                            var sku = (any != null ? any.sku : "");
+                            var img = (any != null ? (any.image_Variant ?? any.image_Product ?? "/images/product-default.png") : "/images/product-default.png");
+                            int qty = 0;
+                            try { qty = g.Sum(z => z.quantity); } catch { qty = 0; }
+
+                            return new
+                            {
+                                productId = g.Key.product_Id,
+                                variantId = g.Key.variant_Id,
+                                name = name ?? "",
+                                sku = sku ?? "",
+                                image = img ?? "/images/product-default.png",
+                                quantity = qty
+                            };
+                        })
+                        .ToList();
+
+                    hOrderItemsJson.Value = JsonConvert.SerializeObject(itemsSlim);
                 }
                 else
                 {
@@ -242,6 +260,7 @@ namespace HAFoodWeb
                     hFirstProductId.Value = "0";
                     hFirstVariantId.Value = "0";
                     hOrderCode.Value = Decode(h.order_Code ?? ("#" + h.id));
+                    hOrderItemsJson.Value = "[]";
                 }
 
                 // ===== Summary =====
@@ -265,8 +284,7 @@ namespace HAFoodWeb
                         "payment_Method=" + (h.payment_Method.HasValue ? h.payment_Method.Value.ToString() : "NULL") + "\n" +
                         "payment_Ref=" + (h.payment_Ref ?? "NULL") + "\n" +
                         "paid_At=" + (h.paid_At.HasValue ? h.paid_At.Value.ToString("o") : "NULL") + "\n" +
-                        "paymentText=" + paymentText + "\n" +
-                        "paymentExtra=" + extraText;
+                        "itemsJson=" + (hOrderItemsJson.Value ?? "[]");
 
                     litDebug.Text = "<pre>DEBUG\n" + Server.HtmlEncode(dbg) + "</pre>";
                     litDebug.Visible = true;
@@ -279,11 +297,6 @@ namespace HAFoodWeb
                 litDebug.Visible = true;
             }
         }
-
-
-
-
-
 
         private string GetStatusText(int status)
         {

@@ -3,17 +3,60 @@
     Inherits="HAFoodWeb.Cart.CartVouchers" %>
 
 <link rel="stylesheet" href="<%= ResolveUrl("~/assets/css/cart-voucher.css") %>" />
+
+<!-- NOTICE cảnh báo (giống hình bạn gửi) -->
 <div id="voucherNotice" class="voucher-notice" style="display:none"></div>
 
+<style>
+  /* ===== FORCE: chip "Đang áp dụng" xuống dòng dưới title ===== */
+  .voucher-head{
+    display:flex !important;
+    flex-direction:column !important;
+    gap:10px !important;
+  }
+  .voucher-head-row{
+    display:flex !important;
+    align-items:center !important;
+    justify-content:space-between !important;
+    gap:12px !important;
+  }
+  /* Canh chip nằm dưới chữ "Khuyến mãi áp dụng" (thụt vào theo icon) */
+  .voucher-applied-row{
+    padding-left:28px; /* icon + gap */
+  }
+
+  /* ===== NOTICE style giống hình ===== */
+  .voucher-notice{
+    margin:0 0 12px 0;
+    padding:12px 14px;
+    border-radius:14px;
+    background:#fff;
+    border:1px solid rgba(16,24,40,.06);
+    box-shadow:0 12px 30px rgba(16,24,40,.08);
+    color:#111827;
+    font-weight:600;
+    line-height:1.5;
+    word-break:break-word;
+  }
+</style>
+
 <div class="voucher-panel open"><%-- open chỉ để bo góc/đổ bóng --%>
+
   <div class="voucher-head">
-    <div class="voucher-title">
-      <i class="bi bi-ticket-perforated"></i>
-      <span>Khuyến mãi áp dụng</span>
+    <!-- ROW 1: title trái + link phải -->
+    <div class="voucher-head-row">
+      <div class="voucher-title">
+        <i class="bi bi-ticket-perforated"></i>
+        <span>Khuyến mãi áp dụng</span>
+      </div>
+
+      <div class="voucher-actions">
+        <a href="#" id="lnkOpenVoucher" class="voucher-pick">Chọn hoặc nhập mã</a>
+      </div>
     </div>
 
-    <div class="voucher-actions">
-      <a href="#" id="lnkOpenVoucher" class="voucher-pick">Chọn hoặc nhập mã</a>
+    <!-- ROW 2: chip xuống dòng dưới title -->
+    <div class="voucher-applied-row">
       <span id="voucherAppliedChip" class="voucher-chip" style="display:none" title="Đang áp dụng"></span>
     </div>
   </div>
@@ -22,14 +65,11 @@
   <div id="voucherHost" class="voucher-list" aria-live="polite"></div>
 </div>
 
-<%--<script src="<%= ResolveUrl("~/assets/js/cart-voucher.js") %>"></script>--%>
-
 <script src="<%= ResolveUrl("~/assets/js/cart-voucher.js?v=20251119_6") %>"></script>
 
 <script>
     (function () {
         function doInit() {
-            // kiểm tra initCartVouchers có hay chưa
             if (typeof window.initCartVouchers !== 'function') {
                 console.warn('[voucher] initCartVouchers NOT FOUND ở doInit');
                 return;
@@ -46,10 +86,6 @@
             var jwtCookie = m ? m[1] : '';
 
             var jwt = (jwtHidden || jwtCookie || '').trim();
-
-            console.log('[voucher] jwtHidden len =', jwtHidden.length,
-                'jwtCookie len =', jwtCookie.length,
-                'jwt len =', jwt.length);
 
             const opts = {
                 apiBase: (apiBaseHid && apiBaseHid.value || '').trim(),
@@ -72,13 +108,9 @@
                 formSelector: 'form#form1'
             };
 
-            console.log('[voucher] opts.jwt =', opts.jwt);
-
-            // 🌟 GỌI INIT Ở ĐÂY
             window.initCartVouchers(opts);
         }
 
-        // Đợi DOM ready rồi mới init, tránh race với script src
         if (document.readyState === 'complete' || document.readyState === 'interactive') {
             setTimeout(doInit, 0);
         } else {
@@ -88,17 +120,27 @@
         }
     })();
 
+    // NOTICE show/hide (để CartPage.aspx gọi)
     function showVoucherNotice(msg) {
         const el = document.getElementById('voucherNotice');
         if (!el) return;
-        el.textContent = msg || '';
-        el.style.display = msg ? 'block' : 'none';
-        if (msg) {
-            setTimeout(() => {
-                if (el.textContent === msg) el.style.display = 'none';
-            }, 4000);
+
+        const text = (msg || '').toString().trim();
+        if (!text) {
+            el.textContent = '';
+            el.style.display = 'none';
+            return;
         }
+
+        el.textContent = text;
+        el.style.display = 'block';
+
+        // auto-hide nhẹ (bạn có thể bỏ nếu muốn giữ nguyên)
+        setTimeout(() => {
+            if (el.textContent === text) {
+                el.style.display = 'none';
+                el.textContent = '';
+            }
+        }, 6000);
     }
-
 </script>
-
