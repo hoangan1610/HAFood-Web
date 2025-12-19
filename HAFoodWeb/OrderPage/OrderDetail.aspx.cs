@@ -1,6 +1,6 @@
 ﻿using HAFoodWeb.Models;
 using HAFoodWeb.Services;
-using Newtonsoft.Json; // ✅ NEW
+using Newtonsoft.Json; // ✅ dùng để đổ JSON sang hidden field
 using System;
 using System.Diagnostics;
 using System.Globalization;
@@ -226,11 +226,30 @@ namespace HAFoodWeb
                     hFirstVariantId.Value = ((first != null ? first.variant_Id : 0)).ToString();
                     hOrderCode.Value = Decode(h.order_Code ?? ("#" + h.id));
 
-                    // ✅ NEW: JSON danh sách sản phẩm/variant trong đơn (unique)
+                    // ✅ NEW: JSON danh sách sản phẩm/variant trong đơn (unique) + thông tin để render UI đẹp
+                    // NOTE: nếu đơn có nhiều dòng trùng productId/variantId thì gộp lại và cộng quantity
                     var itemsSlim = detail.items
                         .Where(x => x != null && x.product_Id > 0)
                         .GroupBy(x => new { x.product_Id, x.variant_Id })
-                        .Select(g => new { productId = g.Key.product_Id, variantId = g.Key.variant_Id })
+                        .Select(g =>
+                        {
+                            var any = g.FirstOrDefault();
+                            var name = (any != null ? (any.product_Name ?? any.name_Variant) : "");
+                            var sku = (any != null ? any.sku : "");
+                            var img = (any != null ? (any.image_Variant ?? any.image_Product ?? "/images/product-default.png") : "/images/product-default.png");
+                            int qty = 0;
+                            try { qty = g.Sum(z => z.quantity); } catch { qty = 0; }
+
+                            return new
+                            {
+                                productId = g.Key.product_Id,
+                                variantId = g.Key.variant_Id,
+                                name = name ?? "",
+                                sku = sku ?? "",
+                                image = img ?? "/images/product-default.png",
+                                quantity = qty
+                            };
+                        })
                         .ToList();
 
                     hOrderItemsJson.Value = JsonConvert.SerializeObject(itemsSlim);
@@ -242,7 +261,7 @@ namespace HAFoodWeb
                     hFirstVariantId.Value = "0";
                     hOrderCode.Value = Decode(h.order_Code ?? ("#" + h.id));
 
-                    // ✅ NEW: luôn có JSON (tránh JSON.parse lỗi)
+                    // ✅ luôn có JSON (tránh JSON.parse lỗi)
                     hOrderItemsJson.Value = "[]";
                 }
 

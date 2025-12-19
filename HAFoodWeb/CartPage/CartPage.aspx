@@ -239,6 +239,7 @@
         .combo.readonly .combo-input:focus-within{outline:none!important;box-shadow:none!important;border-color:var(--border)!important}
         .combo.readonly .combo-text{background:transparent!important;color:#6b7280!important}
         .combo.readonly .combo-caret{display:none!important}
+
     </style>
 </head>
 
@@ -698,7 +699,6 @@
                     .catch(function (e) { console.error('autoMapInitialAddress error', e); });
             })();
         })();
-
     </script>
 
     <!-- Cart JS + Address Popup + Confirm Delete + Toast -->
@@ -711,6 +711,15 @@
             let sameOrigin = false; try { sameOrigin = new URL(API).host === location.host; } catch { }
             const HAS_JWT = !!JWT;
             const USE_USER = HAS_JWT || sameOrigin;
+
+            // ⚡ FLAG BUY NOW: đọc từ ?buynow=1&variantId=...
+            let IS_BUY_NOW = false;
+            let BUY_NOW_VARIANT_ID = 0;
+            try {
+                const qs = new URLSearchParams(window.location.search || '');
+                IS_BUY_NOW = qs.get('buynow') === '1' || qs.get('buynow') === 'true';
+                BUY_NOW_VARIANT_ID = parseInt(qs.get('variantId') || '0', 10) || 0;
+            } catch { }
 
             const fmt = n => (n || 0).toLocaleString('vi-VN') + ' ₫';
 
@@ -766,6 +775,24 @@
                 selectAll.indeterminate = (checkedCount > 0 && checkedCount < cbs.length);
             }
 
+            /* === NEW: helper apply totals (có discount) === */
+            function readPromoDiscount() {
+                const hidDisc = document.getElementById('<%= hidPromoDiscount.ClientID %>');
+                const d = Number((hidDisc && hidDisc.value) ? hidDisc.value : 0) || 0;
+                return Math.max(0, d);
+            }
+
+            let _requoteGuard = false;
+            function requestRequoteVoucherTotals() {
+                if (_requoteGuard) return;
+                if (typeof window.haRequoteVoucherTotals !== 'function') return;
+                _requoteGuard = true;
+                setTimeout(function () {
+                    try { window.haRequoteVoucherTotals(); } catch { }
+                    _requoteGuard = false;
+                }, 0);
+            }
+
             function recalcTotals() {
                 let subtotal = 0,
                     sumItems = 0,
@@ -787,14 +814,15 @@
 
                 const vat = Math.round(subtotal * 0.08);
 
-                // NEW: lấy ship từ hidden
+                // lấy ship từ hidden
                 var hidShip = document.getElementById('<%= hidShippingFee.ClientID %>');
                 var ship = 0;
-                if (hidShip && hidShip.value) {
-                    ship = Number(hidShip.value) || 0;
-                }
+                if (hidShip && hidShip.value) ship = Number(hidShip.value) || 0;
 
-                const grand = subtotal + vat + ship;
+                // NEW: discount từ hidden
+                const discount = readPromoDiscount();
+
+                const grand = Math.max(0, subtotal + vat + ship - discount);
 
                 const lblSubtotal = document.getElementById('<%= lblSubtotal.ClientID %>');
                 const lblVat = document.getElementById('<%= lblVat.ClientID %>');
@@ -802,10 +830,12 @@
                 const lblGrand = document.getElementById('<%= lblGrandTotal.ClientID %>');
                 const lblTotal = document.getElementById('<%= lblTotal.ClientID %>');
                 const lblSumItems = document.getElementById('<%= lblSumItems.ClientID %>');
+                const lblDiscount = document.getElementById('<%= lblDiscount.ClientID %>');
 
                 if (lblSubtotal) lblSubtotal.textContent = fmt(subtotal);
                 if (lblVat) lblVat.textContent = fmt(vat);
                 if (lblShipping) lblShipping.textContent = fmt(ship);
+                if (lblDiscount) lblDiscount.textContent = fmt(discount);
                 if (lblGrand) lblGrand.textContent = fmt(grand);
                 if (lblTotal) lblTotal.textContent = fmt(subtotal);
                 if (lblSumItems) lblSumItems.textContent = String(sumItems);
@@ -820,6 +850,9 @@
                 if (hidWeight) {
                     hidWeight.value = String(Math.max(0, totalWeightGram) || 0);
                 }
+
+                // NEW: subtotal/ship/weight thay đổi -> requote voucher (nếu voucher là %)
+                requestRequoteVoucherTotals();
             }
 
             window.__cartAfterMutate = () => { recalcTotals(); updateSelectAllUI(); syncSelectedHidden(); };
@@ -865,7 +898,10 @@
             const closeBtn = document.getElementById('addrCloseBtn');
 
             const IS_AUTH = (document.getElementById('<%= hidIsAuth.ClientID %>').value === '1');
-            const LOGIN_URL = '<%= Page.ResolveUrl("~/AuthPage/Login.aspx") %>';
+
+            // NEW: cố định đường dẫn đúng như bạn yêu cầu
+            const LOGIN_URL = '/AuthPage/Login.aspx';
+
             const addressSelectUrl = '<%= Page.ResolveUrl("~/CartPage/AddressSelect.aspx") %>';
 
             function openAddrModal() {
@@ -921,8 +957,8 @@
                 const phoneEl = document.getElementById('<%= lblAddrPhone.ClientID %>');
                 const detailEl = document.getElementById('<%= lblAddrDetail.ClientID %>');
 
-                if (nameEl)   nameEl.textContent   = dto.fullName || '';
-                if (phoneEl)  phoneEl.textContent  = dto.phone || '';
+                if (nameEl) nameEl.textContent = dto.fullName || '';
+                if (phoneEl) phoneEl.textContent = dto.phone || '';
                 if (detailEl) detailEl.textContent = dto.fullAddress || '';
 
                 const street = parseStreet(dto.fullAddress || '');
@@ -973,21 +1009,59 @@
                 if (pnlEmptyEl) pnlEmptyEl.style.display = hasItems ? 'none' : 'block';
 
                 var phone = document.getElementById('<%= txtPhone.ClientID %>');
-                if (phone) { phone.setAttribute('type', 'tel'); phone.setAttribute('inputmode', 'tel'); phone.setAttribute('autocomplete', 'tel'); }
+                if (phone) {
+                    phone.setAttribute('type', 'tel');
+                    phone.setAttribute('inputmode', 'tel');
+                    phone.setAttribute('autocomplete', 'tel');
+                }
 
                 if (selectAll) {
-                    selectAll.checked = true;
-                    document.querySelectorAll('.cart-item input[type="checkbox"]').forEach(cb => cb.checked = true);
+                    if (IS_BUY_NOW && BUY_NOW_VARIANT_ID > 0) {
+                        // Mua ngay: bỏ chọn hết, chỉ chọn dòng có variantId tương ứng
+                        selectAll.checked = false;
+                        selectAll.indeterminate = false;
+                        document.querySelectorAll('.cart-item input[type="checkbox"]').forEach(cb => cb.checked = false);
+
+                        const rows = Array.from(document.querySelectorAll('.cart-item'));
+                        let matched = rows.filter(r => {
+                            const vid = parseInt(r.getAttribute('data-variant-id') || '0', 10) || 0;
+                            return vid === BUY_NOW_VARIANT_ID;
+                        });
+
+                        if (!matched.length && rows.length) {
+                            matched = [rows[rows.length - 1]];
+                        }
+
+                        matched.forEach(r => {
+                            const cb = r.querySelector('input[type="checkbox"]');
+                            if (cb) cb.checked = true;
+                        });
+                    } else {
+                        // Trường hợp bình thường: chọn tất cả
+                        selectAll.checked = true;
+                        document.querySelectorAll('.cart-item input[type="checkbox"]').forEach(cb => cb.checked = true);
+                    }
                 }
-                recalcTotals(); updateSelectAllUI(); syncSelectedHidden();
+
+                recalcTotals();
+                updateSelectAllUI();
+                syncSelectedHidden();
                 lockAddressUI();
 
                 const clearBtn = document.getElementById('btnClearAll');
-                if (clearBtn) {
-                    clearBtn.disabled = !hasItems;
-                }
+                if (clearBtn) clearBtn.disabled = !hasItems;
 
                 try { window.refreshCartCount(); } catch { }
+
+                if (IS_BUY_NOW) {
+                    try {
+                        const p = new URLSearchParams(window.location.search || '');
+                        p.delete('buynow');
+                        p.delete('variantId');
+                        const newUrl = window.location.pathname + (p.toString() ? ('?' + p.toString()) : '');
+                        window.history.replaceState({}, '', newUrl);
+                    } catch { }
+                }
             });
 
             /* Helpers giỏ hàng */
@@ -1009,17 +1083,29 @@
                 return Object.assign({ credentials: 'include', headers }, opts || {});
             }
             async function safeJson(resp) { try { return await resp.json(); } catch { return {}; } }
+
             function patchTotals(payload) {
+                // nếu API có trả totals riêng thì vẫn patch, nhưng vẫn giữ logic discount theo hidden
                 if (payload && payload.totals) {
                     const t = payload.totals;
+
+                    if (t.discount != null) {
+                        const hidDisc = document.getElementById('<%= hidPromoDiscount.ClientID %>');
+                        if (hidDisc) hidDisc.value = String(Number(t.discount) || 0);
+                    }
+
                     document.getElementById('<%= lblSubtotal.ClientID %>').textContent = fmt(t.subtotal);
                     document.getElementById('<%= lblVat.ClientID %>').textContent = fmt(t.vat);
                     document.getElementById('<%= lblShipping.ClientID %>').textContent = fmt(t.shipping);
-                    document.getElementById('<%= lblGrandTotal.ClientID %>').textContent  = fmt(t.grand);
-                    document.getElementById('<%= lblTotal.ClientID %>').textContent = fmt(t.subtotal);
+
+                    // grand có thể đã trừ discount ở API, nhưng để đồng bộ UI: recalcTotals() sẽ tính theo hidden
+                    recalcTotals();
                 }
                 if (payload?.header?.item_Count != null) {
                     window.setCartBadge(payload.header.item_Count);
+                }
+                if (typeof window.haSyncPromoUI === 'function') {
+                    try { window.haSyncPromoUI(); } catch { }
                 }
             }
 
@@ -1259,9 +1345,21 @@
         })();
     </script>
 
-    <!-- Submit guard -->
+
+    <!-- Submit guard (NEW: chưa login -> đi Login luôn) -->
     <script>
         function beforeCheckoutSubmit() {
+            // NEW: Nếu chưa đăng nhập -> chuyển thẳng sang /AuthPage/Login.aspx (không validate)
+            try {
+                var isAuth = (document.getElementById('<%= hidIsAuth.ClientID %>')?.value === '1');
+                if (!isAuth) {
+                    var ret = encodeURIComponent(window.location.pathname + window.location.search);
+                    window.location.href = '/AuthPage/Login.aspx?returnUrl=' + ret;
+                    return false;
+                }
+            } catch (e) { }
+
+            // giữ logic copy promo code
             try {
                 var hidCode = document.getElementById('<%= hidPromoCodeSelected.ClientID %>');
                 var txtPromo = document.getElementById('<%= txtPromo.ClientID %>');
@@ -1269,6 +1367,7 @@
                     txtPromo.value = hidCode.value;
                 }
             } catch (e) { }
+
             if (typeof (Page_ClientValidate) === 'function') {
                 if (!Page_ClientValidate('Checkout')) return false;
             }
@@ -1276,7 +1375,7 @@
         }
     </script>
 
-    <!-- Shipping quote hook -->
+    <!-- Shipping quote hook (NEW: grand có trừ discount) -->
     <script>
         (function () {
             var apiBaseEl = document.getElementById('<%= hidApiBase.ClientID %>');
@@ -1286,6 +1385,12 @@
                 var s = (text || '').replace(/[^\d\-]/g, '');
                 var n = parseInt(s, 10);
                 return Number.isFinite(n) ? n : 0;
+            }
+
+            function readDiscount() {
+                var hidDisc = document.getElementById('<%= hidPromoDiscount.ClientID %>');
+                var d = parseMoney(hidDisc ? hidDisc.value : '0');
+                return Math.max(0, d);
             }
 
             async function quoteShipping() {
@@ -1301,9 +1406,7 @@
                     var hidShip0 = document.getElementById('<%= hidShippingFee.ClientID %>');
                     if (hidShip0) hidShip0.value = '0';
 
-                    if (window.haRequoteVoucherTotals) {
-                        window.haRequoteVoucherTotals();
-                    }
+                    if (window.haRequoteVoucherTotals) window.haRequoteVoucherTotals();
                     return;
                 }
 
@@ -1345,21 +1448,19 @@
 
                     var subtotal2 = parseMoney(lblSubtotal2 ? lblSubtotal2.textContent : '0');
                     var vat2 = Math.round(subtotal2 * 0.08);
-                    if (lblVat2) lblVat2.textContent = vat2.toLocaleString('vi-VN') + ' ₫';
-                    if (lblGrand) lblGrand.textContent = (subtotal2 + vat2 + fee).toLocaleString('vi-VN') + ' ₫';
+                    var disc = readDiscount();
 
-                    if (window.haRequoteVoucherTotals) {
-                        window.haRequoteVoucherTotals();
-                    }
+                    if (lblVat2) lblVat2.textContent = vat2.toLocaleString('vi-VN') + ' ₫';
+                    if (lblGrand) lblGrand.textContent = Math.max(0, (subtotal2 + vat2 + fee - disc)).toLocaleString('vi-VN') + ' ₫';
+
+                    if (window.haRequoteVoucherTotals) window.haRequoteVoucherTotals();
 
                 } catch (e) {
                     console.error('quoteShipping error', e);
                     var lblShip3 = document.getElementById('<%= lblShipping.ClientID %>');
                     if (lblShip3) lblShip3.textContent = '0 ₫';
 
-                    if (window.haRequoteVoucherTotals) {
-                        window.haRequoteVoucherTotals();
-                    }
+                    if (window.haRequoteVoucherTotals) window.haRequoteVoucherTotals();
                 }
             }
 
@@ -1382,6 +1483,105 @@
         })();
     </script>
 
+    <!-- NEW: Sync promo UI (code xuống dòng + cảnh báo đỏ + NOTICE giống hình) -->
+    <script>
+        (function () {
+            const hidCode = document.getElementById('<%= hidPromoCodeSelected.ClientID %>');
+            const hidDiscount = document.getElementById('<%= hidPromoDiscount.ClientID %>');
+            const hidMeta = document.getElementById('<%= hidPromoMetaJson.ClientID %>');
+
+            const codeEl = document.getElementById('promoCodeText');
+            const errEl = document.getElementById('promoError');
+
+            function safeParseJson(s) {
+                try { return JSON.parse(s || '{}'); } catch { return {}; }
+            }
+
+            function inferInvalid(meta) {
+                if (!meta) return false;
+
+                // flags phổ biến
+                if (meta.isValid === false || meta.valid === false || meta.ok === false || meta.success === false) return true;
+
+                // code/status phổ biến
+                const c = String(meta.code || meta.errorCode || meta.status || meta.reason || '').toUpperCase();
+                if (['INVALID', 'NOT_VALID', 'NOTFOUND', 'NOT_FOUND', 'EXPIRED', 'DISABLED', 'USED', 'OUT_OF_QUOTA', 'ERROR'].includes(c)) return true;
+
+                return false;
+            }
+
+            function inferRemoved(meta) {
+                if (!meta) return false;
+
+                // flag phổ biến
+                if (meta.removed === true || meta.isRemoved === true || meta.unapplied === true) return true;
+
+                // action/status/code phổ biến
+                const a = String(meta.action || '').toUpperCase();
+                const s = String(meta.status || '').toUpperCase();
+                const c = String(meta.code || '').toUpperCase();
+                if (a === 'REMOVE' || a === 'REMOVED') return true;
+                if (s === 'REMOVE' || s === 'REMOVED') return true;
+                if (c === 'REMOVE' || c === 'REMOVED') return true;
+
+                return false;
+            }
+
+            function syncPromoUI() {
+                const code = (hidCode?.value || '').trim();
+                const discount = Math.max(0, Number((hidDiscount?.value || '0')) || 0);
+                const meta = safeParseJson(hidMeta?.value || '');
+
+                const invalid = code ? inferInvalid(meta) : false;
+                const removed = inferRemoved(meta);
+
+                const msg = (meta.message || meta.error || meta.errorMessage || meta.detail || '').toString().trim();
+
+                // 1) Summary: hiển thị mã
+                if (codeEl) {
+                    codeEl.innerHTML = '<i class="bi bi-ticket-perforated"></i> ' + (code ? code : '—');
+                }
+
+                // 2) Summary: cảnh báo đỏ dưới mã (khi code đang có nhưng invalid)
+                if (errEl) {
+                    if (code && invalid) {
+                        errEl.style.display = 'block';
+                        errEl.textContent = msg || 'Mã khuyến mãi không hợp lệ.';
+                    } else {
+                        errEl.style.display = 'none';
+                        errEl.textContent = '';
+                    }
+                }
+
+                // 3) NOTICE giống hình: chỉ show khi voucher bị gỡ / hoặc code trống nhưng có message
+                //    (tránh show notice khi user chỉ nhập sai mã)
+                if (typeof window.showVoucherNotice === 'function') {
+                    const shouldNotice = !!msg && (removed || (!code && msg));
+                    window.showVoucherNotice(shouldNotice ? msg : '');
+                }
+
+                // 4) đồng bộ discount label nếu cần
+                const lblDiscount = document.getElementById('<%= lblDiscount.ClientID %>');
+                if (lblDiscount) {
+                    lblDiscount.textContent = (discount || 0).toLocaleString('vi-VN') + ' ₫';
+                }
+            }
+
+            window.haSyncPromoUI = syncPromoUI;
+
+            // nếu voucher control có haRequoteVoucherTotals thì wrap lại để luôn sync UI
+            if (typeof window.haRequoteVoucherTotals === 'function') {
+                const old = window.haRequoteVoucherTotals;
+                window.haRequoteVoucherTotals = function () {
+                    try { old(); } finally { try { syncPromoUI(); } catch { } }
+                };
+            } else {
+                window.haRequoteVoucherTotals = syncPromoUI;
+            }
+
+            document.addEventListener('DOMContentLoaded', syncPromoUI);
+        })();
+    </script>
 </form>
 </body>
 </html>
