@@ -106,17 +106,17 @@
     }
     .of-contain{object-fit:contain}
 
-    ratio-badges{
+    .ratio-badges{
       position:absolute;
       inset:0;
       z-index:2;
       pointer-events:none;
     }
-    .ratio-badges .badge-new{
-      position:absolute;
-      top:.5rem;
-      left:.5rem;
-    }
+    .ratio-badges .badge-off{
+  position:absolute;
+  top:.5rem;
+  right:.5rem;
+}
     /* ==== Horizontal shelf (Mới về) ==== */
     .shelf{
       display:flex;
@@ -709,6 +709,22 @@
     .blog-nav-left{left:0}     /* ✅ tránh bị cắt */
     .blog-nav-right{right:0}   /* ✅ tránh bị cắt */
 
+    /* ép badge trong ratio KHÔNG được full cover */
+.ratio > .badge-off.js-badge-off{
+  width: max-content !important;
+  height: auto !important;
+  inset: auto !important;
+
+  top: .5rem !important;
+  right: .5rem !important;
+  left: auto !important;
+  bottom: auto !important;
+
+  display: none; /* mặc định ẩn */
+  pointer-events: none !important;
+  z-index: 10 !important;
+}
+
   </style>
 </head>
 
@@ -933,7 +949,10 @@
                      class="w-100 h-100 of-contain p-2"
                      onerror="this.onerror=null;this.src='<%# ResolveUrl("~/images/product-default.png") %>';" 
                      alt="<%# Eval("Name") %>" />
+
+                    <div class="ratio-badges">
                 <div class="badge-off js-badge-off"></div>
+                        </div>
               </div>
             </a>
 

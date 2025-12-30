@@ -1,4 +1,5 @@
 ﻿// /assets/js/flashsale.js (v3.3 - SSE + Poll, offset chỉ lấy từ HTTP)
+// ✅ PATCH: lock badge style để không bị phủ kín ảnh (orange overlay)
 (function () {
     "use strict";
 
@@ -55,8 +56,164 @@
         }
     }
 
+    // ✅ PATCH: ép badge -xx% không bao giờ “phủ kín” ảnh
+    function lockDiscountBadgeStyle(badgeEl) {
+        if (!badgeEl) return;
+
+        // ghi nhớ nếu đã khóa
+        if (badgeEl.dataset && badgeEl.dataset.fsBadgeLocked === "1") return;
+        if (badgeEl.dataset) badgeEl.dataset.fsBadgeLocked = "1";
+
+        // đọc style hiện tại để giữ hướng trái/phải nếu bạn đã set CSS
+        let preferLeft = false;
+        try {
+            const cs = window.getComputedStyle(badgeEl);
+            const left = cs.left;
+            const right = cs.right;
+            preferLeft = (left && left !== "auto" && (!right || right === "auto"));
+        } catch { /* ignore */ }
+
+        // reset các thuộc tính dễ gây phủ kín
+        badgeEl.style.setProperty("position", "absolute", "important");
+        badgeEl.style.setProperty("display", "none", "important"); // khi show sẽ bật lại
+        badgeEl.style.setProperty("width", "max-content", "important");
+        badgeEl.style.setProperty("height", "auto", "important");
+        badgeEl.style.setProperty("min-width", "0", "important");
+        badgeEl.style.setProperty("min-height", "0", "important");
+        badgeEl.style.setProperty("max-width", "92%", "important");
+        badgeEl.style.setProperty("pointer-events", "none", "important");
+        badgeEl.style.setProperty("z-index", "5", "important");
+
+        // quan trọng: triệt tiêu trường hợp bị inset:0 / stretch
+        badgeEl.style.setProperty("bottom", "auto", "important");
+
+        // giữ hướng trái/phải theo CSS bạn đang dùng
+        if (preferLeft) {
+            badgeEl.style.setProperty("left", "0.5rem", "important");
+            badgeEl.style.setProperty("right", "auto", "important");
+        } else {
+            badgeEl.style.setProperty("right", "0.5rem", "important");
+            badgeEl.style.setProperty("left", "auto", "important");
+        }
+        // top luôn có, để nó nằm góc trên thay vì full
+        badgeEl.style.setProperty("top", "0.5rem", "important");
+
+        // nếu có rule lạ set inset thì “đè” lại bằng top/right/left/bottom phía trên
+        // (không set inset:auto để khỏi mất top/right bạn đã chọn)
+    }
+
+    function showDiscountBadge(badgeEl, text) {
+        if (!badgeEl) return;
+        lockDiscountBadgeStyle(badgeEl);
+
+        badgeEl.textContent = text || "";
+        if (text) {
+            badgeEl.style.setProperty("display", "inline-flex", "important");
+            badgeEl.style.setProperty("align-items", "center", "important");
+            badgeEl.style.setProperty("justify-content", "center", "important");
+        } else {
+            badgeEl.style.setProperty("display", "none", "important");
+        }
+    }
+
     // ===== Cập nhật activeMap từ danh sách server trả về =====
     // updateOffset: mặc định true (HTTP), SSE truyền false
+
+    // ✅ PATCH v2: nếu .js-badge-off là wrapper phủ ảnh -> không dùng nó
+    function findImageBox(card) {
+        return (
+            card.querySelector(".ratio") ||
+            card.querySelector(".js-thumb") ||
+            card.querySelector(".product-thumb") ||
+            card.querySelector(".card-img, .card-img-top") ||
+            card.querySelector("img")?.parentElement ||
+            card
+        );
+    }
+
+    function looksLikeCover(el, box) {
+        if (!el || !box) return false;
+        const r = el.getBoundingClientRect();
+        const b = box.getBoundingClientRect();
+        // cover khi gần như bằng khung ảnh
+        return (r.width >= b.width * 0.85 && r.height >= b.height * 0.85);
+    }
+
+    // tạo/reuse badge nhỏ do JS quản lý
+    function getOrCreateInjectedBadge(card) {
+        const box = findImageBox(card);
+        if (!box) return null;
+
+        // đảm bảo box có position:relative để absolute hoạt động
+        const cs = window.getComputedStyle(box);
+        if (cs.position === "static") {
+            box.style.setProperty("position", "relative", "important");
+        }
+
+        let badge = box.querySelector(".fs-badge-off");
+        if (!badge) {
+            badge = document.createElement("span");
+            badge.className = "fs-badge-off";
+            badge.setAttribute("aria-hidden", "true");
+            box.appendChild(badge);
+
+            // style badge nhỏ (không đụng CSS home)
+            badge.style.setProperty("position", "absolute", "important");
+            badge.style.setProperty("top", "8px", "important");
+            badge.style.setProperty("right", "8px", "important"); // muốn trái thì đổi right->left
+            badge.style.setProperty("z-index", "10", "important");
+            badge.style.setProperty("display", "none", "important");
+            badge.style.setProperty("pointer-events", "none", "important");
+            badge.style.setProperty("padding", "4px 8px", "important");
+            badge.style.setProperty("border-radius", "999px", "important");
+            badge.style.setProperty("font-size", "12px", "important");
+            badge.style.setProperty("font-weight", "700", "important");
+            badge.style.setProperty("line-height", "1.2", "important");
+            badge.style.setProperty("color", "#fff", "important");
+            badge.style.setProperty("background", "linear-gradient(135deg,#ff7a18,#ff3d00)", "important");
+            badge.style.setProperty("box-shadow", "0 6px 18px rgba(0,0,0,.18)", "important");
+            badge.style.setProperty("max-width", "90%", "important");
+            badge.style.setProperty("white-space", "nowrap", "important");
+        }
+        return badge;
+    }
+
+    // nếu bạn vẫn có .js-badge-off cũ và nó đang phủ ảnh -> tắt background nó để hết cam
+    function neutralizeCoverBadgeIfAny(card) {
+        const box = findImageBox(card);
+        const old = card.querySelector(".js-badge-off");
+        if (!old || !box) return;
+
+        if (!looksLikeCover(old, box)) return;
+
+        // Nếu old là wrapper chứa ảnh -> dùng display:contents để bỏ box phủ nhưng giữ con ảnh
+        const isWrapper = !!old.querySelector("img, picture, source, .ratio, .ratio img");
+        if (isWrapper) {
+            old.style.setProperty("display", "contents", "important");
+            old.style.setProperty("position", "static", "important");
+            old.style.setProperty("inset", "auto", "important");
+        } else {
+            // Nếu old chỉ là overlay badge riêng -> tắt hẳn
+            old.style.setProperty("display", "none", "important");
+        }
+
+        // cố gắng triệt thêm các kiểu overlay lạ
+        old.style.setProperty("background", "transparent", "important");
+        old.style.setProperty("background-image", "none", "important");
+        old.style.setProperty("background-color", "transparent", "important");
+        old.style.setProperty("filter", "none", "important");
+        old.style.setProperty("mix-blend-mode", "normal", "important");
+        old.style.setProperty("opacity", "1", "important"); // đừng set 0 vì sẽ ẩn cả con ảnh nếu là wrapper
+    }
+
+
+    function showInjectedBadge(badgeEl, text) {
+        if (!badgeEl) return;
+        badgeEl.textContent = text || "";
+        if (text) badgeEl.style.setProperty("display", "inline-flex", "important");
+        else badgeEl.style.setProperty("display", "none", "important");
+    }
+
     function updateActiveFromList(list, serverNowHint, updateOffset = true) {
         const arr = Array.isArray(list) ? list : [];
         if (!arr.length) {
@@ -208,13 +365,19 @@
         const sel = card.querySelector(".js-variant-select");
         const priceNow = card.querySelector(".js-price-now");
         const priceOld = card.querySelector(".js-price-old");
-        const badge = card.querySelector(".js-badge-off");
+
+        // ✅ diệt overlay cũ nếu nó phủ ảnh
+        neutralizeCoverBadgeIfAny(card);
+
+        // ✅ badge nhỏ do JS inject
+        const badge = getOrCreateInjectedBadge(card);
+
         const cdEl = card.querySelector(".js-countdown");
         const remainEl = card.querySelector(".js-remaining");
 
         // reset UI
         if (priceOld) { priceOld.style.display = "none"; priceOld.textContent = ""; }
-        if (badge) { badge.style.display = "none"; badge.textContent = ""; }
+        if (badge) { showInjectedBadge(badge, ""); }
         if (cdEl) { cdEl.textContent = ""; }
         card.removeAttribute("data-end");
         card.removeAttribute("data-remaining");
@@ -264,13 +427,8 @@
 
         const p1 = pct(chosen.base, chosen.eff);
         if (badge) {
-            if (p1) {
-                badge.textContent = `-${p1}%`;
-                badge.style.display = "block";
-            } else {
-                badge.style.display = "none";
-                badge.textContent = "";
-            }
+            if (p1) showInjectedBadge(badge, `-${p1}%`);
+            else showInjectedBadge(badge, "");
         }
 
         if (hasRealSale && chosen.endAt instanceof Date && !isNaN(chosen.endAt) && chosen.endAt > nowWithOffset()) {
@@ -297,13 +455,12 @@
                 const vid = String(this.value);
                 let d = activeMap.get(vid);
                 if (!d) {
-                    // Đổi biến thể là action chủ động => chấp nhận gọi price
                     d = await fetchVariantPrice(vid);
                     if (d && d.eff != null) activeMap.set(vid, d);
                 }
 
                 if (priceOld) { priceOld.style.display = "none"; priceOld.textContent = ""; }
-                if (badge) { badge.style.display = "none"; badge.textContent = ""; }
+                if (badge) { showInjectedBadge(badge, ""); }
                 if (cdEl) { cdEl.textContent = ""; }
                 card.removeAttribute("data-end");
                 card.removeAttribute("data-remaining");
@@ -326,13 +483,8 @@
 
                 const p2 = pct(d.base, d.eff);
                 if (badge) {
-                    if (p2) {
-                        badge.textContent = `-${p2}%`;
-                        badge.style.display = "block";
-                    } else {
-                        badge.style.display = "none";
-                        badge.textContent = "";
-                    }
+                    if (p2) showInjectedBadge(badge, `-${p2}%`);
+                    else showInjectedBadge(badge, "");
                 }
 
                 if (real2 && d.endAt instanceof Date && !isNaN(d.endAt) && d.endAt > nowWithOffset()) {
@@ -356,6 +508,7 @@
             boundSelects.add(sel);
         }
     }
+
 
     function applyAllCards() {
         document.querySelectorAll(".js-product-card").forEach(c => { applyCard(c); });
@@ -388,9 +541,7 @@
     }
 
     function startTick() {
-        if (!tickTimer) {
-            tickTimer = setInterval(tick, TICK_MS);
-        }
+        if (!tickTimer) tickTimer = setInterval(tick, TICK_MS);
     }
 
     function stopTick() {
@@ -462,9 +613,7 @@
 
             // 2) Kết nối SSE để nhận cập nhật realtime
             const okSse = startSse();
-            if (!okSse) {
-                startPollingFallback();
-            }
+            if (!okSse) startPollingFallback();
         })();
 
         // 3) Xử lý ẩn/hiện tab
@@ -474,9 +623,7 @@
                 if (!sse && mode === "poll") stopPolling();
             } else if (document.visibilityState === "visible") {
                 startTick();
-                if (!sse && mode === "poll" && !pollTimer) {
-                    startPollingFallback();
-                }
+                if (!sse && mode === "poll" && !pollTimer) startPollingFallback();
             }
         });
     });
