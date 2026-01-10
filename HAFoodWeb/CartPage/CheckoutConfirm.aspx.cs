@@ -34,7 +34,6 @@ namespace HAFoodWeb
         private static decimal Eff(decimal priceEffective, decimal priceVariant)
             => priceEffective > 0 ? priceEffective : priceVariant;
 
-
         // ✅ Helper tính phí ship giống rule BE
         private static decimal CalcShipping(decimal subtotal, string cityCode, string wardCode)
         {
@@ -75,20 +74,20 @@ namespace HAFoodWeb
                 {
                     var provQ = (Request.QueryString["prov"] ?? "").Trim().ToLowerInvariant();
                     string provName;
+
                     if (!string.IsNullOrWhiteSpace(provQ))
                     {
-                        provName = provQ == "zalopay" ? "ZaloPay"
-            : provQ == "pay2s" ? "Pay2S"
-            : "cổng thanh toán";
-
+                        // ✅ slot 1: MoMo, slot 2: Pay2S
+                        provName = provQ == "momo" ? "MoMo"
+                                : provQ == "pay2s" ? "Pay2S"
+                                : "cổng thanh toán";
                     }
                     else
                     {
                         var m = GetPendingMethodFromSession();
                         provName = m == 2 ? "Pay2S"
-          : m == 1 ? "ZaloPay"
-          : "cổng thanh toán";
-
+                                : m == 1 ? "MoMo"
+                                : "cổng thanh toán";
                     }
 
                     ShowNiceError(
@@ -139,7 +138,7 @@ namespace HAFoodWeb
                     .Where(x => selectedLines.Contains(x.id))
                     .Select(x =>
                     {
-                        var unit = Eff(x.price_Effective, x.price_Variant); // ✅ dùng giá hiệu lực
+                        var unit = Eff(x.price_Effective, x.price_Variant);
                         var lineTotal = unit * x.quantity;
                         subtotal += lineTotal;
                         return new
@@ -178,8 +177,6 @@ namespace HAFoodWeb
                     Session[SK_DRAFT] = draft;
 
                     subtotal = draft.SnapshotSubtotal;
-                    // ❌ shipping chưa gán ở đây, sẽ xử lý phía dưới
-                    // shipping = draft.SnapshotShipping;
                 }
                 else
                 {
@@ -196,24 +193,18 @@ namespace HAFoodWeb
                 }
             }
 
-
-         
-
-            // ✅ ƯU TIÊN dùng đúng phí ship user thấy ở CartPage
             rptItems.DataSource = displayItems;
             rptItems.DataBind();
 
             // ✅ ƯU TIÊN dùng đúng phí ship user thấy ở CartPage
             if (draft.SnapshotShipping > 0)
             {
-                shipping = draft.SnapshotShipping;  // ví dụ 20.000 ₫
+                shipping = draft.SnapshotShipping;
             }
             else
             {
-                // Nếu snapshot chưa có (trường hợp cũ / bug), fallback tính tạm theo rule
                 shipping = CalcShipping(subtotal, draft.CityCode, draft.WardCode);
             }
-
 
             var vat = Math.Round(subtotal * VAT_RATE, 0, MidpointRounding.AwayFromZero);
 
@@ -226,15 +217,11 @@ namespace HAFoodWeb
                 try
                 {
                     var quoted = await QuoteDiscountAsync(draft, subtotal);
-
-                    // Nếu API quote ra số dương → dùng nó
-                    if (quoted > 0)
-                        discount = quoted;
-                    // Nếu quoted <= 0 → giữ nguyên discount từ snapshot
+                    if (quoted > 0) discount = quoted;
                 }
                 catch
                 {
-                    // lỗi thì giữ snapshot như cũ, khỏi làm gì
+                    // lỗi thì giữ snapshot
                 }
             }
 
@@ -246,7 +233,6 @@ namespace HAFoodWeb
             lblShipping.Text = string.Format(viVN, "{0:N0} ₫", shipping);
             lblVat.Text = string.Format(viVN, "{0:N0} ₫", vat);
 
-            // Nếu muốn 0 thì không in dấu trừ
             if (discount == 0)
                 lblDiscount.Text = string.Format(viVN, "{0:N0} ₫", 0);
             else
@@ -255,7 +241,6 @@ namespace HAFoodWeb
             lblGrandTotal.Text = string.Format(viVN, "{0:N0} ₫", grand);
 
             Session[SK_TOTALS] = (subtotal, shipping);
-
         }
 
         // Helper gọi /api/promotions/cart/quote để lấy tổng giảm (Newtonsoft.Json + C# 7.3)
@@ -263,7 +248,6 @@ namespace HAFoodWeb
         {
             if (string.IsNullOrWhiteSpace(draft.PromoCode)) return 0m;
 
-            // chuẩn bị items
             var cart = await _cartService.GetCartAsync(draft.DeviceUuid);
             var selected = (draft.SelectedLineIds ?? new long[0]).ToHashSet();
 
@@ -272,7 +256,7 @@ namespace HAFoodWeb
             {
                 foreach (var x in cart.items.Where(x => selected.Contains(x.id)))
                 {
-                    var unit = Eff(x.price_Effective, x.price_Variant); // ✅ quote theo giá hiệu lực
+                    var unit = Eff(x.price_Effective, x.price_Variant);
                     items.Add(new
                     {
                         productId = (long?)null,
@@ -282,6 +266,7 @@ namespace HAFoodWeb
                     });
                 }
             }
+
             if (items.Count == 0 && draft.Snapshot != null)
             {
                 foreach (var s in draft.Snapshot)
@@ -315,6 +300,7 @@ namespace HAFoodWeb
                     shippingFee = 0m,
                     channel = (byte?)1
                 };
+
                 var json = JsonConvert.SerializeObject(bodyObj);
                 using (var content = new StringContent(json, Encoding.UTF8, "application/json"))
                 {
@@ -375,7 +361,7 @@ namespace HAFoodWeb
             if (selectedMethod.HasValue && pendingMethod.HasValue && selectedMethod.Value != pendingMethod.Value)
                 return false;
 
-            var stillValid = createdUtc.HasValue && (DateTime.UtcNow - createdUtc.Value) < TimeSpan.FromMinutes(12);
+            var stillValid = createdUtc.HasValue && (DateTime.UtcNow - createdUtc.Value) < TimeSpan.FromMinutes(3);
             if (!stillValid)
             {
                 Session.Remove(SK_PENDING_PAYMENT_URL);
@@ -397,10 +383,10 @@ namespace HAFoodWeb
         {
             if (!Page.IsValid) return;
 
-            // Đọc phương thức thanh toán: byte
+            // ✅ 0=COD, 1=MoMo, 2=Pay2S
             byte paymentMethod;
             if (!byte.TryParse(rblPayment.SelectedValue, out paymentMethod))
-                paymentMethod = 0; // 0=COD, 1=ZaloPay, 2=VNPay
+                paymentMethod = 0;
 
             var pendingCode = Session[SK_PENDING_ORDER_CODE] as string;
 
@@ -413,7 +399,6 @@ namespace HAFoodWeb
                     {
                         var sw = await _orderService.SwitchPaymentSafeAsync(pendingCode, 0, "USER_SWITCH_TO_COD");
 
-                        // lấy sẵn pending id nếu có, rồi dọn session
                         var pid = TryGetPendingOrderId();
 
                         Session.Remove(SK_PENDING_PAYMENT_URL);
@@ -422,7 +407,6 @@ namespace HAFoodWeb
                         Session.Remove(SK_DRAFT);
                         Session.Remove(SK_PENDING_ORDER_CODE);
 
-                        // Redirect ThankYou kèm id nếu có
                         var url = ResolveUrl(THANKYOU_PATH) +
                                   "?code=" + Uri.EscapeDataString(pendingCode) +
                                   (pid.HasValue ? "&id=" + pid.Value : "");
@@ -458,7 +442,6 @@ namespace HAFoodWeb
                         {
                             var newPayUrl = await _orderService.CreatePaymentLinkForOrderAsync(pendingCode, paymentMethod);
 
-                            // Normalize + lưu
                             var normalized = NormalizeGatewayUrlForUA(newPayUrl);
                             Session[SK_PENDING_PAYMENT_URL] = normalized;
                             Session[SK_PENDING_PAYMENT_CREATED] = DateTime.UtcNow;
@@ -545,7 +528,6 @@ namespace HAFoodWeb
                 device_Id = null,
                 promo_Code = draft.PromoCode,
 
-                // ✅ MỚI: bơm thêm thông tin để BE tính ship
                 ship_City_Code = draft.CityCode,
                 ship_Ward_Code = draft.WardCode,
                 total_Weight_Gram = draft.TotalWeightGram,
@@ -563,16 +545,13 @@ namespace HAFoodWeb
             {
                 var resp = await _orderService.CheckoutAsync(req);
 
-                // Có cổng thanh toán
                 if (!string.IsNullOrWhiteSpace(resp?.payment_Url))
                 {
                     if (!string.IsNullOrWhiteSpace(resp.order_Code))
                         Session[SK_PENDING_ORDER_CODE] = resp.order_Code;
 
-                    // LƯU orderId để ThankYou dùng sau khi quay về
                     if (resp.order_Id > 0) Session[SK_PENDING_ORDER_ID] = resp.order_Id;
 
-                    // Normalize + lưu + redirect
                     var payUrl = NormalizeGatewayUrlForUA(resp.payment_Url);
                     Session[SK_PENDING_PAYMENT_URL] = payUrl;
                     Session[SK_PENDING_PAYMENT_CREATED] = DateTime.UtcNow;
@@ -590,7 +569,6 @@ namespace HAFoodWeb
                     return;
                 }
 
-                // COD ok → dọn session, redirect ThankYou kèm id (và code nếu muốn)
                 var code = !string.IsNullOrWhiteSpace(resp.order_Code) ? resp.order_Code : resp.order_Id.ToString();
 
                 Session.Remove(SK_DRAFT);
@@ -654,7 +632,6 @@ namespace HAFoodWeb
             }
         }
 
-
         private void ShowNiceError(string code, string title, string message, string actionsHtml = null)
         {
             var html =
@@ -672,7 +649,7 @@ namespace HAFoodWeb
             litError.Visible = true;
         }
 
-        // ===== Detect & normalize ZaloPay URL theo User-Agent =====
+        // ===== Detect & normalize gateway URL theo User-Agent =====
         private static bool IsMobileUA(string ua)
         {
             if (string.IsNullOrEmpty(ua)) return false;
@@ -685,15 +662,29 @@ namespace HAFoodWeb
         {
             if (string.IsNullOrWhiteSpace(url)) return url;
 
-            var ua = Request?.UserAgent ?? "";
-            var isMobile = IsMobileUA(ua);
+            // Log original để debug chính xác
+            System.Diagnostics.Trace.WriteLine($"[GATEWAY-ORIGINAL-URL] {url}");
 
-            // Desktop → ép dùng trang QR thay vì openinapp
-            if (!isMobile &&
-                url.IndexOf("qcgateway.zalopay.vn/openinapp?", StringComparison.OrdinalIgnoreCase) >= 0)
+            // ✅ giữ logic normalize cho ZaloPay nếu URL là qcgateway (trường hợp bạn dùng lại về sau)
+            if (url.Contains("qcgateway.zalopay.vn"))
             {
-                url = url.Replace("/openinapp?", "/pay/v2/qr?");
-                // Hoặc: Regex.Replace(url, "/openinapp\\?", "/pay/v2/qr?", RegexOptions.IgnoreCase);
+                try
+                {
+                    var uri = new Uri(url);
+                    var fullQuery = uri.Query;
+                    if (fullQuery.Contains("order=") || fullQuery.Contains("zp_trans_token=") || fullQuery.Contains("q="))
+                    {
+                        var queryPart = fullQuery.StartsWith("?") ? fullQuery : "?" + fullQuery;
+                        var normalized = "https://qcgateway.zalopay.vn/openinapp" + queryPart;
+
+                        System.Diagnostics.Trace.WriteLine($"[GATEWAY-NORMALIZED-URL] {normalized}");
+                        return normalized;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Trace.WriteLine($"[GATEWAY-NORMALIZE-ERROR] {ex.Message} | Original URL: {url}");
+                }
             }
 
             return url;

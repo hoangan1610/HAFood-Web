@@ -169,17 +169,31 @@ namespace HAFoodWeb
         {
             byParent.TryGetValue(n.Id, out var children);
             bool hasChild = children != null && children.Count > 0;
-            bool expanded = (selectedId.HasValue && n.Id == selectedId.Value) || (expandSet != null && expandSet.Contains(n.Id));
+
+            bool isSelected = (selectedId.HasValue && n.Id == selectedId.Value);
+            bool expanded = isSelected || (expandSet != null && expandSet.Contains(n.Id));
 
             sb.Append("<div class='cat-node'>");
 
             if (hasChild)
             {
                 sb.Append("<div class='d-flex justify-content-between align-items-center'>");
-                sb.AppendFormat("<a class='text-decoration-none' href='{0}'>{1}</a>",
-                    BuildCategoryLink(n.Id), Server.HtmlEncode(n.Name));
-                sb.AppendFormat("<span class='cat-toggle small text-muted' data-toggle-cat='{0}' aria-expanded='{1}'> {2} </span>",
-                    n.Id, expanded ? "true" : "false", expanded ? "–" : "+");
+
+                // ✅ thêm class active + data-cat-id để JS lookup tên category cho chip
+                sb.AppendFormat(
+                    "<a class='cat-link {2}' data-cat-id='{1}' {3} href='{0}'>{4}</a>",
+                    BuildCategoryLink(n.Id),
+                    n.Id,
+                    isSelected ? "is-active" : "",
+                    isSelected ? "aria-current='true'" : "",
+                    Server.HtmlEncode(n.Name)
+                );
+
+                sb.AppendFormat(
+                    "<span class='cat-toggle small text-muted' data-toggle-cat='{0}' aria-expanded='{1}'> {2} </span>",
+                    n.Id, expanded ? "true" : "false", expanded ? "–" : "+"
+                );
+
                 sb.Append("</div>");
 
                 sb.AppendFormat("<div id='cat-children-{0}' class='cat-children {1}'>", n.Id, expanded ? "" : "d-none");
@@ -188,9 +202,16 @@ namespace HAFoodWeb
             }
             else
             {
-                sb.AppendFormat("<a class='text-decoration-none' href='{0}'>{1}</a>",
-                    BuildCategoryLink(n.Id), Server.HtmlEncode(n.Name));
+                sb.AppendFormat(
+                    "<a class='cat-link {2}' data-cat-id='{1}' {3} href='{0}'>{4}</a>",
+                    BuildCategoryLink(n.Id),
+                    n.Id,
+                    isSelected ? "is-active" : "",
+                    isSelected ? "aria-current='true'" : "",
+                    Server.HtmlEncode(n.Name)
+                );
             }
+
             sb.Append("</div>");
         }
 

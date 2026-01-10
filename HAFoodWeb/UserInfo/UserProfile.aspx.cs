@@ -28,7 +28,7 @@ namespace HAFoodWeb
         // dùng 1 HttpClient dùng chung
         private static readonly HttpClient _httpClient = new HttpClient
         {
-            BaseAddress = new Uri("https://api.hafood.id.vn")
+            BaseAddress = new Uri("http://localhost:8080")
         };
 
         protected async void Page_Load(object sender, EventArgs e)
@@ -57,7 +57,7 @@ namespace HAFoodWeb
                     // Nếu avatar trả về là đường dẫn tương đối → nối với domain
                     if (!avatarUrl.StartsWith("http", StringComparison.OrdinalIgnoreCase))
                     {
-                        avatarUrl = "https://api.hafood.id.vn" + avatarUrl;
+                        avatarUrl = "http://localhost:8080" + avatarUrl;
                     }
 
                     // Thêm timestamp để tránh cache ảnh cũ

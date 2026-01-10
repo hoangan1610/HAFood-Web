@@ -15,20 +15,12 @@ namespace HAFoodWeb
     public partial class OrderPage : Page
     {
         private readonly IOrderService _orderService = new OrderService();
-
         private const int PageSize = 3;
 
         protected int CurrentPage
         {
-            get
-            {
-                if (ViewState["CurrentPage"] == null) return 1;
-                return (int)ViewState["CurrentPage"];
-            }
-            set
-            {
-                ViewState["CurrentPage"] = value;
-            }
+            get => (ViewState["CurrentPage"] == null) ? 1 : (int)ViewState["CurrentPage"];
+            set => ViewState["CurrentPage"] = value;
         }
 
         protected int? CurrentStatus
@@ -37,10 +29,26 @@ namespace HAFoodWeb
             set => ViewState["CurrentStatus"] = value;
         }
 
+        // ✅ Search theo mã đơn (lưu ViewState)
+        protected string CurrentOrderCode
+        {
+            get => (ViewState["CurrentOrderCode"] as string) ?? "";
+            set => ViewState["CurrentOrderCode"] = value ?? "";
+        }
+
+        private static string NormalizeOrderCode(string raw)
+        {
+            raw = (raw ?? "").Trim();
+            if (raw.Length == 0) return "";
+            raw = raw.Replace(" ", "");
+            return raw.ToUpperInvariant();
+        }
+
         protected async void Page_Load(object sender, EventArgs e)
         {
             if (!IsPostBack)
             {
+                // vẫn giữ check login theo session của bạn
                 if (Session["UserId"] == null)
                 {
                     Response.Redirect("~/AuthPage/Login.aspx", false);
@@ -50,33 +58,70 @@ namespace HAFoodWeb
 
                 CurrentPage = 1;
                 CurrentStatus = null;
+                CurrentOrderCode = "";
+
                 ResetActiveFilter(btnAll);
+
+                // sync UI
+                if (txtOrderCode != null) txtOrderCode.Text = CurrentOrderCode;
+                if (btnClearCode != null) btnClearCode.Visible = false;
 
                 await BindOrdersAsync();
             }
+        }
+
+        // ✅ Click tìm mã đơn
+        protected async void btnSearchCode_Click(object sender, EventArgs e)
+        {
+            CurrentOrderCode = NormalizeOrderCode(txtOrderCode?.Text);
+            CurrentPage = 1;
+            await BindOrdersAsync();
+        }
+
+        // ✅ Xoá mã tìm kiếm
+        protected async void btnClearCode_Click(object sender, EventArgs e)
+        {
+            CurrentOrderCode = "";
+            if (txtOrderCode != null) txtOrderCode.Text = "";
+            CurrentPage = 1;
+            await BindOrdersAsync();
         }
 
         private async Task BindOrdersAsync()
         {
             try
             {
-                if (Session["UserId"] == null || !long.TryParse(Session["UserId"].ToString(), out long userId))
+                litDebug.Visible = false;
+
+                if (Session["UserId"] == null)
                 {
                     pnlEmpty.Visible = true;
-                    litDebug.Text = "<pre>⚠️ Không tìm thấy UserId trong session.</pre>";
+                    rpOrders.Visible = false;
+                    pnlPagination.Visible = false;
+
+                    litDebug.Text = "<pre>⚠️ Chưa đăng nhập.</pre>";
                     litDebug.Visible = true;
                     return;
                 }
 
                 int page = CurrentPage;
-                Debug.WriteLine($"📦 Lấy đơn hàng userId={userId}, page={page}, status={(CurrentStatus.HasValue ? CurrentStatus.Value.ToString() : "null")}");
 
-                var result = await _orderService.GetOrdersByUserAsync(userId, CurrentStatus, page, PageSize);
+                // ✅ luôn sync textbox theo ViewState
+                if (txtOrderCode != null) txtOrderCode.Text = CurrentOrderCode;
+                if (btnClearCode != null) btnClearCode.Visible = !string.IsNullOrWhiteSpace(CurrentOrderCode);
+
+                string code = NormalizeOrderCode(CurrentOrderCode);
+
+                Debug.WriteLine($"📦 Orders page={page}, status={(CurrentStatus.HasValue ? CurrentStatus.Value.ToString() : "null")}, code={(string.IsNullOrWhiteSpace(code) ? "null" : code)}");
+
+                // ✅ NEW: gọi BE theo JWT (không userId nữa)
+                var result = await _orderService.GetMyOrdersAsync(CurrentStatus, code, page, PageSize);
 
                 if (result == null || result.items == null || !result.items.Any())
                 {
                     rpOrders.DataSource = null;
                     rpOrders.DataBind();
+
                     pnlEmpty.Visible = true;
                     rpOrders.Visible = false;
                     pnlPagination.Visible = false;
@@ -85,13 +130,14 @@ namespace HAFoodWeb
 
                 rpOrders.DataSource = result.items;
                 rpOrders.DataBind();
+
                 pnlEmpty.Visible = false;
                 rpOrders.Visible = true;
 
                 int totalPages = Math.Max(1, (int)Math.Ceiling((double)result.totalCount / PageSize));
+
                 if (totalPages > 1)
                 {
-                    // danh sách số trang + dấu null (ellipsis)
                     rpPaging.DataSource = BuildPageList(totalPages, page);
                     rpPaging.DataBind();
                     pnlPagination.Visible = true;
@@ -106,74 +152,51 @@ namespace HAFoodWeb
             }
             catch (Exception ex)
             {
-                Debug.WriteLine("❌ Lỗi BindOrdersAsync: " + ex);
+                Debug.WriteLine("❌ BindOrdersAsync ERROR: " + ex);
+
                 litDebug.Text = "<pre>" + Server.HtmlEncode(ex.ToString()) + "</pre>";
                 litDebug.Visible = true;
+
                 pnlEmpty.Visible = true;
+                rpOrders.Visible = false;
                 pnlPagination.Visible = false;
             }
         }
 
-        /// <summary>
-        /// Xây danh sách trang dạng:
-        ///  - nếu tổng trang <= 9: 1..N
-        ///  - nếu > 9:
-        ///    + đầu danh sách (current <= 4): 1 2 3 4 ... N-2 N-1 N
-        ///    + cuối danh sách (current >= N-3): 1 2 ... N-3 N-2 N-1 N
-        ///    + ở giữa: 1 2 ... (c-1) c (c+1) ... N-1 N
-        /// </summary>
         private List<int?> BuildPageList(int totalPages, int currentPage)
         {
             var pages = new List<int?>();
 
             if (totalPages <= 9)
             {
-                for (int i = 1; i <= totalPages; i++)
-                    pages.Add(i);
+                for (int i = 1; i <= totalPages; i++) pages.Add(i);
                 return pages;
             }
 
             if (currentPage <= 4)
             {
-                // 1 2 3 4 ... n-2 n-1 n
-                pages.Add(1);
-                pages.Add(2);
-                pages.Add(3);
-                pages.Add(4);
+                pages.Add(1); pages.Add(2); pages.Add(3); pages.Add(4);
                 pages.Add(null);
-                pages.Add(totalPages - 2);
-                pages.Add(totalPages - 1);
-                pages.Add(totalPages);
+                pages.Add(totalPages - 2); pages.Add(totalPages - 1); pages.Add(totalPages);
             }
             else if (currentPage >= totalPages - 3)
             {
-                // 1 2 ... n-3 n-2 n-1 n
-                pages.Add(1);
-                pages.Add(2);
+                pages.Add(1); pages.Add(2);
                 pages.Add(null);
-                pages.Add(totalPages - 3);
-                pages.Add(totalPages - 2);
-                pages.Add(totalPages - 1);
-                pages.Add(totalPages);
+                pages.Add(totalPages - 3); pages.Add(totalPages - 2); pages.Add(totalPages - 1); pages.Add(totalPages);
             }
             else
             {
-                // 1 2 ... c-1 c c+1 ... n-1 n
-                pages.Add(1);
-                pages.Add(2);
+                pages.Add(1); pages.Add(2);
                 pages.Add(null);
-                pages.Add(currentPage - 1);
-                pages.Add(currentPage);
-                pages.Add(currentPage + 1);
+                pages.Add(currentPage - 1); pages.Add(currentPage); pages.Add(currentPage + 1);
                 pages.Add(null);
-                pages.Add(totalPages - 1);
-                pages.Add(totalPages);
+                pages.Add(totalPages - 1); pages.Add(totalPages);
             }
 
             return pages;
         }
 
-        // helper cho aspx
         protected bool IsEllipsis(object dataItem)
         {
             return dataItem == null || dataItem == DBNull.Value;
@@ -205,8 +228,10 @@ namespace HAFoodWeb
             }
         }
 
-        private static string GetPaymentMethodLabel(string paymentProvider, int? paymentMethod, string paymentStatus)
+        // ✅ FIX mapping METHOD IDs: 0=COD, 1=MOMO, 2=PAY2S, 9=ZALOPAY
+        private static string GetPaymentMethodLabel(string paymentProvider, byte? paymentMethod, string paymentStatus)
         {
+            // payment_status = Unpaid => COD (trường hợp COD)
             if (!string.IsNullOrWhiteSpace(paymentStatus) &&
                 paymentStatus.Trim().Equals("unpaid", StringComparison.OrdinalIgnoreCase))
             {
@@ -218,15 +243,17 @@ namespace HAFoodWeb
                 switch (paymentMethod.Value)
                 {
                     case 0: return "COD";
-                    case 1: return "ZaloPay";
-                    case 2: return "Pay2s";
+                    case 1: return "MoMo";
+                    case 2: return "Pay2S";
+                    case 9: return "ZaloPay";
                 }
             }
 
             if (!string.IsNullOrWhiteSpace(paymentProvider))
             {
                 var p = paymentProvider.Trim().ToUpperInvariant();
-                if (p == "PAY2S") return "Pay2s";
+                if (p == "PAY2S") return "Pay2S";
+                if (p == "MOMO") return "MoMo";
                 if (p == "ZALOPAY") return "ZaloPay";
                 return HttpUtility.HtmlDecode(paymentProvider);
             }
@@ -237,7 +264,7 @@ namespace HAFoodWeb
         protected string BuildPaymentText(OrderHeaderDto h)
         {
             var label = GetPaymentMethodLabel(h.payment_Provider, h.payment_Method, h.payment_Status);
-            return string.IsNullOrWhiteSpace(label) ? "" : (label);
+            return string.IsNullOrWhiteSpace(label) ? "" : label;
         }
 
         protected async void rpPaging_ItemCommand(object source, RepeaterCommandEventArgs e)

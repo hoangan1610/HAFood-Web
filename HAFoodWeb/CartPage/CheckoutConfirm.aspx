@@ -65,7 +65,11 @@
         #<%= rblPayment.ClientID %> label:hover{box-shadow:0 10px 24px rgba(2,6,23,.08);transform:translateY(-1px)}
         #<%= rblPayment.ClientID %> input[type="radio"]:checked + label{border-color:var(--brand);box-shadow:0 12px 28px rgba(255,122,0,.18);background:linear-gradient(180deg,#fff,#fff7ed 80%)}
         #<%= rblPayment.ClientID %> label::before{content:"";flex:0 0 44px;width:44px;height:44px;border-radius:10px;background:#fff1e6;border:1px solid #ffe1c6;margin-right:4px;background-size:contain;background-position:center;background-repeat:no-repeat}
-        #<%= rblPayment.ClientID %> label[for$="_1"]::before{background-image:url('<%= ResolveUrl("~/images/zalopay.jpg") %>')}
+
+        /* ✅ slot 1: MoMo */
+        #<%= rblPayment.ClientID %> label[for$="_1"]::before{background-image:url('<%= ResolveUrl("~/images/momo.jpg") %>')}
+
+        /* slot 2: Pay2S */
         #<%= rblPayment.ClientID %> label[for$="_2"]::before{background-image:url('<%= ResolveUrl("~/images/pay2s.jpg") %>')}
 
         #<%= rblPayment.ClientID %> label[for$="_0"]::before{background-image:url('<%= ResolveUrl("~/images/cod.jpg") %>')}
@@ -146,9 +150,8 @@
 
                     <asp:RadioButtonList ID="rblPayment" runat="server" RepeatDirection="Vertical" RepeatLayout="Flow">
                         <asp:ListItem Value="0" Selected="True" Text="Thanh toán khi nhận hàng (COD)" />
-                        <asp:ListItem Value="1" Text="ZaloPay" />
+                        <asp:ListItem Value="1" Text="MoMo" />
                         <asp:ListItem Value="2" Text="Pay2S" />
-
                     </asp:RadioButtonList>
 
                     <asp:RequiredFieldValidator runat="server" ControlToValidate="rblPayment"

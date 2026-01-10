@@ -78,7 +78,7 @@ namespace HAFoodWeb.UserInfo
     {
         private static readonly HttpClient _httpClient = new HttpClient
         {
-            BaseAddress = new Uri("https://api.hafood.id.vn")
+            BaseAddress = new Uri("http://localhost:8080")
         };
 
         // Để reuse token cho các request trong 1 page lifecycle
