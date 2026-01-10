@@ -3,10 +3,12 @@ using HAFoodWeb.Models;
 using Newtonsoft.Json;
 using System;
 using System.Configuration;
+using System.IO;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Threading.Tasks;
+using System.Web.UI.WebControls;
 
 namespace HAFoodWeb.Services
 {
@@ -93,125 +95,151 @@ namespace HAFoodWeb.Services
         {
             var url = $"{_apiBase}/api/users/me/profile";
 
+            if (string.IsNullOrWhiteSpace(token))
+                return new ApiBaseResponse { Success = false, Message = "Thiếu token xác thực." };
+
+            // ✅ Không có field nào cần update
+            if (request == null || (request.fullName == null && request.phone == null && request.avatar == null))
+                return new ApiBaseResponse { Success = true, Message = "Không có thay đổi để cập nhật." };
+
             try
             {
-                // Đảm bảo header Authorization cho HttpJson.Client
-                HttpJson.Client.DefaultRequestHeaders.Authorization =
-                    new AuthenticationHeaderValue("Bearer", token);
+                var client = HttpJson.Client;
 
-                // KHÔNG EnsureSuccessStatusCode – để còn đọc body lỗi (409, 500…)
-                var response = await HttpJson.PutJsonAsync(url, request);
-                var responseJson = await response.Content.ReadAsStringAsync();
-
-                if (response.IsSuccessStatusCode)
+                // ✅ Serialize bỏ qua null => không gửi field không đổi
+                var json = JsonConvert.SerializeObject(request, new JsonSerializerSettings
                 {
-                    var ok = SafeDeserialize<ApiBaseResponse>(responseJson) ?? new ApiBaseResponse
-                    {
-                        Success = true,
-                        Message = "OK"
-                    };
-                    TrySetOptional(ok, "StatusCode", (int)response.StatusCode);
-                    TrySetOptional(ok, "RawBody", responseJson);
-                    return ok;
-                }
-                else
+                    NullValueHandling = NullValueHandling.Ignore
+                });
+
+                using (var httpReq = new HttpRequestMessage(HttpMethod.Put, url))
                 {
-                    var problem = SafeDeserialize<ProblemDetailsEnvelope>(responseJson);
-                    var fail = new ApiBaseResponse
+                    httpReq.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                    httpReq.Headers.Accept.Clear();
+                    httpReq.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                    httpReq.Content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                    using (var response = await client.SendAsync(httpReq))
                     {
-                        Success = false,
-                        Message = "Không thể cập nhật profile"
-                    };
+                        var responseJson = await response.Content.ReadAsStringAsync();
 
-                    TrySetOptional(fail, "StatusCode", (int)response.StatusCode);
-                    TrySetOptional(fail, "RawBody", responseJson);
+                        if (response.IsSuccessStatusCode)
+                        {
+                            var ok = SafeDeserialize<ApiBaseResponse>(responseJson) ?? new ApiBaseResponse
+                            {
+                                Success = true,
+                                Message = "OK"
+                            };
+                            TrySetOptional(ok, "StatusCode", (int)response.StatusCode);
+                            TrySetOptional(ok, "RawBody", responseJson);
+                            return ok;
+                        }
+                        else
+                        {
+                            var problem = SafeDeserialize<ProblemDetailsEnvelope>(responseJson);
+                            var fail = new ApiBaseResponse
+                            {
+                                Success = false,
+                                Message = "Không thể cập nhật profile"
+                            };
 
-                    if (problem != null)
-                    {
-                        TrySetOptional(fail, "Code", problem.code);
-                        TrySetOptional(fail, "Title", problem.title);
-                        TrySetOptional(fail, "Detail", problem.detail);
+                            TrySetOptional(fail, "StatusCode", (int)response.StatusCode);
+                            TrySetOptional(fail, "RawBody", responseJson);
 
-                        if (!string.IsNullOrWhiteSpace(problem.detail))
-                            fail.Message = problem.detail;
+                            if (problem != null)
+                            {
+                                TrySetOptional(fail, "Code", problem.code);
+                                TrySetOptional(fail, "Title", problem.title);
+                                TrySetOptional(fail, "Detail", problem.detail);
+
+                                if (!string.IsNullOrWhiteSpace(problem.detail))
+                                    fail.Message = problem.detail;
+                            }
+
+                            return fail;
+                        }
                     }
-
-                    return fail;
                 }
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine("UpdateProfile failed: " + ex);
-                var err = new ApiBaseResponse
-                {
-                    Success = false,
-                    Message = "Không thể cập nhật profile"
-                };
+                var err = new ApiBaseResponse { Success = false, Message = "Không thể cập nhật profile" };
                 TrySetOptional(err, "Detail", ex.Message);
                 return err;
             }
         }
 
-        public async Task<ApiBaseResponse> UpdateAvatarAsync(string token, System.Web.UI.WebControls.FileUpload fileUpload)
+        public async Task<ApiBaseResponse> UpdateAvatarAsync(string token, FileUpload fileUpload)
         {
             var url = $"{_apiBase}/api/users/me/avatar";
 
+            if (string.IsNullOrWhiteSpace(token))
+                return new ApiBaseResponse { Success = false, Message = "Thiếu token xác thực." };
+
+            if (fileUpload == null || !fileUpload.HasFile)
+                return new ApiBaseResponse { Success = false, Message = "Không có file avatar để upload." };
+
             try
             {
-                using (var httpClient = new HttpClient())
+                var client = HttpJson.Client;
+
+                using (var form = new MultipartFormDataContent())
                 {
-                    httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                    var fileContent = new StreamContent(fileUpload.FileContent);
+                    var contentType = fileUpload.PostedFile?.ContentType;
+                    if (!string.IsNullOrWhiteSpace(contentType))
+                        fileContent.Headers.ContentType = new MediaTypeHeaderValue(contentType);
 
-                    using (var form = new MultipartFormDataContent())
+                    var safeFileName = Path.GetFileName(fileUpload.FileName);
+                    form.Add(fileContent, "file", safeFileName);
+
+                    using (var httpReq = new HttpRequestMessage(HttpMethod.Post, url))
                     {
-                        var fileContent = new StreamContent(fileUpload.FileContent);
-                        var contentType = fileUpload.PostedFile?.ContentType;
-                        if (!string.IsNullOrWhiteSpace(contentType))
-                            fileContent.Headers.ContentType = new MediaTypeHeaderValue(contentType);
+                        httpReq.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                        httpReq.Content = form;
 
-                        form.Add(fileContent, "file", fileUpload.FileName);
-
-                        var response = await httpClient.PostAsync(url, form);
-                        var responseJson = await response.Content.ReadAsStringAsync();
-
-                        if (!response.IsSuccessStatusCode)
+                        using (var response = await client.SendAsync(httpReq))
                         {
-                            System.Diagnostics.Debug.WriteLine($"[Avatar Upload] {response.StatusCode} - {responseJson}");
+                            var responseJson = await response.Content.ReadAsStringAsync();
 
-                            var problem = SafeDeserialize<ProblemDetailsEnvelope>(responseJson);
-                            var fail = new ApiBaseResponse
+                            if (!response.IsSuccessStatusCode)
                             {
-                                Success = false,
-                                Message = problem?.detail ?? "Upload avatar thất bại"
+                                System.Diagnostics.Debug.WriteLine($"[Avatar Upload] {response.StatusCode} - {responseJson}");
+
+                                var problem = SafeDeserialize<ProblemDetailsEnvelope>(responseJson);
+                                var fail = new ApiBaseResponse
+                                {
+                                    Success = false,
+                                    Message = problem?.detail ?? "Upload avatar thất bại"
+                                };
+
+                                TrySetOptional(fail, "StatusCode", (int)response.StatusCode);
+                                TrySetOptional(fail, "Code", problem?.code);
+                                TrySetOptional(fail, "Title", problem?.title);
+                                TrySetOptional(fail, "Detail", problem?.detail);
+                                TrySetOptional(fail, "RawBody", responseJson);
+
+                                return fail;
+                            }
+
+                            var ok = SafeDeserialize<ApiBaseResponse>(responseJson) ?? new ApiBaseResponse
+                            {
+                                Success = true,
+                                Message = "OK"
                             };
-                            TrySetOptional(fail, "StatusCode", (int)response.StatusCode);
-                            TrySetOptional(fail, "Code", problem?.code);
-                            TrySetOptional(fail, "Title", problem?.title);
-                            TrySetOptional(fail, "Detail", problem?.detail);
-                            TrySetOptional(fail, "RawBody", responseJson);
 
-                            return fail;
+                            TrySetOptional(ok, "StatusCode", (int)response.StatusCode);
+                            TrySetOptional(ok, "RawBody", responseJson);
+                            return ok;
                         }
-
-                        var ok = SafeDeserialize<ApiBaseResponse>(responseJson) ?? new ApiBaseResponse
-                        {
-                            Success = true,
-                            Message = "OK"
-                        };
-                        TrySetOptional(ok, "StatusCode", (int)response.StatusCode);
-                        TrySetOptional(ok, "RawBody", responseJson);
-                        return ok;
                     }
                 }
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine("UpdateAvatar failed: " + ex);
-                var err = new ApiBaseResponse
-                {
-                    Success = false,
-                    Message = "Không thể upload avatar"
-                };
+                var err = new ApiBaseResponse { Success = false, Message = "Không thể upload avatar" };
                 TrySetOptional(err, "Detail", ex.Message);
                 return err;
             }

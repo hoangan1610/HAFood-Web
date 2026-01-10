@@ -22,8 +22,6 @@ namespace HAFoodWeb.Pages
         // Giữ địa chỉ hiện tại để render session
         protected AddressDto CurrentAddress;
 
-
-
         protected async void Page_Load(object sender, EventArgs e)
         {
             // Cache bust
@@ -60,7 +58,6 @@ namespace HAFoodWeb.Pages
 
             if (!IsPostBack)
             {
-                // ... phần còn lại giữ nguyên
                 var chosen = Session["selected_address_obj"] as AddressDto;
                 if (chosen != null)
                 {
@@ -87,7 +84,6 @@ namespace HAFoodWeb.Pages
                 await BindCart();
             }
         }
-
 
         /* ===== Helpers cho địa chỉ ===== */
 
@@ -195,6 +191,7 @@ namespace HAFoodWeb.Pages
                 lblSubtotal.Text = "0 ₫";
                 lblShipping.Text = "0 ₫";
                 lblVat.Text = "0 ₫";
+                lblDiscount.Text = "0 ₫";
                 lblGrandTotal.Text = "0 ₫";
             }
             else
@@ -238,8 +235,7 @@ namespace HAFoodWeb.Pages
             cartItem.Quantity = data.quantity;
 
             // 👇 GÁN TRỌNG LƯỢNG / 1 ĐƠN VỊ (GRAM)
-            cartItem.WeightPerUnit = data.variant_Weight;   // int → decimal, C# tự cast
-
+            cartItem.WeightPerUnit = data.variant_Weight;
         }
 
         private void UpdateTotalsPanel()
@@ -265,7 +261,12 @@ namespace HAFoodWeb.Pages
             }
 
             var vat = Math.Round(subtotal * VAT_RATE, 0, MidpointRounding.AwayFromZero);
-            var grand = subtotal + shipping + vat;
+
+            // discount server-side ở trang này chỉ hiển thị theo hidden/JS,
+            // nên mặc định 0 (confirm page sẽ xử lý re-quote theo API)
+            decimal discount = 0m;
+
+            var grand = subtotal + shipping + vat - discount;
 
             var viVN = System.Globalization.CultureInfo.GetCultureInfo("vi-VN");
             lblTotal.Text = string.Format(viVN, "{0:N0} ₫", subtotal);
@@ -277,9 +278,9 @@ namespace HAFoodWeb.Pages
             lblSubtotal.Text = string.Format(viVN, "{0:N0} ₫", subtotal);
             lblShipping.Text = string.Format(viVN, "{0:N0} ₫", shipping);
             lblVat.Text = string.Format(viVN, "{0:N0} ₫", vat);
-            lblGrandTotal.Text = string.Format(viVN, "{0:N0} ₫", grand);
+            lblDiscount.Text = string.Format(viVN, "{0:N0} ₫", discount);
+            lblGrandTotal.Text = string.Format(viVN, "{0:N0} ₫", Math.Max(0, grand));
         }
-
 
         private static string MergeAddress(string street, string wardText, string cityText)
         {
@@ -288,7 +289,6 @@ namespace HAFoodWeb.Pages
                 parts.Where(s => !string.IsNullOrWhiteSpace(s))
                      .Select(s => s.Trim().Trim(',')));
         }
-
 
         private void AddPageError(string message)
         {
@@ -332,6 +332,15 @@ namespace HAFoodWeb.Pages
 
         protected async void btnCheckout_Click(object sender, EventArgs e)
         {
+            // NEW: chưa đăng nhập -> chuyển thẳng sang /AuthPage/Login.aspx (không cần validate)
+            if (!IsLoggedIn())
+            {
+                var ret = Server.UrlEncode(Request.RawUrl ?? (Request.Url?.PathAndQuery ?? "/"));
+                Response.Redirect("/AuthPage/Login.aspx?returnUrl=" + ret, false);
+                Context.ApplicationInstance.CompleteRequest();
+                return;
+            }
+
             if (string.IsNullOrWhiteSpace(txtCityCode.Text) || string.IsNullOrWhiteSpace(txtWardCode.Text))
             {
                 AddPageError("Vui lòng chọn Tỉnh/Thành và Xã/Phường từ danh sách.");
@@ -365,7 +374,7 @@ namespace HAFoodWeb.Pages
                     lineIds.Add(line.id);
                     items.Add((line.variant_Id, line.quantity));
 
-                    var price = line.price_Effective > 0 ? line.price_Effective : line.price_Variant; // ✅ ưu tiên giá hiệu lực
+                    var price = line.price_Effective > 0 ? line.price_Effective : line.price_Variant;
                     var qty = line.quantity;
 
                     snapshot.Add(new CheckoutDraftItem
@@ -388,31 +397,29 @@ namespace HAFoodWeb.Pages
                 return;
             }
 
-            // 🔹 ƯU TIÊN đọc phí ship từ hidden (do JS + /api/shipping/quote đã set)
+            // ƯU TIÊN đọc phí ship từ hidden (do JS đã set)
             if (!string.IsNullOrWhiteSpace(hidShippingFee.Value))
             {
                 shipping = ParseMoneyFromLabel(hidShippingFee.Value);
             }
             else
             {
-                // fallback: trong trường hợp nào đó hidden chưa có, đọc từ label (nhưng gần như luôn là 0)
                 shipping = ParseMoneyFromLabel(lblShipping.Text);
             }
 
             var vat = Math.Round(subtotal * VAT_RATE, 0, MidpointRounding.AwayFromZero);
             var grand = subtotal + shipping + vat;
 
-
             string cityText = txtCitySel.Text?.Trim();
             string wardText = txtWardSel.Text?.Trim();
             string fullAddr = MergeAddress(txtAddress.Text, wardText, cityText);
 
-            // ⭐ Lấy mã KM từ hidden nếu textbox trống
+            // Lấy mã KM từ hidden nếu textbox trống
             var promoCode = (txtPromo?.Text ?? "").Trim();
             if (string.IsNullOrEmpty(promoCode))
                 promoCode = (hidPromoCodeSelected?.Value ?? "").Trim();
 
-            // ⭐ Lưu số giảm tạm thời (đơn vị VND) để fallback nếu re-quote lỗi
+            // Lưu số giảm tạm thời (đơn vị VND) để fallback nếu re-quote lỗi
             decimal snapshotDiscount = 0m;
             decimal.TryParse(hidPromoDiscount?.Value ?? "0", out snapshotDiscount);
 
@@ -430,17 +437,15 @@ namespace HAFoodWeb.Pages
                 CityCode = txtCityCode.Text?.Trim(),
                 WardCode = txtWardCode.Text?.Trim(),
 
-                // ✅ mới: lấy tổng gram từ label "1.200 g"
-                // 🔹 NEW: đọc từ hidden mà JS đã set
+                // NEW: đọc từ hidden mà JS đã set
                 TotalWeightGram = ParseIntFromLabel(hidTotalWeightGram.Value),
-
 
                 Snapshot = snapshot.ToArray(),
                 SnapshotSubtotal = subtotal,
                 SnapshotVat = vat,
                 SnapshotShipping = shipping,
                 SnapshotGrand = grand,
-                SnapshotDiscount = snapshotDiscount          // ⭐ NEW
+                SnapshotDiscount = snapshotDiscount
             };
 
             try
@@ -454,22 +459,11 @@ namespace HAFoodWeb.Pages
 
             Session["checkout_draft"] = draft;
 
-            if (!IsLoggedIn())
-            {
-                var returnUrl = Server.UrlEncode(ResolveUrl("~/CartPage/CheckoutConfirm.aspx"));
-                var loginUrl = ResolveUrl("~/AuthPage/Login.aspx") + "?returnUrl=" + returnUrl;
-
-                Response.Redirect(loginUrl, false);
-                Context.ApplicationInstance.CompleteRequest();
-                return;
-            }
-
+            // Đã đăng nhập thì chuyển confirm
             var url = ResolveUrl("~/CartPage/CheckoutConfirm.aspx");
             Response.Redirect(url, false);
             Context.ApplicationInstance.CompleteRequest();
         }
-
-
 
         /* ====== PageMethods cho popup ====== */
         [WebMethod(EnableSession = true)]
@@ -481,20 +475,17 @@ namespace HAFoodWeb.Pages
         private static int ParseIntFromLabel(string text)
         {
             if (string.IsNullOrWhiteSpace(text)) return 0;
-            // Bỏ hết ký tự không phải số / dấu trừ
             var s = Regex.Replace(text, @"[^\d\-]", "");
             if (int.TryParse(s, out var n)) return n;
             return 0;
         }
+
         private static decimal ParseMoneyFromLabel(string text)
         {
             if (string.IsNullOrWhiteSpace(text)) return 0m;
-            // Bỏ hết ký tự không phải số / dấu trừ
-            var s = System.Text.RegularExpressions.Regex.Replace(text, @"[^\d\-]", "");
+            var s = Regex.Replace(text, @"[^\d\-]", "");
             if (decimal.TryParse(s, out var d)) return d;
             return 0m;
         }
-
-
     }
 }

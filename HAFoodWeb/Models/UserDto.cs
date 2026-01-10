@@ -1,4 +1,6 @@
-﻿namespace HAFoodWeb.Models
+﻿using Newtonsoft.Json;
+
+namespace HAFoodWeb.Models
 {
     public class UserDto
     {
@@ -24,17 +26,27 @@
     public class AuthMeResponse
     {
         public bool authenticated { get; set; }
-        public AuthUser user { get; set; }  
+        public AuthUser user { get; set; }
         public string code { get; set; }
         public string message { get; set; }
     }
 
-    // Dùng để gửi yêu cầu cập nhật thông tin người dùng tránh thừa field
+    // ✅ Dùng để gửi yêu cầu cập nhật thông tin người dùng (chỉ gửi field thay đổi)
     public class UserUpdateRequest
     {
+        [JsonProperty("fullName", NullValueHandling = NullValueHandling.Ignore)]
         public string fullName { get; set; }
+
+        [JsonProperty("phone", NullValueHandling = NullValueHandling.Ignore)]
         public string phone { get; set; }
+
+        [JsonProperty("avatar", NullValueHandling = NullValueHandling.Ignore)]
         public string avatar { get; set; }
+
+        // ✅ (Khuyến nghị) Không gửi chuỗi rỗng / toàn khoảng trắng
+        public bool ShouldSerializefullName() => !string.IsNullOrWhiteSpace(fullName);
+        public bool ShouldSerializephone() => !string.IsNullOrWhiteSpace(phone);
+        public bool ShouldSerializeavatar() => !string.IsNullOrWhiteSpace(avatar);
     }
 
     public class ApiBaseResponse
@@ -44,5 +56,3 @@
         public string Message { get; set; }
     }
 }
-
-
