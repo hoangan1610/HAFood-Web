@@ -1,4 +1,4 @@
-<%@ Page Language="C#" AutoEventWireup="true"     CodeBehind="CreateUserAddress.aspx.cs"     Inherits="HAFoodWeb.UserAddress.CreateUserAddress" Async="true" %>
+<%@ Page Language="C#" AutoEventWireup="true" CodeBehind="CreateUserAddress.aspx.cs" Inherits="HAFoodWeb.UserAddress.CreateUserAddress" Async="true" %>
 
 <!DOCTYPE html>
 <html lang="vi">
@@ -76,10 +76,9 @@
         }
     </style>
 
-    <%-- ✅ Ẩn Back & nền TRẮNG khi embed --%>
+    <%-- ✅ embed=1: nền TRẮNG (KHÔNG ẩn nút quay lại) --%>
     <% if ("1".Equals(Request["embed"])) { %>
       <style>
-        a[href$="UserAddressList.aspx"]{display:none!important}
         body,html{
           background:#ffffff !important;
           background-image:none !important;
@@ -96,7 +95,7 @@
     <div class="page-header">
         <div class="header-grid">
             <div class="header-left">
-                <a href="UserAddressList.aspx" class="btn-back">← Quay lại địa chỉ</a>
+                <a href="<%: ReturnUrl %>" class="btn-back">← Quay lại</a>
             </div>
             <div class="header-right">
                 <div class="title-badge"><i class="bi bi-geo-alt"></i> HAFood - Địa chỉ giao hàng</div>
@@ -186,14 +185,15 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
+    const __RETURN_URL__ = '<%= ReturnUrlJs %>';
+
     document.addEventListener('DOMContentLoaded', function () {
         document.querySelector('.page-shell')?.classList.add('ready');
         document.querySelector('.page-anim')?.classList.add('ready');
     });
 
     document.getElementById('btnCancelCreate')?.addEventListener('click', function () {
-        if (history.length > 1) history.back();
-        else window.location.href = '/UserAddress/UserAddressList.aspx';
+        if (__RETURN_URL__) window.location.href = __RETURN_URL__;
     });
 
     function showToast(message, variant) {

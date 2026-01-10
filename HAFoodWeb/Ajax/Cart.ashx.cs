@@ -77,8 +77,14 @@ namespace HAFoodWeb.Ajax
                             };
                             var added = await svc.AddCartItemAsync(deviceUuid, add).ConfigureAwait(false);
 
-                            // Return count from the SAME data source we will use for "count" (stable)
-                            var count = await GetCountStableAsync(ctx, channel).ConfigureAwait(false);
+                            // ✅ CHỈNH SỬA: trả count ưu tiên từ response "added" để Network thấy count tăng đúng
+                            var count = ExtractCount(added);
+                            if (count < 0)
+                            {
+                                // fallback nếu response add không đủ dữ liệu
+                                count = await GetCountStableAsync(ctx, channel).ConfigureAwait(false);
+                            }
+
                             WriteJson(ctx, 200, new { ok = true, count });
                             return;
                         }

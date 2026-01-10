@@ -164,7 +164,6 @@ namespace HAFoodWeb
                         "try{onAddToCartSuccess();}catch(e){}", true);
                 }
 
-                upAddCart.Update();
             }
             catch (Exception ex)
             {

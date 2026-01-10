@@ -201,19 +201,49 @@
       overflow:hidden;
     }
 
+    /* ===== TOAST ===== */
     .ha-toast{
-      position:fixed;
-      top:20px;
-      right:20px;
+      position:fixed !important;
+      top:20px !important;
+      right:20px !important;
+      left:auto !important;
+
+      display:inline-flex !important;
+      align-items:center !important;
+      justify-content:flex-start !important;
+
+      width:fit-content !important;
+      max-width:calc(100vw - 40px) !important;
+      min-width:0 !important;
+      box-sizing:border-box !important;
+
+      padding:8px 12px !important;
+      border-radius:999px !important;
+
       background:#16a34a;
       color:#fff;
-      padding:10px 14px;
-      border-radius:999px;
-      box-shadow:0 .25rem .9rem rgba(0,0,0,.22);
-      z-index:20000;
-      display:none;
       font-weight:500;
       font-size:.95rem;
+      line-height:1.2;
+
+      box-shadow:0 .25rem .9rem rgba(0,0,0,.22);
+      z-index:2147483647;
+
+      opacity:0;
+      visibility:hidden;
+      transform:translateY(-6px);
+      transition:opacity .18s ease, transform .18s ease, visibility 0s linear .18s;
+      pointer-events:none;
+
+      white-space:nowrap !important;
+      overflow:hidden !important;
+      text-overflow:ellipsis !important;
+    }
+    .ha-toast.show{
+      opacity:1;
+      visibility:visible;
+      transform:translateY(0);
+      transition-delay:0s;
     }
 
     .ha-fly-img{
@@ -308,7 +338,6 @@
     .ha-star-empty{ color:#e5e7eb; }
     .ha-review-empty{ font-size:.9rem; color:var(--ha-muted); }
 
-    /* Highlight khi focus review qua ?review=... */
     .ha-review-card { position: relative; }
     .ha-review-card.review-highlight{
       outline: 2px solid #0d6efd;
@@ -448,18 +477,12 @@
               <asp:ScriptManager ID="ScriptManager1" runat="server"
                                  EnablePartialRendering="true" EnablePageMethods="true" />
 
-              <asp:UpdatePanel ID="upAddCart" runat="server" UpdateMode="Conditional">
-                <ContentTemplate>
-                  <div class="col-sm-3 d-grid mt-2 mt-sm-0">
-                    <asp:Button ID="btnAddToCart" runat="server" Text="Thêm vào giỏ"
-                      CssClass="btn btn-success btn-sm ha-btn-pill"
-                      OnClick="btnAddToCart_Click" />
-                  </div>
-                </ContentTemplate>
-                <Triggers>
-                  <asp:AsyncPostBackTrigger ControlID="btnAddToCart" EventName="Click" />
-                </Triggers>
-              </asp:UpdatePanel>
+              <!-- ✅ Client button (no postback) -->
+              <div class="col-sm-3 d-grid mt-2 mt-sm-1">
+                <button type="button" id="btnAddToCartClient" class="btn btn-success btn-sm ha-btn-pill">
+                  Thêm vào giỏ hàng
+                </button>
+              </div>
             </div>
 
             <hr class="my-4 ha-divider" />
@@ -631,7 +654,7 @@
                         placeholder="Chia sẻ trải nghiệm thực tế của bạn..."></textarea>
             </div>
 
-            <!-- ⚡ THÊM: Upload ảnh -->
+            <!-- Upload ảnh -->
             <div class="mb-2">
               <label class="form-label small mb-1">Hình ảnh (tùy chọn)</label>
               <input type="file"
@@ -662,20 +685,81 @@
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
+  <!-- ===== Toast + AddToCart (FIX) ===== -->
   <script>
-      // ===== Toast + fly-to-cart =====
-      function showToast(msg) {
-          const el = document.getElementById('haToast');
-          if (!el) return;
-          el.textContent = msg || 'Đã thêm vào giỏ hàng';
-          el.style.display = 'block';
-          setTimeout(() => { el.style.display = 'none'; }, 1800);
-      }
+      (function initToast() {
+          let hideTimer = null;
 
-      function flyToCart() {
+          function ensureToastEl() {
+              let el = document.getElementById('haToast');
+              if (!el) {
+                  el = document.createElement('div');
+                  el.id = 'haToast';
+                  document.body.appendChild(el);
+              }
+
+              el.className = 'ha-toast';
+
+              // hard override để không bị CSS/JS khác làm rộng
+              el.style.setProperty('position', 'fixed', 'important');
+              el.style.setProperty('top', '20px', 'important');
+              el.style.setProperty('right', '20px', 'important');
+              el.style.setProperty('left', 'auto', 'important');
+              el.style.setProperty('z-index', '2147483647', 'important');
+
+              el.style.setProperty('display', 'inline-flex', 'important');
+              el.style.setProperty('align-items', 'center', 'important');
+              el.style.setProperty('justify-content', 'flex-start', 'important');
+
+              el.style.setProperty('width', 'fit-content', 'important');
+              el.style.setProperty('max-width', 'calc(100vw - 40px)', 'important');
+              el.style.setProperty('min-width', '0', 'important');
+              el.style.setProperty('box-sizing', 'border-box', 'important');
+
+              el.style.setProperty('padding', '8px 12px', 'important');
+              el.style.setProperty('border-radius', '999px', 'important');
+              el.style.setProperty('white-space', 'nowrap', 'important');
+              el.style.setProperty('overflow', 'hidden', 'important');
+              el.style.setProperty('text-overflow', 'ellipsis', 'important');
+
+              el.style.setProperty('pointer-events', 'none', 'important');
+
+              return el;
+          }
+
+          function toast(msg, kind) {
+              const el = ensureToastEl();
+              const isErr = (kind === 'error' || kind === 'danger');
+
+              el.textContent = msg || 'Đã thêm vào giỏ hàng';
+              el.style.setProperty('background-color', isErr ? '#dc2626' : '#16a34a', 'important');
+
+              el.classList.add('show');
+
+              if (hideTimer) clearTimeout(hideTimer);
+              hideTimer = setTimeout(() => {
+                  el.classList.remove('show');
+              }, 1800);
+          }
+
+          try {
+              Object.defineProperty(window, 'showToast', {
+                  value: toast,
+                  writable: false,
+                  configurable: false
+              });
+          } catch (e) {
+              window.showToast = toast;
+          }
+
+          window.haShowToast = toast;
+      })();
+
+      window.flyToCart = function () {
           const img = document.getElementById('<%= imgMain.ClientID %>');
           const cartIcon = document.getElementById('cartIcon');
           if (!img || !cartIcon) return;
+
           const r1 = img.getBoundingClientRect(), r2 = cartIcon.getBoundingClientRect();
           const clone = img.cloneNode(true);
           clone.classList.add('ha-fly-img');
@@ -684,16 +768,17 @@
           clone.style.width = Math.min(r1.width, 80) + 'px';
           clone.style.height = Math.min(r1.height, 80) + 'px';
           document.body.appendChild(clone);
+
           requestAnimationFrame(() => {
               clone.style.transform = `translate(${r2.left - r1.left}px, ${r2.top - r1.top}px) scale(0.2)`;
               clone.style.opacity = '0.2';
           });
           setTimeout(() => { clone.remove(); }, 650);
-      }
+      };
 
       window.onAddToCartSuccess = function (qty) {
-          try { showToast('Đã thêm vào giỏ hàng'); } catch { }
-          try { flyToCart(); } catch { }
+          if (window.showToast) window.showToast('Đã thêm vào giỏ hàng');
+          try { window.flyToCart(); } catch { }
       };
 
       window.CART_API = window.CART_API ?? '<%= ResolveUrl("~/Ajax/Cart.ashx") %>';
@@ -714,7 +799,7 @@
       window.addToCartOptimistic = async function () {
           const stockLeft = getSelectedVariantStock();
           if (stockLeft <= 0) {
-              showToast('Sản phẩm hiện tại đang hết hàng, xin quý khách vui lòng chọn sản phẩm khác');
+              if (window.showToast) window.showToast('Sản phẩm hiện tại đang hết hàng, xin quý khách vui lòng chọn sản phẩm khác', 'error');
               return;
           }
 
@@ -742,13 +827,16 @@
           } catch (err) {
               window.dispatchEvent(new CustomEvent('cart:revert', { detail: { delta: qty } }));
               console.error('AddToCart failed:', err);
+              if (window.showToast) window.showToast('Có lỗi xảy ra, vui lòng thử lại', 'error');
           }
       };
 
-      // ✅ CHỈNH SỬA: Mua ngay -> add -> redirect CartPage kèm buynow & variantId
       window.buyNowAsync = async function () {
           const stockLeft = getSelectedVariantStock();
-          if (stockLeft <= 0) { showToast('Sản phẩm hiện tại đang hết hàng, xin quý khách vui lòng chọn sản phẩm khác'); return; }
+          if (stockLeft <= 0) {
+              if (window.showToast) window.showToast('Sản phẩm hiện tại đang hết hàng, xin quý khách vui lòng chọn sản phẩm khác', 'error');
+              return;
+          }
 
           const qty = Math.max(1, parseInt(document.getElementById('qty')?.value || '1', 10));
 
@@ -768,7 +856,7 @@
               const j = await r.json();
               if (!j?.ok) throw new Error(j?.message || 'Add failed');
 
-              try { window.onAddToCartSuccess(qty); } catch {}
+              window.onAddToCartSuccess(qty);
 
               const base = window.CART_PAGE_URL || '/CartPage/CartPage.aspx';
               let goUrl = base;
@@ -787,22 +875,37 @@
 
           } catch (err) {
               console.error('BuyNow failed:', err);
-              showToast('Có lỗi xảy ra khi mua ngay, vui lòng thử lại');
+              if (window.showToast) window.showToast('Có lỗi xảy ra khi mua ngay, vui lòng thử lại', 'error');
           }
       };
 
-      (function bindAddToCartOnce() {
-          if (window.__addToCartBound) return;
-          window.__addToCartBound = true;
-          document.addEventListener('DOMContentLoaded', () => {
-              const btn = document.getElementById('<%= btnAddToCart.ClientID %>');
-              if (btn) btn.addEventListener('click', e => { e.preventDefault(); window.addToCartOptimistic(); });
+      (function bindButtons() {
+          function bind() {
+              const btn = document.getElementById('btnAddToCartClient');
+              if (btn && !btn.__haBound) {
+                  btn.__haBound = true;
+                  btn.addEventListener('click', (e) => {
+                      e.preventDefault();
+                      window.addToCartOptimistic();
+                  });
+              }
 
               const btnBuy = document.getElementById('btnBuy');
-              if (btnBuy) btnBuy.addEventListener('click', e => { e.preventDefault(); window.buyNowAsync(); });
-          });
-      })();
+              if (btnBuy && !btnBuy.__haBound) {
+                  btnBuy.__haBound = true;
+                  btnBuy.addEventListener('click', (e) => {
+                      e.preventDefault();
+                      window.buyNowAsync();
+                  });
+              }
+          }
 
+          if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bind);
+          else bind();
+      })();
+  </script>
+
+  <script>
       document.addEventListener('click', function (e) {
           if (e.target && e.target.classList.contains('thumb')) {
               document.getElementById('<%= imgMain.ClientID %>').src = e.target.getAttribute('data-url');
@@ -1174,12 +1277,12 @@
               content = content.trim();
 
               if (!rating || rating < 1 || rating > 5) {
-                  if (window.showToast) showToast('Vui lòng chọn số sao đánh giá');
+                  if (window.showToast) window.showToast('Vui lòng chọn số sao đánh giá');
                   return;
               }
 
-              var params = new URLSearchParams(window.location.search || '');
-              var productId = parseInt(params.get('id') || '0', 10);
+              var params2 = new URLSearchParams(window.location.search || '');
+              var productId2 = parseInt(params2.get('id') || '0', 10);
 
               var orderId = 0, orderItemId = 0;
               if (reviewEligibility) {
@@ -1190,7 +1293,7 @@
               var hasImages = !!(files && files.length > 0);
 
               var formData = new FormData();
-              formData.append('Product_Id', String(productId));
+              formData.append('Product_Id', String(productId2));
               if (variantId > 0) formData.append('Variant_Id', String(variantId));
               if (orderId > 0) formData.append('Order_Id', String(orderId));
               if (orderItemId > 0) formData.append('Order_Item_Id', String(orderItemId));
@@ -1208,23 +1311,23 @@
                   }
               }
 
-              var url = API_BASE + '/api/reviews';
+              var url2 = API_BASE + '/api/reviews';
 
               var headers = { 'Accept':'application/json' };
               if (window.__AUTH_TOKEN && window.__AUTH_TOKEN.length > 0) headers['Authorization'] = 'Bearer ' + window.__AUTH_TOKEN;
 
               try {
-                  var resp = await fetch(url, { method:'POST', headers:headers, credentials:'include', body:formData });
-                  var data = null; try { data = await resp.json(); } catch { }
+                  var resp2 = await fetch(url2, { method:'POST', headers:headers, credentials:'include', body:formData });
+                  var data2 = null; try { data2 = await resp2.json(); } catch { }
 
-                  if (resp.status === 401 || resp.status === 403) { if (window.showToast) showToast('Vui lòng đăng nhập để gửi đánh giá'); return; }
-                  if (!resp.ok || (data && data.success === false)) {
-                      var msg = (data && (data.message || data.detail)) || 'Không thể gửi đánh giá, vui lòng thử lại.';
-                      if (window.showToast) showToast(msg);
+                  if (resp2.status === 401 || resp2.status === 403) { if (window.showToast) window.showToast('Vui lòng đăng nhập để gửi đánh giá'); return; }
+                  if (!resp2.ok || (data2 && data2.success === false)) {
+                      var msg = (data2 && (data2.message || data2.detail)) || 'Không thể gửi đánh giá, vui lòng thử lại.';
+                      if (window.showToast) window.showToast(msg);
                       return;
                   }
 
-                  if (window.showToast) showToast('Đã gửi đánh giá, chờ duyệt.');
+                  if (window.showToast) window.showToast('Đã gửi đánh giá, chờ duyệt.');
 
                   var titleInput = document.getElementById('reviewTitleInput');
                   var contentInput = document.getElementById('reviewContentInput');
@@ -1237,7 +1340,7 @@
                   window.reloadProductReviews();
               } catch (err) {
                   console.error('Submit review error:', err);
-                  if (window.showToast) showToast('Có lỗi xảy ra, vui lòng thử lại.');
+                  if (window.showToast) window.showToast('Có lỗi xảy ra, vui lòng thử lại.');
               }
           }
 
