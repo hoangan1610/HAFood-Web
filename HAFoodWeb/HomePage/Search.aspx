@@ -11,7 +11,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Tìm kiếm sản phẩm - HAFood</title>
 
-  <link rel="preconnect" href="http://localhost:8080" crossorigin="anonymous" />
+  <!-- ✅ bỏ preconnect localhost (prod user không có localhost) -->
   <link rel="preconnect" href="https://cdn.hafood.id.vn" crossorigin="anonymous" />
 
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
@@ -159,6 +159,24 @@
     .cat-node{margin:.3rem 0}
     .cat-children{margin-left:.75rem;border-left:1px dashed #eee;padding-left:.5rem}
     .cat-toggle{cursor:pointer;user-select:none}
+
+    /* ✅ Highlight danh mục đang chọn */
+    .cat-link{
+      color:#212529;
+      text-decoration:none;
+      display:inline-flex;
+      align-items:center;
+      gap:.35rem;
+      padding:.18rem .35rem;
+      border-radius:.6rem;
+    }
+    .cat-link:hover{ background:#f8f9fa; }
+    .cat-link.is-active{
+      background:#fff3e8;
+      color:#e66000;
+      font-weight:600;
+      border:1px solid rgba(255,102,0,.18);
+    }
 
     .chip{
       display:inline-flex; align-items:center; gap:.35rem; padding:.3rem .7rem;
@@ -455,7 +473,11 @@
 
               <div class="mb-3">
                 <div class="filter-section-title">Danh mục</div>
-                <asp:Literal ID="ltCategoryTree" runat="server" />
+
+                <!-- ✅ wrapper để AJAX có thể replace cả tree -->
+                <div id="catTreeRoot">
+                  <asp:Literal ID="ltCategoryTree" runat="server" />
+                </div>
               </div>
 
               <div class="filter-section-title">Bộ lọc chi tiết</div>
@@ -505,7 +527,8 @@
                 <label class="form-check-label" for="inStock">Chỉ còn hàng</label>
               </div>
 
-              <input type="hidden" name="category_id" value="<%= Server.HtmlEncode(Request["category_id"] ?? "") %>" />
+              <!-- ✅ thêm id để AJAX sync theo URL -->
+              <input type="hidden" id="categoryIdHidden" name="category_id" value="<%= Server.HtmlEncode(Request["category_id"] ?? "") %>" />
 
               <div class="d-flex gap-2 mt-3">
                 <button type="button" class="btn btn-outline-secondary btn-clear" id="btnClearAll">Xóa tất cả</button>
@@ -523,16 +546,20 @@
                 <div class="col-6 col-md-4">
                   <div class="product-card d-flex flex-column">
                     <div class="position-relative">
-                      <a href='<%# ResolveUrl("~/Product/Product.aspx?id=" + Eval("Id")) %>' class="ratio ratio-1x1 product-thumb d-block">
-                        <img
-                          src="<%# Eval("ImageUrl") %>"
-                          srcset="<%# Eval("ImageUrl") %>?w=240 240w, <%# Eval("ImageUrl") %>?w=480 480w, <%# Eval("ImageUrl") %>?w=720 720w"
-                          sizes="(max-width: 576px) 48vw, (max-width: 992px) 32vw, 240px"
-                          class="w-100 h-100 of-contain"
-                          loading="lazy" decoding="async" fetchpriority="low"
-                          onerror="this.src='/images/product-default.png';"
-                          alt="<%# Eval("Name") %>" />
-                      </a>
+                     <a href='<%# ResolveUrl("~/Product/Product.aspx?id=" + Eval("Id")) %>' class="ratio ratio-1x1 product-thumb d-block">
+  <%-- chống loop nếu default cũng lỗi: KHÔNG đặt <!-- --> trong thẻ img --%>
+  <img
+    src="<%# Eval("ImageUrl") %>"
+    srcset="<%# Eval("ImageUrl") %>?w=240 240w, <%# Eval("ImageUrl") %>?w=480 480w, <%# Eval("ImageUrl") %>?w=720 720w"
+    sizes="(max-width: 576px) 48vw, (max-width: 992px) 32vw, 240px"
+    class="w-100 h-100 of-contain"
+    loading="lazy"
+    decoding="async"
+    fetchpriority="low"
+    onerror="this.onerror=null;this.src='/images/product-default.png';"
+    alt="<%# Eval("Name") %>" />
+</a>
+
                     </div>
 
                     <div class="card-body d-flex flex-column">
@@ -702,14 +729,23 @@
       const inMin = document.getElementById('minPriceInput'), inMax = document.getElementById('maxPriceInput');
       const lblMin = document.getElementById('priceMinLabel'), lblMax = document.getElementById('priceMaxLabel');
 
-      (function initPrice() {
+      function applyPriceFromUrl() {
           const qs = new URLSearchParams(location.search);
-          const m = +(qs.get('min_price') || 10000), x = +(qs.get('max_price') || 1000000);
+          const m = +(qs.get('min_price') || 10000);
+          const x = +(qs.get('max_price') || 1000000);
+          if (minEl) minEl.value = m;
+          if (maxEl) maxEl.value = x;
+          if (hMin) hMin.value = m;
+          if (hMax) hMax.value = x;
+          if (inMin) inMin.value = m;
+          if (inMax) inMax.value = x;
+          if (lblMin) lblMin.textContent = fmtVnd(m);
+          if (lblMax) lblMax.textContent = fmtVnd(x);
+      }
+
+      (function initPrice() {
           [minEl, maxEl].forEach(el => el && (el.min = 10000, el.max = 1000000, el.step = 1000));
-          if (minEl) minEl.value = m; if (maxEl) maxEl.value = x;
-          if (hMin) hMin.value = m; if (hMax) hMax.value = x;
-          if (inMin) inMin.value = m; if (inMax) inMax.value = x;
-          lblMin.textContent = fmtVnd(m); lblMax.textContent = fmtVnd(x);
+          applyPriceFromUrl();
       })();
 
       function syncRange() {
@@ -747,7 +783,7 @@
 
           if (document.getElementById('inStock')?.checked) p.set('only_in_stock', 'true');
 
-          const cat = readVal('[name="category_id"]'); if (cat) p.set('category_id', cat);
+          const cat = readVal('#categoryIdHidden'); if (cat) p.set('category_id', cat);
 
           const sort = (document.getElementById('sortVal')?.value || '').trim();
           if (sort) p.set('sort', sort);
@@ -795,6 +831,40 @@
           setDropdownUI('gridMenu', 'gridMenuBtn', ps);
       }
 
+      /* ✅ Sync sidebar inputs theo URL (quan trọng khi bấm danh mục/pager/chip bằng AJAX) */
+      function syncSidebarFromUrl() {
+          const qs = new URLSearchParams(location.search);
+
+          const cat = qs.get('category_id') || '';
+          const catHidden = document.getElementById('categoryIdHidden');
+          if (catHidden) catHidden.value = cat;
+
+          const q = qs.get('q') || '';
+          const txtQ = document.getElementById('txtQ');
+          if (txtQ && document.activeElement !== txtQ) txtQ.value = q;
+
+          const brand = qs.get('brand') || '';
+          const brandEl = document.querySelector('[name="brand"]');
+          if (brandEl && document.activeElement !== brandEl) brandEl.value = brand;
+
+          const inStock = qs.get('only_in_stock') === 'true';
+          const inStockEl = document.getElementById('inStock');
+          if (inStockEl) inStockEl.checked = inStock;
+
+          const setChk = (name, key) => {
+              const el = document.querySelector(`[name="${name}"]`);
+              if (el) el.checked = qs.has(key);
+          };
+          setChk('w_100_250', 'w_100_250');
+          setChk('w_250_500', 'w_250_500');
+          setChk('w_500_1000', 'w_500_1000');
+          setChk('w_1000_5000', 'w_1000_5000');
+          setChk('w_5000', 'w_5000');
+
+          applyPriceFromUrl();
+          syncRange();
+      }
+
       async function ajaxNavigate(url, pushState = true) {
           const root = document.getElementById('resultsRoot');
           if (!root) { location.href = url; return; }
@@ -814,8 +884,14 @@
                   document.getElementById('totalText').innerHTML = newTotal.innerHTML;
               }
 
+              /* ✅ replace category tree để highlight đúng + lấy name đúng */
+              const curTree = document.getElementById('catTreeRoot');
+              const newTree = doc.getElementById('catTreeRoot');
+              if (curTree && newTree) curTree.innerHTML = newTree.innerHTML;
+
               if (pushState) history.pushState(null, '', url);
 
+              syncSidebarFromUrl();
               renderActiveChips();
               syncToolbarFromUrl();
 
@@ -855,6 +931,13 @@
       document.getElementById('btnClearAll')?.addEventListener('click', clearAllFilters);
       document.getElementById('form1')?.addEventListener('submit', function (e) { e.preventDefault(); applyFilters(1); });
 
+      /* ✅ chip: category_id hiển thị theo tên danh mục (lookup từ tree) */
+      function lookupCategoryName(catId) {
+          if (!catId) return '';
+          const a = document.querySelector(`#catTreeRoot a[data-cat-id="${CSS.escape(catId)}"]`);
+          return a ? (a.textContent || '').trim() : '';
+      }
+
       function renderActiveChips() {
           const p = new URLSearchParams(location.search);
           const dom = document.getElementById('active-filters');
@@ -873,9 +956,15 @@
               if (!labels[k]) return;
               has = true;
 
+              let showVal = v;
+              if (k === 'category_id') {
+                  const name = lookupCategoryName(v);
+                  showVal = name || v;
+              }
+
               const chip = document.createElement('span'); chip.className = 'chip';
               const text = document.createElement('span');
-              text.textContent = labels[k] + (v && v !== 'on' ? `: ${v}` : '');
+              text.textContent = labels[k] + (showVal && showVal !== 'on' ? `: ${showVal}` : '');
 
               const close = document.createElement('span'); close.className = 'x'; close.innerHTML = '&times;';
               close.onclick = () => {
@@ -940,6 +1029,7 @@
 
       bindToolbarDropdowns();
       syncToolbarFromUrl();
+      syncSidebarFromUrl();
       renderActiveChips();
 
       /* Offcanvas (mobile) */

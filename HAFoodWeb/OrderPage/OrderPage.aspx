@@ -70,6 +70,45 @@
     .btn-outline-dark.active{ background:#212529; color:#fff; box-shadow:0 .3rem 1rem rgba(15, 23, 42, 0.12); }
     .btn-outline-secondary{ background:rgba(255,255,255,.85); border-color:var(--border); color:#111; }
 
+    /* ===== Search theo mã đơn ===== */
+    .order-searchbar{ margin:.25rem 0 1rem; }
+    .searchbox{
+      display:flex; align-items:center; gap:.55rem;
+      border:1px solid var(--border);
+      border-radius:999px;
+      padding:.35rem .5rem .35rem .8rem;
+      background:rgba(255,255,255,.92);
+      box-shadow:0 .25rem .75rem rgba(15, 23, 42, 0.08);
+      overflow:hidden;
+    }
+    .searchbox i{ color:#6b7280; font-size:1rem; }
+    .search-input{
+      border:0; outline:0; flex:1;
+      font-size:.92rem; padding:.35rem .25rem;
+      background:transparent;
+      min-width:140px;
+    }
+    .search-btn{
+      height:34px;
+      min-width:76px;
+      border-radius:999px;
+      border:1px solid #212529;
+      background:#212529;
+      color:#fff;
+      font-weight:800;
+      cursor:pointer;
+      padding:0 14px;
+      display:inline-flex; align-items:center; justify-content:center;
+    }
+    .search-btn:hover{ filter:brightness(.95); }
+    .search-clear{
+      border:0; background:transparent;
+      color:#9aa0a6; text-decoration:none;
+      padding:0 .2rem;
+      display:inline-flex; align-items:center; justify-content:center;
+    }
+    .search-clear:hover{ color:#6b7280; }
+
     .filter-bar{
       display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin-bottom:1rem;
       background:rgba(255,255,255,.8); border-radius:999px; padding:.35rem;
@@ -77,7 +116,7 @@
     }
     .filter-bar .btn{
       min-width:120px; border-radius:999px;
-      font-weight:700; /* ✅ CHỮ IN ĐẬM */
+      font-weight:700;
       border-color:transparent; color:#495057;
       background-color:transparent; transition:all 0.2s ease; padding-block:.32rem; padding-inline:.85rem; font-size:.84rem;
     }
@@ -132,6 +171,7 @@
 
     @media (max-width:575.98px){
         .page-header{ margin:12px 0 6px !important; padding:0 16px !important; }
+        .search-btn{ min-width:64px; padding:0 12px; }
     }
   </style>
 
@@ -161,6 +201,36 @@
 
     <div class="wrap-inner">
 
+        <!-- ✅ SEARCH MÃ ĐƠN -->
+        <asp:Panel ID="pnlSearch" runat="server" CssClass="order-searchbar" DefaultButton="btnSearchCode">
+          <div class="searchbox">
+            <i class="bi bi-search"></i>
+
+            <asp:TextBox ID="txtOrderCode" runat="server"
+              CssClass="search-input"
+              placeholder="Nhập mã đơn (VD: 260106000001)"
+              AutoCompleteType="Disabled" />
+
+            <asp:Button ID="btnSearchCode" runat="server"
+              CssClass="search-btn"
+              Text="Tìm"
+              OnClick="btnSearchCode_Click" />
+
+            <asp:LinkButton ID="btnClearCode" runat="server"
+              CssClass="search-clear"
+              CausesValidation="false"
+              OnClick="btnClearCode_Click"
+              ToolTip="Xóa mã tìm kiếm">
+              <i class="bi bi-x-circle"></i>
+            </asp:LinkButton>
+          </div>
+
+          <div class="small text-muted mt-2">
+            * Có thể nhập một phần mã để tìm nhanh.
+          </div>
+        </asp:Panel>
+
+        <!-- Filter theo trạng thái -->
         <div class="filter-bar mt-2">
           <asp:Button ID="btnAll" runat="server" CssClass="btn btn-outline-dark btn-sm active" Text="Tất cả" CommandArgument="all" OnClick="btnFilter_Click" />
           <asp:Button ID="btnPending" runat="server" CssClass="btn btn-outline-dark btn-sm" Text="Đã được tạo" CommandArgument="0" OnClick="btnFilter_Click" />
