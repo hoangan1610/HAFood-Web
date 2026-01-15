@@ -65,6 +65,9 @@
     .status-2 { background: rgba(253,126,20,.10); color: #fd7e14; }
     .status-3 { background: rgba(25,135,84,.10); color: #198754; }
     .status-4 { background: rgba(108,117,125,.12); color: #6c757d; }
+    .status-6 { background: rgba(13,110,253,.08); color: #0d6efd; }
+    .status-7 { background: rgba(25,135,84,.10); color: #198754; }
+    .status-9 { background: rgba(220,53,69,.10); color: #dc3545; }
 
     .header-badge {
       font-size: .75rem; letter-spacing: .06em; text-transform: uppercase; font-weight: 700;
@@ -128,6 +131,24 @@
       color:#dc3545;
     }
     .btn-cancel-order:active{ transform: translateY(0); }
+
+    /* ✅ Confirm received button (NEW) */
+    .btn-confirm-received{
+      border-radius:999px; font-weight:800; letter-spacing:.01em;
+      padding:.55rem 1.05rem; font-size:.95rem;
+      color:#198754; border:1px solid rgba(25,135,84,.28);
+      background: linear-gradient(180deg, rgba(25,135,84,.08), rgba(25,135,84,.02));
+      display:inline-flex; align-items:center; gap:.5rem;
+      transition: transform .12s ease, box-shadow .12s ease, background .12s ease;
+      white-space: nowrap;
+    }
+    .btn-confirm-received:hover{
+      transform: translateY(-1px);
+      box-shadow: 0 .35rem 1rem rgba(25,135,84,.12);
+      background: linear-gradient(180deg, rgba(25,135,84,.12), rgba(25,135,84,.03));
+      color:#198754;
+    }
+    .btn-confirm-received:active{ transform: translateY(0); }
 
     /* ===== Review Modal (NEW - đẹp) ===== */
     .rv-progress-pill{
@@ -206,7 +227,7 @@
       .page-header-title { font-size: 1.35rem; }
       .card-order { padding: 1rem 1rem; }
       .img-thumb { width: 70px; height: 70px; }
-      .btn-cancel-order { width: 100%; justify-content: center; }
+      .btn-cancel-order, .btn-confirm-received { width: 100%; justify-content: center; }
 
       .rv-left{ max-height: 22vh; }
       .rv-right{ min-height: auto; }
@@ -251,8 +272,8 @@
 
   <form id="form1" runat="server">
     <script>
-      window.__AUTH_TOKEN = '<%= Session["JwtToken"] != null ? Session["JwtToken"].ToString() : "" %>';
-      window.__API_BASE = '<%= System.Configuration.ConfigurationManager.AppSettings["ApiBaseUrl"] ?? "" %>';
+        window.__AUTH_TOKEN = '<%= Session["JwtToken"] != null ? Session["JwtToken"].ToString() : "" %>';
+        window.__API_BASE = '<%= System.Configuration.ConfigurationManager.AppSettings["ApiBaseUrl"] ?? "" %>';
     </script>
 
     <div class="container order-detail-page py-4">
@@ -392,7 +413,7 @@
                 </button>
 
                 <span id="orderReviewDisabled" class="btn btn-outline-secondary btn-sm disabled ha-btn-pill d-none" style="cursor:not-allowed; pointer-events:none;">
-                  Bạn không thể đánh giá khi đơn hàng chưa được giao
+                  Bạn chưa thể đánh giá (cần xác nhận đã nhận hàng)
                 </span>
 
                 <span id="orderReviewAlready" class="btn btn-outline-secondary btn-sm disabled ha-btn-pill d-none" style="cursor:not-allowed; pointer-events:none;">
@@ -406,8 +427,12 @@
         </div>
       </div>
 
-      <%-- ✅ NÚT HỦY ĐƠN Ở CUỐI TRANG (chỉ hiện khi status=0) --%>
-      <div class="mt-4 d-flex justify-content-end">
+      <%-- ✅ NÚT Ở CUỐI TRANG --%>
+      <div class="mt-4 d-flex justify-content-end gap-2 flex-wrap">
+        <button type="button" id="btnConfirmReceived" class="btn-confirm-received d-none">
+          <i class="bi bi-check2-circle"></i> Tôi đã nhận hàng
+        </button>
+
         <button type="button" id="btnCancelOrder" class="btn-cancel-order d-none">
           <i class="bi bi-x-circle"></i> Hủy đơn hàng
         </button>
@@ -426,6 +451,9 @@
       <%-- Hidden cho hủy đơn --%>
       <asp:HiddenField ID="hStatus" runat="server" />
       <asp:HiddenField ID="hCanCancel" runat="server" />
+
+      <%-- ✅ Hidden cho xác nhận đã nhận hàng --%>
+      <asp:HiddenField ID="hCanConfirmReceived" runat="server" />
     </div>
   </form>
 
@@ -450,6 +478,40 @@
         <div class="modal-footer d-flex justify-content-between w-100">
           <button type="button" class="btn btn-danger btn-sm ha-btn-pill" id="btnConfirmCancelOrder">
             <i class="bi bi-x-circle me-1"></i>Xác nhận hủy
+          </button>
+          <button type="button" class="btn btn-light btn-sm" data-bs-dismiss="modal">
+            Hủy
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ✅ MODAL XÁC NHẬN ĐÃ NHẬN HÀNG -->
+  <div class="modal fade" id="receivedModal" tabindex="-1" aria-labelledby="receivedModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="receivedModalLabel">
+            <i class="bi bi-check2-circle me-2 text-success"></i>Xác nhận đã nhận hàng
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+        </div>
+
+        <div class="modal-body">
+          <div class="small text-muted mb-2">Đơn hàng: <span id="rcOrderCode" class="fw-semibold"></span></div>
+          <div class="alert alert-success py-2 mb-0">
+            <i class="bi bi-info-circle me-2"></i>
+            Bạn chắc chắn đã <strong>nhận đủ hàng</strong> và muốn hoàn tất đơn này chứ?
+          </div>
+          <div class="small text-muted mt-2">
+            * Sau khi xác nhận, đơn sẽ chuyển sang <strong>Đã nhận hàng</strong> và bạn có thể đánh giá sản phẩm.
+          </div>
+        </div>
+
+        <div class="modal-footer d-flex justify-content-between w-100">
+          <button type="button" class="btn btn-success btn-sm ha-btn-pill" id="btnConfirmReceivedDo">
+            <i class="bi bi-check2-circle me-1"></i>Xác nhận
           </button>
           <button type="button" class="btn btn-light btn-sm" data-bs-dismiss="modal">
             Hủy
@@ -515,272 +577,323 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
   <script>
-    function showToast(msg, isError) {
-      const el = document.getElementById('haToast'); if (!el) return;
-      el.textContent = msg || 'Đã thực hiện';
-      el.style.background = isError ? '#dc3545' : '#16a34a';
-      el.style.display = 'block';
-      setTimeout(() => { el.style.display = 'none'; }, 1800);
-    }
-
-    function statusText(status) {
-      switch (parseInt(status || '0', 10)) {
-        case 0: return 'Đã được tạo';
-        case 1: return 'Xác nhận';
-        case 2: return 'Đang giao';
-        case 3: return 'Đã giao';
-        case 4: return 'Đã hủy';
-        default: return 'Không rõ';
-      }
-    }
-
-    function setStatusPill(status) {
-      var pill = document.getElementById('<%= litStatus.ClientID %>');
-      if (!pill) return;
-      var s = parseInt(status || '0', 10);
-      pill.textContent = statusText(s);
-      pill.className = 'order-status-pill status-' + s;
-    }
-
-    // ✅ Chỉ hiện nút hủy khi status=0; còn lại ẩn hoàn toàn
-    function decideCancelUI() {
-      const status = parseInt(document.getElementById('<%= hStatus.ClientID %>').value || '0', 10);
-      const canCancel = (document.getElementById('<%= hCanCancel.ClientID %>').value === '1');
-      const btn = document.getElementById('btnCancelOrder');
-      if (!btn) return;
-
-      if (status === 0 && canCancel) btn.classList.remove('d-none');
-      else btn.classList.add('d-none');
-    }
-
-    // ✅ Swagger: POST /api/orders/{id}/status, body là số 4
-    async function callCancelOrderApi(orderId) {
-      const API_BASE = (window.__API_BASE || '').replace(/\/+$/, '');
-      const token = window.__AUTH_TOKEN || '';
-      if (!API_BASE) throw new Error('Thiếu cấu hình API');
-      if (!token) throw new Error('Vui lòng đăng nhập để hủy đơn');
-
-      const resp = await fetch(`${API_BASE}/api/orders/${orderId}/status`, {
-        method: 'POST',
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ' + token
-        },
-        credentials: 'include',
-        body: JSON.stringify(4)
-      });
-
-      let data = null; try { data = await resp.json(); } catch { }
-      if (resp.status === 401 || resp.status === 403) throw new Error('Vui lòng đăng nhập để hủy đơn');
-      if (!resp.ok) throw new Error((data && (data.message || data.detail)) || 'Không thể hủy đơn, vui lòng thử lại.');
-      return data;
-    }
-
-    // ===== Review (NEW) =====
-    window.__rvEligibility = window.__rvEligibility || {}; // cache { key: true/false } => already reviewed
-    window.__rvSubmitting = window.__rvSubmitting || {};   // cache { key: true/false } => submitting
-
-    function escapeHtml(s) {
-      return String(s ?? '').replace(/[&<>"']/g, function (m) {
-        return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[m];
-      });
-    }
-
-    function makeKey(productId, variantId) {
-      const p = parseInt(productId || 0, 10);
-      const v = parseInt(variantId || 0, 10);
-      return p + ':' + v;
-    }
-
-    function keyToId(key) { return String(key).replace(/[^a-zA-Z0-9_]/g, '_'); }
-
-    // ✅ NEW: lấy list sản phẩm trong đơn từ hidden JSON
-    function getOrderItems() {
-      try {
-        const raw = document.getElementById('<%= hOrderItemsJson.ClientID %>')?.value || '[]';
-        const arr = JSON.parse(raw) || [];
-        return arr
-          .map(x => ({
-            productId: parseInt(x.productId || x.ProductId || 0, 10),
-            variantId: parseInt(x.variantId || x.VariantId || 0, 10),
-            name: (x.name || x.Name || ''),
-            sku: (x.sku || x.Sku || ''),
-            image: (x.image || x.Image || '/images/product-default.png'),
-            quantity: parseInt(x.quantity || x.Quantity || 0, 10)
-          }))
-          .filter(x => x.productId > 0);
-      } catch {
-        return [];
-      }
-    }
-
-    // ✅ NEW: check đã review chưa (theo từng product/variant) + cache
-    async function isAlreadyReviewed(productId, variantId) {
-      const key = makeKey(productId, variantId);
-      if (window.__rvEligibility.hasOwnProperty(key)) return window.__rvEligibility[key];
-
-      try {
-        const API_BASE = (window.__API_BASE || '').replace(/\/+$/, '');
-        const token = window.__AUTH_TOKEN || '';
-        if (!API_BASE || !token || !productId) { window.__rvEligibility[key] = false; return false; }
-
-        let url = `${API_BASE}/api/products/${productId}/reviews/eligibility`;
-        if (variantId > 0) url += `?variantId=${variantId}`;
-
-        const resp = await fetch(url, {
-          method: 'GET',
-          headers: { 'Accept': 'application/json', 'Authorization': 'Bearer ' + token },
-          credentials: 'include'
-        });
-
-        if (!resp.ok) { window.__rvEligibility[key] = false; return false; }
-
-        const data = await resp.json();
-        const already = !!(data.already_Reviewed || data.Already_Reviewed);
-        window.__rvEligibility[key] = already;
-        return already;
-      } catch {
-        window.__rvEligibility[key] = false;
-        return false;
-      }
-    }
-
-    function setStars(container, rating) {
-      const r = parseInt(rating || '0', 10);
-      const hidden = container.closest('.rv-pane')?.querySelector('input.rv-rating-value');
-      if (hidden) hidden.value = String(r);
-
-      container.querySelectorAll('i[data-rating]').forEach(function (el) {
-        const v = parseInt(el.getAttribute('data-rating') || '0', 10);
-        if (v <= r) { el.classList.remove('bi-star'); el.classList.add('bi-star-fill', 'text-warning'); }
-        else { el.classList.add('bi-star'); el.classList.remove('bi-star-fill', 'text-warning'); }
-      });
-    }
-
-    function bindStars(container) {
-      container.addEventListener('click', function (e) {
-        const t = e.target;
-        if (!t || !t.getAttribute) return;
-        const r = parseInt(t.getAttribute('data-rating') || '0', 10);
-        if (r >= 1 && r <= 5) setStars(container, r);
-      });
-    }
-
-    function setPaneDone(key) {
-      const id = keyToId(key);
-      const pane = document.getElementById('rvPane_' + id);
-      if (!pane) return;
-
-      pane.querySelectorAll('input, textarea, button').forEach(function (el) {
-        if (el.classList.contains('btn-close')) return;
-        el.disabled = true;
-      });
-
-      const badge = pane.querySelector('.rv-badge');
-      if (badge) {
-        badge.classList.remove('todo', 'lock');
-        badge.classList.add('done');
-        badge.textContent = 'Đã đánh giá';
+      function showToast(msg, isError) {
+          const el = document.getElementById('haToast'); if (!el) return;
+          el.textContent = msg || 'Đã thực hiện';
+          el.style.background = isError ? '#dc3545' : '#16a34a';
+          el.style.display = 'block';
+          setTimeout(() => { el.style.display = 'none'; }, 1800);
       }
 
-      const submitBtn = pane.querySelector('button.rv-submit-item');
-      if (submitBtn) submitBtn.classList.add('d-none');
-
-      // đánh dấu bên nav
-      const nav = document.querySelector(`[data-bs-target="#rvPane_${id}"]`);
-      if (nav) {
-        const meta = nav.querySelector('.rv-meta');
-        if (meta) meta.innerHTML = (meta.innerHTML || '').replace(/•\s*Chưa đánh giá/gi, '') + ' • Đã đánh giá';
-      }
-    }
-
-    function updateProgress(items) {
-      const total = items.length;
-      let done = 0;
-      items.forEach(it => {
-        const key = makeKey(it.productId, it.variantId);
-        if (window.__rvEligibility[key] === true) done++;
-      });
-      const el = document.getElementById('rvProgress');
-      if (el) {
-        const span = el.querySelector('span');
-        if (span) span.textContent = `${done}/${total} đã đánh giá`;
-      }
-    }
-
-    // ✅ disable nút "Gửi tất cả" khi đã đánh giá hết
-    function updateSubmitAllButton(items) {
-      const btn = document.getElementById('btnSubmitAllReviews');
-      if (!btn) return;
-
-      const list = items || [];
-      const hasTodo = list.some(it => window.__rvEligibility[makeKey(it.productId, it.variantId)] !== true);
-
-      if (!hasTodo) {
-        btn.disabled = true;
-        btn.classList.remove('btn-success');
-        btn.classList.add('btn-secondary');
-        btn.setAttribute('aria-disabled', 'true');
-        btn.title = 'Tất cả sản phẩm đã được đánh giá';
-      } else {
-        btn.disabled = false;
-        btn.classList.remove('btn-secondary');
-        btn.classList.add('btn-success');
-        btn.removeAttribute('aria-disabled');
-        btn.title = '';
-      }
-    }
-
-    function renderReviewModal(items) {
-      const nav = document.getElementById('rvNav');
-      const tabs = document.getElementById('rvTabs');
-      const empty = document.getElementById('rvEmpty');
-
-      if (!nav || !tabs) return;
-
-      nav.innerHTML = '';
-      tabs.innerHTML = '';
-
-      if (!items || !items.length) {
-        if (empty) empty.classList.remove('d-none');
-        updateSubmitAllButton([]);
-        return;
-      } else {
-        if (empty) empty.classList.add('d-none');
+      function statusText(status) {
+          switch (parseInt(status || '0', 10)) {
+              case 0: return 'Đã được tạo';
+              case 1: return 'Đã xác nhận';
+              case 2: return 'Đang giao';
+              case 3: return 'Đã giao';
+              case 6: return 'Đang giao hàng';
+              case 7: return 'Đã nhận hàng';
+              case 4: return 'Đã huỷ';
+              case 9: return 'Huỷ đơn';
+              default: return 'Không rõ';
+          }
       }
 
-      items.forEach(function (it, idx) {
-        const key = makeKey(it.productId, it.variantId);
-        const id = keyToId(key);
+      function setStatusPill(status) {
+          var pill = document.getElementById('<%= litStatus.ClientID %>');
+          if (!pill) return;
+          var s = parseInt(status || '0', 10);
+          pill.textContent = statusText(s);
+          pill.className = 'order-status-pill status-' + s;
+      }
 
-        const name = escapeHtml(it.name || ('Sản phẩm #' + it.productId));
-        const sku = escapeHtml(it.sku || '');
-        const img = escapeHtml(it.image || '/images/product-default.png');
-        const qty = it.quantity > 0 ? it.quantity : '';
+      // ✅ Chỉ hiện nút hủy khi status=0; còn lại ẩn hoàn toàn
+      function decideCancelUI() {
+          const status = parseInt(document.getElementById('<%= hStatus.ClientID %>').value || '0', 10);
+        const canCancel = (document.getElementById('<%= hCanCancel.ClientID %>').value === '1');
+          const btn = document.getElementById('btnCancelOrder');
+          if (!btn) return;
 
-        // Nav
-        const navBtn = document.createElement('button');
-        navBtn.type = 'button';
-        navBtn.className = 'nav-link ' + (idx === 0 ? 'active' : '');
-        navBtn.setAttribute('data-bs-toggle', 'pill');
-        navBtn.setAttribute('data-bs-target', '#rvPane_' + id);
-        navBtn.setAttribute('role', 'tab');
-        navBtn.innerHTML = `
+          if (status === 0 && canCancel) btn.classList.remove('d-none');
+          else btn.classList.add('d-none');
+      }
+
+      function decideConfirmReceivedUI() {
+          const status = parseInt(document.getElementById('<%= hStatus.ClientID %>').value || '0', 10);
+        const can = (document.getElementById('<%= hCanConfirmReceived.ClientID %>').value === '1');
+          const btn = document.getElementById('btnConfirmReceived');
+          if (!btn) return;
+
+          if (can && status === 3) btn.classList.remove('d-none');
+          else btn.classList.add('d-none');
+      }
+
+      // ✅ Swagger: POST /api/orders/{id}/status, body là số 4
+      async function callCancelOrderApi(orderId) {
+          const API_BASE = (window.__API_BASE || '').replace(/\/+$/, '');
+          const token = window.__AUTH_TOKEN || '';
+          if (!API_BASE) throw new Error('Thiếu cấu hình API');
+          if (!token) throw new Error('Vui lòng đăng nhập để hủy đơn');
+
+          const resp = await fetch(`${API_BASE}/api/orders/${orderId}/status`, {
+              method: 'POST',
+              headers: {
+                  'Accept': 'application/json',
+                  'Content-Type': 'application/json',
+                  'Authorization': 'Bearer ' + token
+              },
+              credentials: 'include',
+              body: JSON.stringify(4)
+          });
+
+          let data = null; try { data = await resp.json(); } catch { }
+          if (resp.status === 401 || resp.status === 403) throw new Error('Vui lòng đăng nhập để hủy đơn');
+          if (!resp.ok) throw new Error((data && (data.message || data.detail)) || 'Không thể hủy đơn, vui lòng thử lại.');
+          return data;
+      }
+
+      // ✅ POST /api/orders/{id}/confirm-received
+      async function callConfirmReceivedApi(orderId) {
+          const API_BASE = (window.__API_BASE || '').replace(/\/+$/, '');
+          const token = window.__AUTH_TOKEN || '';
+          if (!API_BASE) throw new Error('Thiếu cấu hình API');
+          if (!token) throw new Error('Vui lòng đăng nhập để xác nhận');
+
+          const resp = await fetch(`${API_BASE}/api/orders/${orderId}/confirm-received`, {
+              method: 'POST',
+              headers: {
+                  'Accept': 'application/json',
+                  'Authorization': 'Bearer ' + token
+              },
+              credentials: 'include'
+              // ✅ KHÔNG gửi body, KHÔNG set Content-Type
+          });
+
+          // ✅ nhiều API trả 204 NoContent / body rỗng
+          let data = null;
+          const ct = resp.headers.get('content-type') || '';
+          if (ct.includes('application/json')) {
+              try { data = await resp.json(); } catch { data = null; }
+          } else {
+              // nếu không phải json thì cố đọc text để debug
+              try { data = await resp.text(); } catch { }
+          }
+
+          if (resp.status === 401 || resp.status === 403) throw new Error('Vui lòng đăng nhập để xác nhận');
+
+          if (!resp.ok) {
+              // nếu data là json có message/detail
+              if (data && typeof data === 'object') {
+                  throw new Error((data.message || data.detail) || 'Không thể xác nhận nhận hàng.');
+              }
+              // nếu data là text
+              if (typeof data === 'string' && data.trim()) {
+                  throw new Error(data);
+              }
+              throw new Error('Không thể xác nhận nhận hàng.');
+          }
+
+          return data;
+      }
+
+      // ===== Review (NEW) =====
+      window.__rvEligibility = window.__rvEligibility || {};
+      window.__rvSubmitting = window.__rvSubmitting || {};
+
+      function escapeHtml(s) {
+          return String(s ?? '').replace(/[&<>"']/g, function (m) {
+              return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[m];
+          });
+      }
+
+      function makeKey(productId, variantId) {
+          const p = parseInt(productId || 0, 10);
+          const v = parseInt(variantId || 0, 10);
+          return p + ':' + v;
+      }
+
+      function keyToId(key) { return String(key).replace(/[^a-zA-Z0-9_]/g, '_'); }
+
+      function getOrderItems() {
+          try {
+              const raw = document.getElementById('<%= hOrderItemsJson.ClientID %>')?.value || '[]';
+              const arr = JSON.parse(raw) || [];
+              return arr
+                  .map(x => ({
+                      productId: parseInt(x.productId || x.ProductId || 0, 10),
+                      variantId: parseInt(x.variantId || x.VariantId || 0, 10),
+                      name: (x.name || x.Name || ''),
+                      sku: (x.sku || x.Sku || ''),
+                      image: (x.image || x.Image || '/images/product-default.png'),
+                      quantity: parseInt(x.quantity || x.Quantity || 0, 10)
+                  }))
+                  .filter(x => x.productId > 0);
+          } catch {
+              return [];
+          }
+      }
+
+      async function isAlreadyReviewed(productId, variantId) {
+          const key = makeKey(productId, variantId);
+          if (window.__rvEligibility.hasOwnProperty(key)) return window.__rvEligibility[key];
+
+          try {
+              const API_BASE = (window.__API_BASE || '').replace(/\/+$/, '');
+              const token = window.__AUTH_TOKEN || '';
+              if (!API_BASE || !token || !productId) { window.__rvEligibility[key] = false; return false; }
+
+              let url = `${API_BASE}/api/products/${productId}/reviews/eligibility`;
+              if (variantId > 0) url += `?variantId=${variantId}`;
+
+              const resp = await fetch(url, {
+                  method: 'GET',
+                  headers: { 'Accept': 'application/json', 'Authorization': 'Bearer ' + token },
+                  credentials: 'include'
+              });
+
+              if (!resp.ok) { window.__rvEligibility[key] = false; return false; }
+
+              const data = await resp.json();
+              const already = !!(data.already_Reviewed || data.Already_Reviewed);
+              window.__rvEligibility[key] = already;
+              return already;
+          } catch {
+              window.__rvEligibility[key] = false;
+              return false;
+          }
+      }
+
+      function setStars(container, rating) {
+          const r = parseInt(rating || '0', 10);
+          const hidden = container.closest('.rv-pane')?.querySelector('input.rv-rating-value');
+          if (hidden) hidden.value = String(r);
+
+          container.querySelectorAll('i[data-rating]').forEach(function (el) {
+              const v = parseInt(el.getAttribute('data-rating') || '0', 10);
+              if (v <= r) { el.classList.remove('bi-star'); el.classList.add('bi-star-fill', 'text-warning'); }
+              else { el.classList.add('bi-star'); el.classList.remove('bi-star-fill', 'text-warning'); }
+          });
+      }
+
+      function bindStars(container) {
+          container.addEventListener('click', function (e) {
+              const t = e.target;
+              if (!t || !t.getAttribute) return;
+              const r = parseInt(t.getAttribute('data-rating') || '0', 10);
+              if (r >= 1 && r <= 5) setStars(container, r);
+          });
+      }
+
+      function setPaneDone(key) {
+          const id = keyToId(key);
+          const pane = document.getElementById('rvPane_' + id);
+          if (!pane) return;
+
+          pane.querySelectorAll('input, textarea, button').forEach(function (el) {
+              if (el.classList.contains('btn-close')) return;
+              el.disabled = true;
+          });
+
+          const badge = pane.querySelector('.rv-badge');
+          if (badge) {
+              badge.classList.remove('todo', 'lock');
+              badge.classList.add('done');
+              badge.textContent = 'Đã đánh giá';
+          }
+
+          const submitBtn = pane.querySelector('button.rv-submit-item');
+          if (submitBtn) submitBtn.classList.add('d-none');
+
+          const nav = document.querySelector(`[data-bs-target="#rvPane_${id}"]`);
+          if (nav) {
+              const meta = nav.querySelector('.rv-meta');
+              if (meta) meta.innerHTML = (meta.innerHTML || '').replace(/•\s*Chưa đánh giá/gi, '') + ' • Đã đánh giá';
+          }
+      }
+
+      function updateProgress(items) {
+          const total = items.length;
+          let done = 0;
+          items.forEach(it => {
+              const key = makeKey(it.productId, it.variantId);
+              if (window.__rvEligibility[key] === true) done++;
+          });
+          const el = document.getElementById('rvProgress');
+          if (el) {
+              const span = el.querySelector('span');
+              if (span) span.textContent = `${done}/${total} đã đánh giá`;
+          }
+      }
+
+      function updateSubmitAllButton(items) {
+          const btn = document.getElementById('btnSubmitAllReviews');
+          if (!btn) return;
+
+          const list = items || [];
+          const hasTodo = list.some(it => window.__rvEligibility[makeKey(it.productId, it.variantId)] !== true);
+
+          if (!hasTodo) {
+              btn.disabled = true;
+              btn.classList.remove('btn-success');
+              btn.classList.add('btn-secondary');
+              btn.setAttribute('aria-disabled', 'true');
+              btn.title = 'Tất cả sản phẩm đã được đánh giá';
+          } else {
+              btn.disabled = false;
+              btn.classList.remove('btn-secondary');
+              btn.classList.add('btn-success');
+              btn.removeAttribute('aria-disabled');
+              btn.title = '';
+          }
+      }
+
+      function renderReviewModal(items) {
+          const nav = document.getElementById('rvNav');
+          const tabs = document.getElementById('rvTabs');
+          const empty = document.getElementById('rvEmpty');
+
+          if (!nav || !tabs) return;
+
+          nav.innerHTML = '';
+          tabs.innerHTML = '';
+
+          if (!items || !items.length) {
+              if (empty) empty.classList.remove('d-none');
+              updateSubmitAllButton([]);
+              return;
+          } else {
+              if (empty) empty.classList.add('d-none');
+          }
+
+          items.forEach(function (it, idx) {
+              const key = makeKey(it.productId, it.variantId);
+              const id = keyToId(key);
+
+              const name = escapeHtml(it.name || ('Sản phẩm #' + it.productId));
+              const sku = escapeHtml(it.sku || '');
+              const img = escapeHtml(it.image || '/images/product-default.png');
+              const qty = it.quantity > 0 ? it.quantity : '';
+
+              const navBtn = document.createElement('button');
+              navBtn.type = 'button';
+              navBtn.className = 'nav-link ' + (idx === 0 ? 'active' : '');
+              navBtn.setAttribute('data-bs-toggle', 'pill');
+              navBtn.setAttribute('data-bs-target', '#rvPane_' + id);
+              navBtn.setAttribute('role', 'tab');
+              navBtn.innerHTML = `
           <img class="rv-thumb" src="${img}" onerror="this.src='/images/product-default.png';" />
           <div class="flex-grow-1 text-start">
             <div class="rv-name">${name}</div>
             <div class="rv-meta">${sku ? ('SKU: ' + sku) : 'Sản phẩm'}${qty ? (' • SL: ' + qty) : ''} • Chưa đánh giá</div>
           </div>
         `;
-        nav.appendChild(navBtn);
+              nav.appendChild(navBtn);
 
-        // Pane
-        const pane = document.createElement('div');
-        pane.className = 'tab-pane fade rv-pane ' + (idx === 0 ? 'show active' : '');
-        pane.id = 'rvPane_' + id;
-        pane.setAttribute('role', 'tabpanel');
-        pane.innerHTML = `
+              const pane = document.createElement('div');
+              pane.className = 'tab-pane fade rv-pane ' + (idx === 0 ? 'show active' : '');
+              pane.id = 'rvPane_' + id;
+              pane.setAttribute('role', 'tabpanel');
+              pane.innerHTML = `
           <div class="d-flex align-items-start justify-content-between gap-2 mb-2">
             <div class="d-flex align-items-center gap-2">
               <img class="rv-thumb" src="${img}" onerror="this.src='/images/product-default.png';" />
@@ -832,91 +945,90 @@
             <div class="small text-muted" id="rvMsg_${id}"></div>
           </div>
         `;
-        tabs.appendChild(pane);
+              tabs.appendChild(pane);
 
-        const starsWrap = pane.querySelector('.rv-stars');
-        if (starsWrap) {
-          bindStars(starsWrap);
-          setStars(starsWrap, 5);
-        }
-      });
+              const starsWrap = pane.querySelector('.rv-stars');
+              if (starsWrap) {
+                  bindStars(starsWrap);
+                  setStars(starsWrap, 5);
+              }
+          });
 
-      updateSubmitAllButton(items);
-    }
-
-    async function postReviewForItem(productId, variantId) {
-      const key = makeKey(productId, variantId);
-      const id = keyToId(key);
-
-      const pane = document.getElementById('rvPane_' + id);
-      if (!pane) throw new Error('Không tìm thấy form đánh giá');
-
-      const rating = parseInt(pane.querySelector('#rvRating_' + id)?.value || '0', 10);
-      const title = pane.querySelector('#rvTitle_' + id)?.value || '';
-      const content = pane.querySelector('#rvContent_' + id)?.value || '';
-      const filesEl = pane.querySelector('#rvImages_' + id);
-      const files = filesEl && filesEl.files ? filesEl.files : null;
-
-      if (!rating || rating < 1 || rating > 5) throw new Error('Vui lòng chọn số sao đánh giá');
-
-      const orderId = parseInt((document.getElementById('<%= hOrderId.ClientID %>')?.value || '0'), 10);
-      if (!orderId) throw new Error('Thiếu dữ liệu đơn hàng');
-
-      const API_BASE = (window.__API_BASE || '').replace(/\/+$/, '');
-      const auth = window.__AUTH_TOKEN || '';
-      if (!API_BASE) throw new Error('Thiếu cấu hình API');
-      if (!auth) throw new Error('Vui lòng đăng nhập để gửi đánh giá');
-
-      const formData = new FormData();
-      formData.append('Product_Id', String(productId));
-      if (parseInt(variantId || 0, 10) > 0) formData.append('Variant_Id', String(variantId));
-      formData.append('Order_Id', String(orderId));
-      formData.append('Rating', String(rating));
-      if (title.trim()) formData.append('Title', title.trim());
-      if (content.trim()) formData.append('Content', content.trim());
-
-      let hasImages = false;
-      let count = 0;
-      if (files && files.length) {
-        for (let i = 0; i < files.length; i++) {
-          const f = files[i]; if (!f) continue;
-          if (f.size > 2 * 1024 * 1024) continue;
-          count++;
-          if (count > 5) break;
-          hasImages = true;
-          formData.append('Images', f);
-        }
+          updateSubmitAllButton(items);
       }
-      formData.append('Has_Image', hasImages ? 'true' : 'false');
 
-      const resp = await fetch(API_BASE + '/api/reviews', {
-        method: 'POST',
-        headers: { 'Accept': 'application/json', 'Authorization': 'Bearer ' + auth },
-        credentials: 'include',
-        body: formData
-      });
+      async function postReviewForItem(productId, variantId) {
+          const key = makeKey(productId, variantId);
+          const id = keyToId(key);
 
-      let data = null; try { data = await resp.json(); } catch { }
-      if (resp.status === 401 || resp.status === 403) throw new Error('Vui lòng đăng nhập để gửi đánh giá');
-      if (!resp.ok || (data && data.success === false)) {
-        throw new Error((data && (data.message || data.detail)) || 'Không thể gửi đánh giá, vui lòng thử lại.');
+          const pane = document.getElementById('rvPane_' + id);
+          if (!pane) throw new Error('Không tìm thấy form đánh giá');
+
+          const rating = parseInt(pane.querySelector('#rvRating_' + id)?.value || '0', 10);
+          const title = pane.querySelector('#rvTitle_' + id)?.value || '';
+          const content = pane.querySelector('#rvContent_' + id)?.value || '';
+          const filesEl = pane.querySelector('#rvImages_' + id);
+          const files = filesEl && filesEl.files ? filesEl.files : null;
+
+          if (!rating || rating < 1 || rating > 5) throw new Error('Vui lòng chọn số sao đánh giá');
+
+          const orderId = parseInt((document.getElementById('<%= hOrderId.ClientID %>')?.value || '0'), 10);
+          if (!orderId) throw new Error('Thiếu dữ liệu đơn hàng');
+
+          const API_BASE = (window.__API_BASE || '').replace(/\/+$/, '');
+          const auth = window.__AUTH_TOKEN || '';
+          if (!API_BASE) throw new Error('Thiếu cấu hình API');
+          if (!auth) throw new Error('Vui lòng đăng nhập để gửi đánh giá');
+
+          const formData = new FormData();
+          formData.append('Product_Id', String(productId));
+          if (parseInt(variantId || 0, 10) > 0) formData.append('Variant_Id', String(variantId));
+          formData.append('Order_Id', String(orderId));
+          formData.append('Rating', String(rating));
+          if (title.trim()) formData.append('Title', title.trim());
+          if (content.trim()) formData.append('Content', content.trim());
+
+          let hasImages = false;
+          let count = 0;
+          if (files && files.length) {
+              for (let i = 0; i < files.length; i++) {
+                  const f = files[i]; if (!f) continue;
+                  if (f.size > 2 * 1024 * 1024) continue;
+                  count++;
+                  if (count > 5) break;
+                  hasImages = true;
+                  formData.append('Images', f);
+              }
+          }
+          formData.append('Has_Image', hasImages ? 'true' : 'false');
+
+          const resp = await fetch(API_BASE + '/api/reviews', {
+              method: 'POST',
+              headers: { 'Accept': 'application/json', 'Authorization': 'Bearer ' + auth },
+              credentials: 'include',
+              body: formData
+          });
+
+          let data = null; try { data = await resp.json(); } catch { }
+          if (resp.status === 401 || resp.status === 403) throw new Error('Vui lòng đăng nhập để gửi đánh giá');
+          if (!resp.ok || (data && data.success === false)) {
+              throw new Error((data && (data.message || data.detail)) || 'Không thể gửi đánh giá, vui lòng thử lại.');
+          }
+          return data;
       }
-      return data;
-    }
 
-    async function hydrateEligibility(items) {
-      for (const it of items) {
-        const key = makeKey(it.productId, it.variantId);
-        const already = await isAlreadyReviewed(it.productId, it.variantId);
-        if (already) setPaneDone(key);
+      async function hydrateEligibility(items) {
+          for (const it of items) {
+              const key = makeKey(it.productId, it.variantId);
+              const already = await isAlreadyReviewed(it.productId, it.variantId);
+              if (already) setPaneDone(key);
+          }
+          updateProgress(items);
+          updateSubmitAllButton(items);
       }
-      updateProgress(items);
-      updateSubmitAllButton(items);
-    }
 
-    // ✅ UI nút đánh giá dựa trên TẤT CẢ sản phẩm trong đơn
-    async function decideOrderReviewUI() {
-      const canReviewEl = document.getElementById('<%= hCanReview.ClientID %>');
+      async function decideOrderReviewUI() {
+          const canReviewEl = document.getElementById('<%= hCanReview.ClientID %>');
       const canReview = (canReviewEl && canReviewEl.value === '1');
 
       const btn = document.getElementById('btnOpenOrderReview');
@@ -947,6 +1059,7 @@
       const oc = document.getElementById('<%= hOrderCode.ClientID %>')?.value || '';
       const rv = document.getElementById('rvOrderCode'); if (rv) rv.textContent = oc;
       const cn = document.getElementById('cnOrderCode'); if (cn) cn.textContent = oc;
+      const rc = document.getElementById('rcOrderCode'); if (rc) rc.textContent = oc;
 
       // Cancel modal
       let cancelModalInstance = null;
@@ -979,8 +1092,64 @@
           setStatusPill(4);
           decideCancelUI();
 
+          // cancel => không confirm received / không review
+          document.getElementById('<%= hCanConfirmReceived.ClientID %>').value = '0';
+          decideConfirmReceivedUI();
+
+          document.getElementById('<%= hCanReview.ClientID %>').value = '0';
+          decideOrderReviewUI();
+
           showToast('Đã hủy đơn hàng.');
           try { bootstrap.Modal.getInstance(document.getElementById('cancelModal'))?.hide(); } catch { }
+
+          btn.disabled = false;
+          btn.innerHTML = oldHtml;
+        } catch (err) {
+          console.error(err);
+          showToast((err && err.message) ? err.message : 'Có lỗi xảy ra, vui lòng thử lại.', true);
+          btn.disabled = false;
+          btn.innerHTML = oldHtml;
+        }
+      });
+
+      // Received modal
+      let receivedModalInstance = null;
+
+      document.getElementById('btnConfirmReceived')?.addEventListener('click', function () {
+        const el = document.getElementById('receivedModal');
+        if (!receivedModalInstance) receivedModalInstance = new bootstrap.Modal(el);
+        receivedModalInstance.show();
+      });
+
+      document.getElementById('btnConfirmReceivedDo')?.addEventListener('click', async function () {
+        const btn = document.getElementById('btnConfirmReceivedDo');
+        const oldHtml = btn.innerHTML;
+
+        try {
+          const status = parseInt(document.getElementById('<%= hStatus.ClientID %>').value || '0', 10);
+          const can = (document.getElementById('<%= hCanConfirmReceived.ClientID %>').value === '1');
+          if (!(can && status === 3)) { showToast('Đơn hàng chưa đủ điều kiện xác nhận.', true); return; }
+
+          const orderId = parseInt(document.getElementById('<%= hOrderId.ClientID %>').value || '0', 10);
+          if (!orderId) { showToast('Thiếu dữ liệu đơn hàng', true); return; }
+
+          btn.disabled = true;
+          btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Đang xác nhận...';
+
+          await callConfirmReceivedApi(orderId);
+
+          // update UI: status=7
+          document.getElementById('<%= hStatus.ClientID %>').value = '7';
+          document.getElementById('<%= hCanConfirmReceived.ClientID %>').value = '0';
+          setStatusPill(7);
+          decideConfirmReceivedUI();
+
+          // ✅ cho phép review sau khi nhận hàng
+          document.getElementById('<%= hCanReview.ClientID %>').value = '1';
+          decideOrderReviewUI();
+
+          showToast('Đã xác nhận nhận hàng.');
+          try { bootstrap.Modal.getInstance(document.getElementById('receivedModal'))?.hide(); } catch { }
 
           btn.disabled = false;
           btn.innerHTML = oldHtml;
@@ -999,7 +1168,6 @@
         const items = getOrderItems();
         renderReviewModal(items);
 
-        // attach submit handlers (event delegation)
         const tabs = document.getElementById('rvTabs');
         if (tabs && !tabs.__bound) {
           tabs.__bound = true;
@@ -1047,7 +1215,6 @@
           });
         }
 
-        // submit all
         const allBtn = document.getElementById('btnSubmitAllReviews');
         if (allBtn && !allBtn.__bound) {
           allBtn.__bound = true;
@@ -1116,11 +1283,11 @@
 
       decideOrderReviewUI();
       decideCancelUI();
+      decideConfirmReceivedUI();
 
       // ===== embed helpers =====
       var isEmbed = /[?&]embed=1\b/.test(location.search);
 
-      // back link khi embed
       var backLink = document.getElementById('<%= lnkBack.ClientID %>');
       if (isEmbed && backLink) {
         try {
@@ -1133,7 +1300,6 @@
         }
       }
 
-      // gắn embed=1 cho mọi link nội bộ
       if (isEmbed) {
         try {
           document.querySelectorAll('a[href]').forEach(function (a) {
@@ -1163,45 +1329,45 @@
 
   <%-- Auto-height (robust) --%>
   <script>
-    (function () {
-      var isEmbed = /[?&]embed=1\b/.test(location.search) && window.parent && window.parent !== window;
-      if (!isEmbed) return;
+      (function () {
+          var isEmbed = /[?&]embed=1\b/.test(location.search) && window.parent && window.parent !== window;
+          if (!isEmbed) return;
 
-      var params = new URLSearchParams(location.search);
-      var TARGET = params.get('parentOrigin') || '*';
+          var params = new URLSearchParams(location.search);
+          var TARGET = params.get('parentOrigin') || '*';
 
-      function measure() {
-        try {
-          var d = document, b = d.body, e = d.documentElement;
-          var h = Math.max(
-            b.scrollHeight || 0, e.scrollHeight || 0,
-            b.offsetHeight || 0, e.offsetHeight || 0,
-            b.clientHeight || 0, e.clientHeight || 0
-          );
-          if (!h || h < 400) h = 400;
-          window.parent.postMessage({ type: 'haf-embed-height', height: h }, TARGET);
-        } catch (_) { }
-      }
+          function measure() {
+              try {
+                  var d = document, b = d.body, e = d.documentElement;
+                  var h = Math.max(
+                      b.scrollHeight || 0, e.scrollHeight || 0,
+                      b.offsetHeight || 0, e.offsetHeight || 0,
+                      b.clientHeight || 0, e.clientHeight || 0
+                  );
+                  if (!h || h < 400) h = 400;
+                  window.parent.postMessage({ type: 'haf-embed-height', height: h }, TARGET);
+              } catch (_) { }
+          }
 
-      function rafMeasure() { try { requestAnimationFrame(measure); } catch { measure(); } }
+          function rafMeasure() { try { requestAnimationFrame(measure); } catch { measure(); } }
 
-      document.addEventListener('DOMContentLoaded', function () { setTimeout(rafMeasure, 0); });
-      window.addEventListener('load', function () { setTimeout(rafMeasure, 20); });
+          document.addEventListener('DOMContentLoaded', function () { setTimeout(rafMeasure, 0); });
+          window.addEventListener('load', function () { setTimeout(rafMeasure, 20); });
 
-      if (document.fonts && document.fonts.ready) {
-        document.fonts.ready.then(function () { setTimeout(rafMeasure, 20); });
-      }
+          if (document.fonts && document.fonts.ready) {
+              document.fonts.ready.then(function () { setTimeout(rafMeasure, 20); });
+          }
 
-      var ro = (typeof ResizeObserver !== 'undefined') ? new ResizeObserver(function () { rafMeasure(); }) : null;
-      if (ro) { ro.observe(document.documentElement); ro.observe(document.body); }
+          var ro = (typeof ResizeObserver !== 'undefined') ? new ResizeObserver(function () { rafMeasure(); }) : null;
+          if (ro) { ro.observe(document.documentElement); ro.observe(document.body); }
 
-      var mo = (typeof MutationObserver !== 'undefined') ? new MutationObserver(function () { rafMeasure(); }) : null;
-      if (mo) { mo.observe(document.body, { childList: true, subtree: true, attributes: true, characterData: true }); }
+          var mo = (typeof MutationObserver !== 'undefined') ? new MutationObserver(function () { rafMeasure(); }) : null;
+          if (mo) { mo.observe(document.body, { childList: true, subtree: true, attributes: true, characterData: true }); }
 
-      setTimeout(rafMeasure, 200);
-      setTimeout(rafMeasure, 600);
-      setTimeout(rafMeasure, 1200);
-    })();
+          setTimeout(rafMeasure, 200);
+          setTimeout(rafMeasure, 600);
+          setTimeout(rafMeasure, 1200);
+      })();
   </script>
 </body>
 </html>

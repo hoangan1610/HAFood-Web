@@ -67,6 +67,9 @@ namespace HAFoodWeb
                 litShipAddress.InnerText = Decode(h.ship_Full_Address ?? "");
                 litNote.InnerText = Decode(h.note ?? "");
 
+                // ✅ luôn set orderCode hidden để JS dùng (kể cả không có items)
+                hOrderCode.Value = Decode(h.order_Code ?? ("#" + h.id));
+
                 // ===== Payment helpers =====
                 Func<string, string> NiceProvider = p =>
                 {
@@ -190,23 +193,20 @@ namespace HAFoodWeb
                 }
                 catch { }
 
-                // debug attributes để inspect
-                litPayment.Attributes["data-pay-provider"] = (h.payment_Provider ?? "");
-                litPayment.Attributes["data-pay-status"] = (h.payment_Status ?? "");
-                litPayment.Attributes["data-pay-method"] = (h.payment_Method.HasValue ? h.payment_Method.Value.ToString() : "");
-                litPayment.Attributes["data-pay-ref"] = (h.payment_Ref ?? "");
-                litPayment.Attributes["data-paid-at"] = (h.paid_At.HasValue ? h.paid_At.Value.ToString("o") : "");
-                litPayment.Attributes["data-pay-text"] = paymentText;
-                litPayment.Attributes["data-pay-extra"] = extraText;
-
                 // ===== Status pill =====
                 litStatus.InnerText = GetStatusText(h.status);
                 litStatus.Attributes["class"] = "order-status-pill " + GetStatusCssClass(h.status);
 
-                // Review/Cancel flags
-                CanReview = (h.status == 3);
+                // ✅ flags
+                // Review: chỉ khi status=7
+                CanReview = (h.status == 7);
                 hCanReview.Value = CanReview ? "1" : "0";
 
+                // Confirm received: chỉ khi status=3
+                bool canConfirmReceived = (h.status == 3);
+                hCanConfirmReceived.Value = canConfirmReceived ? "1" : "0";
+
+                // Cancel: chỉ khi status=0
                 CanCancel = (h.status == 0);
                 hCanCancel.Value = CanCancel ? "1" : "0";
 
@@ -224,10 +224,8 @@ namespace HAFoodWeb
                     var first = detail.items.FirstOrDefault();
                     hFirstProductId.Value = ((first != null ? first.product_Id : 0)).ToString();
                     hFirstVariantId.Value = ((first != null ? first.variant_Id : 0)).ToString();
-                    hOrderCode.Value = Decode(h.order_Code ?? ("#" + h.id));
 
-                    // ✅ NEW: JSON danh sách sản phẩm/variant trong đơn (unique) + thông tin để render UI đẹp
-                    // NOTE: nếu đơn có nhiều dòng trùng productId/variantId thì gộp lại và cộng quantity
+                    // ✅ JSON danh sách sản phẩm/variant trong đơn (unique)
                     var itemsSlim = detail.items
                         .Where(x => x != null && x.product_Id > 0)
                         .GroupBy(x => new { x.product_Id, x.variant_Id })
@@ -259,9 +257,6 @@ namespace HAFoodWeb
                     pnlItems.Visible = false;
                     hFirstProductId.Value = "0";
                     hFirstVariantId.Value = "0";
-                    hOrderCode.Value = Decode(h.order_Code ?? ("#" + h.id));
-
-                    // ✅ luôn có JSON (tránh JSON.parse lỗi)
                     hOrderItemsJson.Value = "[]";
                 }
 
@@ -281,14 +276,16 @@ namespace HAFoodWeb
                 if ("1".Equals(Request.QueryString["debug"]))
                 {
                     string dbg =
+                        "status=" + h.status + "\n" +
                         "payment_Provider=" + (h.payment_Provider ?? "NULL") + "\n" +
                         "payment_Status=" + (h.payment_Status ?? "NULL") + "\n" +
                         "payment_Method=" + (h.payment_Method.HasValue ? h.payment_Method.Value.ToString() : "NULL") + "\n" +
                         "payment_Ref=" + (h.payment_Ref ?? "NULL") + "\n" +
                         "paid_At=" + (h.paid_At.HasValue ? h.paid_At.Value.ToString("o") : "NULL") + "\n" +
-                        "paymentText=" + paymentText + "\n" +
-                        "paymentExtra=" + extraText + "\n" +
-                        "itemsJson=" + (hOrderItemsJson.Value ?? "[]");
+                        "orderCodeHidden=" + (hOrderCode.Value ?? "NULL") + "\n" +
+                        "itemsJson=" + (hOrderItemsJson.Value ?? "[]") + "\n" +
+                        "canConfirmReceived=" + (canConfirmReceived ? "1" : "0") + "\n" +
+                        "canReview=" + (CanReview ? "1" : "0");
 
                     litDebug.Text = "<pre>DEBUG\n" + Server.HtmlEncode(dbg) + "</pre>";
                     litDebug.Visible = true;
@@ -307,17 +304,20 @@ namespace HAFoodWeb
             switch (status)
             {
                 case 0: return "Đã được tạo";
-                case 1: return "Xác nhận";
+                case 1: return "Đã xác nhận";
                 case 2: return "Đang giao";
                 case 3: return "Đã giao";
-                case 4: return "Đã hủy";
+                case 6: return "Đang giao hàng";
+                case 7: return "Đã nhận hàng";
+                case 4: return "Đã huỷ";
+                case 9: return "Huỷ đơn";
                 default: return "Không rõ";
             }
         }
 
         private string GetStatusCssClass(int status)
         {
-            return "status-" + status; // status-0..status-4
+            return "status-" + status;
         }
     }
 }

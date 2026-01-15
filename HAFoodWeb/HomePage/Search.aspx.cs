@@ -125,7 +125,24 @@ namespace HAFoodWeb
 
         private async System.Threading.Tasks.Task BindCategoryTreeAsync()
         {
-            var all = await _cats.GetAllAsync() ?? new List<CategoryTreeDto>();
+            // ✅ Cache category 5 phút để AJAX paging/filter không gọi API liên tục
+            const string cacheKey = "HAFood_Categories_All";
+            var cache = HttpRuntime.Cache;
+
+            var all = cache[cacheKey] as List<CategoryTreeDto>;
+            if (all == null)
+            {
+                // ✅ FIX CS0266: IReadOnlyList -> List
+                all = (await _cats.GetAllAsync())?.ToList() ?? new List<CategoryTreeDto>();
+
+                cache.Insert(
+                    cacheKey,
+                    all,
+                    dependencies: null,
+                    absoluteExpiration: DateTime.Now.AddMinutes(5),
+                    slidingExpiration: System.Web.Caching.Cache.NoSlidingExpiration
+                );
+            }
 
             var byParent = all
                 .Where(x => x.Parent_Id.HasValue)
@@ -160,6 +177,7 @@ namespace HAFoodWeb
             ltCategoryTree.Text = sb.ToString();
         }
 
+
         private void RenderNode(
             CategoryTreeDto n,
             StringBuilder sb,
@@ -179,7 +197,6 @@ namespace HAFoodWeb
             {
                 sb.Append("<div class='d-flex justify-content-between align-items-center'>");
 
-                // ✅ thêm class active + data-cat-id để JS lookup tên category cho chip
                 sb.AppendFormat(
                     "<a class='cat-link {2}' data-cat-id='{1}' {3} href='{0}'>{4}</a>",
                     BuildCategoryLink(n.Id),
@@ -224,7 +241,6 @@ namespace HAFoodWeb
 
             ltTotal.Text = string.Format("{0:n0} sản phẩm", list.TotalCount);
 
-            // EMPTY STATE
             if (list.TotalCount == 0)
             {
                 rpProducts.Visible = false;
@@ -241,7 +257,6 @@ namespace HAFoodWeb
   </button>
 </div>";
 
-                // DEBUG URL API
                 if (!string.IsNullOrEmpty(_search.LastListUrl))
                 {
                     var debugUrl0 = _search.LastListUrl
@@ -268,7 +283,6 @@ namespace HAFoodWeb
 
             ltPager.Text = BuildPager(req.Page, req.PageSize, list.TotalCount);
 
-            // DEBUG URL API
             if (!string.IsNullOrEmpty(_search.LastListUrl))
             {
                 var debugUrl = _search.LastListUrl
@@ -325,11 +339,9 @@ namespace HAFoodWeb
 
             var sb = new StringBuilder();
 
-            // First / Prev
             sb.Append(PageItem("Đầu", SetPage(1), page <= 1, false, "Trang đầu"));
             sb.Append(PageItem("‹", SetPage(page - 1), page <= 1, false, "Trang trước"));
 
-            // Pages with ellipsis
             const int window = 2;
             int start = Math.Max(1, page - window);
             int end = Math.Min(totalPages, page + window);
@@ -351,7 +363,6 @@ namespace HAFoodWeb
                 sb.Append(PageItem(totalPages.ToString(), SetPage(totalPages), false, page == totalPages, $"Trang {totalPages}"));
             }
 
-            // Next / Last
             sb.Append(PageItem("›", SetPage(page + 1), page >= totalPages, false, "Trang sau"));
             sb.Append(PageItem("Cuối", SetPage(totalPages), page >= totalPages, false, "Trang cuối"));
 

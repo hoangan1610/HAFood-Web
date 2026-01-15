@@ -245,9 +245,18 @@
         window.addEventListener('message', function (ev) {
             if (!frame || ev.source !== frame.contentWindow) return;
             const d = ev.data;
+
+            // ✅ nhận yêu cầu cuộn iframe vào giữa viewport
+            if (d && d.type === 'haf-scroll-iframe-into-view') {
+                try { frame.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch { }
+                return;
+            }
+
+            // giữ đoạn cũ của bạn
             if (!d || d.type !== 'haf-embed-height') return;
             setFrameHeight(d.height || 0);
         });
+
 
         if (frame) {
             frame.addEventListener('load', function () {

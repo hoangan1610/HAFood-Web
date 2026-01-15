@@ -40,7 +40,7 @@ namespace HAFoodWeb
 
                     if (!avatarUrl.StartsWith("http", StringComparison.OrdinalIgnoreCase))
                     {
-                        avatarUrl = "https://api.hafood.id.vn" + avatarUrl;
+                        avatarUrl = "http://localhost:8080" + avatarUrl;
                     }
 
                     imgAvatar.ImageUrl = avatarUrl;
@@ -111,7 +111,7 @@ namespace HAFoodWeb
                 {
                     var avatarUrl = updatedProfile.user.avatar;
                     if (!avatarUrl.StartsWith("http", StringComparison.OrdinalIgnoreCase))
-                        avatarUrl = "https://api.hafood.id.vn" + avatarUrl;
+                        avatarUrl = "http://localhost:8080" + avatarUrl;
 
                     imgAvatar.ImageUrl = avatarUrl + "?t=" + DateTime.Now.Ticks;
                 }

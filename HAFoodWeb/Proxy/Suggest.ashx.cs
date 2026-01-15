@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Configuration;
-using System.IO;
 using System.Net;
 using System.Web;
 
@@ -21,6 +20,15 @@ namespace HAFoodWeb.Proxy
             context.Response.AddHeader("Access-Control-Allow-Origin", "*");
 
             var q = (context.Request["q"] ?? "").Trim();
+
+            // ✅ chặn term quá ngắn để giảm tải DB/API
+            if (q.Length < 2)
+            {
+                context.Response.StatusCode = 200;
+                context.Response.Write("{\"items\":[]}");
+                return;
+            }
+
             if (string.IsNullOrEmpty(ApiBase))
             {
                 context.Response.StatusCode = 200;
@@ -42,6 +50,7 @@ namespace HAFoodWeb.Proxy
                 using (var resp = (HttpWebResponse)await req.GetResponseAsync())
                 {
                     context.Response.StatusCode = (int)resp.StatusCode;
+
                     using (var s = resp.GetResponseStream())
                     {
                         if (s != null)
@@ -63,6 +72,6 @@ namespace HAFoodWeb.Proxy
             }
         }
 
-        public override bool IsReusable { get { return true; } }
+        public override bool IsReusable => true;
     }
 }

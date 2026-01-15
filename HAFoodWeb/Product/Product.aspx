@@ -480,7 +480,7 @@
               <!-- ✅ Client button (no postback) -->
               <div class="col-sm-3 d-grid mt-2 mt-sm-1">
                 <button type="button" id="btnAddToCartClient" class="btn btn-success btn-sm ha-btn-pill">
-                  Thêm vào giỏ hàng
+                  Thêm giỏ hàng
                 </button>
               </div>
             </div>
