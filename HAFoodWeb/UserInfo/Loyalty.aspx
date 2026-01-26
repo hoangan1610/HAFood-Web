@@ -434,9 +434,7 @@
                                         OnClick="btnCheckin_Click" />
                         </div>
 
-                        <div class="note-small" style="margin-top:10px;">
-                            Quy tắc tạm thời: dùng điểm để đổi lượt quay / ưu đãi. Vòng quay &amp; ưu đãi có thể giới hạn theo thời gian.
-                        </div>
+                       
                     </div>
                 </div>
 

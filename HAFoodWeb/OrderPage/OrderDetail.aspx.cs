@@ -79,6 +79,7 @@ namespace HAFoodWeb
                     if (up == "PAY2S") return "Pay2S";
                     if (up == "ZALOPAY") return "ZaloPay";
                     if (up == "VNPAY") return "VNPAY";
+                    if (up == "MOMO") return "MoMo";
                     if (up == "COD") return "COD";
                     return p;
                 };
@@ -103,6 +104,7 @@ namespace HAFoodWeb
                         case 0: return "COD";
                         case 1: return "ZaloPay";
                         case 2: return "Pay2S";
+                        case 3: return "MoMo";
                         default: return "Khác";
                     }
                 };
@@ -193,6 +195,12 @@ namespace HAFoodWeb
                 }
                 catch { }
 
+                // ✅ NEW: set hidden payment info để JS render note hủy đơn
+                hPaymentProviderUp.Value = providerUp;
+                hPaymentStatusRaw.Value = statusRaw ?? "";
+                hPaymentRef.Value = (h.payment_Ref ?? "").Trim();
+                hIsPaidOnline.Value = onlinePaid ? "1" : "0";
+
                 // ===== Status pill =====
                 litStatus.InnerText = GetStatusText(h.status);
                 litStatus.Attributes["class"] = "order-status-pill " + GetStatusCssClass(h.status);
@@ -282,6 +290,8 @@ namespace HAFoodWeb
                         "payment_Method=" + (h.payment_Method.HasValue ? h.payment_Method.Value.ToString() : "NULL") + "\n" +
                         "payment_Ref=" + (h.payment_Ref ?? "NULL") + "\n" +
                         "paid_At=" + (h.paid_At.HasValue ? h.paid_At.Value.ToString("o") : "NULL") + "\n" +
+                        "providerUpHidden=" + (hPaymentProviderUp.Value ?? "NULL") + "\n" +
+                        "isPaidOnlineHidden=" + (hIsPaidOnline.Value ?? "0") + "\n" +
                         "orderCodeHidden=" + (hOrderCode.Value ?? "NULL") + "\n" +
                         "itemsJson=" + (hOrderItemsJson.Value ?? "[]") + "\n" +
                         "canConfirmReceived=" + (canConfirmReceived ? "1" : "0") + "\n" +

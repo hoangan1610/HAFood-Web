@@ -532,10 +532,7 @@
                         <i class="bi bi-cash-coin" aria-hidden="true"></i>
                         <span>Sản phẩm giá 20k - 100k</span>
                     </button>
-                    <button type="button" class="haf-quick-btn" data-text="Gợi ý cho tôi các sản phẩm bán chạy nhất hiện tại.">
-                        <i class="bi bi-stars" aria-hidden="true"></i>
-                        <span>Gợi ý sản phẩm bán chạy</span>
-                    </button>
+                  
                     <button type="button" class="haf-quick-btn" data-text="Tra cho tôi mã đơn hàng 251212000001.">
                         <i class="bi bi-truck" aria-hidden="true"></i>
                         <span>Tra cứu đơn 251212000001</span>

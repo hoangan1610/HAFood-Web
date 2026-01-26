@@ -52,6 +52,80 @@
         .fv{color:#dc3545;font-size:13px;margin-top:6px}
         .alert{margin:0 0 12px 0;padding:10px 12px;border-radius:12px;background:#fff1f2;color:#9f2a37;border:1px solid #ffcdd2}
 
+        /* ✅ Alert đẹp (dùng cho litError / ShowNiceError) */
+        .alertx{
+            display:flex;
+            gap:12px;
+            align-items:flex-start;
+            padding:12px 12px;
+            border-radius:14px;
+            border:1px solid transparent;
+            background:#fff;
+            box-shadow:0 8px 18px rgba(17,24,39,.06);
+            position:relative;
+            margin:0 0 12px 0;
+            animation:axPop .18s ease-out;
+        }
+        @keyframes axPop{
+            from{transform:translateY(-4px);opacity:0}
+            to{transform:translateY(0);opacity:1}
+        }
+        .alertx .ax-ic{
+            width:44px;height:44px;
+            border-radius:12px;
+            display:flex;align-items:center;justify-content:center;
+            flex:0 0 44px;
+            border:1px solid rgba(0,0,0,.05);
+        }
+        .alertx .ax-ic i{font-size:20px}
+        .alertx .ax-body{flex:1;min-width:0}
+        .alertx .ax-title{font-weight:900;font-size:15px;margin:1px 0 2px 0;line-height:1.2}
+        .alertx .ax-msg{margin:0;color:#374151;font-size:13.5px;line-height:1.35}
+        .alertx .ax-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+        .ax-close{
+            position:absolute;
+            top:10px;right:10px;
+            border:none;
+            background:transparent;
+            color:#6b7280;
+            cursor:pointer;
+            border-radius:10px;
+            padding:6px;
+            line-height:1;
+        }
+        .ax-close:hover{background:rgba(2,6,23,.06)}
+        .btn-soft{
+            height:36px;
+            padding:0 14px;
+            border-radius:9999px;
+            border:1px solid #e5e7eb;
+            background:#fff;
+            font-weight:900;
+            cursor:pointer;
+        }
+        .btn-soft:hover{background:#f9fafb}
+        .btn-link{
+            height:36px;
+            padding:0 10px;
+            border-radius:9999px;
+            border:1px solid transparent;
+            background:transparent;
+            font-weight:900;
+            color:#111827;
+            cursor:pointer;
+            text-decoration:underline;
+        }
+        .btn-link:hover{background:rgba(2,6,23,.06);text-decoration:none}
+
+        .alertx-danger{background:#fef2f2;border-color:#fecaca}
+        .alertx-danger .ax-ic{background:#fee2e2;color:#991b1b}
+        .alertx-warning{background:#fff7ed;border-color:#fed7aa}
+        .alertx-warning .ax-ic{background:#ffedd5;color:#9a3412}
+        .alertx-success{background:#ecfdf5;border-color:#a7f3d0}
+        .alertx-success .ax-ic{background:#d1fae5;color:#065f46}
+        .alertx-info{background:#eff6ff;border-color:#bfdbfe}
+        .alertx-info .ax-ic{background:#dbeafe;color:#1d4ed8}
+
         /* Thông tin nhận hàng: 3 trường */
         .info-grid{display:grid;grid-template-columns:1fr;gap:10px}
         .field{display:flex;flex-direction:column;gap:4px;padding:10px 12px;border:1px solid #eef0f5;border-radius:12px;background:#fff}

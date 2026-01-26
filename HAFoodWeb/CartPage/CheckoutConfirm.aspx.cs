@@ -95,8 +95,10 @@ namespace HAFoodWeb
                         title: $"Bạn vừa hủy thanh toán {provName}",
                         message: "Bạn có thể chọn phương thức khác hoặc thử thanh toán lại.",
                         actionsHtml:
-                            $"<button class='btn-soft' onclick=\"location.reload()\">Thử lại</button>" +
-                            $"<button class='btn-link' onclick=\"location.href='{ResolveUrl("~/CartPage/CartPage.aspx")}'\">Về giỏ hàng</button>"
+                            $"<button type='button' class='btn-soft' onclick=\"location.reload()\">Thử lại</button>" +
+                            $"<button type='button' class='btn-link' onclick=\"location.href='{ResolveUrl("~/CartPage/CartPage.aspx")}'\">Về giỏ hàng</button>",
+                        variant: "warning",
+                        icon: "bi bi-x-circle"
                     );
 
                     Session.Remove(SK_PENDING_PAYMENT_URL);
@@ -454,7 +456,7 @@ namespace HAFoodWeb
                         }
                         if (sw.Outcome == SwitchPaymentOutcome.NotFound)
                         {
-                            ShowNiceError("ORDER_NOT_FOUND", "Không tìm thấy đơn hàng", "Vui lòng đặt lại đơn mới.");
+                            ShowNiceError("ORDER_NOT_FOUND", "Không tìm thấy đơn hàng", "Vui lòng đặt lại đơn mới.", null, "danger");
                             return;
                         }
                         if (sw.Outcome == SwitchPaymentOutcome.Unauthorized)
@@ -466,7 +468,9 @@ namespace HAFoodWeb
 
                         ShowNiceError("SWITCH_PAYMENT_FAILED", "Không chuyển phương thức/khởi tạo link thanh toán được",
                             Server.HtmlEncode(sw?.Message ?? sw?.RawBody ?? "Lỗi không xác định"),
-                            actionsHtml: $"<button class='btn-soft' onclick=\"location.reload()\">Thử lại</button>");
+                            actionsHtml: $"<button type='button' class='btn-soft' onclick=\"location.reload()\">Thử lại</button>",
+                            variant: "danger",
+                            icon: "bi bi-exclamation-octagon-fill");
                         return;
                     }
                 }
@@ -476,7 +480,9 @@ namespace HAFoodWeb
                         code: "SWITCH_OR_LINK_FAIL",
                         title: "Không chuyển phương thức/khởi tạo link thanh toán được",
                         message: Server.HtmlEncode(ex.Message),
-                        actionsHtml: $"<button class='btn-soft' onclick=\"location.reload()\">Thử lại</button>"
+                        actionsHtml: $"<button type='button' class='btn-soft' onclick=\"location.reload()\">Thử lại</button>",
+                        variant: "danger",
+                        icon: "bi bi-exclamation-octagon-fill"
                     );
                     return;
                 }
@@ -490,7 +496,9 @@ namespace HAFoodWeb
             if (draft == null)
             {
                 ShowNiceError("SESSION_EXPIRED", "Phiên đặt hàng đã hết hạn", "Vui lòng quay lại giỏ hàng để đặt lại.",
-                    actionsHtml: $"<button class='btn-soft' onclick=\"location.href='{ResolveUrl("~/CartPage/CartPage.aspx")}'\">Về giỏ hàng</button>");
+                    actionsHtml: $"<button type='button' class='btn-soft' onclick=\"location.href='{ResolveUrl("~/CartPage/CartPage.aspx")}'\">Về giỏ hàng</button>",
+                    variant: "warning",
+                    icon: "bi bi-hourglass-split");
                 return;
             }
 
@@ -507,7 +515,9 @@ namespace HAFoodWeb
             {
                 ShowNiceError("CART_EMPTY", "Giỏ hàng trống",
                     "Vui lòng quay lại giỏ hoặc chọn lại sản phẩm.",
-                    actionsHtml: $"<button class='btn-soft' onclick=\"location.href='{ResolveUrl("~/CartPage/CartPage.aspx")}'\">Về giỏ hàng</button>");
+                    actionsHtml: $"<button type='button' class='btn-soft' onclick=\"location.href='{ResolveUrl("~/CartPage/CartPage.aspx")}'\">Về giỏ hàng</button>",
+                    variant: "warning",
+                    icon: "bi bi-cart-x");
                 return;
             }
 
@@ -565,7 +575,7 @@ namespace HAFoodWeb
 
                 if (resp == null || (resp.order_Id <= 0 && string.IsNullOrWhiteSpace(resp.order_Code)))
                 {
-                    ShowNiceError("EMPTY_RESPONSE", "Không tạo được đơn hàng", "Phản hồi trống từ máy chủ.");
+                    ShowNiceError("EMPTY_RESPONSE", "Không tạo được đơn hàng", "Phản hồi trống từ máy chủ.", null, "danger", "bi bi-exclamation-octagon-fill");
                     return;
                 }
 
@@ -591,7 +601,9 @@ namespace HAFoodWeb
                 {
                     ShowNiceError("OUT_OF_STOCK", "Một số sản phẩm đã hết hàng",
                         "Vui lòng giảm số lượng hoặc bỏ các sản phẩm tạm hết khỏi giỏ, rồi thử lại.",
-                        actionsHtml: $"<button class='btn-soft' onclick=\"location.href='{ResolveUrl("~/CartPage/CartPage.aspx")}'\">Về giỏ hàng để cập nhật</button>");
+                        actionsHtml: $"<button type='button' class='btn-soft' onclick=\"location.href='{ResolveUrl("~/CartPage/CartPage.aspx")}'\">Về giỏ hàng để cập nhật</button>",
+                        variant: "warning",
+                        icon: "bi bi-box-seam");
                     return;
                 }
 
@@ -601,7 +613,8 @@ namespace HAFoodWeb
                     if (!string.IsNullOrWhiteSpace(pendingUrl))
                     {
                         pendingUrl = NormalizeGatewayUrlForUA(pendingUrl);
-                        ShowNiceError("CART_EMPTY", "Đơn hàng đã khởi tạo trước đó", "Đang chuyển tới trang thanh toán…");
+                        ShowNiceError("CART_EMPTY", "Đơn hàng đã khởi tạo trước đó", "Đang chuyển tới trang thanh toán…",
+                            null, "info", "bi bi-arrow-right-circle");
                         System.Diagnostics.Trace.WriteLine($"[PAY-REDIRECT:RESTORE] UA={Request?.UserAgent} URL={pendingUrl}");
                         Response.Redirect(pendingUrl, false);
                         Context.ApplicationInstance.CompleteRequest();
@@ -623,26 +636,48 @@ namespace HAFoodWeb
 
                     ShowNiceError("CART_EMPTY", "Giỏ hàng trống",
                         "Vui lòng quay lại giỏ hàng để đặt lại.",
-                        actionsHtml: $"<button class='btn-soft' onclick=\"location.href='{ResolveUrl("~/CartPage/CartPage.aspx")}'\">Về giỏ hàng</button>");
+                        actionsHtml: $"<button type='button' class='btn-soft' onclick=\"location.href='{ResolveUrl("~/CartPage/CartPage.aspx")}'\">Về giỏ hàng</button>",
+                        variant: "warning",
+                        icon: "bi bi-cart-x");
                     return;
                 }
 
                 ShowNiceError("UNKNOWN", "Có lỗi khi tạo đơn hàng", Server.HtmlEncode(msg),
-                    actionsHtml: $"<button class='btn-soft' onclick=\"location.reload()\">Thử lại</button>");
+                    actionsHtml: $"<button type='button' class='btn-soft' onclick=\"location.reload()\">Thử lại</button>",
+                    variant: "danger",
+                    icon: "bi bi-exclamation-octagon-fill");
             }
         }
 
-        private void ShowNiceError(string code, string title, string message, string actionsHtml = null)
+        // ✅ NÂNG CẤP: alert đẹp + variant + icon + nút đóng
+        private void ShowNiceError(string code, string title, string message, string actionsHtml = null, string variant = "danger", string icon = null)
         {
+            var v = (variant ?? "danger").Trim().ToLowerInvariant();
+
+            var cls = v == "success" ? "alertx alertx-success"
+                    : v == "warning" ? "alertx alertx-warning"
+                    : v == "info" ? "alertx alertx-info"
+                    : "alertx alertx-danger";
+
+            var iconCls = !string.IsNullOrWhiteSpace(icon)
+                ? icon
+                : (v == "success" ? "bi bi-check-circle"
+                 : v == "warning" ? "bi bi-exclamation-triangle"
+                 : v == "info" ? "bi bi-info-circle"
+                 : "bi bi-exclamation-octagon-fill");
+
             var html =
-                "<div class='alertx'>" +
-                    "<i class='bi bi-exclamation-octagon-fill'></i>" +
+                "<div class='" + cls + "'>" +
+                    "<div class='ax-ic'><i class='" + iconCls + "'></i></div>" +
                     "<div class='ax-body'>" +
-                        $"<div class='ax-title'>{Server.HtmlEncode(title)}</div>" +
-                        $"<p class='ax-msg'>{message}</p>" +
-                        (string.IsNullOrWhiteSpace(actionsHtml) ? "" : $"<div class='ax-actions'>{actionsHtml}</div>") +
-                        $"<input type='hidden' value='{Server.HtmlEncode(code)}' />" +
+                        "<div class='ax-title'>" + Server.HtmlEncode(title) + "</div>" +
+                        "<p class='ax-msg'>" + (message ?? "") + "</p>" +
+                        (string.IsNullOrWhiteSpace(actionsHtml) ? "" : "<div class='ax-actions'>" + actionsHtml + "</div>") +
+                        "<input type='hidden' value='" + Server.HtmlEncode(code ?? "") + "' />" +
                     "</div>" +
+                    "<button type='button' class='ax-close' onclick=\"this.parentElement.remove()\">" +
+                        "<i class='bi bi-x-lg'></i>" +
+                    "</button>" +
                 "</div>";
 
             litError.Text = html;
@@ -691,3 +726,4 @@ namespace HAFoodWeb
         }
     }
 }
+

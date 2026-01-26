@@ -335,6 +335,9 @@
                 </div>
 
                 <small id="litPaymentExtra" runat="server" class="meta-small d-block mt-1 ms-4 text-muted"></small>
+
+                <!-- ✅ NEW: hint nhỏ về hoàn tiền khi hủy (JS sẽ fill) -->
+                <small id="paymentCancelHint" class="meta-small d-block mt-1 ms-4 text-muted" style="display:none;"></small>
               </div>
             </asp:Panel>
           </asp:Panel>
@@ -454,6 +457,12 @@
 
       <%-- ✅ Hidden cho xác nhận đã nhận hàng --%>
       <asp:HiddenField ID="hCanConfirmReceived" runat="server" />
+
+      <%-- ✅ NEW: Hidden payment info để render note hủy đơn --%>
+      <asp:HiddenField ID="hPaymentProviderUp" runat="server" />
+      <asp:HiddenField ID="hPaymentStatusRaw" runat="server" />
+      <asp:HiddenField ID="hPaymentRef" runat="server" />
+      <asp:HiddenField ID="hIsPaidOnline" runat="server" />
     </div>
   </form>
 
@@ -473,6 +482,9 @@
             <i class="bi bi-exclamation-triangle me-2"></i>
             Bạn chắc chắn muốn <strong>hủy đơn hàng</strong> này chứ?
           </div>
+
+          <!-- ✅ NEW: Note về COD/Online/Refund -->
+          <div id="cancelPaymentNote" class="mt-2"></div>
         </div>
 
         <div class="modal-footer d-flex justify-content-between w-100">
@@ -610,7 +622,7 @@
       // ✅ Chỉ hiện nút hủy khi status=0; còn lại ẩn hoàn toàn
       function decideCancelUI() {
           const status = parseInt(document.getElementById('<%= hStatus.ClientID %>').value || '0', 10);
-        const canCancel = (document.getElementById('<%= hCanCancel.ClientID %>').value === '1');
+          const canCancel = (document.getElementById('<%= hCanCancel.ClientID %>').value === '1');
           const btn = document.getElementById('btnCancelOrder');
           if (!btn) return;
 
@@ -620,7 +632,7 @@
 
       function decideConfirmReceivedUI() {
           const status = parseInt(document.getElementById('<%= hStatus.ClientID %>').value || '0', 10);
-        const can = (document.getElementById('<%= hCanConfirmReceived.ClientID %>').value === '1');
+          const can = (document.getElementById('<%= hCanConfirmReceived.ClientID %>').value === '1');
           const btn = document.getElementById('btnConfirmReceived');
           if (!btn) return;
 
@@ -669,24 +681,20 @@
               // ✅ KHÔNG gửi body, KHÔNG set Content-Type
           });
 
-          // ✅ nhiều API trả 204 NoContent / body rỗng
           let data = null;
           const ct = resp.headers.get('content-type') || '';
           if (ct.includes('application/json')) {
               try { data = await resp.json(); } catch { data = null; }
           } else {
-              // nếu không phải json thì cố đọc text để debug
               try { data = await resp.text(); } catch { }
           }
 
           if (resp.status === 401 || resp.status === 403) throw new Error('Vui lòng đăng nhập để xác nhận');
 
           if (!resp.ok) {
-              // nếu data là json có message/detail
               if (data && typeof data === 'object') {
                   throw new Error((data.message || data.detail) || 'Không thể xác nhận nhận hàng.');
               }
-              // nếu data là text
               if (typeof data === 'string' && data.trim()) {
                   throw new Error(data);
               }
@@ -694,6 +702,83 @@
           }
 
           return data;
+      }
+
+      // =============================
+      // ✅ NEW: Cancel note theo payment
+      // =============================
+      function normalizePayStatus(s) {
+          const lo = String(s || '').trim().toLowerCase();
+          if (lo === 'paid' || lo === 'success' || lo === 'succeeded') return 'paid';
+          if (lo === 'pending' || lo === 'unpaid' || lo === 'processing' || lo === 'created') return 'pending';
+          if (lo === 'failed' || lo === 'cancelled' || lo === 'canceled') return 'failed';
+          return lo || 'unknown';
+      }
+
+      function readPayInfo() {
+          const provUp = (document.getElementById('<%= hPaymentProviderUp.ClientID %>')?.value || '').trim().toUpperCase();
+          const stRaw = (document.getElementById('<%= hPaymentStatusRaw.ClientID %>')?.value || '').trim();
+          const st = normalizePayStatus(stRaw);
+          const ref = (document.getElementById('<%= hPaymentRef.ClientID %>')?.value || '').trim();
+          const isPaidOnline = (document.getElementById('<%= hIsPaidOnline.ClientID %>')?.value === '1');
+          const isCod = (!provUp || provUp === 'COD');
+          return { provUp, stRaw, st, ref, isPaidOnline, isCod };
+      }
+
+      function buildCancelNoteHtml() {
+          const p = readPayInfo();
+
+          // COD
+          if (p.isCod) {
+              return `
+                <div class="alert alert-info py-2 mb-0">
+                  <i class="bi bi-info-circle me-2"></i>
+                  Đơn <strong>COD</strong> chưa thanh toán. Khi hủy, đơn sẽ dừng xử lý và <strong>không phát sinh hoàn tiền</strong>.
+                </div>`;
+          }
+
+          // Online - paid
+          if (p.isPaidOnline || p.st === 'paid') {
+              const refLine = p.ref ? `<div class="small mt-1"><span class="text-muted">Mã giao dịch:</span> <strong>${p.ref}</strong></div>` : '';
+              return `
+                <div class="alert alert-info py-2 mb-0">
+                  <i class="bi bi-arrow-repeat me-2"></i>
+                  Đơn đã <strong>thanh toán online</strong>. Khi hủy, HAFood sẽ <strong>tiến hành hoàn tiền</strong> về nguồn thanh toán ban đầu.
+                  <div class="small text-muted mt-1">Thời gian dự kiến: <strong>1–3 ngày làm việc</strong> (tùy ngân hàng/nhà cung cấp).</div>
+                  ${refLine}
+                </div>`;
+          }
+
+          // Online - pending/unpaid/unknown
+          return `
+            <div class="alert alert-secondary py-2 mb-0">
+              <i class="bi bi-shield-check me-2"></i>
+              Đơn đang ở trạng thái <strong>chưa hoàn tất thanh toán</strong>. Khi hủy, bạn sẽ <strong>không bị trừ tiền</strong>.
+              <div class="small text-muted mt-1">Nếu bạn đã thanh toán nhưng hệ thống chưa cập nhật, vui lòng chờ 1–2 phút hoặc liên hệ CSKH để được hỗ trợ.</div>
+            </div>`;
+      }
+
+      function fillCancelPaymentNote() {
+          const box = document.getElementById('cancelPaymentNote');
+          if (!box) return;
+          box.innerHTML = buildCancelNoteHtml();
+      }
+
+      function fillPaymentCancelHint() {
+          // hiển thị hint nhỏ ở phần Payment
+          const hint = document.getElementById('paymentCancelHint');
+          if (!hint) return;
+
+          const p = readPayInfo();
+          if (p.isCod) {
+              hint.style.display = 'none';
+              hint.textContent = '';
+              return;
+          }
+
+          // Nếu online thì cho hint chung
+          hint.style.display = '';
+          hint.innerHTML = `<i class="bi bi-info-circle me-1"></i> Nếu hủy sau khi đã thanh toán, tiền sẽ hoàn về nguồn thanh toán ban đầu (1–3 ngày làm việc).`;
       }
 
       // ===== Review (NEW) =====
@@ -1029,290 +1114,299 @@
 
       async function decideOrderReviewUI() {
           const canReviewEl = document.getElementById('<%= hCanReview.ClientID %>');
-      const canReview = (canReviewEl && canReviewEl.value === '1');
+          const canReview = (canReviewEl && canReviewEl.value === '1');
 
-      const btn = document.getElementById('btnOpenOrderReview');
-      const disabled = document.getElementById('orderReviewDisabled');
-      const already = document.getElementById('orderReviewAlready');
+          const btn = document.getElementById('btnOpenOrderReview');
+          const disabled = document.getElementById('orderReviewDisabled');
+          const already = document.getElementById('orderReviewAlready');
 
-      [btn, disabled, already].forEach(x => x && x.classList.add('d-none'));
+          [btn, disabled, already].forEach(x => x && x.classList.add('d-none'));
 
-      if (!canReview) { if (disabled) disabled.classList.remove('d-none'); return; }
+          if (!canReview) { if (disabled) disabled.classList.remove('d-none'); return; }
 
-      const items = getOrderItems();
-      if (!items.length) { if (btn) btn.classList.remove('d-none'); return; }
+          const items = getOrderItems();
+          if (!items.length) { if (btn) btn.classList.remove('d-none'); return; }
 
-      try {
-        for (const it of items) {
-          const ar = await isAlreadyReviewed(it.productId, it.variantId);
-          if (!ar) { if (btn) btn.classList.remove('d-none'); return; }
-        }
-        if (already) already.classList.remove('d-none');
-      } catch {
-        if (btn) btn.classList.remove('d-none');
-      }
-    }
-
-    document.addEventListener('DOMContentLoaded', function () {
-      setStatusPill(document.getElementById('<%= hStatus.ClientID %>').value || '0');
-
-      const oc = document.getElementById('<%= hOrderCode.ClientID %>')?.value || '';
-      const rv = document.getElementById('rvOrderCode'); if (rv) rv.textContent = oc;
-      const cn = document.getElementById('cnOrderCode'); if (cn) cn.textContent = oc;
-      const rc = document.getElementById('rcOrderCode'); if (rc) rc.textContent = oc;
-
-      // Cancel modal
-      let cancelModalInstance = null;
-      document.getElementById('btnCancelOrder')?.addEventListener('click', function () {
-        const el = document.getElementById('cancelModal');
-        if (!cancelModalInstance) cancelModalInstance = new bootstrap.Modal(el);
-        cancelModalInstance.show();
-      });
-
-      // Confirm cancel
-      document.getElementById('btnConfirmCancelOrder')?.addEventListener('click', async function () {
-        const btn = document.getElementById('btnConfirmCancelOrder');
-        const oldHtml = btn.innerHTML;
-
-        try {
-          const status = parseInt(document.getElementById('<%= hStatus.ClientID %>').value || '0', 10);
-          const canCancel = (document.getElementById('<%= hCanCancel.ClientID %>').value === '1');
-          if (!(canCancel && status === 0)) { showToast('Đơn hàng không đủ điều kiện để hủy.', true); return; }
-
-          const orderId = parseInt(document.getElementById('<%= hOrderId.ClientID %>').value || '0', 10);
-          if (!orderId) { showToast('Thiếu dữ liệu đơn hàng', true); return; }
-
-          btn.disabled = true;
-          btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Đang hủy...';
-
-          await callCancelOrderApi(orderId);
-
-          document.getElementById('<%= hStatus.ClientID %>').value = '4';
-          document.getElementById('<%= hCanCancel.ClientID %>').value = '0';
-          setStatusPill(4);
-          decideCancelUI();
-
-          // cancel => không confirm received / không review
-          document.getElementById('<%= hCanConfirmReceived.ClientID %>').value = '0';
-          decideConfirmReceivedUI();
-
-          document.getElementById('<%= hCanReview.ClientID %>').value = '0';
-          decideOrderReviewUI();
-
-          showToast('Đã hủy đơn hàng.');
-          try { bootstrap.Modal.getInstance(document.getElementById('cancelModal'))?.hide(); } catch { }
-
-          btn.disabled = false;
-          btn.innerHTML = oldHtml;
-        } catch (err) {
-          console.error(err);
-          showToast((err && err.message) ? err.message : 'Có lỗi xảy ra, vui lòng thử lại.', true);
-          btn.disabled = false;
-          btn.innerHTML = oldHtml;
-        }
-      });
-
-      // Received modal
-      let receivedModalInstance = null;
-
-      document.getElementById('btnConfirmReceived')?.addEventListener('click', function () {
-        const el = document.getElementById('receivedModal');
-        if (!receivedModalInstance) receivedModalInstance = new bootstrap.Modal(el);
-        receivedModalInstance.show();
-      });
-
-      document.getElementById('btnConfirmReceivedDo')?.addEventListener('click', async function () {
-        const btn = document.getElementById('btnConfirmReceivedDo');
-        const oldHtml = btn.innerHTML;
-
-        try {
-          const status = parseInt(document.getElementById('<%= hStatus.ClientID %>').value || '0', 10);
-          const can = (document.getElementById('<%= hCanConfirmReceived.ClientID %>').value === '1');
-          if (!(can && status === 3)) { showToast('Đơn hàng chưa đủ điều kiện xác nhận.', true); return; }
-
-          const orderId = parseInt(document.getElementById('<%= hOrderId.ClientID %>').value || '0', 10);
-          if (!orderId) { showToast('Thiếu dữ liệu đơn hàng', true); return; }
-
-          btn.disabled = true;
-          btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Đang xác nhận...';
-
-          await callConfirmReceivedApi(orderId);
-
-          // update UI: status=7
-          document.getElementById('<%= hStatus.ClientID %>').value = '7';
-          document.getElementById('<%= hCanConfirmReceived.ClientID %>').value = '0';
-          setStatusPill(7);
-          decideConfirmReceivedUI();
-
-          // ✅ cho phép review sau khi nhận hàng
-          document.getElementById('<%= hCanReview.ClientID %>').value = '1';
-          decideOrderReviewUI();
-
-          showToast('Đã xác nhận nhận hàng.');
-          try { bootstrap.Modal.getInstance(document.getElementById('receivedModal'))?.hide(); } catch { }
-
-          btn.disabled = false;
-          btn.innerHTML = oldHtml;
-        } catch (err) {
-          console.error(err);
-          showToast((err && err.message) ? err.message : 'Có lỗi xảy ra, vui lòng thử lại.', true);
-          btn.disabled = false;
-          btn.innerHTML = oldHtml;
-        }
-      });
-
-      // Review modal
-      let reviewModalInstance = null;
-
-      document.getElementById('btnOpenOrderReview')?.addEventListener('click', async function () {
-        const items = getOrderItems();
-        renderReviewModal(items);
-
-        const tabs = document.getElementById('rvTabs');
-        if (tabs && !tabs.__bound) {
-          tabs.__bound = true;
-          tabs.addEventListener('click', async function (e) {
-            const btn = e.target.closest('button.rv-submit-item');
-            if (!btn) return;
-
-            const productId = parseInt(btn.getAttribute('data-product-id') || '0', 10);
-            const variantId = parseInt(btn.getAttribute('data-variant-id') || '0', 10);
-            const key = makeKey(productId, variantId);
-
-            if (window.__rvSubmitting[key]) return;
-
-            try {
-              const already = await isAlreadyReviewed(productId, variantId);
-              if (already) {
-                setPaneDone(key);
-                const itemsNow0 = getOrderItems();
-                updateProgress(itemsNow0);
-                updateSubmitAllButton(itemsNow0);
-                return;
+          try {
+              for (const it of items) {
+                  const ar = await isAlreadyReviewed(it.productId, it.variantId);
+                  if (!ar) { if (btn) btn.classList.remove('d-none'); return; }
               }
+              if (already) already.classList.remove('d-none');
+          } catch {
+              if (btn) btn.classList.remove('d-none');
+          }
+      }
 
-              window.__rvSubmitting[key] = true;
-              btn.disabled = true;
-              btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Đang gửi...';
+      document.addEventListener('DOMContentLoaded', function () {
+          setStatusPill(document.getElementById('<%= hStatus.ClientID %>').value || '0');
 
-              await postReviewForItem(productId, variantId);
+          const oc = document.getElementById('<%= hOrderCode.ClientID %>')?.value || '';
+          const rv = document.getElementById('rvOrderCode'); if (rv) rv.textContent = oc;
+          const cn = document.getElementById('cnOrderCode'); if (cn) cn.textContent = oc;
+          const rc = document.getElementById('rcOrderCode'); if (rc) rc.textContent = oc;
 
-              window.__rvEligibility[key] = true;
-              setPaneDone(key);
+          // ✅ fill hint ở box Payment
+          fillPaymentCancelHint();
 
-              const itemsNow = getOrderItems();
-              updateProgress(itemsNow);
-              updateSubmitAllButton(itemsNow);
-
-              showToast('Đã gửi đánh giá.');
-              decideOrderReviewUI();
-            } catch (err) {
-              console.error(err);
-              showToast((err && err.message) ? err.message : 'Có lỗi xảy ra, vui lòng thử lại.', true);
-            } finally {
-              window.__rvSubmitting[key] = false;
-            }
+          // Cancel modal
+          let cancelModalInstance = null;
+          document.getElementById('btnCancelOrder')?.addEventListener('click', function () {
+              fillCancelPaymentNote(); // ✅ NEW
+              const el = document.getElementById('cancelModal');
+              if (!cancelModalInstance) cancelModalInstance = new bootstrap.Modal(el);
+              cancelModalInstance.show();
           });
-        }
 
-        const allBtn = document.getElementById('btnSubmitAllReviews');
-        if (allBtn && !allBtn.__bound) {
-          allBtn.__bound = true;
-          allBtn.addEventListener('click', async function () {
-            const items2 = getOrderItems();
-            if (!items2.length) return;
+          // Confirm cancel
+          document.getElementById('btnConfirmCancelOrder')?.addEventListener('click', async function () {
+              const btn = document.getElementById('btnConfirmCancelOrder');
+              const oldHtml = btn.innerHTML;
 
-            const targets = [];
-            for (const it of items2) {
-              const ar = await isAlreadyReviewed(it.productId, it.variantId);
-              if (!ar) targets.push(it);
-            }
-
-            if (!targets.length) {
-              showToast('Bạn đã đánh giá tất cả sản phẩm trong đơn rồi.', true);
-              updateProgress(items2);
-              updateSubmitAllButton(items2);
-              decideOrderReviewUI();
-              return;
-            }
-
-            const old = allBtn.innerHTML;
-            allBtn.disabled = true;
-            allBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Đang gửi...';
-
-            let ok = 0, fail = 0;
-            for (const it of targets) {
-              const key = makeKey(it.productId, it.variantId);
-              const id = keyToId(key);
               try {
-                await postReviewForItem(it.productId, it.variantId);
-                window.__rvEligibility[key] = true;
-                setPaneDone(key);
-                const msg = document.getElementById('rvMsg_' + id);
-                if (msg) msg.textContent = 'Đã gửi, chờ duyệt.';
-                ok++;
-              } catch (e) {
-                console.warn('submit fail', it, e);
-                fail++;
+                  const status = parseInt(document.getElementById('<%= hStatus.ClientID %>').value || '0', 10);
+                  const canCancel = (document.getElementById('<%= hCanCancel.ClientID %>').value === '1');
+                  if (!(canCancel && status === 0)) { showToast('Đơn hàng không đủ điều kiện để hủy.', true); return; }
+
+                  const orderId = parseInt(document.getElementById('<%= hOrderId.ClientID %>').value || '0', 10);
+                  if (!orderId) { showToast('Thiếu dữ liệu đơn hàng', true); return; }
+
+                  btn.disabled = true;
+                  btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Đang hủy...';
+
+                  await callCancelOrderApi(orderId);
+
+                  document.getElementById('<%= hStatus.ClientID %>').value = '4';
+                  document.getElementById('<%= hCanCancel.ClientID %>').value = '0';
+                  setStatusPill(4);
+                  decideCancelUI();
+
+                  // cancel => không confirm received / không review
+                  document.getElementById('<%= hCanConfirmReceived.ClientID %>').value = '0';
+                  decideConfirmReceivedUI();
+
+                  document.getElementById('<%= hCanReview.ClientID %>').value = '0';
+                  decideOrderReviewUI();
+
+                  // ✅ NEW: toast theo payment
+                  const p = readPayInfo();
+                  if (p.isCod) showToast('Đã hủy đơn hàng.');
+                  else if (p.isPaidOnline || p.st === 'paid') showToast('Đã hủy đơn. Hoàn tiền sẽ được xử lý (1–3 ngày làm việc).');
+                  else showToast('Đã hủy đơn. Bạn sẽ không bị trừ tiền.');
+
+                  try { bootstrap.Modal.getInstance(document.getElementById('cancelModal'))?.hide(); } catch { }
+
+                  btn.disabled = false;
+                  btn.innerHTML = oldHtml;
+              } catch (err) {
+                  console.error(err);
+                  showToast((err && err.message) ? err.message : 'Có lỗi xảy ra, vui lòng thử lại.', true);
+                  btn.disabled = false;
+                  btn.innerHTML = oldHtml;
               }
-              const itemsLoop = getOrderItems();
-              updateProgress(itemsLoop);
-              updateSubmitAllButton(itemsLoop);
-            }
-
-            allBtn.innerHTML = old;
-            allBtn.disabled = false;
-
-            const itemsAfter = getOrderItems();
-            updateProgress(itemsAfter);
-            updateSubmitAllButton(itemsAfter);
-
-            if (fail === 0) showToast(`Đã gửi ${ok} đánh giá.`);
-            else showToast(`Đã gửi ${ok}/${ok + fail}. Có ${fail} lỗi.`, true);
-
-            decideOrderReviewUI();
           });
-        }
 
-        await hydrateEligibility(items);
+          // Received modal
+          let receivedModalInstance = null;
 
-        const el = document.getElementById('reviewModal');
-        if (!reviewModalInstance) reviewModalInstance = new bootstrap.Modal(el);
-        reviewModalInstance.show();
+          document.getElementById('btnConfirmReceived')?.addEventListener('click', function () {
+              const el = document.getElementById('receivedModal');
+              if (!receivedModalInstance) receivedModalInstance = new bootstrap.Modal(el);
+              receivedModalInstance.show();
+          });
+
+          document.getElementById('btnConfirmReceivedDo')?.addEventListener('click', async function () {
+              const btn = document.getElementById('btnConfirmReceivedDo');
+              const oldHtml = btn.innerHTML;
+
+              try {
+                  const status = parseInt(document.getElementById('<%= hStatus.ClientID %>').value || '0', 10);
+                  const can = (document.getElementById('<%= hCanConfirmReceived.ClientID %>').value === '1');
+                  if (!(can && status === 3)) { showToast('Đơn hàng chưa đủ điều kiện xác nhận.', true); return; }
+
+                  const orderId = parseInt(document.getElementById('<%= hOrderId.ClientID %>').value || '0', 10);
+                  if (!orderId) { showToast('Thiếu dữ liệu đơn hàng', true); return; }
+
+                  btn.disabled = true;
+                  btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Đang xác nhận...';
+
+                  await callConfirmReceivedApi(orderId);
+
+                  // update UI: status=7
+                  document.getElementById('<%= hStatus.ClientID %>').value = '7';
+                  document.getElementById('<%= hCanConfirmReceived.ClientID %>').value = '0';
+                  setStatusPill(7);
+                  decideConfirmReceivedUI();
+
+                  // ✅ cho phép review sau khi nhận hàng
+                  document.getElementById('<%= hCanReview.ClientID %>').value = '1';
+                  decideOrderReviewUI();
+
+                  showToast('Đã xác nhận nhận hàng.');
+                  try { bootstrap.Modal.getInstance(document.getElementById('receivedModal'))?.hide(); } catch { }
+
+                  btn.disabled = false;
+                  btn.innerHTML = oldHtml;
+              } catch (err) {
+                  console.error(err);
+                  showToast((err && err.message) ? err.message : 'Có lỗi xảy ra, vui lòng thử lại.', true);
+                  btn.disabled = false;
+                  btn.innerHTML = oldHtml;
+              }
+          });
+
+          // Review modal (giữ nguyên)
+          let reviewModalInstance = null;
+
+          document.getElementById('btnOpenOrderReview')?.addEventListener('click', async function () {
+              const items = getOrderItems();
+              renderReviewModal(items);
+
+              const tabs = document.getElementById('rvTabs');
+              if (tabs && !tabs.__bound) {
+                  tabs.__bound = true;
+                  tabs.addEventListener('click', async function (e) {
+                      const btn = e.target.closest('button.rv-submit-item');
+                      if (!btn) return;
+
+                      const productId = parseInt(btn.getAttribute('data-product-id') || '0', 10);
+                      const variantId = parseInt(btn.getAttribute('data-variant-id') || '0', 10);
+                      const key = makeKey(productId, variantId);
+
+                      if (window.__rvSubmitting[key]) return;
+
+                      try {
+                          const already = await isAlreadyReviewed(productId, variantId);
+                          if (already) {
+                              setPaneDone(key);
+                              const itemsNow0 = getOrderItems();
+                              updateProgress(itemsNow0);
+                              updateSubmitAllButton(itemsNow0);
+                              return;
+                          }
+
+                          window.__rvSubmitting[key] = true;
+                          btn.disabled = true;
+                          btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Đang gửi...';
+
+                          await postReviewForItem(productId, variantId);
+
+                          window.__rvEligibility[key] = true;
+                          setPaneDone(key);
+
+                          const itemsNow = getOrderItems();
+                          updateProgress(itemsNow);
+                          updateSubmitAllButton(itemsNow);
+
+                          showToast('Đã gửi đánh giá.');
+                          decideOrderReviewUI();
+                      } catch (err) {
+                          console.error(err);
+                          showToast((err && err.message) ? err.message : 'Có lỗi xảy ra, vui lòng thử lại.', true);
+                      } finally {
+                          window.__rvSubmitting[key] = false;
+                      }
+                  });
+              }
+
+              const allBtn = document.getElementById('btnSubmitAllReviews');
+              if (allBtn && !allBtn.__bound) {
+                  allBtn.__bound = true;
+                  allBtn.addEventListener('click', async function () {
+                      const items2 = getOrderItems();
+                      if (!items2.length) return;
+
+                      const targets = [];
+                      for (const it of items2) {
+                          const ar = await isAlreadyReviewed(it.productId, it.variantId);
+                          if (!ar) targets.push(it);
+                      }
+
+                      if (!targets.length) {
+                          showToast('Bạn đã đánh giá tất cả sản phẩm trong đơn rồi.', true);
+                          updateProgress(items2);
+                          updateSubmitAllButton(items2);
+                          decideOrderReviewUI();
+                          return;
+                      }
+
+                      const old = allBtn.innerHTML;
+                      allBtn.disabled = true;
+                      allBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Đang gửi...';
+
+                      let ok = 0, fail = 0;
+                      for (const it of targets) {
+                          const key = makeKey(it.productId, it.variantId);
+                          const id = keyToId(key);
+                          try {
+                              await postReviewForItem(it.productId, it.variantId);
+                              window.__rvEligibility[key] = true;
+                              setPaneDone(key);
+                              const msg = document.getElementById('rvMsg_' + id);
+                              if (msg) msg.textContent = 'Đã gửi, chờ duyệt.';
+                              ok++;
+                          } catch (e) {
+                              console.warn('submit fail', it, e);
+                              fail++;
+                          }
+                          const itemsLoop = getOrderItems();
+                          updateProgress(itemsLoop);
+                          updateSubmitAllButton(itemsLoop);
+                      }
+
+                      allBtn.innerHTML = old;
+                      allBtn.disabled = false;
+
+                      const itemsAfter = getOrderItems();
+                      updateProgress(itemsAfter);
+                      updateSubmitAllButton(itemsAfter);
+
+                      if (fail === 0) showToast(`Đã gửi ${ok} đánh giá.`);
+                      else showToast(`Đã gửi ${ok}/${ok + fail}. Có ${fail} lỗi.`, true);
+
+                      decideOrderReviewUI();
+                  });
+              }
+
+              await hydrateEligibility(items);
+
+              const el = document.getElementById('reviewModal');
+              if (!reviewModalInstance) reviewModalInstance = new bootstrap.Modal(el);
+              reviewModalInstance.show();
+          });
+
+          decideOrderReviewUI();
+          decideCancelUI();
+          decideConfirmReceivedUI();
+
+          // ===== embed helpers =====
+          var isEmbed = /[?&]embed=1\b/.test(location.search);
+
+          var backLink = document.getElementById('<%= lnkBack.ClientID %>');
+          if (isEmbed && backLink) {
+              try {
+                  var u = new URL(backLink.getAttribute('href') || backLink.href, location.href);
+                  u.searchParams.set('embed', '1');
+                  backLink.setAttribute('href', u.pathname + u.search + u.hash);
+              } catch (e) {
+                  var href = backLink.getAttribute('href') || backLink.href;
+                  backLink.setAttribute('href', href + (href.indexOf('?') >= 0 ? '&' : '?') + 'embed=1');
+              }
+          }
+
+          if (isEmbed) {
+              try {
+                  document.querySelectorAll('a[href]').forEach(function (a) {
+                      var href = a.getAttribute('href'); if (!href) return;
+                      if (href.startsWith('#') || href.startsWith('javascript:')) return;
+                      var u = new URL(href, location.href);
+                      if (u.origin !== location.origin) return;
+                      u.searchParams.set('embed', '1');
+                      a.setAttribute('href', u.pathname + u.search + u.hash);
+                  });
+              } catch (e) { }
+          }
       });
-
-      decideOrderReviewUI();
-      decideCancelUI();
-      decideConfirmReceivedUI();
-
-      // ===== embed helpers =====
-      var isEmbed = /[?&]embed=1\b/.test(location.search);
-
-      var backLink = document.getElementById('<%= lnkBack.ClientID %>');
-      if (isEmbed && backLink) {
-        try {
-          var u = new URL(backLink.getAttribute('href') || backLink.href, location.href);
-          u.searchParams.set('embed', '1');
-          backLink.setAttribute('href', u.pathname + u.search + u.hash);
-        } catch (e) {
-          var href = backLink.getAttribute('href') || backLink.href;
-          backLink.setAttribute('href', href + (href.indexOf('?') >= 0 ? '&' : '?') + 'embed=1');
-        }
-      }
-
-      if (isEmbed) {
-        try {
-          document.querySelectorAll('a[href]').forEach(function (a) {
-            var href = a.getAttribute('href'); if (!href) return;
-            if (href.startsWith('#') || href.startsWith('javascript:')) return;
-            var u = new URL(href, location.href);
-            if (u.origin !== location.origin) return;
-            u.searchParams.set('embed', '1');
-            a.setAttribute('href', u.pathname + u.search + u.hash);
-          });
-        } catch (e) { }
-      }
-    });
   </script>
 
   <!-- Dọn text-node rơi ra DOM -->
